@@ -1,0 +1,497 @@
+"use client";
+import axios from 'axios';
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Loading } from "@/components/loading";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Building2,
+  ChevronDown,
+  Plus,
+  Search,
+  MapPin,
+  TrendingUp,
+  SortAsc,
+  SortDesc,
+  ChevronLeft,
+  ChevronRight,
+  X,
+} from "lucide-react";
+import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
+import type {
+  CompanyGroupResponse,
+  SignalGroupResponse,
+  LocationGroupResponse,
+  SearchResponse,
+  PaginationInfo,
+} from "@/app/api/contacts/route";
+
+export type GroupByType = 'company' | 'signals' | 'location' | 'city';
+export type LocationType = 'country' | 'state' | 'city';
+export type SortBy = 'name';
+export type SortOrder = 'asc' | 'desc';
+
+export type DashboardResponse = CompanyGroupResponse | SignalGroupResponse | LocationGroupResponse | SearchResponse;
+
+// State interface for managing dashboard data
+interface DashboardState {
+  data: DashboardResponse | null;
+  pagination: PaginationInfo;
+}
+
+// Search and filter parameters
+interface FetchParams {
+  groupBy?: GroupByType;
+  locationType?: LocationType;
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: SortBy;
+  sortOrder?: SortOrder;
+}
+
+export default function AudiencePage() {
+  const { loading: authLoading } = useAuth();
+  const [dashboardState, setDashboardState] = useState<DashboardState>({
+    data: null,
+    pagination: {
+      page: 1,
+      limit: 20,
+      total: 0,
+      totalPages: 1,
+      hasNext: false,
+      hasPrev: false
+    }
+  });
+  const [groupBy, setGroupBy] = useState<GroupByType>('company');
+  const [fetchLoading, setfetchLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
+  const [locationType, setLocationType] = useState<LocationType>('country');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchInput, setSearchInput] = useState<string>(''); // New state for input
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageLimit, setPageLimit] = useState<number>(20);
+  const [sortBy, setSortBy] = useState<SortBy>('name');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set());
+
+  // Fetch records from API
+  const fetchDashboardData = useCallback(async (params?: FetchParams) => {
+    try {
+      setfetchLoading(true)
+
+      const queryParams = new URLSearchParams();
+      if (params?.groupBy || groupBy) {
+        queryParams.append('groupBy', params?.groupBy || groupBy);
+      }
+      if ((params?.groupBy || groupBy) === 'location' && (params?.locationType || locationType)) {
+        queryParams.append('locationType', params?.locationType || locationType);
+      }
+      if (params?.search || searchTerm) {
+        queryParams.append('search', params?.search || searchTerm);
+      }
+      if (params?.page || currentPage) {
+        queryParams.append('page', String(params?.page || currentPage));
+      }
+      if (params?.limit || pageLimit) {
+        queryParams.append('limit', String(params?.limit || pageLimit));
+      }
+      if (params?.sortBy || sortBy) {
+        queryParams.append('sortBy', params?.sortBy || sortBy);
+      }
+      if (params?.sortOrder || sortOrder) {
+        queryParams.append('sortOrder', params?.sortOrder || sortOrder);
+      }
+      const response = await axios.get(`/api/contacts?${queryParams.toString()}`);
+      console.log('API Response:', response.data);
+
+      setDashboardState({
+        data: response.data,
+        pagination: response.data.pagination
+      });
+      setfetchLoading(false)
+
+    } catch (error) {
+      console.error('Failed to fetch Contacts data:', error);
+      setDashboardState(prev => ({
+        ...prev,
+      }));
+      setfetchLoading(false)
+      setError(error instanceof Error ? error.message : 'Failed to fetch data')
+    } finally {
+      setfetchLoading(false)
+      setError(null)
+    }
+  }, [groupBy, locationType, searchTerm, currentPage, pageLimit, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (!authLoading) {
+      fetchDashboardData();
+    }
+  }, [authLoading, fetchDashboardData]);
+
+  // Handler functions
+  const handleGroupByChange = (newGroupBy: GroupByType) => {
+    setGroupBy(newGroupBy);
+    setCurrentPage(1);
+    if (newGroupBy === 'signals') {
+      setSortOrder('desc');
+    } else {
+      setSortOrder('asc'); 
+    }
+  };
+
+  const handleLocationTypeChange = (newLocationType: LocationType) => {
+    setLocationType(newLocationType);
+    setCurrentPage(1);
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+  };
+
+  const handleSearchSubmit = () => {
+    setSearchTerm(searchInput);
+    setCurrentPage(1);
+  };
+
+  const handleSortOrderToggle = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setPageLimit(newLimit);
+    setCurrentPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setGroupBy('company');
+    setLocationType('country');
+    setSearchTerm('');
+    setSearchInput('');
+    setSortBy('name');
+    setSortOrder('asc');
+    setCurrentPage(1);
+    setSelectedContacts(new Set());
+  };
+
+  // Contact selection handlers
+  const handleContactSelect = (contactId: string) => {
+    setSelectedContacts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(contactId)) {
+        newSet.delete(contactId);
+      } else {
+        newSet.add(contactId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = (contactIds: string[]) => {
+    setSelectedContacts(prev => {
+      const newSet = new Set(prev);
+      const allSelected = contactIds.every(id => newSet.has(id));
+      
+      if (allSelected) {
+        // Deselect all
+        contactIds.forEach(id => newSet.delete(id));
+      } else {
+        // Select all
+        contactIds.forEach(id => newSet.add(id));
+      }
+      return newSet;
+    });
+  };
+
+  const handleEnrichmentAction = (type: 'contact_enrichment' | 'social_activity') => {
+    if (selectedContacts.size === 0) {
+      console.log('No contacts selected for enrichment');
+      return;
+    }
+
+    const selectedContactIds = Array.from(selectedContacts);
+    console.log(`${type.charAt(0).toUpperCase() + type.slice(1)} Enrichment - Selected Contact IDs:`, selectedContactIds);
+  };
+
+  // Check if any filters are applied
+  const hasFiltersApplied = () => {
+    return (
+      groupBy !== 'company' ||
+      locationType !== 'country' ||
+      searchTerm !== '' ||
+      sortBy !== 'name' ||
+      sortOrder !== 'asc'
+    );
+  };
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="flex min-h-screen w-full flex-col">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex flex-1 items-center justify-between">
+            <h1 className="text-xl font-semibold">Accountify</h1>
+          </div>
+        </header>
+        <main className="flex-1 p-6">
+          <Alert>
+            <AlertDescription>
+              Failed to load data: {error}
+            </AlertDescription>
+          </Alert>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
+
+      {/* Enhanced Actions Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b bg-white px-6 py-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Group Controls */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 text-sm">
+                <Building2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Group:</span>
+                <span>{groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}</span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => handleGroupByChange('company')}>
+                <Building2 className="h-4 w-4 mr-2" />
+                Company
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleGroupByChange('location')}>
+                <MapPin className="h-4 w-4 mr-2" />
+                Location
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleGroupByChange('signals')}>
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Signals
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Location Type Filter - only show when groupBy is location */}
+          {groupBy === 'location' && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 text-sm">
+                  <MapPin className="h-4 w-4" />
+                  <span className="hidden sm:inline">Location:</span>
+                  <span>{locationType.charAt(0).toUpperCase() + locationType.slice(1)}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => handleLocationTypeChange('country')}>
+                  Country
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleLocationTypeChange('state')}>
+                  State
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleLocationTypeChange('city')}>
+                  City
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* Sort Controls - Fixed to Name only with sort order toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-sm"
+            onClick={handleSortOrderToggle}
+          >
+            {sortOrder === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+            <span className="hidden sm:inline">Sort:</span>
+            <span>Name ({sortOrder === 'asc' ? 'A-Z' : 'Z-A'})</span>
+          </Button>
+
+          {/* Search Input with Button */}
+            <div className="relative">
+              <Search onClick={handleSearchSubmit} className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black" />
+              <Input
+                placeholder="Search contacts..."
+                value={searchInput}
+                onChange={handleSearchInputChange}
+                className="pl-10 w-64"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearchSubmit();
+                  }
+                }}
+              />
+            </div>
+          {/* Clear All Filters - only show when filters are applied */}
+          {hasFiltersApplied() && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllFilters}
+              className="gap-2 text-gray-500"
+            >
+              <X className="h-4 w-4" />
+              <span className="hidden sm:inline">Clear All</span>
+            </Button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Page Size Control */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 text-sm">
+                <span>Show {pageLimit}</span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => handleLimitChange(10)}>
+                10 per page
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleLimitChange(20)}>
+                20 per page
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleLimitChange(50)}>
+                50 per page
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleLimitChange(100)}>
+                100 per page
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Add Enrichment Button */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium"
+                disabled={selectedContacts.size === 0}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  Add enrichment {selectedContacts.size > 0 && `(${selectedContacts.size})`}
+                </span>
+                <span className="sm:hidden">
+                  Enrich {selectedContacts.size > 0 && `(${selectedContacts.size})`}
+                </span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => handleEnrichmentAction('contact_enrichment')}>
+                Contact Enrichment
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleEnrichmentAction('social_activity')}>
+                Company Enrichment
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      {(authLoading || fetchLoading) ? <Loading /> :
+        (
+
+          <main className="flex-1 p-4 md:p-6">
+            <div className="min-h-[400px] bg-white rounded-lg shadow-sm p-6">
+              <ContactsSection
+                groupBy={groupBy}
+                records={dashboardState.data as DashboardResponse}
+                selectedContacts={selectedContacts}
+                onContactSelect={handleContactSelect}
+                onSelectAll={handleSelectAll}
+              />
+            </div>
+          </main>
+        )}
+
+      {/* Pagination Controls - Footer Style */}
+      {dashboardState.pagination && dashboardState.pagination.totalPages > 1 && (
+        <footer className="border-t bg-white px-6 py-4 mt-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-600">
+              Showing {((dashboardState.pagination.page - 1) * dashboardState.pagination.limit) + 1} to{' '}
+              {Math.min(dashboardState.pagination.page * dashboardState.pagination.limit, dashboardState.pagination.total)} of{' '}
+              {dashboardState.pagination.total} results
+            </div>
+
+            <div className="flex items-center gap-2">
+              {dashboardState.pagination.hasPrev && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="gap-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
+                </Button>
+              )}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, dashboardState.pagination.totalPages) }, (_, i) => {
+                  const pageNum = Math.max(1, Math.min(
+                    dashboardState.pagination.totalPages - 4,
+                    Math.max(1, currentPage - 2)
+                  )) + i;
+
+                  if (pageNum <= dashboardState.pagination.totalPages) {
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+              {dashboardState.pagination.hasNext && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="gap-2"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="text-sm text-gray-600">
+              Page {dashboardState.pagination.page} of {dashboardState.pagination.totalPages}
+            </div>
+          </div>
+        </footer>
+      )}
+    </div>
+  );
+}
