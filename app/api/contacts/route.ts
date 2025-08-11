@@ -18,31 +18,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
  * - Drawer data loaded on-demand only
  */
 
-interface DatabaseContactResult {
-  id: string;
-  company_id: string;
-  full_name: string;
-  title: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  profile_picture: string | null;
-  company: MinimalCompany[]; 
-  signals: ContactSignal[];
-}
-
-interface DatabaseContactResultNoCompany {
-  id: string;
-  company_id: string;
-  full_name: string;
-  title: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  profile_picture: string | null;
-  signals: ContactSignal[];
-}
-
 // Display interfaces
 export interface MinimalCompany {
   id: string;
@@ -113,19 +88,6 @@ export interface SearchResponse {
   searchTerm: string;
 }
 
-// Helper function to build search conditions
-function buildSearchConditions(searchTerm: string) {
-  const conditions = [];
-  
-  // Search in contact fields
-  conditions.push(`full_name.ilike.%${searchTerm}%`);
-  conditions.push(`title.ilike.%${searchTerm}%`);
-  conditions.push(`city.ilike.%${searchTerm}%`);
-  conditions.push(`state.ilike.%${searchTerm}%`);
-  conditions.push(`country.ilike.%${searchTerm}%`);
-  
-  return conditions;
-}
 
 // Helper function to get pagination info
 function getPaginationInfo(page: number, limit: number, total: number): PaginationInfo {
@@ -201,65 +163,22 @@ async function handleSearch(
   sortOrder: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
-  
-  // Build minimal search query - only data displayed in table
-  let query = supabase
-    .from('contacts')
-    .select(`
-      id, company_id, full_name, title, city, state, country, profile_picture,
-      company:companies!company_id (
-        id, name, logo_url, industry
-      ),
-      signals:contact_signals (
-        id, signal_type, confidence_score
-      )
-    `, { count: 'exact' });
 
-  // Add search conditions
-  const searchConditions = buildSearchConditions(searchTerm);
-  query = query.or(searchConditions.join(','));
+  // Use RPC function for optimized search
+  const { data: result, error } = await supabase.rpc('search_contacts', {
+    search_term: searchTerm,
+    page_offset: offset,
+    page_limit: limit,
+    sort_field: sortBy === 'name' ? 'name' : sortBy,
+    sort_order: sortOrder
+  });
 
-  // Add sorting
-  const sortField = sortBy === 'name' ? 'full_name' : sortBy;
-  query = query.order(sortField, { ascending: sortOrder === 'asc' });
-
-  // Add pagination
-  query = query.range(offset, offset + limit - 1);
-
-  const { data: contacts, error, count } = await query;
-  
   if (error) {
     throw new Error(`Failed to search contacts: ${error.message}`);
   }
 
-  // Process and limit the signals in JavaScript
-  const formattedContacts: DashboardContact[] = (contacts || []).map((contact: DatabaseContactResult) => {
-    // Limit signals to top 4 by confidence score
-    const limitedSignals = (contact.signals || [])
-      .sort((a: ContactSignal, b: ContactSignal) => b.confidence_score - a.confidence_score)
-      .slice(0, 4);
-
-    return {
-      id: contact.id,
-      company_id: contact.company_id,
-      full_name: contact.full_name,
-      title: contact.title,
-      city: contact.city,
-      state: contact.state,
-      country: contact.country,
-      profile_picture: contact.profile_picture,
-      company: contact.company?.[0] || null,
-      signals: limitedSignals
-    };
-  });
-
-  const pagination = getPaginationInfo(page, limit, count || 0);
-
-  return NextResponse.json({
-    contacts: formattedContacts,
-    pagination,
-    searchTerm
-  } as SearchResponse);
+  // RPC function returns the complete response structure
+  return NextResponse.json(result as SearchResponse);
 }
 
 async function handleCompanyGrouping(
@@ -271,100 +190,25 @@ async function handleCompanyGrouping(
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // First get companies with pagination
-  const { data: companies, error: companiesError, count: companiesCount } = await supabase
-    .from('companies')
-    .select('id, name, logo_url, industry', { count: 'exact' })
-    .order(sortBy === 'name' ? 'name' : 'created_at', { ascending: sortOrder === 'asc' })
-    .range(offset, offset + limit - 1);
+  // Use RPC function for optimized company grouping
+  const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_company', {
+    page_offset: offset,
+    page_limit: limit,
+    sort_field: sortBy === 'name' ? 'name' : 'created_at',
+    sort_order: sortOrder
+  });
 
-  if (companiesError) {
-    throw new Error(`Failed to fetch companies: ${companiesError.message}`);
+  if (error) {
+    throw new Error(`Failed to fetch companies: ${error.message}`);
   }
 
-  const companyIds = (companies || []).map((company: MinimalCompany) => company.id);
-  
-  // Get contacts for these companies with minimal data
-  const { data: contacts, error: contactsError } = await supabase
-    .from('contacts')
-    .select(`
-      id, company_id, full_name, title, city, state, country, profile_picture,
-      signals:contact_signals (
-        id, signal_type, confidence_score
-      )
-    `)
-    .in('company_id', companyIds);
+  const companies = result?.companies || [];
+  const totalCount = result?.total_count || 0;
 
-  if (contactsError) {
-    throw new Error(`Failed to fetch contacts: ${contactsError.message}`);
-  }
-
-  // Process and limit the signals in JavaScript
-  const processedContacts = (contacts || []).map((contact: DatabaseContactResultNoCompany) => {
-    // Limit signals to top 4 by confidence score
-    const limitedSignals = (contact.signals || [])
-      .sort((a: ContactSignal, b: ContactSignal) => b.confidence_score - a.confidence_score)
-      .slice(0, 4);
-
-    return {
-      ...contact,
-      signals: limitedSignals
-    };
-  });
-
-  // Group contacts by company
-  const companyMap: Record<string, MinimalCompany & { contacts: DashboardContact[]; contactCount: number }> = {};
-  
-  (companies || []).forEach((company: MinimalCompany) => {
-    companyMap[company.id] = {
-      ...company,
-      contacts: [],
-      contactCount: 0
-    };
-  });
-
-  processedContacts.forEach((contact: DatabaseContactResultNoCompany & { signals: ContactSignal[] }) => {
-    if (contact.company_id && companyMap[contact.company_id]) {
-      // Create company object for the contact
-      const companyForContact = {
-        id: companyMap[contact.company_id].id,
-        name: companyMap[contact.company_id].name,
-        logo_url: companyMap[contact.company_id].logo_url,
-        industry: companyMap[contact.company_id].industry
-      };
-
-      const formattedContact = {
-        id: contact.id,
-        company_id: contact.company_id,
-        full_name: contact.full_name,
-        title: contact.title,
-        city: contact.city,
-        state: contact.state,
-        country: contact.country,
-        profile_picture: contact.profile_picture,
-        company: companyForContact,
-        signals: contact.signals
-      };
-      
-      companyMap[contact.company_id].contacts.push(formattedContact);
-      companyMap[contact.company_id].contactCount++;
-    }
-  });
-
-  const result = Object.values(companyMap).map((company: MinimalCompany & { contacts: DashboardContact[]; contactCount: number }) => {
-    return {
-      id: company.id,
-      name: company.name,
-      logo_url: company.logo_url,
-      industry: company.industry,
-      contacts: company.contacts,
-      contactCount: company.contactCount
-    };
-  });
-  const pagination = getPaginationInfo(page, limit, companiesCount || 0);
+  const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
-    companies: result,
+    companies,
     pagination
   } as CompanyGroupResponse);
 }
@@ -376,122 +220,26 @@ async function handleSignalsGrouping(
   _sortBy: string,
   sortOrder: string
 ): Promise<NextResponse> {
-  // Get all contacts with minimal data for signals grouping
-  const { data: contacts, error: contactsError } = await supabase
-    .from('contacts')
-    .select(`
-      id, company_id, full_name, title, city, state, country, profile_picture,
-      company:companies!company_id (
-        id, name, logo_url, industry
-      ),
-      signals:contact_signals (
-        id, signal_type, confidence_score
-      )
-    `);
+  const offset = (page - 1) * limit;
 
-  if (contactsError) {
-    throw new Error(`Failed to fetch contacts with signals: ${contactsError.message}`);
+  // Use RPC function for optimized signals grouping
+  const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_signals', {
+    page_offset: offset,
+    page_limit: limit,
+    sort_order: sortOrder
+  });
+
+  if (error) {
+    throw new Error(`Failed to fetch contacts with signals: ${error.message}`);
   }
 
-  // Group by signal type
-  const signalMap: Record<string, {
-    signal_type: string;
-    contacts: Array<DashboardContact & { confidence_score: number }>;
-    contactCount: number;
-    avgConfidence: number;
-  }> = {};
+  const signals = result?.signals || {};
+  const totalCount = result?.total_count || 0;
 
-  (contacts || []).forEach((contact: DatabaseContactResult) => {
-    // Limit signals to top 4 by confidence score
-    const limitedSignals = (contact.signals || [])
-      .sort((a: ContactSignal, b: ContactSignal) => b.confidence_score - a.confidence_score)
-      .slice(0, 4);
-
-    const formattedContact: DashboardContact = {
-      id: contact.id,
-      company_id: contact.company_id,
-      full_name: contact.full_name,
-      title: contact.title,
-      city: contact.city,
-      state: contact.state,
-      country: contact.country,
-      profile_picture: contact.profile_picture,
-      company: contact.company?.[0] || null,
-      signals: limitedSignals
-    };
-
-    (contact.signals || []).forEach((signal: ContactSignal) => {
-      // Skip signals with zero confidence score
-      if (signal.confidence_score === 0) {
-        return;
-      }
-
-      if (!signalMap[signal.signal_type]) {
-        signalMap[signal.signal_type] = {
-          signal_type: signal.signal_type,
-          contacts: [],
-          contactCount: 0,
-          avgConfidence: 0
-        };
-      }
-      
-      signalMap[signal.signal_type].contacts.push({
-        ...formattedContact,
-        confidence_score: signal.confidence_score
-      });
-      signalMap[signal.signal_type].contactCount++;
-    });
-  });
-
-  const filteredSignalMap: Record<string, {
-    signal_type: string;
-    contacts: Array<DashboardContact & { confidence_score: number }>;
-    contactCount: number;
-    avgConfidence: number;
-  }> = {};
-
-  Object.entries(signalMap).forEach(([signalType, signalGroup]) => {
-    if (signalGroup.contactCount > 0) {
-      signalGroup.avgConfidence = signalGroup.contacts.reduce((sum, contact) => 
-        sum + contact.confidence_score, 0) / signalGroup.contactCount;
-      
-      // Only include signals with non-zero average confidence
-      if (signalGroup.avgConfidence > 0) {
-        filteredSignalMap[signalType] = signalGroup;
-      }
-    }
-  });
-
-  // Sort signal types by average confidence (ascending by default)
-  const sortedSignalTypes = Object.keys(filteredSignalMap).sort((a, b) => {
-    const aAvgConfidence = filteredSignalMap[a].avgConfidence;
-    const bAvgConfidence = filteredSignalMap[b].avgConfidence;
-    
-    if (sortOrder === 'asc') {
-      return aAvgConfidence - bAvgConfidence;
-    }
-    return bAvgConfidence - aAvgConfidence; 
-  });
-
-  // Apply pagination to signal groups
-  const totalSignalTypes = sortedSignalTypes.length;
-  const offset = (page - 1) * limit;
-  const paginatedSignalTypes = sortedSignalTypes.slice(offset, offset + limit);
-  
-  const paginatedSignalMap: Record<string, {
-    signal_type: string;
-    contacts: Array<DashboardContact & { confidence_score: number }>;
-    contactCount: number;
-    avgConfidence: number;
-  }> = {};
-  paginatedSignalTypes.forEach(signalType => {
-    paginatedSignalMap[signalType] = filteredSignalMap[signalType];
-  });
-
-  const pagination = getPaginationInfo(page, limit, totalSignalTypes);
+  const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
-    signals: paginatedSignalMap,
+    signals,
     pagination
   } as SignalGroupResponse);
 }
@@ -501,90 +249,31 @@ async function handleLocationGrouping(
   page: number,
   limit: number,
   locationType: string,
-  _sortBy: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-  _sortOrder: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  sortBy: string,
+  sortOrder: string
 ): Promise<NextResponse> {
-  const { data: contacts, error: contactsError } = await supabase
-    .from('contacts')
-    .select(`
-      id, company_id, full_name, title, city, state, country, profile_picture,
-      company:companies!company_id (
-        id, name, logo_url, industry
-      ),
-      signals:contact_signals (
-        id, signal_type, confidence_score
-      )
-    `);
+  const offset = (page - 1) * limit;
 
-  if (contactsError) {
-    throw new Error(`Failed to fetch contacts: ${contactsError.message}`);
+  // Use RPC function for optimized location grouping
+  const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_location', {
+    page_offset: offset,
+    page_limit: limit,
+    location_type: locationType,
+    sort_field: sortBy === 'name' ? 'name' : sortBy,
+    sort_order: sortOrder
+  });
+
+  if (error) {
+    throw new Error(`Failed to fetch contacts: ${error.message}`);
   }
 
-  // Group by location
-  const locationMap: Record<string, {
-    location: string;
-    contacts: DashboardContact[];
-    contactCount: number;
-  }> = {};
+  const locations = result?.locations || {};
+  const totalCount = result?.total_count || 0;
 
-  (contacts || []).forEach((contact: DatabaseContactResult) => {
-    const limitedSignals = (contact.signals || [])
-      .sort((a: ContactSignal, b: ContactSignal) => b.confidence_score - a.confidence_score)
-      .slice(0, 4);
-
-    const formattedContact: DashboardContact = {
-      id: contact.id,
-      company_id: contact.company_id,
-      full_name: contact.full_name,
-      title: contact.title,
-      city: contact.city,
-      state: contact.state,
-      country: contact.country,
-      profile_picture: contact.profile_picture,
-      company: contact.company?.[0] || null,
-      signals: limitedSignals
-    };
-
-    let locationKey = 'Unknown';
-    if (locationType === 'city') {
-      locationKey = contact.city || 'Unknown';
-    } else if (locationType === 'state') {
-      locationKey = contact.state || 'Unknown';
-    } else if (locationType === 'country') {
-      locationKey = contact.country || 'Unknown';
-    }
-
-    if (!locationMap[locationKey]) {
-      locationMap[locationKey] = {
-        location: locationKey,
-        contacts: [],
-        contactCount: 0
-      };
-    }
-
-    locationMap[locationKey].contacts.push(formattedContact);
-    locationMap[locationKey].contactCount++;
-  });
-
-  // Apply pagination to location groups
-  const locations = Object.keys(locationMap);
-  const totalLocations = locations.length;
-  const offset = (page - 1) * limit;
-  const paginatedLocations = locations.slice(offset, offset + limit);
-  
-  const paginatedLocationMap: Record<string, {
-    location: string;
-    contacts: DashboardContact[];
-    contactCount: number;
-  }> = {};
-  paginatedLocations.forEach(location => {
-    paginatedLocationMap[location] = locationMap[location];
-  });
-
-  const pagination = getPaginationInfo(page, limit, totalLocations);
+  const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
-    locations: paginatedLocationMap,
+    locations,
     pagination
   } as LocationGroupResponse);
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Clock,
   Puzzle,
   Settings,
   ChevronRight,
@@ -10,6 +9,7 @@ import {
   LogOut,
   Users,
   Building2,
+  Network,
 } from "lucide-react";
 
 import {
@@ -57,12 +57,6 @@ const items = [
   //   url: "/",
   //   hasChevron: false,
   // },
-  {
-    title: "Analytics",
-    icon: Clock,
-    url: "/analytics",
-    hasChevron: true,
-  },
   // {
   //   title: "Automation",
   //   icon: Zap,
@@ -74,6 +68,12 @@ const items = [
     icon: Puzzle,
     url: "/integration",
     hasChevron: false,
+  },
+  {
+    title: "Organization",
+    icon: Network,
+    url: "/organization",
+    hasChevron: true,
   },
   {
     title: "Settings",

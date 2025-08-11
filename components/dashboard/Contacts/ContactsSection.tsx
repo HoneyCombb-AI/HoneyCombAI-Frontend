@@ -112,7 +112,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
   // Total contacts
   const totalContacts = useMemo(() =>
-    groups.reduce((sum, g) => sum + g.contacts.length, 0)
+    groups.reduce((sum, g) => sum + (g.contacts?.length || 0), 0)
     , [groups]);
 
 
@@ -331,8 +331,8 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                     variant="secondary"
                     className="bg-gray-200 text-gray-700 text-xs"
                   >
-                    {group.metadata?.contactCount || group.contacts.length} record
-                    {(group.metadata?.contactCount || group.contacts.length) !== 1 ? 's' : ''}
+                    {group.metadata?.contactCount || group.contacts?.length || 0} record
+                    {(group.metadata?.contactCount || group.contacts?.length || 0) !== 1 ? 's' : ''}
                   </Badge>
                 </div>
               </div>
@@ -346,10 +346,10 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                         <th className="px-4 py-2 text-left font-medium w-12">
                           <Checkbox
                             checked={
-                              group.contacts.length > 0 && 
-                              group.contacts.every(contact => selectedContacts.has(contact.id))
+                              (group.contacts?.length || 0) > 0 && 
+                              group.contacts?.every(contact => selectedContacts.has(contact.id))
                             }
-                            onCheckedChange={() => onSelectAll(group.contacts.map(contact => contact.id))}
+                            onCheckedChange={() => onSelectAll(group.contacts?.map(contact => contact.id) || [])}
                           />
                         </th>
                         <th className="px-4 py-2 text-left font-medium w-1/5">Name</th>
@@ -359,7 +359,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                       </tr>
                     </thead>
                     <tbody>
-                      {renderContacts(group.contacts)}
+                      {renderContacts(group.contacts || [])}
                     </tbody>
                   </table>
                 </div>

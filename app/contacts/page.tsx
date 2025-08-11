@@ -34,6 +34,7 @@ import type {
   SearchResponse,
   PaginationInfo,
 } from "@/app/api/contacts/route";
+import { AddContactDialog } from "@/components/dashboard/Contacts/AddContactDialog"
 
 export type GroupByType = 'company' | 'signals' | 'location' | 'city';
 export type LocationType = 'country' | 'state' | 'city';
@@ -146,7 +147,7 @@ export default function AudiencePage() {
     if (newGroupBy === 'signals') {
       setSortOrder('desc');
     } else {
-      setSortOrder('asc'); 
+      setSortOrder('asc');
     }
   };
 
@@ -206,7 +207,7 @@ export default function AudiencePage() {
     setSelectedContacts(prev => {
       const newSet = new Set(prev);
       const allSelected = contactIds.every(id => newSet.has(id));
-      
+
       if (allSelected) {
         // Deselect all
         contactIds.forEach(id => newSet.delete(id));
@@ -329,20 +330,20 @@ export default function AudiencePage() {
           </Button>
 
           {/* Search Input with Button */}
-            <div className="relative">
-              <Search onClick={handleSearchSubmit} className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black" />
-              <Input
-                placeholder="Search contacts..."
-                value={searchInput}
-                onChange={handleSearchInputChange}
-                className="pl-10 w-64"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearchSubmit();
-                  }
-                }}
-              />
-            </div>
+          <div className="relative">
+            <Search onClick={handleSearchSubmit} className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black" />
+            <Input
+              placeholder="Search contacts..."
+              value={searchInput}
+              onChange={handleSearchInputChange}
+              className="pl-10 w-64"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearchSubmit();
+                }
+              }}
+            />
+          </div>
           {/* Clear All Filters - only show when filters are applied */}
           {hasFiltersApplied() && (
             <Button
@@ -381,6 +382,17 @@ export default function AudiencePage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <AddContactDialog onSubmit={(data) => console.log(data)}>
+            <Button
+              size="sm"
+              className="gap-2"
+              variant="outline"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Contact</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          </AddContactDialog>
 
           {/* Add Enrichment Button */}
           <DropdownMenu>

@@ -36,6 +36,7 @@ import type {
   SearchResponse,
   PaginationInfo,
 } from "@/app/api/companies/route";
+import { AddCompanyDialog } from "@/components/dashboard/Company/AddCompanyDialog"
 
 export type GroupByType = 'none' | 'industry' | 'location' | 'employee_size';
 export type LocationType = 'country' | 'state' | 'city';
@@ -386,6 +387,7 @@ export default function CompaniesPage() {
           </DropdownMenu>
 
           {/* Add Company Button */}
+          <AddCompanyDialog onSubmit={(data) => console.log(data)}>
           <Button
             size="sm"
             className="gap-2"
@@ -395,6 +397,7 @@ export default function CompaniesPage() {
             <span className="hidden sm:inline">Add Company</span>
             <span className="sm:hidden">Add</span>
           </Button>
+          </AddCompanyDialog>
 
           {/* Add Enrichment Button */}
           <DropdownMenu>
