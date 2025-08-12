@@ -3,7 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
-# Accountify CRM - Development Rules & Standards
+# HoneyComb CRM - Development Rules & Standards
 
 ## 🎯 Core Framework Requirements
 - Use "use client" directive for all interactive components (useState, useEffect, etc.)

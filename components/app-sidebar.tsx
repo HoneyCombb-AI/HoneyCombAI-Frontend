@@ -106,24 +106,24 @@ export function AppSidebar() {
     .join("")
     .toUpperCase()
     .slice(0, 2);
-    
+
   return (
     <Sidebar className="border-r">
       <SidebarHeader className="border-b p-4">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 bg-gradient-to-br from-purple-500 to-green-700 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-            <Image 
-              src="/vercel.svg" 
-              alt="Accountify Logo" 
-              width={24} 
-              height={32} 
-              className="object-contain" 
-              style={{ background: "transparent" }} 
+            <Image
+              src="/vercel.svg"
+              alt="HoneyComb Logo"
+              width={24}
+              height={32}
+              className="object-contain"
+              style={{ background: "transparent" }}
             />
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-xl text-foreground tracking-tight">
-              Accountify
+              HoneyComb
             </span>
             <span className="text-xs text-muted-foreground font-medium">
               Business Intelligence
@@ -140,11 +140,11 @@ export function AppSidebar() {
                 const isActive = isPathActive(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                    >
-                      <Link href={item.url} className="flex items-center w-full">
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link
+                        href={item.url}
+                        className="flex items-center w-full"
+                      >
                         <item.icon className="h-4 w-4" />
                         <span className="flex-1">{item.title}</span>
                         {item.hasChevron && (
