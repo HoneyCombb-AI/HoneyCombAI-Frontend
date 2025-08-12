@@ -21,7 +21,6 @@ import {
   Eye,
   Search,
   MessageSquare,
-  BarChart3,
   Network,
 } from "lucide-react";
 import Image from "next/image";
