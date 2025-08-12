@@ -65,7 +65,7 @@ function ErrorContent() {
       default:
         return {
           title: "Authentication Error",
-          message: "There was a problem signing you in to Accountify.",
+          message: "There was a problem signing you in to HoneyComb.",
           suggestions: [
             "Cancelled Google sign-in",
             "Network connectivity issues",
@@ -132,7 +132,7 @@ function ErrorContent() {
             <div className="text-center text-sm text-muted-foreground">
               Need help?{" "}
               <a
-                href="mailto:support@accountify.com"
+                href="mailto:support@HoneyComb.com"
                 className="underline underline-offset-4"
               >
                 Contact Support

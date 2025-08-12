@@ -1,5 +1,10 @@
 {
   "enabledMcpjsonServers": [
     "supabase"
-  ]
+  ],
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.perplexity.ai)"
+    ]
+  }
 }
