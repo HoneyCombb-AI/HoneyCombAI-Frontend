@@ -39,7 +39,7 @@ import type {
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 
-export type GroupByType = "company" | "signals" | "location" | "city";
+export type GroupByType = "none" | "company" | "signals" | "location" | "city";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name";
 export type SortOrder = "asc" | "desc";
@@ -80,7 +80,7 @@ export default function AudiencePage() {
       hasPrev: false,
     },
   });
-  const [groupBy, setGroupBy] = useState<GroupByType>("company");
+  const [groupBy, setGroupBy] = useState<GroupByType>("none");
   const [fetchLoading, setfetchLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [locationType, setLocationType] = useState<LocationType>("country");
@@ -211,7 +211,7 @@ export default function AudiencePage() {
   };
 
   const clearAllFilters = () => {
-    setGroupBy("company");
+    setGroupBy("none");
     setLocationType("country");
     setSearchTerm("");
     setSearchInput("");
@@ -269,7 +269,7 @@ export default function AudiencePage() {
   // Check if any filters are applied
   const hasFiltersApplied = () => {
     return (
-      groupBy !== "company" ||
+      groupBy !== "none" ||
       locationType !== "country" ||
       searchTerm !== "" ||
       sortBy !== "name" ||
@@ -307,12 +307,16 @@ export default function AudiencePage() {
                 <Building2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Group:</span>
                 <span>
-                  {groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
+                  {groupBy === "none" ? "None" : groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
                 </span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => handleGroupByChange("none")}>
+                <Building2 className="h-4 w-4 mr-2" />
+                None
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => handleGroupByChange("company")}>
                 <Building2 className="h-4 w-4 mr-2" />
                 Company
@@ -391,7 +395,7 @@ export default function AudiencePage() {
               value={searchInput}
               onChange={handleSearchInputChange}
               className="pl-10 w-64"
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSearchSubmit();
                 }

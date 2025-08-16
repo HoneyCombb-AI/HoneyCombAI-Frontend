@@ -132,6 +132,8 @@ export async function GET(req: NextRequest) {
 
     // Handle different groupBy options
     switch (groupBy) {
+      case 'none':
+        return handleContactsList(supabase, page, limit, sortBy, sortOrder);
       case 'company':
         return handleCompanyGrouping(supabase, page, limit, sortBy, sortOrder);
       case 'signals':
@@ -141,7 +143,7 @@ export async function GET(req: NextRequest) {
       case 'city':
         return handleLocationGrouping(supabase, page, limit, 'city', sortBy, sortOrder);
       default:
-        return handleCompanyGrouping(supabase, page, limit, sortBy, sortOrder);
+        return handleContactsList(supabase, page, limit, sortBy, sortOrder);
     }
 
   } catch (error: unknown) {
@@ -276,4 +278,29 @@ async function handleLocationGrouping(
     locations,
     pagination
   } as LocationGroupResponse);
+}
+
+async function handleContactsList(
+  supabase: SupabaseClient,
+  page: number,
+  limit: number,
+  sortBy: string,
+  sortOrder: string
+): Promise<NextResponse> {
+  const offset = (page - 1) * limit;
+
+  // Use RPC function for optimized contacts list
+  const { data: result, error } = await supabase.rpc('get_contacts_list', {
+    page_offset: offset,
+    page_limit: limit,
+    sort_field: sortBy === 'name' ? 'signals_first' : sortBy,
+    sort_order: sortOrder
+  });
+
+  if (error) {
+    throw new Error(`Failed to fetch contacts list: ${error.message}`);
+  }
+
+  // RPC function returns the complete response structure
+  return NextResponse.json(result as SearchResponse);
 }
