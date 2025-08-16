@@ -8,14 +8,12 @@ import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 
 const contactSchema = z.object({
   fullName: z.string().min(1, "Person's name is required"),
@@ -47,13 +45,22 @@ const contactSchema = z.object({
 
 type ContactFormData = z.infer<typeof contactSchema>
 
-interface AddContactDialogProps {
+interface AddContactDrawerProps {
   onSubmit?: (data: ContactFormData) => void
   children?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function AddContactDialog({ onSubmit, children }: AddContactDialogProps) {
-  const [open, setOpen] = React.useState(false)
+const customDrawerStyles = {
+  width: '40vw',
+  maxWidth: '45vw'
+};
+
+export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onOpenChange }: AddContactDrawerProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false)
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = onOpenChange || setInternalOpen
   const {
     register,
     handleSubmit,
@@ -74,21 +81,22 @@ export function AddContactDialog({ onSubmit, children }: AddContactDialogProps) 
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || <Button>Add Contact</Button>}
-      </DialogTrigger>
-      <DialogContent 
-        className="w-full overflow-y-auto"
-        style={{ maxHeight: '85vh' }}
-      >
-        <DialogHeader>
-          <DialogTitle>Add New Contact</DialogTitle>
-          <DialogDescription>
-            Add a new contact to your organization. Fill in the contact details below.
-          </DialogDescription>
-        </DialogHeader>
+    <Drawer direction="right" open={open} onOpenChange={setOpen}>
+      {children && (
+        <DrawerTrigger asChild>
+          {children}
+        </DrawerTrigger>
+      )}
+      <DrawerContent style={customDrawerStyles}>
+        <div className="mx-auto w-full h-screen overflow-y-auto">
+          <DrawerHeader className="sticky top-0 bg-white z-10 border-b">
+            <DrawerTitle>Add New Contact</DrawerTitle>
+            <p className="text-sm text-muted-foreground">
+              Add a new contact to your organization. Fill in the contact details below.
+            </p>
+          </DrawerHeader>
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+          <div className="px-6 py-4 space-y-6">
           {/* Required Fields */}
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-foreground">Required Information</h3>
@@ -228,17 +236,21 @@ export function AddContactDialog({ onSubmit, children }: AddContactDialogProps) 
               )}
             </div>
           </div>
+          </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Adding..." : "Add Contact"}
-            </Button>
-          </DialogFooter>
+          <div className="px-6 py-4 border-t bg-white sticky bottom-0">
+            <div className="flex gap-3 justify-end">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Adding..." : "Add Contact"}
+              </Button>
+            </div>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </DrawerContent>
+    </Drawer>
   )
 }
