@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export interface CreateContactRequest {
+interface CreateContactRequest {
   fullName: string;
   title: string;
   companyId?: string;
@@ -15,7 +15,7 @@ export interface CreateContactRequest {
   instagramProfile?: string;
 }
 
-export interface CreateContactResponse {
+interface CreateContactResponse {
   success: boolean;
   contact?: {
     id: string;

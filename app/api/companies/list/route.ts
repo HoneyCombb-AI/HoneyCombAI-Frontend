@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export interface CompanyListItem {
   id: string;
   name: string;
 }
 
-export interface CompanyListResponse {
+interface CompanyListResponse {
   companies: CompanyListItem[];
+}
+
+interface OrganizationMember {
+  organization_id: string;
 }
 
 export async function GET() {
@@ -49,7 +54,7 @@ export async function GET() {
 }
 
 // Helper function to get organization IDs for the current user
-async function getOrganizationIds(supabase: any): Promise<string> {
+async function getOrganizationIds(supabase: SupabaseClient): Promise<string> {
   try {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return '';
@@ -61,7 +66,7 @@ async function getOrganizationIds(supabase: any): Promise<string> {
 
     if (!orgMembers || orgMembers.length === 0) return '';
 
-    return orgMembers.map((member: any) => member.organization_id).join(',');
+    return orgMembers.map((member: OrganizationMember) => member.organization_id).join(',');
   } catch (error) {
     console.error('Error getting organization IDs:', error);
     return '';

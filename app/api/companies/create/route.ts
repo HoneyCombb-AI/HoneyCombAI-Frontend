@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export interface CreateCompanyRequest {
+interface CreateCompanyRequest {
   companyName: string;
   companyWebsite: string;
   linkedinUrl?: string;
@@ -10,7 +10,7 @@ export interface CreateCompanyRequest {
   country?: string;
 }
 
-export interface CreateCompanyResponse {
+interface CreateCompanyResponse {
   success: boolean;
   company?: {
     id: string;

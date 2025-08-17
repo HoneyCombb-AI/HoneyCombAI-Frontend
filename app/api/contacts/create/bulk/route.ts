@@ -17,7 +17,22 @@ const EXPECTED_HEADERS = [
   'company_url'
 ];
 
-export interface BulkImportResponse {
+interface CSVContactData {
+  full_name: string;
+  title: string;
+  email: string;
+  phone: string;
+  city: string;
+  state: string;
+  country: string;
+  linkedin_url: string;
+  twitter_profile: string;
+  instagram_profile: string;
+  company_name: string;
+  company_url: string;
+}
+
+interface BulkImportResponse {
   success: boolean;
   total_processed?: number;
   companies_created?: number;
@@ -123,7 +138,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const contactsWithRowNumbers = parseResult.data.map((contact: any, index: number) => ({
+    const contactsWithRowNumbers = (parseResult.data as CSVContactData[]).map((contact, index) => ({
       ...contact,
       row_number: index + 2
     }));

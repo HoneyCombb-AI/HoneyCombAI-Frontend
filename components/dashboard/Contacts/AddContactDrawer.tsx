@@ -133,10 +133,12 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
       } else {
         toast.error(response.data.error || "Failed to create contact")
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error submitting form:", error)
-      if (error.response?.data?.error) {
-        toast.error(error.response.data.error)
+      if (error && typeof error === 'object' && 'response' in error && 
+          error.response && typeof error.response === 'object' && 'data' in error.response &&
+          error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data) {
+        toast.error(String(error.response.data.error))
       } else {
         toast.error("Something went wrong. Please try again.")
       }
@@ -165,7 +167,7 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
               <div className="space-y-2">
                 <label htmlFor="fullName" className="flex items-center gap-2 text-sm font-medium">
                   <User className="h-4 w-4" />
-                  Person's Name *
+                  Person&apos;s Name *
                 </label>
                 <Input
                   id="fullName"
