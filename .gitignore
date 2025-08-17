@@ -9,7 +9,11 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-*.json
+.claude
+.cursor
+.vscode
+.mcp.json
+package-lock.json
 
 # testing
 /coverage

@@ -95,7 +95,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
     if ('contacts' in records && Array.isArray(records.contacts)) {
       return [{
         id: 'search-results',
-        label: 'Search Results',
+        label: 'Results',
         contacts: records.contacts,
         metadata: {
           contactCount: records.contacts.length

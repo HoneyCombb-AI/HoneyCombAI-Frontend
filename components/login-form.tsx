@@ -53,12 +53,12 @@ export function LoginForm({
       <Card>
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 bg-gradient-to-br from-purple-500 to-green-700 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-            <Image
-              src="/vercel.svg"
-              alt="HoneyComb Logo"
-              width={24}
-              height={32}
-              className="object-contain"
+            <Image 
+              src="/icon0.svg" 
+              alt="Accountify Logo" 
+              width={24} 
+              height={32} 
+              className="object-contain" 
             />
           </div>
           <CardTitle className="text-2xl font-bold">

@@ -25,6 +25,8 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Rows2,
+  FileUp,
 } from "lucide-react";
 import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
@@ -34,9 +36,10 @@ import type {
   SearchResponse,
   PaginationInfo,
 } from "@/app/api/contacts/route";
-import { AddContactDialog } from "@/components/dashboard/Contacts/AddContactDialog";
+import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
+import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 
-export type GroupByType = "company" | "signals" | "location" | "city";
+export type GroupByType = "none" | "company" | "signals" | "location" | "city";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name";
 export type SortOrder = "asc" | "desc";
@@ -77,7 +80,7 @@ export default function AudiencePage() {
       hasPrev: false,
     },
   });
-  const [groupBy, setGroupBy] = useState<GroupByType>("company");
+  const [groupBy, setGroupBy] = useState<GroupByType>("none");
   const [fetchLoading, setfetchLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [locationType, setLocationType] = useState<LocationType>("country");
@@ -90,6 +93,8 @@ export default function AudiencePage() {
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(
     new Set()
   );
+  const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
+  const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -206,7 +211,7 @@ export default function AudiencePage() {
   };
 
   const clearAllFilters = () => {
-    setGroupBy("company");
+    setGroupBy("none");
     setLocationType("country");
     setSearchTerm("");
     setSearchInput("");
@@ -255,8 +260,7 @@ export default function AudiencePage() {
 
     const selectedContactIds = Array.from(selectedContacts);
     console.log(
-      `${
-        type.charAt(0).toUpperCase() + type.slice(1)
+      `${type.charAt(0).toUpperCase() + type.slice(1)
       } Enrichment - Selected Contact IDs:`,
       selectedContactIds
     );
@@ -265,7 +269,7 @@ export default function AudiencePage() {
   // Check if any filters are applied
   const hasFiltersApplied = () => {
     return (
-      groupBy !== "company" ||
+      groupBy !== "none" ||
       locationType !== "country" ||
       searchTerm !== "" ||
       sortBy !== "name" ||
@@ -303,12 +307,16 @@ export default function AudiencePage() {
                 <Building2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Group:</span>
                 <span>
-                  {groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
+                  {groupBy === "none" ? "None" : groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
                 </span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => handleGroupByChange("none")}>
+                <Building2 className="h-4 w-4 mr-2" />
+                None
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => handleGroupByChange("company")}>
                 <Building2 className="h-4 w-4 mr-2" />
                 Company
@@ -387,7 +395,7 @@ export default function AudiencePage() {
               value={searchInput}
               onChange={handleSearchInputChange}
               className="pl-10 w-64"
-              onKeyPress={(e) => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSearchSubmit();
                 }
@@ -432,13 +440,38 @@ export default function AudiencePage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <AddContactDialog onSubmit={(data) => console.log(data)}>
-            <Button size="sm" className="gap-2" variant="outline">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Contact</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </AddContactDialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="gap-2 text-sm">
+                <ChevronDown className="h-3 w-3" />
+                <span className="hidden sm:inline">Insert</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setAddContactDrawerOpen(true)}>
+                <Rows2 className="h-4 w-4" />
+                <span>Add Contact</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setImportContactsDrawerOpen(true)}>
+                <FileUp className="h-4 w-4 mr-2" />
+                <span>Import data from CSV</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {/* Add Contact Drawer */}
+          <AddContactDrawer 
+            open={addContactDrawerOpen} 
+            onOpenChange={setAddContactDrawerOpen}
+            onSubmit={(data) => console.log(data)} 
+          />
+
+          {/* Import Contacts Drawer */}
+          <ImportContactsDrawer 
+            open={importContactsDrawerOpen} 
+            onOpenChange={setImportContactsDrawerOpen}
+            onSubmit={(file) => console.log('CSV file:', file)} 
+          />
 
           {/* Add Enrichment Button */}
           <DropdownMenu>
@@ -506,7 +539,7 @@ export default function AudiencePage() {
                 to{" "}
                 {Math.min(
                   dashboardState.pagination.page *
-                    dashboardState.pagination.limit,
+                  dashboardState.pagination.limit,
                   dashboardState.pagination.total
                 )}{" "}
                 of {dashboardState.pagination.total} results

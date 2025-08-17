@@ -1,0 +1,147 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+interface CreateCompanyRequest {
+  companyName: string;
+  companyWebsite: string;
+  linkedinUrl?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+}
+
+interface CreateCompanyResponse {
+  success: boolean;
+  company?: {
+    id: string;
+    name: string;
+    company_url: string;
+    linkedin_url?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    user_id: string;
+    organization_id?: string;
+    created_at: string;
+  };
+  error?: string;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+    
+    // Get the current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Get user's organization_id from profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to get user profile' },
+        { status: 500 }
+      );
+    }
+
+    // Parse request body
+    const body: CreateCompanyRequest = await req.json();
+    
+    // Validate required fields
+    if (!body.companyName?.trim() || !body.companyWebsite?.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Company name and website are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate LinkedIn URL if provided
+    if (body.linkedinUrl && !body.linkedinUrl.includes('linkedin.com')) {
+      return NextResponse.json(
+        { success: false, error: 'Please provide a valid LinkedIn URL' },
+        { status: 400 }
+      );
+    }
+
+    // Prepare data for insertion
+    const companyData = {
+      name: body.companyName.trim(),
+      company_url: body.companyWebsite.trim(),
+      linkedin_url: body.linkedinUrl?.trim() || null,
+      city: body.city?.trim() || null,
+      state: body.state?.trim() || null,
+      country: body.country?.trim() || null,
+      user_id: user.id,
+      organization_id: profile.organization_id,
+    };
+
+    // Insert the company
+    const { data: company, error: insertError } = await supabase
+      .from('companies')
+      .insert(companyData)
+      .select('*')
+      .single();
+
+    if (insertError) {
+      console.error('Error inserting company:', insertError);
+      
+      // Handle specific errors
+      if (insertError.code === '23505') {
+        if (insertError.message.includes('company_url')) {
+          return NextResponse.json(
+            { success: false, error: 'A company with this website URL already exists' },
+            { status: 409 }
+          );
+        }
+        if (insertError.message.includes('linkedin_url')) {
+          return NextResponse.json(
+            { success: false, error: 'A company with this LinkedIn URL already exists' },
+            { status: 409 }
+          );
+        }
+      }
+      
+      return NextResponse.json(
+        { success: false, error: 'Failed to create company' },
+        { status: 500 }
+      );
+    }
+
+    const response: CreateCompanyResponse = {
+      success: true,
+      company: {
+        id: company.id,
+        name: company.name,
+        company_url: company.company_url,
+        linkedin_url: company.linkedin_url,
+        city: company.city,
+        state: company.state,
+        country: company.country,
+        user_id: company.user_id,
+        organization_id: company.organization_id,
+        created_at: company.created_at,
+      }
+    };
+
+    return NextResponse.json(response);
+
+  } catch (error: unknown) {
+    console.error('API /api/companies/create error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json(
+      { success: false, error: errorMessage },
+      { status: 500 }
+    );
+  }
+}
