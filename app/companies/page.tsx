@@ -36,7 +36,7 @@ import type {
   SearchResponse,
   PaginationInfo,
 } from "@/app/api/companies/route";
-import { AddCompanyDialog } from "@/components/dashboard/Company/AddCompanyDialog";
+import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
 
 export type GroupByType = "none" | "industry" | "location" | "employee_size";
 export type LocationType = "country" | "state" | "city";
@@ -93,6 +93,7 @@ export default function CompaniesPage() {
   const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(
     new Set()
   );
+  const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -449,13 +450,23 @@ export default function CompaniesPage() {
           </DropdownMenu>
 
           {/* Add Company Button */}
-          <AddCompanyDialog onSubmit={(data) => console.log(data)}>
-            <Button size="sm" className="gap-2" variant="outline">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Company</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </AddCompanyDialog>
+          <Button 
+            size="sm" 
+            className="gap-2" 
+            variant="outline"
+            onClick={() => setAddCompanyDrawerOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Company</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
+
+          {/* Add Company Drawer */}
+          <AddCompanyDrawer 
+            open={addCompanyDrawerOpen} 
+            onOpenChange={setAddCompanyDrawerOpen}
+            onSubmit={(data) => console.log(data)} 
+          />
 
           {/* Add Enrichment Button */}
           <DropdownMenu>
