@@ -2,10 +2,11 @@
 
 import * as React from "react"
 import { useState } from "react"
+import { useDropzone } from "react-dropzone"
 import { FileUp, Upload, X } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Drawer,
   DrawerContent,
@@ -34,15 +35,22 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+  const onDrop = React.useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]
     if (file && file.type === 'text/csv') {
       setSelectedFile(file)
     } else {
-      alert('Please select a valid CSV file')
-      event.target.value = ''
+      toast.error('Please select a valid CSV file')
     }
-  }
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/csv': ['.csv']
+    },
+    multiple: false
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,11 +58,53 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
 
     try {
       setIsUploading(true)
-      onSubmit?.(selectedFile)
-      setSelectedFile(null)
-      setOpen(false)
+      
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('csv', selectedFile)
+
+      // Call the bulk import API
+      const response = await fetch('/api/contacts/create/bulk', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        toast.error(result.error || 'Import failed')
+        return
+      }
+
+      if (result.success) {
+        // Show success message with summary
+        const { total_processed, contacts_created, contacts_updated, companies_created, contacts_skipped } = result
+        
+        let message = `Successfully processed ${total_processed} rows`
+        const details = []
+        
+        if (contacts_created > 0) details.push(`${contacts_created} contacts created`)
+        if (contacts_updated > 0) details.push(`${contacts_updated} contacts updated`)
+        if (companies_created > 0) details.push(`${companies_created} companies created`)
+        
+        if (details.length > 0) {
+          message += `: ${details.join(', ')}`
+        }
+        
+        if (contacts_skipped > 0) {
+          toast.warning(`${message}. ${contacts_skipped} rows were skipped due to validation errors.`)
+        } else {
+          toast.success(message)
+        }
+        onSubmit?.(selectedFile)
+        setSelectedFile(null)
+        setOpen(false)
+      } else {
+        toast.error(result.error || 'Import failed')
+      }
     } catch (error) {
       console.error("Error uploading file:", error)
+      toast.error("Network error during import. Please try again.")
     } finally {
       setIsUploading(false)
     }
@@ -73,7 +123,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
         </DrawerTrigger>
       )}
       <DrawerContent style={customDrawerStyles}>
-        <div className="mx-auto w-full h-screen overflow-y-auto">
+        <div className="mx-auto w-full h-screen flex flex-col">
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b">
             <DrawerTitle>Import Contacts from CSV</DrawerTitle>
             <p className="text-sm text-muted-foreground">
@@ -81,7 +131,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
             </p>
           </DrawerHeader>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex-1 overflow-y-auto">
             <div className="px-6 py-4 space-y-6">
               
               {/* File Upload Section */}
@@ -89,22 +139,23 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                 <h3 className="text-sm font-semibold text-foreground">Upload CSV File</h3>
                 
                 <div className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <FileUp className="mx-auto h-12 w-12 text-gray-400" />
+                  <div 
+                    {...getRootProps()} 
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                      isDragActive 
+                        ? 'border-blue-400 bg-blue-50' 
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <input {...getInputProps()} />
+                    <FileUp className={`mx-auto h-12 w-12 ${
+                      isDragActive ? 'text-blue-500' : 'text-gray-400'
+                    }`} />
                     <div className="mt-4">
-                      <label htmlFor="csv-upload" className="cursor-pointer">
-                        <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                          Click to upload
-                        </span>
-                        <span className="text-sm text-gray-500"> or drag and drop</span>
-                      </label>
-                      <Input
-                        id="csv-upload"
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileSelect}
-                        className="sr-only"
-                      />
+                      <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
+                        {isDragActive ? 'Drop the CSV file here' : 'Click to upload'}
+                      </span>
+                      <span className="text-sm text-gray-500"> or drag and drop</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">CSV files only</p>
                   </div>
@@ -139,16 +190,34 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-xs text-gray-600 mb-2">Your CSV should include these columns:</p>
                   <code className="text-xs bg-white px-2 py-1 rounded border block">
-                    full_name, title, company_name, linkedin_url, email, phone, twitter_profile, instagram_profile
+                    full_name, title, email, phone, city, state, country, linkedin_url, twitter_profile, instagram_profile, company_name, company_url
                   </code>
-                  <p className="text-xs text-gray-500 mt-2">
-                    * Required columns: full_name, title, company_name, linkedin_url
-                  </p>
+                  <div className="mt-3 space-y-1">
+                    <p className="text-xs text-gray-600 font-medium">Required fields:</p>
+                    <p className="text-xs text-gray-500">
+                      • Contact: full_name
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      • Social Media: At least one of linkedin_url, twitter_profile, or instagram_profile
+                    </p>
+                    <p className="text-xs text-gray-600 font-medium mt-2">Optional fields:</p>
+                    <p className="text-xs text-gray-500">
+                      • Contact details: title, email, phone
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      • Location: city, state, country
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      • Company: company_name, company_url (both required if providing company info)
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="px-6 py-4 border-t bg-white sticky bottom-0">
+          <form onSubmit={handleSubmit}>
+            <div className="px-6 py-4 border-t bg-white">
               <div className="flex gap-3 justify-end">
                 <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancel
