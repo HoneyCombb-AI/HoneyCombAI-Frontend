@@ -144,29 +144,51 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                 onClick={(e) => e.stopPropagation()}
               />
             </td>
-            
+
             {/* Name */}
-            <td 
+            <td
               className="px-4 py-3 w-1/4 cursor-pointer"
               onClick={() => handleContactClick(contact)}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
-                  {contact.profile_picture ? (
-                    <Image
-                      src={contact.profile_picture}
-                      alt={contact.full_name}
-                      fill
-                      sizes="32px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
-                    flex items-center justify-center text-white text-sm font-medium">
-                      {contact.full_name.charAt(0)}
+                {/* Profile image with conditional ring - OUTER container for ring */}
+                {contact.isTracked ? (
+                  <div className="w-8 h-8 rounded-full ring-2 ring-[#EAB308] ring-offset-1 flex-shrink-0 p-0.5">
+                    <div className="w-full h-full rounded-full overflow-hidden relative">
+                      {contact.profile_picture ? (
+                        <Image
+                          src={contact.profile_picture}
+                          alt={contact.full_name}
+                          fill
+                          sizes="32px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
+        flex items-center justify-center text-white text-sm font-medium rounded-full">
+                          {contact.full_name.charAt(0)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
+                    {contact.profile_picture ? (
+                      <Image
+                        src={contact.profile_picture}
+                        alt={contact.full_name}
+                        fill
+                        sizes="32px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
+      flex items-center justify-center text-white text-sm font-medium rounded-full">
+                        {contact.full_name.charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-gray-900 truncate">
                     {contact.full_name || "Unknown"}
@@ -176,7 +198,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
             </td>
 
             {/* Title */}
-            <td 
+            <td
               className="px-2 py-3 w-1/5 cursor-pointer"
               onClick={() => handleContactClick(contact)}
             >
@@ -186,7 +208,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
             </td>
 
             {/* Location */}
-            <td 
+            <td
               className="px-2 py-3 w-1/6 cursor-pointer"
               onClick={() => handleContactClick(contact)}
             >
@@ -196,7 +218,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
             </td>
 
             {/* Signals */}
-            <td 
+            <td
               className="px-2 py-3 w-1/3 cursor-pointer"
               onClick={() => handleContactClick(contact)}
             >
@@ -305,7 +327,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                             e.currentTarget.style.display = 'none';
                             const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
                             if (fallback) fallback.style.display = 'flex';
-                        }}
+                          }}
                         />
                       </div>
                     ) : null}
@@ -346,7 +368,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                         <th className="px-4 py-2 text-left font-medium w-12">
                           <Checkbox
                             checked={
-                              (group.contacts?.length || 0) > 0 && 
+                              (group.contacts?.length || 0) > 0 &&
                               group.contacts?.every(contact => selectedContacts.has(contact.id))
                             }
                             onCheckedChange={() => onSelectAll(group.contacts?.map(contact => contact.id) || [])}
