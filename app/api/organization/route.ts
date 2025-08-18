@@ -8,6 +8,8 @@ export interface OrganizationMember {
     user_id: string;
     joined_at: string;
     full_name: string;
+    token_limit: number | null;
+    tokens_used: number;
 }
 
 export interface OrganizationData {
@@ -16,6 +18,7 @@ export interface OrganizationData {
     invite_code: string;
     created_by: string;
     created_at: string;
+    total_tokens: number;
     members: OrganizationMember[];
     memberCount: number;
     isOwner: boolean;
@@ -67,6 +70,7 @@ export async function GET() {
             invite_code: orgData[0].invite_code,
             created_by: orgData[0].created_by,
             created_at: orgData[0].created_at,
+            total_tokens: orgData[0].total_tokens || 0,
             members: orgData[0].members,
             memberCount: orgData[0].member_count,
             isOwner: orgData[0].is_owner

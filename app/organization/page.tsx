@@ -33,6 +33,8 @@ import {
   Crown,
   UserPlus,
   RefreshCw,
+  Coins,
+  Settings,
 } from "lucide-react";
 import { OrganizationData } from '../api/organization/route';
 
@@ -48,6 +50,9 @@ export default function OrganizationPage() {
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
   const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
   const [joinFailCount, setJoinFailCount] = useState<number>(0);
+  const [showTokenLimitDialog, setShowTokenLimitDialog] = useState<boolean>(false);
+  const [selectedMember, setSelectedMember] = useState<string>('');
+  const [tokenLimit, setTokenLimit] = useState<string>('');
 
   const fetchOrganizationData = async () => {
     if (!user) return;
@@ -57,6 +62,7 @@ export default function OrganizationPage() {
       const response = await axios.get('/api/organization');
       
       if (response.data.organization) {
+        console.log("API response",response.data)
         setOrganization(response.data.organization);
       } else {
         setOrganization(null);
@@ -191,6 +197,44 @@ export default function OrganizationPage() {
     } catch (error) {
       console.error('Failed to regenerate invite code:', error);
       toast.error('Failed to regenerate invite code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetTokenLimit = async (memberId: string) => {
+    const member = organization?.members.find(m => m.user_id === memberId);
+    if (!member) return;
+    
+    setSelectedMember(memberId);
+    setTokenLimit(member.token_limit?.toString() || '');
+    setShowTokenLimitDialog(true);
+  };
+
+  const handleSaveTokenLimit = async () => {
+    if (!selectedMember || !tokenLimit.trim()) return;
+    
+    const limitValue = parseInt(tokenLimit);
+    if (isNaN(limitValue) || limitValue < 0) {
+      toast.error('Please enter a valid token limit (0 or greater)');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      await axios.post('/api/organization/tokens', {
+        target_user_id: selectedMember,
+        token_limit: limitValue
+      });
+      
+      await fetchOrganizationData();
+      setShowTokenLimitDialog(false);
+      setSelectedMember('');
+      setTokenLimit('');
+      toast.success('Token limit updated successfully!');
+    } catch (error) {
+      console.error('Failed to set token limit:', error);
+      toast.error('Failed to set token limit');
     } finally {
       setLoading(false);
     }
@@ -353,7 +397,7 @@ export default function OrganizationPage() {
             </Card>
 
             {/* Organization Stats */}
-            <div className={`grid grid-cols-1 gap-4 ${organization.isOwner ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+            <div className={`grid grid-cols-1 gap-4 ${organization.isOwner ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-gray-600">
@@ -387,6 +431,20 @@ export default function OrganizationPage() {
                         <span className="text-2xl font-bold">Member</span>
                       </>
                     )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-600">
+                    Token Balance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Coins className="h-4 w-4 text-green-500" />
+                    <span className="text-2xl font-bold">{organization.total_tokens?.toLocaleString() || 0}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -458,19 +516,45 @@ export default function OrganizationPage() {
                           <div className="text-xs text-gray-400">
                             Joined {new Date(member.joined_at).toLocaleDateString()}
                           </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            <span className="inline-flex items-center gap-1">
+                              <Coins className="h-3 w-3" />
+                              Used: {member.tokens_used?.toLocaleString() || 0}
+                              {member.token_limit !== null && (
+                                <span> / {member.token_limit.toLocaleString()} limit</span>
+                              )}
+                              {member.token_limit === null && member.user_id !== organization.created_by && (
+                                <span className="text-orange-500"> (No limit set)</span>
+                              )}
+                              {member.user_id === organization.created_by && (
+                                <span className="text-green-500"> (Unlimited)</span>
+                              )}
+                            </span>
+                          </div>
                         </div>
                       </div>
                       
                       {organization.isOwner && member.user_id !== user?.id && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveMember(member.user_id)}
-                          className="gap-2 text-red-600 hover:text-red-700"
-                        >
-                          <UserX className="h-4 w-4" />
-                          Remove
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSetTokenLimit(member.user_id)}
+                            className="gap-2"
+                          >
+                            <Settings className="h-4 w-4" />
+                            Set Limit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveMember(member.user_id)}
+                            className="gap-2 text-red-600 hover:text-red-700"
+                          >
+                            <UserX className="h-4 w-4" />
+                            Remove
+                          </Button>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -480,6 +564,47 @@ export default function OrganizationPage() {
           </div>
         )}
       </main>
+
+      {/* Token Limit Dialog */}
+      <Dialog open={showTokenLimitDialog} onOpenChange={setShowTokenLimitDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Token Limit</DialogTitle>
+            <DialogDescription>
+              Set the maximum number of tokens this member can use. Leave empty or set to 0 for no limit.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium">Token Limit</label>
+              <Input
+                type="number"
+                min="0"
+                value={tokenLimit}
+                onChange={(e) => setTokenLimit(e.target.value)}
+                placeholder="Enter token limit (0 for unlimited)"
+                className="mt-1"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSaveTokenLimit}
+                disabled={loading}
+                className="flex-1"
+              >
+                {loading ? 'Setting...' : 'Set Limit'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowTokenLimitDialog(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
