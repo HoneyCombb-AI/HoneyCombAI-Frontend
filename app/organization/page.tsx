@@ -18,7 +18,6 @@ export default function OrganizationPage() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [organization, setOrganization] = useState<OrganizationData | null>(null);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
 
   const fetchOrganizationData = async () => {
     if (!user) return;
@@ -39,13 +38,27 @@ export default function OrganizationPage() {
       setLoading(false);
     }
   };
+  const fetchOrganizationDataWL = async () => {
+    if (!user) return;
+    
+    try {
+      const response = await axios.get('/api/organization');
+      if (response.data.organization) {
+        setOrganization(response.data.organization);
+      } else {
+        setOrganization(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch organization data:', error);
+      toast.error('Failed to fetch organization data');
+    } 
+  };
 
   useEffect(() => {
-    if (user && !authLoading && !hasLoadedOnce) {
-      setHasLoadedOnce(true);
+    if (user && !authLoading ) {
       fetchOrganizationData();
     }
-  }, [user, authLoading, hasLoadedOnce]);
+  }, [user, authLoading]);
 
 
 
@@ -76,15 +89,15 @@ export default function OrganizationPage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <CreateOrganizationDialog onOrganizationCreated={fetchOrganizationData} />
-                <JoinOrganizationDialog onOrganizationJoined={fetchOrganizationData} />
+                <CreateOrganizationDialog onOrganizationCreated={fetchOrganizationDataWL} />
+                <JoinOrganizationDialog onOrganizationJoined={fetchOrganizationDataWL} />
               </div>
             </div>
           </div>
         ) : (
           <OrganizationDetails 
             organization={organization} 
-            onOrganizationUpdated={fetchOrganizationData} 
+            onOrganizationUpdated={fetchOrganizationDataWL} 
           />
         )}
       </main>

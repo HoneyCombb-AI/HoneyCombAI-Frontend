@@ -65,7 +65,26 @@ export async function DELETE() {
 
       if (memberCount && memberCount > 1) {
         return NextResponse.json(
-          { error: 'Cannot leave organization as owner with other members. Remove all members first or transfer ownership.' },
+          { error: 'Owner cannot leave the organization because the organization still has connected members.' },
+          { status: 400 }
+        );
+      }
+
+      // Get organization details including token balance
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('total_tokens')
+        .eq('id', organization.id)
+        .single();
+
+      if (orgError) {
+        throw new Error(`Failed to get organization details: ${orgError.message}`);
+      }
+
+      // Check if organization has token balance
+      if (orgData.total_tokens > 0) {
+        return NextResponse.json(
+          { error: `Cannot leave organization with remaining token balance of ${orgData.total_tokens.toLocaleString()}. Please contact support for assistance.` },
           { status: 400 }
         );
       }

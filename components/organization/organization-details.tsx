@@ -69,9 +69,16 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
       await axios.delete('/api/organization/leave');
       toast.success('Successfully left organization');
       onOrganizationUpdated?.();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to leave organization:', error);
-      toast.error('Failed to leave organization');
+      const isAxiosError = (err: unknown): err is { response?: { data?: { error?: string } } } => {
+        return typeof err === 'object' && err !== null && 'response' in err;
+      };
+      const errorMessage = isAxiosError(error) && error.response?.data?.error 
+        ? error.response.data.error 
+        : 'Failed to leave organization';
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -276,7 +283,13 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {organization.members.map((member) => (
+            {organization.members
+              .sort((a, b) => {
+                if (a.user_id === organization.created_by) return -1;
+                if (b.user_id === organization.created_by) return 1;
+                return 0;
+              })
+              .map((member) => (
               <div
                 key={member.id}
                 className="flex items-center justify-between p-4 border rounded-lg"
