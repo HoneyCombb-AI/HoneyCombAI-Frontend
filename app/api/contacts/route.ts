@@ -39,6 +39,7 @@ export interface DashboardContact {
   title: string | null;
   city: string | null;
   state: string | null;
+  isTracked :boolean;
   country: string | null;
   profile_picture: string | null;
   company: MinimalCompany | null;
