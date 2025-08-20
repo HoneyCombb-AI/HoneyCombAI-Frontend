@@ -17,13 +17,20 @@ import { getSignalBadgeColor, processSignals } from '@/lib/ContactUtils';
 
 type DashboardResponse = CompanyGroupResponse | SignalGroupResponse | LocationGroupResponse | SearchResponse;
 
+// Contact validation data interface
+interface ContactValidationData {
+  isTracked: boolean;
+  primaryAnalysisCompleted: boolean;
+  full_name: string;
+}
+
 // Props for ContactsSection
 interface ContactsSectionProps {
   groupBy: GroupByType;
   records: DashboardResponse;
-  selectedContacts: Set<string>;
-  onContactSelect: (contactId: string) => void;
-  onSelectAll: (contactIds: string[]) => void;
+  selectedContacts: Map<string, ContactValidationData>;
+  onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
+  onSelectAll: (contactsData: Array<{id: string, data: ContactValidationData}>) => void;
 }
 
 // Interface for processed group data
@@ -140,7 +147,11 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
             <td className="px-4 py-3 w-12">
               <Checkbox
                 checked={isSelected}
-                onCheckedChange={() => onContactSelect(contact.id)}
+                onCheckedChange={() => onContactSelect(contact.id, {
+                  isTracked: contact.isTracked,
+                  primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+                  full_name: contact.full_name
+                })}
                 onClick={(e) => e.stopPropagation()}
               />
             </td>
@@ -371,7 +382,16 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                               (group.contacts?.length || 0) > 0 &&
                               group.contacts?.every(contact => selectedContacts.has(contact.id))
                             }
-                            onCheckedChange={() => onSelectAll(group.contacts?.map(contact => contact.id) || [])}
+                            onCheckedChange={() => onSelectAll(
+                              group.contacts?.map(contact => ({
+                                id: contact.id,
+                                data: {
+                                  isTracked: contact.isTracked,
+                                  primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+                                  full_name: contact.full_name
+                                }
+                              })) || []
+                            )}
                           />
                         </th>
                         <th className="px-4 py-2 text-left font-medium w-1/5">Name</th>

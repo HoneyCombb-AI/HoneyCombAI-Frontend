@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
-import Image from "next/image";
 import { AlertCircle } from "lucide-react";
 
 export function LoginForm({
@@ -50,16 +49,19 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <Card className="border-amber-400/30 shadow-2xl shadow-amber-500/20 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 h-10 w-10 bg-gradient-to-br from-purple-500 to-green-700 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-            <Image 
-              src="/icon0.svg" 
-              alt="Accountify Logo" 
-              width={24} 
-              height={32} 
-              className="object-contain" 
-            />
+          <div className="flex justify-center mb-4">
+            <div className="relative h-16 w-16">
+              <div className="h-16 w-16 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
+              </div>
+              <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
+              <div className="absolute inset-0 flex items-end justify-end p-1 pointer-events-none">
+                <svg className="w-8 h-8 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z" />
+                </svg>
+              </div>
+            </div>
           </div>
           <CardTitle className="text-2xl font-bold">
             Welcome to HoneyComb

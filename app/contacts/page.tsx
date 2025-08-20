@@ -6,6 +6,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -43,6 +44,12 @@ export type GroupByType = "none" | "company" | "signals" | "location" | "city";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name";
 export type SortOrder = "asc" | "desc";
+
+interface ContactValidationData {
+  isTracked: boolean;
+  primaryAnalysisCompleted: boolean;
+  full_name: string;
+}
 
 export type DashboardResponse =
   | CompanyGroupResponse
@@ -90,8 +97,8 @@ export default function AudiencePage() {
   const [pageLimit, setPageLimit] = useState<number>(20);
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(
-    new Set()
+  const [selectedContacts, setSelectedContacts] = useState<Map<string, ContactValidationData>>(
+    new Map()
   );
   const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
@@ -218,52 +225,76 @@ export default function AudiencePage() {
     setSortBy("name");
     setSortOrder("asc");
     setCurrentPage(1);
-    setSelectedContacts(new Set());
+    setSelectedContacts(new Map());
   };
 
   // Contact selection handlers
-  const handleContactSelect = (contactId: string) => {
+  const handleContactSelect = (contactId: string, contactData: ContactValidationData) => {
     setSelectedContacts((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(contactId)) {
-        newSet.delete(contactId);
+      const newMap = new Map(prev);
+      if (newMap.has(contactId)) {
+        newMap.delete(contactId);
       } else {
-        newSet.add(contactId);
+        newMap.set(contactId, contactData);
       }
-      return newSet;
+      return newMap;
     });
   };
 
-  const handleSelectAll = (contactIds: string[]) => {
+  const handleSelectAll = (contactsData: Array<{id: string, data: ContactValidationData}>) => {
     setSelectedContacts((prev) => {
-      const newSet = new Set(prev);
-      const allSelected = contactIds.every((id) => newSet.has(id));
+      const newMap = new Map(prev);
+      const contactIds = contactsData.map(contact => contact.id);
+      const allSelected = contactIds.every((id) => newMap.has(id));
 
       if (allSelected) {
         // Deselect all
-        contactIds.forEach((id) => newSet.delete(id));
+        contactIds.forEach((id) => newMap.delete(id));
       } else {
         // Select all
-        contactIds.forEach((id) => newSet.add(id));
+        contactsData.forEach(({id, data}) => newMap.set(id, data));
       }
-      return newSet;
+      return newMap;
     });
   };
 
   const handleEnrichmentAction = (
-    type: "contact_enrichment" | "social_activity"
+    type: "complete_contact_enrichment" | "contact_tracking"
   ) => {
     if (selectedContacts.size === 0) {
-      console.log("No contacts selected for enrichment");
+      toast.error("No contacts selected for enrichment");
       return;
     }
 
-    const selectedContactIds = Array.from(selectedContacts);
+    // Validate enrichment eligibility using Map data
+    const selectedContactsArray = Array.from(selectedContacts.entries());
+    
+    if (type === "complete_contact_enrichment") {
+      // Complete Contact Enrichment: only for contacts where primaryAnalysisCompleted is false
+      const invalidContacts = selectedContactsArray.filter(([, data]) => data.primaryAnalysisCompleted);
+      if (invalidContacts.length > 0) {
+        const names = invalidContacts.map(([, data]) => data.full_name).join(", ");
+        toast.error(`Cannot run Complete Contact Enrichment for ${names} - primary analysis already completed for ${invalidContacts.length === 1 ? "this contact" : "these contacts"}.`);
+        return;
+      }
+    } else if (type === "contact_tracking") {
+      // Contact Tracking: only for contacts where primaryAnalysisCompleted is true
+      const invalidContacts = selectedContactsArray.filter(([, data]) => !data.primaryAnalysisCompleted);
+      if (invalidContacts.length > 0) {
+        const names = invalidContacts.map(([, data]) => data.full_name).join(", ");
+        toast.error(`Cannot start Contact Tracking for ${names} - primary analysis must be completed first for ${invalidContacts.length === 1 ? "this contact" : "these contacts"}.`);
+        return;
+      }
+    }
+
+    // If validation passes, proceed with enrichment
+    const selectedContactIds = Array.from(selectedContacts.keys());
     console.log(
-      `${type.charAt(0).toUpperCase() + type.slice(1)
-      } Enrichment - Selected Contact IDs:`,
+      type,
       selectedContactIds
     );
+    
+    toast.success(`${type === "complete_contact_enrichment" ? "Complete Contact Enrichment" : "Contact Tracking"} initiated for ${selectedContactIds.length} contact(s)`);
   };
 
   // Check if any filters are applied
@@ -458,19 +489,19 @@ export default function AudiencePage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           {/* Add Contact Drawer */}
-          <AddContactDrawer 
-            open={addContactDrawerOpen} 
+          <AddContactDrawer
+            open={addContactDrawerOpen}
             onOpenChange={setAddContactDrawerOpen}
-            onSubmit={(data) => console.log(data)} 
+            onSubmit={(data) => console.log(data)}
           />
 
           {/* Import Contacts Drawer */}
-          <ImportContactsDrawer 
-            open={importContactsDrawerOpen} 
+          <ImportContactsDrawer
+            open={importContactsDrawerOpen}
             onOpenChange={setImportContactsDrawerOpen}
-            onSubmit={(file) => console.log('CSV file:', file)} 
+            onSubmit={(file) => console.log('CSV file:', file)}
           />
 
           {/* Add Enrichment Button */}
@@ -495,14 +526,14 @@ export default function AudiencePage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("contact_enrichment")}
+                onSelect={() => handleEnrichmentAction("complete_contact_enrichment")}
               >
-                Contact Enrichment
+                Complete Contact Enrichment
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("social_activity")}
+                onSelect={() => handleEnrichmentAction("contact_tracking")}
               >
-                Company Enrichment
+                Contact Tracking
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

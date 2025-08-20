@@ -24,7 +24,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -111,15 +110,15 @@ export function AppSidebar() {
     <Sidebar className="border-r">
       <SidebarHeader className="border-b p-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-gradient-to-br from-purple-500 to-green-700 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-            <Image 
-              src="/icon0.svg" 
-              alt="Accountify Logo" 
-              width={24} 
-              height={24} 
-              className="object-contain" 
-              style={{ background: "transparent" }} 
-            />
+          <div className="relative">
+            <div className="h-16 w-16 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
+            </div>
+            <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
+            <div className="absolute inset-0 flex items-end justify-end p-1 pointer-events-none">
+              <svg className="w-8 h-8 mt-1 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z"/>
+              </svg>
+            </div>
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-xl text-foreground tracking-tight">
