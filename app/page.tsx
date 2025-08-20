@@ -40,10 +40,29 @@ export default function HomePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-6">
-            <div className="absolute inset-0 rounded-full border-4 border-amber-500/30"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-amber-400 border-t-transparent animate-spin"></div>
-            <HexagonIcon className="absolute inset-2 text-amber-400 animate-pulse" />
+          <div className="relative w-16 h-16 mx-auto mb-2">
+            <div className="hexagon-loader">
+              <div>
+                <div>
+                  <span className="one h6"></span>
+                  <span className="two h3"></span>
+                </div>
+              </div>
+              <div>
+                <div>
+                  <span className="one h1"></span>
+                  <span className="two h4"></span>
+                </div>
+              </div>
+              <div>
+                <div>
+                  <span className="one h5"></span>
+                  <span className="two h2"></span>
+                </div>
+              </div>
+            </div>
+            {/* Center hexagon icon */}
+            <HexagonIcon className="absolute inset-0 text-amber-400 animate-pulse z-10 w-10 h-10 m-auto rotate-90" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent mb-2">
             Honeycomb AI
@@ -61,14 +80,14 @@ export default function HomePage() {
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-500/10 to-yellow-500/5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute top-1/2 -left-20 w-80 h-80 bg-gradient-to-br from-orange-500/10 to-amber-500/5 rounded-full blur-2xl animate-pulse delay-1000"></div>
         <div className="absolute bottom-0 right-1/3 w-72 h-72 bg-gradient-to-br from-yellow-500/10 to-amber-500/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
-        
+
         {/* Hexagonal Grid Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="grid grid-cols-12 gap-4 h-full w-full transform rotate-12 scale-150">
             {Array.from({ length: 144 }).map((_, i) => (
-              <HexagonIcon 
-                key={i} 
-                className="w-4 h-4 text-amber-400 animate-pulse" 
+              <HexagonIcon
+                key={i}
+                className="w-4 h-4 text-amber-400 animate-pulse"
               />
             ))}
           </div>
@@ -78,14 +97,14 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center px-4">
         <div className="container mx-auto text-center max-w-6xl relative z-10">
-          <Badge 
-            variant="outline" 
+          <Badge
+            variant="outline"
             className="mb-8 px-6 py-3 text-sm border-amber-400/30 text-amber-300 bg-amber-500/10 backdrop-blur-sm"
           >
             <Bot className="w-4 h-4 mr-2" />
             AI Agents Working in the Shadows
           </Badge>
-          
+
           {/* Logo and Title */}
           <div className="flex items-center justify-center gap-6 mb-8">
             <div className="relative">
@@ -108,26 +127,26 @@ export default function HomePage() {
           </div>
 
           <h2 className="text-3xl md:text-5xl font-bold text-slate-100 mb-6 leading-tight">
-            AI Agents That 
+            AI Agents That
             <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent"> Harvest </span>
             The Sweetest Leads
           </h2>
-          
+
           <p className="text-xl md:text-2xl text-slate-300 mb-4 font-medium">
             Gathering and nurturing the sweetest leads for your hive
           </p>
-          
+
           <p className="text-lg text-slate-400 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Our AI agents conduct deep social and web analysis to uncover hidden buyer intent, 
+            Our AI agents conduct deep social and web analysis to uncover hidden buyer intent,
             operating in the shadows to transform prospects into your most valuable pipeline
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             {user ? (
               <>
-                <Button 
-                  size="lg" 
-                  className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-900 font-bold transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-400/40 hover:scale-105"
+                <Button
+                  size="lg"
+                  className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                   onClick={() => router.push("/contacts")}
                 >
                   Enter The Hive <LayoutDashboard className="ml-3 h-6 w-6" />
@@ -135,17 +154,16 @@ export default function HomePage() {
               </>
             ) : (
               <>
-                <Button 
-                  size="lg" 
-                  className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-900 font-bold transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-400/40 hover:scale-105"
+                <Button
+                  size="lg"
+                  className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                   onClick={() => router.push("/login")}
                 >
                   Start Gathering <ArrowRight className="ml-3 h-6 w-6" />
                 </Button>
-                <Button 
-                  variant="outline"
-                  size="lg" 
-                  className="text-xl px-12 py-6 border-2 border-amber-400/40 text-amber-300 hover:bg-amber-500/10 hover:border-amber-400 font-bold transition-all duration-300"
+                <Button
+                  size="lg"
+                  className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                 >
                   Watch The Swarm
                 </Button>
@@ -170,12 +188,12 @@ export default function HomePage() {
               Invisible agents gathering intelligence that human analysis cannot perceive
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="bg-slate-800/50 border-amber-500/20 hover:border-amber-400/40 transition-all duration-500 backdrop-blur-sm hover:shadow-2xl hover:shadow-amber-500/10 group">
               <CardHeader className="text-center pb-4">
                 <div className="relative mx-auto mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-amber-500/20 to-yellow-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-20 h-20 bg-gradient-to-br from-amber-500/20 to-yellow-500/20 rounded-full flex items-center justify-center group-hover:-translate-y-1 transition-all duration-500 ease-out">
                     <Eye className="h-10 w-10 text-amber-400" />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
@@ -194,7 +212,7 @@ export default function HomePage() {
             <Card className="bg-slate-800/50 border-orange-500/20 hover:border-orange-400/40 transition-all duration-500 backdrop-blur-sm hover:shadow-2xl hover:shadow-orange-500/10 group">
               <CardHeader className="text-center pb-4">
                 <div className="relative mx-auto mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-20 h-20 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full flex items-center justify-center group-hover:-translate-y-1 transition-all duration-500 ease-out">
                     <Target className="h-10 w-10 text-orange-400" />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-500 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
@@ -213,7 +231,7 @@ export default function HomePage() {
             <Card className="bg-slate-800/50 border-purple-500/20 hover:border-purple-400/40 transition-all duration-500 backdrop-blur-sm hover:shadow-2xl hover:shadow-purple-500/10 group">
               <CardHeader className="text-center pb-4">
                 <div className="relative mx-auto mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full flex items-center justify-center group-hover:-translate-y-1 transition-all duration-500 ease-out">
                     <Brain className="h-10 w-10 text-purple-400" />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
@@ -232,7 +250,7 @@ export default function HomePage() {
             <Card className="bg-slate-800/50 border-green-500/20 hover:border-green-400/40 transition-all duration-500 backdrop-blur-sm hover:shadow-2xl hover:shadow-green-500/10 group">
               <CardHeader className="text-center pb-4">
                 <div className="relative mx-auto mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-full flex items-center justify-center group-hover:-translate-y-1 transition-all duration-500 ease-out">
                     <Bot className="h-10 w-10 text-green-400" />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
@@ -262,17 +280,17 @@ export default function HomePage() {
               Witness how our AI agents transform raw data into actionable pipeline intelligence
             </p>
           </div>
-          
+
           <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
             <div className="space-y-8">
               <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 p-8 rounded-2xl border border-amber-500/20 backdrop-blur-sm">
                 <div className="w-full h-80 bg-gradient-to-br from-slate-700 to-slate-600 rounded-xl border border-amber-500/10 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent"></div>
-                  <Image 
+                  <Image
                     src="/ContactsDashboard.png"
-                    alt="Honeycomb AI Social Intelligence Dashboard" 
+                    alt="Honeycomb AI Social Intelligence Dashboard"
                     fill
-                    className="object-cover rounded-xl" 
+                    className="object-cover rounded-xl"
                   />
                   <HexagonIcon className="absolute top-4 right-4 w-8 h-8 text-amber-400/40 z-10" />
                   <HexagonIcon className="absolute bottom-4 left-4 w-6 h-6 text-amber-400/30 z-10" />
@@ -283,16 +301,16 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
-            
+
             <div className="space-y-8">
               <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/80 p-8 rounded-2xl border border-orange-500/20 backdrop-blur-sm">
                 <div className="w-full h-80 bg-gradient-to-br from-slate-700 to-slate-600 rounded-xl border border-orange-500/10 relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent"></div>
-                  <Image 
+                  <Image
                     src="/Recommendations.png"
-                    alt="Honeycomb AI Strategic Recommendations" 
+                    alt="Honeycomb AI Strategic Recommendations"
                     fill
-                    className="object-cover rounded-xl" 
+                    className="object-cover rounded-xl"
                   />
                   <HexagonIcon className="absolute top-4 right-4 w-8 h-8 text-orange-400/40 z-10" />
                   <HexagonIcon className="absolute bottom-4 left-4 w-6 h-6 text-orange-400/30 z-10" />
@@ -318,11 +336,11 @@ export default function HomePage() {
               Every weapon your sales team needs, forged by mysterious AI intelligence
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-amber-500/20 hover:border-amber-400/60 transition-all duration-500 backdrop-blur-sm group hover:scale-105">
+            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-amber-500/20 hover:border-amber-400/60 transition-all duration-500 ease-out backdrop-blur-sm group hover:-translate-y-2 hover:shadow-xl hover:shadow-amber-500/10">
               <CardHeader>
-                <div className="w-16 h-16 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-6 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500/30 to-yellow-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-3 group-hover:-translate-y-1 transition-all duration-500 ease-out">
                   <Search className="h-8 w-8 text-amber-400" />
                 </div>
                 <CardTitle className="text-2xl text-slate-100">Social & Web Intelligence</CardTitle>
@@ -334,9 +352,9 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-orange-500/20 hover:border-orange-400/60 transition-all duration-500 backdrop-blur-sm group hover:scale-105">
+            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-orange-500/20 hover:border-orange-400/60 transition-all duration-500 ease-out backdrop-blur-sm group hover:-translate-y-2 hover:shadow-xl hover:shadow-orange-500/10">
               <CardHeader>
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-500/30 to-red-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-6 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500/30 to-red-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-3 group-hover:-translate-y-1 transition-all duration-500 ease-out">
                   <Target className="h-8 w-8 text-orange-400" />
                 </div>
                 <CardTitle className="text-2xl text-slate-100">Smart Lead Scoring</CardTitle>
@@ -348,9 +366,9 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-purple-500/20 hover:border-purple-400/60 transition-all duration-500 backdrop-blur-sm group hover:scale-105">
+            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-purple-500/20 hover:border-purple-400/60 transition-all duration-500 ease-out backdrop-blur-sm group hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/10">
               <CardHeader>
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-6 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-3 group-hover:-translate-y-1 transition-all duration-500 ease-out">
                   <Brain className="h-8 w-8 text-purple-400" />
                 </div>
                 <CardTitle className="text-2xl text-slate-100">Behavioral Analysis</CardTitle>
@@ -362,9 +380,9 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-blue-500/20 hover:border-blue-400/60 transition-all duration-500 backdrop-blur-sm group hover:scale-105">
+            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-blue-500/20 hover:border-blue-400/60 transition-all duration-500 ease-out backdrop-blur-sm group hover:-translate-y-2 hover:shadow-xl hover:shadow-blue-500/10">
               <CardHeader>
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-6 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-3 group-hover:-translate-y-1 transition-all duration-500 ease-out">
                   <MessageSquare className="h-8 w-8 text-blue-400" />
                 </div>
                 <CardTitle className="text-2xl text-slate-100">Personalized Outreach</CardTitle>
@@ -376,9 +394,9 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-green-500/20 hover:border-green-400/60 transition-all duration-500 backdrop-blur-sm group hover:scale-105">
+            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-green-500/20 hover:border-green-400/60 transition-all duration-500 ease-out backdrop-blur-sm group hover:-translate-y-2 hover:shadow-xl hover:shadow-green-500/10">
               <CardHeader>
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500/30 to-emerald-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-6 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500/30 to-emerald-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-3 group-hover:-translate-y-1 transition-all duration-500 ease-out">
                   <Network className="h-8 w-8 text-green-400" />
                 </div>
                 <CardTitle className="text-2xl text-slate-100">Relationship Automation</CardTitle>
@@ -390,9 +408,9 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-pink-500/20 hover:border-pink-400/60 transition-all duration-500 backdrop-blur-sm group hover:scale-105">
+            <Card className="bg-gradient-to-br from-slate-800/60 to-slate-700/40 border-pink-500/20 hover:border-pink-400/60 transition-all duration-500 ease-out backdrop-blur-sm group hover:-translate-y-2 hover:shadow-xl hover:shadow-pink-500/10">
               <CardHeader>
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-500/30 to-rose-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-6 transition-transform duration-300">
+                <div className="w-16 h-16 bg-gradient-to-br from-pink-500/30 to-rose-500/30 rounded-2xl flex items-center justify-center mb-4 group-hover:rotate-3 group-hover:-translate-y-1 transition-all duration-500 ease-out">
                   <TrendingUp className="h-8 w-8 text-pink-400" />
                 </div>
                 <CardTitle className="text-2xl text-slate-100">Pipeline Optimization</CardTitle>
@@ -418,11 +436,11 @@ export default function HomePage() {
               Three phases of AI agent deployment to dominate your sales pipeline
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-12 max-w-6xl mx-auto">
             <div className="text-center group">
               <div className="relative mb-8">
-                <div className="w-28 h-28 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-amber-500/25 group-hover:scale-110 transition-transform duration-500">
+                <div className="w-28 h-28 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-amber-500/25 group-hover:-translate-y-2 transition-all duration-500 ease-out">
                   <span className="text-4xl font-black text-slate-900">1</span>
                 </div>
                 <div className="absolute -inset-4 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
@@ -435,10 +453,10 @@ export default function HomePage() {
                 AI agents infiltrate social and web networks, continuously scanning for intelligence that humans miss
               </p>
             </div>
-            
+
             <div className="text-center group">
               <div className="relative mb-8">
-                <div className="w-28 h-28 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-orange-500/25 group-hover:scale-110 transition-transform duration-500">
+                <div className="w-28 h-28 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-orange-500/25 group-hover:-translate-y-2 transition-all duration-500 ease-out">
                   <span className="text-4xl font-black text-slate-900">2</span>
                 </div>
                 <div className="absolute -inset-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
@@ -451,10 +469,10 @@ export default function HomePage() {
                 Machine learning algorithms process hidden intent signals, identifying your most valuable targets
               </p>
             </div>
-            
+
             <div className="text-center group">
               <div className="relative mb-8">
-                <div className="w-28 h-28 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-purple-500/25 group-hover:scale-110 transition-transform duration-500">
+                <div className="w-28 h-28 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-purple-500/25 group-hover:-translate-y-2 transition-all duration-500 ease-out">
                   <span className="text-4xl font-black text-slate-900">3</span>
                 </div>
                 <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
@@ -482,27 +500,27 @@ export default function HomePage() {
               Join visionary companies already harvesting success with our AI swarm
             </p>
           </div>
-          
+
           <div className="flex justify-center items-center gap-20 opacity-60 hover:opacity-100 transition-opacity duration-500">
             <div className="flex items-center justify-center group">
               <div className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700 backdrop-blur-sm group-hover:border-amber-500/40 transition-all duration-300">
-                <Image 
+                <Image
                   src="/Justbooks.webp"
-                  alt="JustBooks Solutions Pvt. Ltd." 
-                  width={180} 
-                  height={80} 
-                  className="object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                  alt="JustBooks Solutions Pvt. Ltd."
+                  width={180}
+                  height={80}
+                  className="object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
                 />
               </div>
             </div>
             <div className="flex items-center justify-center group">
               <div className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700 backdrop-blur-sm group-hover:border-amber-500/40 transition-all duration-300">
-                <Image 
+                <Image
                   src="/cocreate.webp"
-                  alt="CoCreate Ventures" 
-                  width={180} 
-                  height={80} 
-                  className="object-contain grayscale group-hover:grayscale-0 transition-all duration-500" 
+                  alt="CoCreate Ventures"
+                  width={180}
+                  height={80}
+                  className="object-contain grayscale group-hover:grayscale-0 transition-all duration-500"
                 />
               </div>
             </div>
@@ -519,7 +537,7 @@ export default function HomePage() {
               <HexagonIcon className="w-16 h-16 text-amber-400 animate-pulse" />
             </div>
             <h3 className="text-6xl md:text-7xl font-black text-slate-100 mb-8 leading-tight">
-              Ready To 
+              Ready To
               <span className="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
                 Unleash
               </span>
@@ -528,36 +546,36 @@ export default function HomePage() {
             <p className="text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
               Join the hive and start gathering the sweetest leads while your competitors sleep
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-8 justify-center">
               {user ? (
                 <>
-                  <Button 
-                    size="lg" 
-                    className="text-2xl px-16 py-8 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-900 font-black transition-all duration-300 shadow-2xl shadow-amber-500/25 hover:shadow-amber-400/50 hover:scale-110 rounded-2xl"
+                  <Button
+                    size="lg"
+                    className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                     onClick={() => router.push("/contacts")}
                   >
-                    Enter The Hive <LayoutDashboard className="ml-4 h-8 w-8" />
+                    Enter The Hive <LayoutDashboard className="ml-3 h-6 w-6" />
                   </Button>
-                  <Button 
-                    size="lg" 
-                    className="text-2xl px-16 py-8 bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-amber-300 font-black transition-all duration-300 shadow-2xl hover:scale-105 rounded-2xl border-2 border-amber-500/30 hover:border-amber-400"
+                  <Button
+                    size="lg"
+                    className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                   >
                     Contact The Queens
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button 
-                    size="lg" 
-                    className="text-2xl px-16 py-8 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-900 font-black transition-all duration-300 shadow-2xl shadow-amber-500/25 hover:shadow-amber-400/50 hover:scale-110 rounded-2xl"
+                  <Button
+                    size="lg"
+                   className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                     onClick={() => router.push("/login")}
                   >
-                    Start Harvesting <ArrowRight className="ml-4 h-8 w-8" />
+                    Start Harvesting <ArrowRight className="ml-2 h-8 w-8" />
                   </Button>
-                  <Button 
-                    size="lg" 
-                    className="text-2xl px-16 py-8 bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 text-amber-300 font-black transition-all duration-300 shadow-2xl hover:scale-105 rounded-2xl border-2 border-amber-500/30 hover:border-amber-400"
+                  <Button
+                    size="lg"
+                   className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                   >
                     Contact The Queens
                   </Button>

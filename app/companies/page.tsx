@@ -486,11 +486,6 @@ export default function CompaniesPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("full_workflow")}
-              >
-                Full Workflow
-              </DropdownMenuItem>
-              <DropdownMenuItem
                 onSelect={() => handleEnrichmentAction("company_enrichment")}
               >
                 Company Enrichment
