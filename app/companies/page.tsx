@@ -260,8 +260,7 @@ export default function CompaniesPage() {
 
     const selectedCompanyIds = Array.from(selectedCompanies);
     console.log(
-      `${
-        type.charAt(0).toUpperCase() + type.slice(1)
+      `${type.charAt(0).toUpperCase() + type.slice(1)
       } Enrichment - Selected Company IDs:`,
       selectedCompanyIds
     );
@@ -311,7 +310,7 @@ export default function CompaniesPage() {
                   {groupBy === "none"
                     ? "None"
                     : groupBy.charAt(0).toUpperCase() +
-                      groupBy.slice(1).replace("_", " ")}
+                    groupBy.slice(1).replace("_", " ")}
                 </span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
@@ -450,9 +449,9 @@ export default function CompaniesPage() {
           </DropdownMenu>
 
           {/* Add Company Button */}
-          <Button 
-            size="sm" 
-            className="gap-2" 
+          <Button
+            size="sm"
+            className="gap-2"
             variant="outline"
             onClick={() => setAddCompanyDrawerOpen(true)}
           >
@@ -462,10 +461,10 @@ export default function CompaniesPage() {
           </Button>
 
           {/* Add Company Drawer */}
-          <AddCompanyDrawer 
-            open={addCompanyDrawerOpen} 
+          <AddCompanyDrawer
+            open={addCompanyDrawerOpen}
             onOpenChange={setAddCompanyDrawerOpen}
-            onSubmit={(data) => console.log(data)} 
+            onSubmit={(data) => console.log(data)}
           />
 
           {/* Add Enrichment Button */}
@@ -507,10 +506,11 @@ export default function CompaniesPage() {
 
       {/* Main Content */}
       {authLoading || fetchLoading ? (
-        <Loading />
+        <div className="flex-1 flex items-center justify-center">
+          <Loading />
+        </div>
       ) : (
-        <main className="flex-1 p-4 md:p-6">
-          <div className="min-h-[400px] bg-white rounded-lg shadow-sm p-6">
+          <div className="min-h-[400px] bg-white shadow-sm p-6">
             <CompaniesSection
               groupBy={groupBy}
               records={dashboardState.data as DashboardResponse}
@@ -519,7 +519,6 @@ export default function CompaniesPage() {
               onSelectAll={handleSelectAll}
             />
           </div>
-        </main>
       )}
 
       {/* Pagination Controls - Footer Style */}
@@ -535,7 +534,7 @@ export default function CompaniesPage() {
                 to{" "}
                 {Math.min(
                   dashboardState.pagination.page *
-                    dashboardState.pagination.limit,
+                  dashboardState.pagination.limit,
                   dashboardState.pagination.total
                 )}{" "}
                 of {dashboardState.pagination.total} results

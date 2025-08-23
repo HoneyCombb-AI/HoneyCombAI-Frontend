@@ -338,9 +338,9 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                             onCheckedChange={() => onSelectAll(group.companies.map(company => company.id))}
                           />
                         </th>
-                        <th className="px-4 py-2 text-left font-medium w-1/5">Company</th>
+                        <th className="px-4 py-2 text-left font-medium w-1/3">Company</th>
                         <th className="px-2 py-2 text-left font-medium w-1/4">Industry</th>
-                        <th className="px-2 py-2 text-left font-medium w-1/8">Location</th>
+                        <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
                         <th className="px-2 py-2 text-left font-medium w-1/12">Contacts</th>
                         <th className="px-2 py-2 text-left font-medium w-1/4">Signals</th>
                       </tr>
