@@ -24,6 +24,7 @@ import {
   Network,
 } from "lucide-react";
 import Image from "next/image";
+import { Loading } from "@/components/loading";
 
 // Custom Hexagon SVG Component
 const HexagonIcon = ({ className }: { className?: string }) => (
@@ -40,30 +41,7 @@ export default function HomePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-2">
-            <div className="hexagon-loader">
-              <div>
-                <div>
-                  <span className="one h6"></span>
-                  <span className="two h3"></span>
-                </div>
-              </div>
-              <div>
-                <div>
-                  <span className="one h1"></span>
-                  <span className="two h4"></span>
-                </div>
-              </div>
-              <div>
-                <div>
-                  <span className="one h5"></span>
-                  <span className="two h2"></span>
-                </div>
-              </div>
-            </div>
-            {/* Center hexagon icon */}
-            <HexagonIcon className="absolute inset-0 text-amber-400 animate-pulse z-10 w-10 h-10 m-auto rotate-90" />
-          </div>
+          <Loading />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent mb-2">
             Honeycomb AI
           </h1>
@@ -568,14 +546,14 @@ export default function HomePage() {
                 <>
                   <Button
                     size="lg"
-                   className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
+                    className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                     onClick={() => router.push("/login")}
                   >
                     Start Harvesting <ArrowRight className="ml-2 h-8 w-8" />
                   </Button>
                   <Button
                     size="lg"
-                   className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
+                    className="text-xl px-12 py-6 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-900 font-bold transition-all duration-500 ease-out shadow-lg shadow-amber-500/25 hover:shadow-amber-400/50 hover:-translate-y-1 hover:shadow-2xl"
                   >
                     Contact The Queens
                   </Button>

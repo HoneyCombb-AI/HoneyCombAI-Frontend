@@ -24,7 +24,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -33,8 +32,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import Link from "next/dist/client/link";
 import { usePathname } from "next/navigation";
+import { NotificationPopoverContent } from "@/components/notification-popover";
 
 // Menu items
 const items = [
@@ -164,15 +169,19 @@ export function AppSidebar() {
         <div className="space-y-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <a href="#" className="flex items-center w-full">
-                  <Bell className="h-4 w-4" />
-                  <span className="flex-1">Notification</span>
-                  <Badge variant="secondary" className="ml-auto">
-                    10
-                  </Badge>
-                </a>
-              </SidebarMenuButton>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <SidebarMenuButton asChild>
+                    <button className="flex items-center w-full">
+                      <Bell className="h-4 w-4" />
+                      <span className="flex-1">Notification</span>
+                    </button>
+                  </SidebarMenuButton>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="start">
+                  <NotificationPopoverContent />
+                </PopoverContent>
+              </Popover>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>

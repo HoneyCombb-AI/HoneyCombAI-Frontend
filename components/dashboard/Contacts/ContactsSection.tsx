@@ -210,7 +210,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
             {/* Title */}
             <td
-              className="px-2 py-3 w-1/5 cursor-pointer"
+              className="px-2 py-3 w-1/4 cursor-pointer"
               onClick={() => handleContactClick(contact)}
             >
               <div className="text-sm text-gray-600 truncate" title={contact.title || "No title"}>
@@ -394,9 +394,9 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                             )}
                           />
                         </th>
-                        <th className="px-4 py-2 text-left font-medium w-1/5">Name</th>
+                        <th className="px-4 py-2 text-left font-medium w-1/4">Name</th>
                         <th className="px-2 py-2 text-left font-medium w-1/4">Title</th>
-                        <th className="px-2 py-2 text-left font-medium w-1/8">Location</th>
+                        <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
                         <th className="px-2 py-2 text-left font-medium w-1/3">Signals</th>
                       </tr>
                     </thead>

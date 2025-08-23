@@ -241,7 +241,7 @@ export default function AudiencePage() {
     });
   };
 
-  const handleSelectAll = (contactsData: Array<{id: string, data: ContactValidationData}>) => {
+  const handleSelectAll = (contactsData: Array<{ id: string, data: ContactValidationData }>) => {
     setSelectedContacts((prev) => {
       const newMap = new Map(prev);
       const contactIds = contactsData.map(contact => contact.id);
@@ -252,7 +252,7 @@ export default function AudiencePage() {
         contactIds.forEach((id) => newMap.delete(id));
       } else {
         // Select all
-        contactsData.forEach(({id, data}) => newMap.set(id, data));
+        contactsData.forEach(({ id, data }) => newMap.set(id, data));
       }
       return newMap;
     });
@@ -268,7 +268,7 @@ export default function AudiencePage() {
 
     // Validate enrichment eligibility using Map data
     const selectedContactsArray = Array.from(selectedContacts.entries());
-    
+
     if (type === "complete_contact_enrichment") {
       // Complete Contact Enrichment: only for contacts where primaryAnalysisCompleted is false
       const invalidContacts = selectedContactsArray.filter(([, data]) => data.primaryAnalysisCompleted);
@@ -293,7 +293,7 @@ export default function AudiencePage() {
       type,
       selectedContactIds
     );
-    
+
     toast.success(`${type === "complete_contact_enrichment" ? "Complete Contact Enrichment" : "Contact Tracking"} initiated for ${selectedContactIds.length} contact(s)`);
   };
 
@@ -542,10 +542,11 @@ export default function AudiencePage() {
 
       {/* Main Content */}
       {authLoading || fetchLoading ? (
-        <Loading />
+        <div className="flex-1 flex items-center justify-center">
+          <Loading />
+        </div>
       ) : (
-        <main className="flex-1 p-4 md:p-6">
-          <div className="min-h-[400px] bg-white rounded-lg shadow-sm p-6">
+          <div className="min-h-[400px] bg-white shadow-sm p-6">
             <ContactsSection
               groupBy={groupBy}
               records={dashboardState.data as DashboardResponse}
@@ -554,7 +555,6 @@ export default function AudiencePage() {
               onSelectAll={handleSelectAll}
             />
           </div>
-        </main>
       )}
 
       {/* Pagination Controls - Footer Style */}
