@@ -58,7 +58,7 @@ export default function OrganizationPage() {
     if (user && !authLoading) {
       fetchOrganizationData();
     }
-  }, [user, authLoading]);
+  }, [authLoading]);
 
 
 

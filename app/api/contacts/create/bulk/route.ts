@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Papa from 'papaparse';
 
+
 const EXPECTED_HEADERS = [
   'full_name',
   'title', 
