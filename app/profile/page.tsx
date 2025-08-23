@@ -39,8 +39,11 @@ export default function ProfilePage() {
   });
 
   if (loading) {
-    return <Loading />;
-  }
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-screen">
+        <Loading />
+      </div>
+    )}
 
   if (!user) {
     return null;

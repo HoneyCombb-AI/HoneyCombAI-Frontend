@@ -21,11 +21,11 @@ export default function OrganizationPage() {
 
   const fetchOrganizationData = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
       const response = await axios.get('/api/organization');
-      
+
       if (response.data.organization) {
         setOrganization(response.data.organization);
       } else {
@@ -40,7 +40,7 @@ export default function OrganizationPage() {
   };
   const fetchOrganizationDataWL = async () => {
     if (!user) return;
-    
+
     try {
       const response = await axios.get('/api/organization');
       if (response.data.organization) {
@@ -51,11 +51,11 @@ export default function OrganizationPage() {
     } catch (error) {
       console.error('Failed to fetch organization data:', error);
       toast.error('Failed to fetch organization data');
-    } 
+    }
   };
 
   useEffect(() => {
-    if (user && !authLoading ) {
+    if (user && !authLoading) {
       fetchOrganizationData();
     }
   }, [user, authLoading]);
@@ -63,8 +63,11 @@ export default function OrganizationPage() {
 
 
   if (authLoading || loading) {
-    return <Loading />;
-  }
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-screen">
+        <Loading />
+      </div>
+    )}
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
@@ -87,7 +90,7 @@ export default function OrganizationPage() {
               <p className="text-gray-600 mb-8 max-w-md mx-auto">
                 You&apos;re not part of any organization. Create a new one or join an existing organization using an invite code.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <CreateOrganizationDialog onOrganizationCreated={fetchOrganizationDataWL} />
                 <JoinOrganizationDialog onOrganizationJoined={fetchOrganizationDataWL} />
@@ -95,9 +98,9 @@ export default function OrganizationPage() {
             </div>
           </div>
         ) : (
-          <OrganizationDetails 
-            organization={organization} 
-            onOrganizationUpdated={fetchOrganizationDataWL} 
+          <OrganizationDetails
+            organization={organization}
+            onOrganizationUpdated={fetchOrganizationDataWL}
           />
         )}
       </main>
