@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 const setTokenLimitSchema = z.object({
     target_user_id: z.string().uuid('Invalid user ID'),
@@ -18,6 +19,25 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
+            );
+        }
+
+        // Apply organization operations rate limiting
+        const rateLimit = await rateLimiters.organizationPerUser(user.id);
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                {
+                    error: 'Organization operations rate limit exceeded. Please wait before trying again.'
+                },
+                {
+                    status: 429,
+                    headers: {
+                        'X-RateLimit-Limit': '30',
+                        'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+                        'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+                        'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+                    }
+                }
             );
         }
 

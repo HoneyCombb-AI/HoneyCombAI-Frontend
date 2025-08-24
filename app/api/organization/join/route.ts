@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 const joinOrganizationSchema = z.object({
   invite_code: z.string()
@@ -19,6 +20,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Apply organization join rate limiting
+    const rateLimit = await rateLimiters.joinOrgPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many organization join attempts. Please wait before trying again.',
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
       );
     }
 

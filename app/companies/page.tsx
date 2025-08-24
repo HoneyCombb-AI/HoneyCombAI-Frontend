@@ -7,6 +7,7 @@ import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,6 +95,7 @@ export default function CompaniesPage() {
     new Set()
   );
   const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
+  const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -246,7 +248,7 @@ export default function CompaniesPage() {
     });
   };
 
-  const handleEnrichmentAction = (
+  const handleEnrichmentAction = async (
     type:
       | "company_enrichment"
       | "full_workflow"
@@ -254,16 +256,59 @@ export default function CompaniesPage() {
       | "employee_discovery"
   ) => {
     if (selectedCompanies.size === 0) {
-      console.log("No companies selected for enrichment");
+      toast.error("No companies selected for enrichment");
       return;
     }
 
     const selectedCompanyIds = Array.from(selectedCompanies);
-    console.log(
-      `${type.charAt(0).toUpperCase() + type.slice(1)
-      } Enrichment - Selected Company IDs:`,
-      selectedCompanyIds
-    );
+    
+    try {
+      setEnrichmentLoading(true);
+      
+      const response = await axios.post("/api/companies/enrichment", {
+        entity_ids: selectedCompanyIds,
+        entity_type: "company_id",
+        task_type: type
+      });
+
+      if (response.data.success) {
+        toast.success(
+          `${response.data.message}${
+            response.data.tokens_used ? ` (${response.data.tokens_used} tokens used)` : ""
+          }`
+        );
+        
+        // Clear selected companies after successful enrichment
+        setSelectedCompanies(new Set());
+        
+        // Log request ID for tracking if available
+        if (response.data.request_id) {
+          console.log("Enrichment Request ID:", response.data.request_id);
+        }
+      } else {
+        // Handle API success:false responses
+        toast.error(response.data.message || "Enrichment request failed");
+      }
+    } catch (error) {
+      console.error("Enrichment request failed:", error);
+      
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorData = error.response.data;
+        
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          // Show specific error messages
+          errorData.errors.forEach((err: any) => {
+            toast.error(err.message || "Unknown error occurred");
+          });
+        } else {
+          toast.error(errorData.message || "Enrichment request failed");
+        }
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setEnrichmentLoading(false);
+    }
   };
 
   // Check if any filters are applied
@@ -474,11 +519,11 @@ export default function CompaniesPage() {
                 variant="outline"
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium"
-                disabled={selectedCompanies.size === 0}
+                disabled={selectedCompanies.size === 0 || enrichmentLoading}
               >
                 <span>
-                  Add enrichment{" "}
-                  {selectedCompanies.size > 0 && `(${selectedCompanies.size})`}
+                  {enrichmentLoading ? "Processing..." : "Add enrichment"}{" "}
+                  {!enrichmentLoading && selectedCompanies.size > 0 && `(${selectedCompanies.size})`}
                 </span>
                 <ChevronDown className="h-3 w-3" />
               </Button>

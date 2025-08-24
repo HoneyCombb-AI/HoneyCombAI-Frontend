@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 interface CreateCompanyRequest {
   companyName: string;
@@ -37,6 +38,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Apply create operations rate limiting
+    const rateLimit = await rateLimiters.createPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Create rate limit exceeded. Please wait before creating more companies.'
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '50',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
       );
     }
 

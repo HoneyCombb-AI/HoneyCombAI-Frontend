@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Papa from 'papaparse';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 
 const EXPECTED_HEADERS = [
@@ -56,6 +57,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' } as BulkImportResponse,
         { status: 401 }
+      );
+    }
+
+    // Apply bulk import rate limiting
+    const rateLimit = await rateLimiters.bulkImportPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Bulk import rate limit exceeded. Please wait before importing again.',
+          details: `You can import again at ${new Date(rateLimit.resetTime).toISOString()}`
+        } as BulkImportResponse,
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
       );
     }
 

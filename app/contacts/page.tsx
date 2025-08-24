@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
@@ -102,6 +102,7 @@ export default function AudiencePage() {
   );
   const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
+  const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -228,6 +229,81 @@ export default function AudiencePage() {
     setSelectedContacts(new Map());
   };
 
+  // Optimized contact states calculation using useMemo
+  const contactStates = useMemo(() => {
+    const selectedContactsArray = Array.from(selectedContacts.entries());
+    
+    const states = selectedContactsArray.reduce((acc, [, data]) => {
+      acc.total++;
+      
+      // Tracking states
+      if (data.isTracked) acc.tracked++;
+      else acc.untracked++;
+      
+      // Enrichment eligibility states
+      if (!data.primaryAnalysisCompleted) acc.eligibleForEnrichment++;
+      else acc.ineligibleForEnrichment++;
+      
+      return acc;
+    }, {
+      total: 0,
+      tracked: 0,
+      untracked: 0,
+      eligibleForEnrichment: 0,
+      ineligibleForEnrichment: 0
+    });
+    
+    return {
+      // Basic counts
+      totalSelected: states.total,
+      
+      // Tracking states
+      trackedCount: states.tracked,
+      untrackedCount: states.untracked,
+      hasTracked: states.tracked > 0,
+      hasUntracked: states.untracked > 0,
+      allTracked: states.total > 0 && states.tracked === states.total,
+      allUntracked: states.total > 0 && states.untracked === states.total,
+      trackingIsMixed: states.tracked > 0 && states.untracked > 0,
+      
+      // Enrichment states
+      eligibleCount: states.eligibleForEnrichment,
+      ineligibleCount: states.ineligibleForEnrichment,
+      hasEligible: states.eligibleForEnrichment > 0,
+      hasIneligible: states.ineligibleForEnrichment > 0,
+      allEligible: states.total > 0 && states.eligibleForEnrichment === states.total,
+      allIneligible: states.total > 0 && states.ineligibleForEnrichment === states.total,
+      enrichmentIsMixed: states.eligibleForEnrichment > 0 && states.ineligibleForEnrichment > 0
+    };
+  }, [selectedContacts]);
+
+  const getTrackingButtonText = () => {
+    if (contactStates.totalSelected === 0) return "Contact Tracking";
+    
+    if (contactStates.allTracked) {
+      return `Disable Tracking (${contactStates.trackedCount})`;
+    } else if (contactStates.allUntracked) {
+      return `Enable Tracking (${contactStates.untrackedCount})`;
+    } else if (contactStates.trackingIsMixed) {
+      return `Toggle Tracking (${contactStates.untrackedCount} enable, ${contactStates.trackedCount} disable)`;
+    }
+    
+    return "Contact Tracking";
+  };
+
+  const getEnrichmentButtonText = () => {
+    if (contactStates.totalSelected === 0) return "Complete Contact Enrichment";
+    
+    if (contactStates.hasEligible) {
+      if (contactStates.enrichmentIsMixed) {
+        return `Complete Contact Enrichment (${contactStates.eligibleCount} eligible)`;
+      } else {
+        return `Complete Contact Enrichment (${contactStates.eligibleCount})`;
+      }
+    }
+    return "Complete Contact Enrichment";
+  };
+
   // Contact selection handlers
   const handleContactSelect = (contactId: string, contactData: ContactValidationData) => {
     setSelectedContacts((prev) => {
@@ -258,43 +334,111 @@ export default function AudiencePage() {
     });
   };
 
-  const handleEnrichmentAction = (
-    type: "complete_contact_enrichment" | "contact_tracking"
+  const handleEnrichmentAction = async (
+    type: "complete_contact_enrichment"
   ) => {
     if (selectedContacts.size === 0) {
       toast.error("No contacts selected for enrichment");
       return;
     }
 
-    // Validate enrichment eligibility using Map data
+    // Get only eligible contact IDs (no validation needed since button is smart)
     const selectedContactsArray = Array.from(selectedContacts.entries());
+    const eligibleContactIds = selectedContactsArray
+      .filter(([, data]) => !data.primaryAnalysisCompleted)
+      .map(([id]) => id);
 
-    if (type === "complete_contact_enrichment") {
-      // Complete Contact Enrichment: only for contacts where primaryAnalysisCompleted is false
-      const invalidContacts = selectedContactsArray.filter(([, data]) => data.primaryAnalysisCompleted);
-      if (invalidContacts.length > 0) {
-        const names = invalidContacts.map(([, data]) => data.full_name).join(", ");
-        toast.error(`Cannot run Complete Contact Enrichment for ${names} - primary analysis already completed for ${invalidContacts.length === 1 ? "this contact" : "these contacts"}.`);
-        return;
-      }
-    } else if (type === "contact_tracking") {
-      // Contact Tracking: only for contacts where primaryAnalysisCompleted is true
-      const invalidContacts = selectedContactsArray.filter(([, data]) => !data.primaryAnalysisCompleted);
-      if (invalidContacts.length > 0) {
-        const names = invalidContacts.map(([, data]) => data.full_name).join(", ");
-        toast.error(`Cannot start Contact Tracking for ${names} - primary analysis must be completed first for ${invalidContacts.length === 1 ? "this contact" : "these contacts"}.`);
-        return;
-      }
+    if (eligibleContactIds.length === 0) {
+      toast.error("No eligible contacts selected for enrichment");
+      return;
     }
 
-    // If validation passes, proceed with enrichment
-    const selectedContactIds = Array.from(selectedContacts.keys());
-    console.log(
-      type,
-      selectedContactIds
-    );
+    try {
+      setEnrichmentLoading(true);
+      
+      const response = await axios.post("/api/contacts/enrichment", {
+        entity_ids: eligibleContactIds,
+        entity_type: "contact_id",
+        task_type: type
+      });
 
-    toast.success(`${type === "complete_contact_enrichment" ? "Complete Contact Enrichment" : "Contact Tracking"} initiated for ${selectedContactIds.length} contact(s)`);
+      if (response.data.success) {
+        toast.success(`${response.data.message}${response.data.tokens_used ? ` (${response.data.tokens_used} tokens used)` : ""}`);
+        setSelectedContacts(new Map());
+
+        if (response.data.request_id) {
+          console.log("Enrichment Request ID:", response.data.request_id);
+        }
+      } else {
+        toast.error(response.data.message || "Enrichment request failed");
+      }
+    } catch (error) {
+      console.error("Enrichment request failed:", error);
+
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorData.errors.forEach((err: any) => {
+            toast.error(err.message || "Unknown error occurred");
+          });
+        } else {
+          toast.error(errorData.message || "Enrichment request failed");
+        }
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setEnrichmentLoading(false);
+    }
+  };
+
+  const handleTrackingToggle = async () => {
+    if (selectedContacts.size === 0) {
+      toast.error("No contacts selected for tracking");
+      return;
+    }
+
+    const selectedContactIds = Array.from(selectedContacts.keys());
+
+    try {
+      setEnrichmentLoading(true);
+      const response = await axios.post("/api/contacts/tracking", {
+        contact_ids: selectedContactIds,
+        action: contactStates.trackingIsMixed ? "toggle" : (contactStates.allTracked ? "disable" : "enable")
+      });
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+
+        // Update local state to reflect the changes
+        // setSelectedContacts((prev) => {
+        //   const newMap = new Map(prev);
+        //   response.data.updated_contacts.forEach((contact: any) => {
+        //     if (newMap.has(contact.id)) {
+        //       const existingData = newMap.get(contact.id)!;
+        //       newMap.set(contact.id, {
+        //         ...existingData,
+        //         isTracked: contact.isTracked
+        //       });
+        //     }
+        //   });
+        //   return newMap;
+        // });
+      } else {
+        toast.error(response.data.message || "Tracking update failed");
+      }
+    } catch (error) {
+      console.error("Tracking update failed:", error);
+
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorData = error.response.data;
+        toast.error(errorData.message || "Tracking update failed");
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setEnrichmentLoading(false);
+    }
   };
 
   // Check if any filters are applied
@@ -310,18 +454,10 @@ export default function AudiencePage() {
   // Show error state if there's an error
   if (error) {
     return (
-      <div className="flex min-h-screen w-full flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-xl font-semibold">HoneyComb</h1>
-          </div>
-        </header>
-        <main className="flex-1 p-6">
+      <div className="flex min-h-screen w-full flex-col p-6">
           <Alert>
             <AlertDescription>Failed to load data: {error}</AlertDescription>
           </Alert>
-        </main>
       </div>
     );
   }
@@ -510,30 +646,32 @@ export default function AudiencePage() {
               <Button
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium"
-                disabled={selectedContacts.size === 0}
+                disabled={selectedContacts.size === 0 || enrichmentLoading}
               >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">
-                  Add enrichment{" "}
-                  {selectedContacts.size > 0 && `(${selectedContacts.size})`}
+                  {enrichmentLoading ? "Processing..." : "Add enrichment"}{" "}
+                  {!enrichmentLoading && selectedContacts.size > 0 && `(${selectedContacts.size})`}
                 </span>
                 <span className="sm:hidden">
-                  Enrich{" "}
-                  {selectedContacts.size > 0 && `(${selectedContacts.size})`}
+                  {enrichmentLoading ? "Processing..." : "Enrich"}{" "}
+                  {!enrichmentLoading && selectedContacts.size > 0 && `(${selectedContacts.size})`}
                 </span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {contactStates.hasEligible && (
+                <DropdownMenuItem
+                  onSelect={() => handleEnrichmentAction("complete_contact_enrichment")}
+                >
+                  {getEnrichmentButtonText()}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("complete_contact_enrichment")}
+                onSelect={() => handleTrackingToggle()}
               >
-                Complete Contact Enrichment
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("contact_tracking")}
-              >
-                Contact Tracking
+                {getTrackingButtonText()}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -546,15 +684,15 @@ export default function AudiencePage() {
           <Loading />
         </div>
       ) : (
-          <div className="min-h-[400px] bg-white shadow-sm p-6">
-            <ContactsSection
-              groupBy={groupBy}
-              records={dashboardState.data as DashboardResponse}
-              selectedContacts={selectedContacts}
-              onContactSelect={handleContactSelect}
-              onSelectAll={handleSelectAll}
-            />
-          </div>
+        <div className="min-h-[400px] bg-white shadow-sm p-6">
+          <ContactsSection
+            groupBy={groupBy}
+            records={dashboardState.data as DashboardResponse}
+            selectedContacts={selectedContacts}
+            onContactSelect={handleContactSelect}
+            onSelectAll={handleSelectAll}
+          />
+        </div>
       )}
 
       {/* Pagination Controls - Footer Style */}

@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getWorkflowTokenCost, TaskType } from '../../utils/cost-estimation';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 interface EnrichmentRequest {
   entity_ids: string[];
   entity_type: 'company_id';
-  user_id: string;
-  user_tier: 'vip';
   task_type: TaskType;
 }
 
 interface EnrichmentResponse {
   success: boolean;
   message: string;
-  cost_estimate: {
-    tokens_per_entity: number;
-    total_entities: number;
-    total_tokens: number;
-    task_type: string;
-  };
+  tokens_used?: number;
   request_id?: string;
+  errors?: Array<{
+    field?: string;
+    message: string;
+    error_code?: string;
+  }>;
 }
 
 export async function POST(req: NextRequest) {
@@ -41,20 +40,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!body.user_id || typeof body.user_id !== 'string') {
-      return NextResponse.json(
-        { success: false, message: 'user_id is required and must be a string' },
-        { status: 400 }
-      );
-    }
-
-    if (body.user_tier !== 'vip') {
-      return NextResponse.json(
-        { success: false, message: 'user_tier must be "vip"' },
-        { status: 400 }
-      );
-    }
-
     if (!body.task_type || !Object.values(TaskType).includes(body.task_type)) {
       return NextResponse.json(
         { success: false, message: 'Invalid task_type. Must be one of the supported workflow types.' },
@@ -64,11 +49,41 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient();
     
+    // Get user from auth session
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Apply enrichment rate limiting
+    const rateLimit = await rateLimiters.enrichmentPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Enrichment rate limit exceeded. Please wait before trying again.',
+          errors: [{ message: `You can try again at ${new Date(rateLimit.resetTime).toISOString()}` }]
+        } as EnrichmentResponse,
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '10',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
+      );
+    }
     // Verify user exists and get their current token balance
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, tier')
-      .eq('id', body.user_id)
+      .select('id, "UserTier"')
+      .eq('id', user.id)
       .single();
 
     if (profileError || !profile) {
@@ -106,61 +121,122 @@ export async function POST(req: NextRequest) {
 
     // Calculate cost using our internal utility
     const totalTokens = getWorkflowTokenCost(body.task_type, body.entity_ids.length);
-    const tokensPerEntity = getWorkflowTokenCost(body.task_type, 1);
 
-    const costEstimate = {
-      tokens_per_entity: tokensPerEntity,
-      total_entities: body.entity_ids.length,
-      total_tokens: totalTokens,
-      task_type: body.task_type
-    };
+    // Check user token balance and permissions
+    const { data: tokenCheck, error: tokenError } = await supabase
+      .rpc('check_user_tokens', {
+        input_user_id: user.id
+      });
 
-    // TODO: Check if user has sufficient tokens (implement when token system is ready)
+    if (tokenError) {
+      return NextResponse.json({
+        success: false,
+        message: 'Error checking token balance',
+        errors: [{ message: tokenError.message }]
+      } as EnrichmentResponse, { status: 500 });
+    }
+
+    // RPC returns an array, get first element
+    const tokenData = tokenCheck?.[0];
+    
+    if (!tokenData?.can_use_tokens) {
+      return NextResponse.json({
+        success: false,
+        message: 'User token limit reached',
+        errors: [{ message: 'You have reached your token usage limit' }]
+      } as EnrichmentResponse, { status: 403 });
+    }
+
+    if (tokenData.available_tokens < totalTokens) {
+      return NextResponse.json({
+        success: false,
+        message: 'Insufficient tokens',
+        errors: [{ 
+          message: `Not enough tokens available. Need ${totalTokens}, have ${tokenData.available_tokens}` 
+        }]
+      } as EnrichmentResponse, { status: 403 });
+    }
     
     // Forward request to external backend
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const backendUrl = process.env.BACKEND_URL;
     if (!backendUrl) {
       return NextResponse.json(
-        { success: false, message: 'Backend URL not configured' },
+        { success: false, message: 'AI enrichment not configured' },
         { status: 500 }
       );
     }
 
-    const backendResponse = await fetch(`${backendUrl}/enrichment`, {
+    const backendResponse = await fetch(`${backendUrl}/api/v1/workflows/submit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        ...body,
+        user_id: user.id,
+        user_tier: profile.UserTier || 'basic'
+      })
     });
 
     if (!backendResponse.ok) {
-      const errorText = await backendResponse.text();
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: `Backend request failed: ${errorText}`,
-          cost_estimate: costEstimate
-        },
-        { status: backendResponse.status }
-      );
+      // Provide user-friendly error messages instead of exposing raw backend errors
+      if (backendResponse.status === 404) {
+        return NextResponse.json({
+          success: false,
+          message: 'Enrichment service is currently unavailable',
+          errors: [{ message: 'Our AI enrichment service is temporarily down. Please try again after sometime.' }]
+        } as EnrichmentResponse, { status: 503 });
+      }
+      
+      if (backendResponse.status >= 500) {
+        return NextResponse.json({
+          success: false,
+          message: 'Enrichment service error',
+          errors: [{ message: 'Something went wrong on our end. Please try again later.' }]
+        } as EnrichmentResponse, { status: 503 });
+      }
+      
+      if (backendResponse.status === 429) {
+        return NextResponse.json({
+          success: false,
+          message: 'Too many requests',
+          errors: [{ message: 'Please wait a moment before trying again.' }]
+        } as EnrichmentResponse, { status: 429 });
+      }
+      
+      // For all other errors (400s, etc.), provide clean generic messages
+      return NextResponse.json({
+        success: false,
+        message: 'Unable to process enrichment request',
+        errors: [{ message: 'Please check your company selection and try again. If the issue persists, contact support.' }]
+      } as EnrichmentResponse, { status: 400 });
     }
 
     const backendResult = await backendResponse.json();
 
-    return NextResponse.json({
-      success: true,
-      message: 'Enrichment request submitted successfully',
-      cost_estimate: costEstimate,
-      request_id: backendResult.request_id || undefined
-    } as EnrichmentResponse);
+    // Handle different backend response formats
+    if (backendResult.status === 'success') {
+      return NextResponse.json({
+        success: true,
+        message: backendResult.message || 'Enrichment request submitted successfully',
+        tokens_used: totalTokens,
+        request_id: backendResult.workflow?.workflow_id || backendResult.request_id
+      } as EnrichmentResponse);
+    } else {
+      return NextResponse.json({
+        success: false,
+        message: backendResult.message || 'Enrichment processing failed',
+        errors: backendResult.errors || [{ message: 'Unknown Enrichment error' }]
+      } as EnrichmentResponse, { status: 400 });
+    }
 
   } catch (error: unknown) {
-    console.error('API /api/companies/enrichment error:', error);
+    console.error('API /api/v1/workflows/submit error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return NextResponse.json(
-      { success: false, message: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      message: errorMessage,
+      errors: [{ message: errorMessage }]
+    } as EnrichmentResponse, { status: 500 });
   }
 }

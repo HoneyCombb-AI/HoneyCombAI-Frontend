@@ -107,7 +107,7 @@ export const rateLimiters = {
   // Organization operations
   organizationPerUser: (userId: string) =>
     RateLimiter.checkLimit(userId, {
-      limit: 15,
+      limit: 30,
       windowSeconds: 3600, // 1 hour
       keyPrefix: 'org_user'
     }),
