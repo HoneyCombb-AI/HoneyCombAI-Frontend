@@ -4,8 +4,9 @@ import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Building2, Target, Lightbulb, TrendingUp } from "lucide-react"
+import { Building2, Target, Lightbulb, TrendingUp, CheckCircle } from "lucide-react"
 import { motion } from "motion/react"
+import axios from "axios"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -167,11 +168,22 @@ export default function OnboardingPage() {
 
   const onFormSubmit = async (data: OnboardingFormData) => {
     try {
-      console.log("Onboarding data:", data)
+      const response = await axios.post('/api/onboarding', data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      console.log("Enriched onboarding data:", response.data.data)
       toast.success("Onboarding completed successfully!")
     } catch (error) {
       console.error("Error submitting onboarding form:", error)
-      toast.error("Something went wrong. Please try again.")
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.error || "Failed to process onboarding data"
+        toast.error(errorMessage)
+      } else {
+        toast.error("Something went wrong. Please try again.")
+      }
     }
   }
 
