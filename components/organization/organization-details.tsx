@@ -170,7 +170,7 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
               <Button
                 variant="destructive"
                 size="sm"
-                disabled={organization.isOwner}
+                // disabled={organization.isOwner}
                 onClick={handleLeaveOrganization}
                 className="gap-2"
               >
