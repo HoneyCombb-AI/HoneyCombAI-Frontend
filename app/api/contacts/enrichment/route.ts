@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getWorkflowTokenCost, TaskType } from '../../utils/cost-estimation';
+import { getWorkflowTokenCost, TaskType } from '@/app/api/utils/cost-estimation';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 interface EnrichmentRequest {
@@ -79,6 +79,39 @@ export async function POST(req: NextRequest) {
         }
       );
     }
+    // Calculate cost using our internal utility
+    const totalTokens = getWorkflowTokenCost(body.task_type, body.entity_ids.length);
+
+    // Check user token balance and permissions
+    const { data: tokenCheck, error: tokenError } = await supabase
+      .rpc('check_user_tokens', {
+        input_user_id: user.id
+      });
+    if (tokenError) {
+      return NextResponse.json({
+        success: false,
+        message: 'Error checking token balance',
+        errors: [{ message: tokenError.message }]
+      } as EnrichmentResponse, { status: 500 });
+    }
+    const tokenData = tokenCheck?.[0]; 
+    if (!tokenData?.can_use_tokens) {
+      return NextResponse.json({
+        success: false,
+        message: 'User token limit reached',
+        errors: [{ message: 'You have reached your token usage limit' }]
+      } as EnrichmentResponse, { status: 403 });
+    }
+    if (tokenData.available_tokens < totalTokens) {
+      return NextResponse.json({
+        success: false,
+        message: 'Insufficient tokens',
+        errors: [{ 
+          message: `Not enough tokens available. Need ${totalTokens}, have ${tokenData.available_tokens}` 
+        }]
+      } as EnrichmentResponse, { status: 403 });
+    }
+    
     // Verify user exists and get their current token balance
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -93,22 +126,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify contact IDs exist and belong to the user's organization
+    // Combined validation: existence + business rules in single query
     const { data: contacts, error: contactsError } = await supabase
       .from('contacts')
-      .select('id')
+      .select('id, primary_analysis_completed')
       .in('id', body.entity_ids);
 
     if (contactsError) {
       return NextResponse.json(
-        { success: false, message: 'Error validating contact IDs' },
+        { success: false, message: 'Error validating contacts' },
         { status: 500 }
       );
     }
 
-    const foundContactIds = contacts?.map(c => c.id) || [];
+    const foundContacts = contacts || [];
+    const foundContactIds = foundContacts.map(c => c.id);
+
+    // Check for missing contacts (existence validation)
     const missingIds = body.entity_ids.filter(id => !foundContactIds.includes(id));
-    
     if (missingIds.length > 0) {
       return NextResponse.json(
         { 
@@ -119,42 +154,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Calculate cost using our internal utility
-    const totalTokens = getWorkflowTokenCost(body.task_type, body.entity_ids.length);
-
-    // Check user token balance and permissions
-    const { data: tokenCheck, error: tokenError } = await supabase
-      .rpc('check_user_tokens', {
-        input_user_id: user.id
-      });
-
-    if (tokenError) {
+    // Check for business rule validation (primary_analysis_completed)
+    const ineligibleContacts = foundContacts.filter(c => c.primary_analysis_completed);
+    if (ineligibleContacts.length > 0) {
+      const ineligibleIds = ineligibleContacts.map(c => c.id);
       return NextResponse.json({
         success: false,
-        message: 'Error checking token balance',
-        errors: [{ message: tokenError.message }]
-      } as EnrichmentResponse, { status: 500 });
-    }
-
-    // RPC returns an array, get first element
-    const tokenData = tokenCheck?.[0];
-    
-    if (!tokenData?.can_use_tokens) {
-      return NextResponse.json({
-        success: false,
-        message: 'User token limit reached',
-        errors: [{ message: 'You have reached your token usage limit' }]
-      } as EnrichmentResponse, { status: 403 });
-    }
-
-    if (tokenData.available_tokens < totalTokens) {
-      return NextResponse.json({
-        success: false,
-        message: 'Insufficient tokens',
-        errors: [{ 
-          message: `Not enough tokens available. Need ${totalTokens}, have ${tokenData.available_tokens}` 
+        message: `Cannot enrich contacts - primary analysis already completed for: ${ineligibleIds.join(', ')}`,
+        errors: [{
+          message: `Contacts with completed primary analysis cannot be enriched again`
         }]
-      } as EnrichmentResponse, { status: 403 });
+      } as EnrichmentResponse, { status: 400 });
     }
     
     // Forward request to external backend

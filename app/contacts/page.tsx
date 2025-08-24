@@ -363,11 +363,21 @@ export default function AudiencePage() {
       });
 
       if (response.data.success) {
-        toast.success(`${response.data.message}${response.data.tokens_used ? ` (${response.data.tokens_used} tokens used)` : ""}`);
+        toast.success(`${response.data.message}${response.data.tokens_used ? ` will consume ${response.data.tokens_used} tokens upon completion.` : ""}`);
         setSelectedContacts(new Map());
 
         if (response.data.request_id) {
-          console.log("Enrichment Request ID:", response.data.request_id);
+          const requestData = {
+            request_id: response.data.request_id,
+            timestamp: new Date().toISOString(),
+            task_type: type,
+            contact_count: eligibleContactIds.length,
+            tokens_allocated: response.data.tokens_used || 0
+          };
+          const existingRequests = JSON.parse(localStorage.getItem('enrichmentRequests') || '[]');
+          existingRequests.push(requestData);
+
+          localStorage.setItem('enrichmentRequests', JSON.stringify(existingRequests));
         }
       } else {
         toast.error(response.data.message || "Enrichment request failed");
@@ -409,21 +419,8 @@ export default function AudiencePage() {
 
       if (response.data.success) {
         toast.success(response.data.message);
-
-        // Update local state to reflect the changes
-        // setSelectedContacts((prev) => {
-        //   const newMap = new Map(prev);
-        //   response.data.updated_contacts.forEach((contact: any) => {
-        //     if (newMap.has(contact.id)) {
-        //       const existingData = newMap.get(contact.id)!;
-        //       newMap.set(contact.id, {
-        //         ...existingData,
-        //         isTracked: contact.isTracked
-        //       });
-        //     }
-        //   });
-        //   return newMap;
-        // });
+        fetchDashboardData();
+        setSelectedContacts(new Map());
       } else {
         toast.error(response.data.message || "Tracking update failed");
       }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
+import { getWorkflowTokenCost, TaskType } from '@/app/api/utils/cost-estimation';
 
 interface TrackingRequest {
   contact_ids: string[];
@@ -18,6 +20,12 @@ interface TrackingResponse {
     message: string;
     error_code?: string;
   }>;
+}
+
+interface RPCResult {
+  id: string;
+  is_tracked: boolean;
+  was_updated: boolean;
 }
 
 export async function POST(req: NextRequest) {
@@ -51,10 +59,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify contact IDs exist and belong to the user's organization
+    // Apply enrichment rate limiting (tracking is a form of enrichment)
+    const rateLimit = await rateLimiters.enrichmentPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Enrichment rate limit exceeded. Please wait before trying again.',
+          errors: [{ message: `You can try again at ${new Date(rateLimit.resetTime).toISOString()}` }]
+        } as TrackingResponse,
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '10',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
+      );
+    }
+
+    // Verify contact IDs exist and get current tracking states (single query for both validation and token calculation)
     const { data: contacts, error: contactsError } = await supabase
       .from('contacts')
-      .select('id, isTracked')
+      .select('id, istracked')
       .in('id', body.contact_ids);
 
     if (contactsError) {
@@ -78,49 +107,78 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine the updates needed based on action
-    const updatedContacts: Array<{ id: string; isTracked: boolean }> = [];
+    let contactsToEnable = 0;
     
-    for (const contact of foundContacts) {
-      let newTrackingState: boolean;
-      
-      switch (body.action) {
-        case 'enable':
-          newTrackingState = true;
-          break;
-        case 'disable':
-          newTrackingState = false;
-          break;
-        case 'toggle':
-          newTrackingState = !contact.isTracked;
-          break;
-        default:
-          continue;
+    if (body.action === 'enable') {
+      contactsToEnable = foundContacts.length;
+    } else if (body.action === 'disable') {
+      contactsToEnable = 0;
+    } else if (body.action === 'toggle') {
+      contactsToEnable = foundContacts.filter(c => !c.istracked).length;
+    }
+
+    const totalTokens = getWorkflowTokenCost(TaskType.SIGNALS_AGENT, contactsToEnable);
+    if (totalTokens > 0) {
+      const { data: tokenCheck, error: tokenError } = await supabase
+        .rpc('check_user_tokens', {
+          input_user_id: user.id
+        });
+
+      if (tokenError) {
+        return NextResponse.json({
+          success: false,
+          message: 'Error checking token balance',
+          errors: [{ message: tokenError.message }]
+        } as TrackingResponse, { status: 500 });
       }
       
-      // Only update if the state is changing
-      if (newTrackingState !== contact.isTracked) {
-        const { error: updateError } = await supabase
-          .from('contacts')
-          .update({ isTracked: newTrackingState })
-          .eq('id', contact.id);
-
-        if (updateError) {
-          console.error(`Error updating contact ${contact.id}:`, updateError);
-          continue;
-        }
-        
-        updatedContacts.push({
-          id: contact.id,
-          isTracked: newTrackingState
-        });
+      const tokenData = tokenCheck?.[0];
+      if (!tokenData?.can_use_tokens) {
+        return NextResponse.json({
+          success: false,
+          message: 'User token limit reached',
+          errors: [{ message: 'You have reached your token usage limit' }]
+        } as TrackingResponse, { status: 403 });
+      }
+      
+      if (tokenData.available_tokens < totalTokens) {
+        return NextResponse.json({
+          success: false,
+          message: 'Insufficient tokens',
+          errors: [{ 
+            message: `Not enough tokens available. Need ${totalTokens}, have ${tokenData.available_tokens}` 
+          }]
+        } as TrackingResponse, { status: 403 });
       }
     }
+    // Use RPC function for optimized bulk update
+    const { data: rpcResults, error: rpcError } = await supabase
+      .rpc('update_contact_tracking', {
+        contact_ids: body.contact_ids,
+        action_type: body.action
+      });
+
+    if (rpcError) {
+      console.error('Error updating contact tracking:', rpcError);
+      return NextResponse.json({
+        success: false,
+        message: 'Error updating contact tracking',
+        errors: [{ message: rpcError.message }]
+      } as TrackingResponse, { status: 500 });
+    }
+
+    // Filter to get only the contacts that were actually updated
+    const updatedContacts = (rpcResults as RPCResult[] || [])
+      .filter((result: RPCResult) => result.was_updated)
+      .map((result: RPCResult) => ({
+        id: result.id,
+        isTracked: result.is_tracked
+      }));
 
     // Generate success message
     let message = '';
-    const enabledCount = updatedContacts.filter(c => c.isTracked).length;
-    const disabledCount = updatedContacts.filter(c => !c.isTracked).length;
+    const enabledCount = updatedContacts.filter((c: { id: string; isTracked: boolean }) => c.isTracked).length;
+    const disabledCount = updatedContacts.filter((c: { id: string; isTracked: boolean }) => !c.isTracked).length;
     
     if (body.action === 'toggle') {
       const parts = [];
