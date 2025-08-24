@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getWorkflowTokenCost, TaskType } from '@/app/api/utils/cost-estimation';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
+import axios from 'axios';
 
 interface EnrichmentRequest {
   entity_ids: string[];
@@ -176,72 +177,83 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const backendResponse = await fetch(`${backendUrl}/api/v1/workflows/submit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...body,
-        user_id: user.id,
-        user_tier: profile.UserTier || 'basic'
-      })
-    });
+    const requestData = {
+      ...body,
+      user_id: user.id,
+      user_tier: profile.UserTier || 'basic'
+    };
 
-    if (!backendResponse.ok) {
-      // Provide user-friendly error messages instead of exposing raw backend errors
-      if (backendResponse.status === 404) {
+    try {
+      const backendResponse = await axios.post(`${backendUrl}/api/v1/workflows/submit`, requestData, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      const backendResult = backendResponse.data;
+
+      // Handle different backend response formats
+      if (backendResult.status === 'success') {
+        return NextResponse.json({
+          success: true,
+          message: backendResult.message || 'Enrichment request submitted successfully',
+          tokens_used: totalTokens,
+          request_id: backendResult.workflow?.workflow_id || backendResult.request_id
+        } as EnrichmentResponse);
+      } else {
         return NextResponse.json({
           success: false,
-          message: 'Enrichment service is currently unavailable',
-          errors: [{ message: 'Our AI enrichment service is temporarily down. Please try again after sometime.' }]
-        } as EnrichmentResponse, { status: 503 });
+          message: backendResult.message || 'Enrichment processing failed',
+          errors: backendResult.errors || [{ message: 'Unknown Enrichment error' }]
+        } as EnrichmentResponse, { status: 400 });
       }
-      
-      if (backendResponse.status >= 500) {
+    } catch (error: unknown) {
+      // Handle Axios errors
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        
+        if (status === 404) {
+          return NextResponse.json({
+            success: false,
+            message: 'Enrichment service is currently unavailable',
+            errors: [{ message: 'Our AI enrichment service is temporarily down. Please try again after sometime.' }]
+          } as EnrichmentResponse, { status: 503 });
+        }
+        
+        if (status && status >= 500) {
+          return NextResponse.json({
+            success: false,
+            message: 'Enrichment service error',
+            errors: [{ message: 'Something went wrong on our end. Please try again later.' }]
+          } as EnrichmentResponse, { status: 503 });
+        }
+        
+        if (status === 429) {
+          return NextResponse.json({
+            success: false,
+            message: 'Too many requests',
+            errors: [{ message: 'Please wait a moment before trying again.' }]
+          } as EnrichmentResponse, { status: 429 });
+        }
+
         return NextResponse.json({
           success: false,
-          message: 'Enrichment service error',
-          errors: [{ message: 'Something went wrong on our end. Please try again later.' }]
-        } as EnrichmentResponse, { status: 503 });
+          message: 'Unable to process enrichment request',
+          errors: [{ message: 'Please check your contact selection and try again. If the issue persists, contact support.' }]
+        } as EnrichmentResponse, { status: 400 });
       }
       
-      if (backendResponse.status === 429) {
-        return NextResponse.json({
-          success: false,
-          message: 'Too many requests',
-          errors: [{ message: 'Please wait a moment before trying again.' }]
-        } as EnrichmentResponse, { status: 429 });
-      }
-      
-      // For all other errors (400s, etc.), provide clean generic messages
+      // Handle non-Axios errors
+      console.error('API /api/v1/workflows/submit error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       return NextResponse.json({
         success: false,
-        message: 'Unable to process enrichment request',
-        errors: [{ message: 'Please check your contact selection and try again. If the issue persists, contact support.' }]
-      } as EnrichmentResponse, { status: 400 });
-    }
-
-    const backendResult = await backendResponse.json();
-
-    // Handle different backend response formats
-    if (backendResult.status === 'success') {
-      return NextResponse.json({
-        success: true,
-        message: backendResult.message || 'Enrichment request submitted successfully',
-        tokens_used: totalTokens,
-        request_id: backendResult.workflow?.workflow_id || backendResult.request_id
-      } as EnrichmentResponse);
-    } else {
-      return NextResponse.json({
-        success: false,
-        message: backendResult.message || 'Enrichment processing failed',
-        errors: backendResult.errors || [{ message: 'Unknown Enrichment error' }]
-      } as EnrichmentResponse, { status: 400 });
+        message: errorMessage,
+        errors: [{ message: errorMessage }]
+      } as EnrichmentResponse, { status: 500 });
     }
 
   } catch (error: unknown) {
-    console.error('API /api/v1/workflows/submit error:', error);
+    console.error('API /api/contacts/enrichment error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json({
       success: false,
