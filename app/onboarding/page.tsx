@@ -277,14 +277,14 @@ export default function OnboardingPage() {
     }
 
     setIsSubmittingFinal(true)
-    
+
     try {
       const response = await axios.post("/api/onboarding/clientContext", editableData, {
         headers: { "Content-Type": "application/json" },
       })
 
       if (response.data.success) {
-        toast.success("Onboarding completed successfully!")        
+        toast.success("Onboarding completed successfully!")
         router.replace("/contacts?joyride=true");
       } else {
         toast.error(response.data.error)
@@ -316,8 +316,13 @@ export default function OnboardingPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-3xl font-bold">Honey Comb AI</h1>
-        <p className="text-muted-foreground">Help us understand your business so we can provide personalized insights</p>
+        <div>
+          <h1 className="text-4xl font-black bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 bg-clip-text text-transparent leading-tight">
+            Honeycomb
+          </h1>
+          <div className="text-xl font-bold text-amber-400/80 -mt-2">AI</div>
+        </div>
+        <p className="text-white">Help us understand your business so we can provide personalized insights</p>
       </motion.div>
 
       <form onSubmit={handleFormSubmit}>
@@ -388,7 +393,7 @@ export default function OnboardingPage() {
                   e.stopPropagation()
                   goToPreviousStep()
                 }}
-                disabled={currentStep === 1 || currentStep ===5}
+                disabled={currentStep === 1 || currentStep === 5}
                 className="cursor-pointer transition-colors hover:bg-primary/10"
               >
                 Previous
