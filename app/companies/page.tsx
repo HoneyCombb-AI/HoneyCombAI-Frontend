@@ -576,7 +576,7 @@ export default function CompaniesPage() {
           <AddCompanyDrawer
             open={addCompanyDrawerOpen}
             onOpenChange={setAddCompanyDrawerOpen}
-            onSubmit={(data) => console.log(data)}
+            onSubmit={(data) => fetchDashboardData()}
           />
           {/* Export to CSV Button */}
           <Button

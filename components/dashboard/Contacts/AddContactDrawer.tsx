@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select"
 import type { CompanyListItem } from "@/app/api/companies/list/route"
 import { toast } from "sonner";
+import { AddCompanyDrawer } from "../Company/AddCompanyDrawer"
 
 const contactSchema = z.object({
   fullName: z.string().trim().min(1, "Person's name is required"),
@@ -87,6 +88,7 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
   const [internalOpen, setInternalOpen] = React.useState(false)
   const [companies, setCompanies] = React.useState<CompanyListItem[]>([])
   const [loadingCompanies, setLoadingCompanies] = React.useState(false)
+  const [companyDrawerOpen, setCompanyDrawerOpen] = React.useState(false)
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
   const {
@@ -116,6 +118,11 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     } finally {
       setLoadingCompanies(false)
     }
+  }
+
+  const handleCompanyAdded = (newCompany: any) => {
+    setCompanies(prev => [...prev, newCompany])
+    setCompanyDrawerOpen(false)
   }
 
   const onFormSubmit = async (data: ContactFormData) => {
@@ -201,25 +208,38 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
                   <Building2 className="h-4 w-4" />
                   Company
                 </label>
-                <Controller
-                  name="companyId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={loadingCompanies ? "Loading companies..." : "Select a company"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no-company">No company</SelectItem>
-                        {companies.map((company) => (
-                          <SelectItem key={company.id} value={company.id}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Controller
+                      name="companyId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={loadingCompanies ? "Loading companies..." : "Select a company"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="no-company">No company</SelectItem>
+                            {companies.map((company) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setCompanyDrawerOpen(true)}
+                    className="shrink-0"
+                  >
+                    Add Company
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -370,6 +390,12 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
           </form>
         </div>
       </DrawerContent>
+      <AddCompanyDrawer 
+        open={companyDrawerOpen} 
+        onOpenChange={setCompanyDrawerOpen}
+        direction="left"
+        onSubmit={handleCompanyAdded}
+      />
     </Drawer>
   )
 }

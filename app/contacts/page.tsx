@@ -710,14 +710,14 @@ export default function AudiencePage() {
           <AddContactDrawer
             open={addContactDrawerOpen}
             onOpenChange={setAddContactDrawerOpen}
-            onSubmit={(data) => console.log(data)}
+            onSubmit={(data) => fetchDashboardData()}
           />
 
           {/* Import Contacts Drawer */}
           <ImportContactsDrawer
             open={importContactsDrawerOpen}
             onOpenChange={setImportContactsDrawerOpen}
-            onSubmit={(file) => console.log('CSV file:', file)}
+            onSubmit={(file) => fetchDashboardData()}
           />
 
           {/* Add Enrichment Button */}

@@ -41,6 +41,7 @@ interface AddCompanyDrawerProps {
   children?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  direction?: "left" | "right"
 }
 
 const customDrawerStyles = {
@@ -48,7 +49,7 @@ const customDrawerStyles = {
   maxWidth: '35vw'
 };
 
-export function AddCompanyDrawer({ onSubmit, children, open: controlledOpen, onOpenChange }: AddCompanyDrawerProps) {
+export function AddCompanyDrawer({ onSubmit, children, open: controlledOpen, onOpenChange, direction = "right" }: AddCompanyDrawerProps) {
   const [internalOpen, setInternalOpen] = React.useState(false)
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
@@ -86,7 +87,7 @@ export function AddCompanyDrawer({ onSubmit, children, open: controlledOpen, onO
   }
 
   return (
-    <Drawer direction="right" open={open} onOpenChange={setOpen}>
+    <Drawer direction={direction} open={open} onOpenChange={setOpen}>
       {children && (
         <DrawerTrigger asChild>
           {children}
