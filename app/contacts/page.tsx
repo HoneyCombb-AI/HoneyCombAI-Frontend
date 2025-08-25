@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,12 @@ import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportCont
 import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
+// Component that uses useSearchParams wrapped in Suspense
+function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean }) => React.ReactNode }) {
+  const { isJoyrideMode } = useTour('contacts');
+  return <>{children({ isJoyrideMode })}</>;
+}
+
 export type GroupByType = "none" | "company" | "signals" | "location" | "city";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name";
@@ -76,7 +82,7 @@ interface FetchParams {
   sortOrder?: SortOrder;
 }
 
-export default function AudiencePage() {
+function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const { loading: authLoading } = useAuth();
   const [dashboardState, setDashboardState] = useState<DashboardState>({
     data: null,
@@ -107,7 +113,6 @@ export default function AudiencePage() {
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
-  const { isJoyrideMode } = useTour('contacts');
   const displayData = isJoyrideMode ? SAMPLE_CONTACT_DATA : dashboardState.data;
 
   // Fetch records from API
@@ -857,5 +862,15 @@ export default function AudiencePage() {
           </footer>
         )}
     </div>
+  );
+}
+
+export default function AudiencePage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loading /></div>}>
+      <TourProvider>
+        {({ isJoyrideMode }) => <AudiencePageContent isJoyrideMode={isJoyrideMode} />}
+      </TourProvider>
+    </Suspense>
   );
 }

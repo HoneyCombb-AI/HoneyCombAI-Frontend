@@ -1,6 +1,6 @@
 "use client";
 import axios from 'axios';
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
@@ -14,12 +14,17 @@ import { JoinOrganizationDialog } from '@/components/organization/join-organizat
 import { OrganizationDetails } from '@/components/organization/organization-details';
 import { useTour } from '@/lib/joyride/useTour';
 
+// Component that uses useSearchParams wrapped in Suspense
+function TourProvider({ children }: { children: (props: { isDataLoaded: boolean }) => React.ReactNode }) {
+  const { loading: authLoading } = useAuth();
+  useTour('organization', !authLoading);
+  return <>{children({ isDataLoaded:!authLoading })}</>;
+}
 
-export default function OrganizationPage() {
+function OrganizationPageContent() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [organization, setOrganization] = useState<OrganizationData | null>(null);
-  useTour('organization', !loading && !authLoading);
 
   const fetchOrganizationData = async () => {
     if (!user) return;
@@ -113,5 +118,15 @@ export default function OrganizationPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function OrganizationPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loading /></div>}>
+      <TourProvider>
+        {() => <OrganizationPageContent  />}
+      </TourProvider>
+    </Suspense>
   );
 }

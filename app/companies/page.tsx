@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
@@ -42,6 +42,12 @@ import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawe
 import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
+// Component that uses useSearchParams wrapped in Suspense
+function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean }) => React.ReactNode }) {
+  const { isJoyrideMode } = useTour('companies');
+  return <>{children({ isJoyrideMode })}</>;
+}
+
 export type GroupByType = "none" | "industry" | "location" | "employee_size";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name" | "created_at";
@@ -71,7 +77,7 @@ interface FetchParams {
   sortOrder?: SortOrder;
 }
 
-export default function CompaniesPage() {
+function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const { loading: authLoading } = useAuth();
   const [dashboardState, setDashboardState] = useState<DashboardState>({
     data: null,
@@ -101,7 +107,6 @@ export default function CompaniesPage() {
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
-  const { isJoyrideMode } = useTour('companies');
   const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
 
   // Fetch records from API
@@ -737,5 +742,15 @@ export default function CompaniesPage() {
           </footer>
         )}
     </div>
+  );
+}
+
+export default function CompaniesPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loading /></div>}>
+      <TourProvider>
+        {({ isJoyrideMode }) => <CompaniesPageContent isJoyrideMode={isJoyrideMode} />}
+      </TourProvider>
+    </Suspense>
   );
 }
