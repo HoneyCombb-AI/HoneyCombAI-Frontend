@@ -27,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Download,
 } from "lucide-react";
 import CompaniesSection from "@/components/dashboard/Company/CompaniesSection";
 import type {
@@ -38,6 +39,9 @@ import type {
   PaginationInfo,
 } from "@/app/api/companies/route";
 import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
+import { useSearchParams } from "next/navigation";
+import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
+import { useTour } from "@/lib/joyride/useTour";
 
 export type GroupByType = "none" | "industry" | "location" | "employee_size";
 export type LocationType = "country" | "state" | "city";
@@ -96,6 +100,10 @@ export default function CompaniesPage() {
   );
   const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
+
+  const searchParams = useSearchParams();
+  const { isJoyrideMode } = useTour('companies');
+  const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -261,10 +269,10 @@ export default function CompaniesPage() {
     }
 
     const selectedCompanyIds = Array.from(selectedCompanies);
-    
+
     try {
       setEnrichmentLoading(true);
-      
+
       const response = await axios.post("/api/companies/enrichment", {
         entity_ids: selectedCompanyIds,
         entity_type: "company_id",
@@ -273,14 +281,13 @@ export default function CompaniesPage() {
 
       if (response.data.success) {
         toast.success(
-          `${response.data.message}${
-            response.data.tokens_used ? ` (${response.data.tokens_used} tokens used)` : ""
+          `${response.data.message}${response.data.tokens_used ? ` (${response.data.tokens_used} tokens used)` : ""
           }`
         );
-        
+
         // Clear selected companies after successful enrichment
         setSelectedCompanies(new Set());
-        
+
         // Log request ID for tracking if available
         if (response.data.request_id) {
           console.log("Enrichment Request ID:", response.data.request_id);
@@ -291,10 +298,10 @@ export default function CompaniesPage() {
       }
     } catch (error) {
       console.error("Enrichment request failed:", error);
-      
+
       if (axios.isAxiosError(error) && error.response?.data) {
         const errorData = error.response.data;
-        
+
         if (errorData.errors && Array.isArray(errorData.errors)) {
           // Show specific error messages
           errorData.errors.forEach((err: any) => {
@@ -347,7 +354,7 @@ export default function CompaniesPage() {
         <div className="flex flex-wrap items-center gap-2">
           {/* Group Controls */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild data-testid="group-dropdown">
               <Button variant="outline" size="sm" className="gap-2 text-sm">
                 <Building2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Group:</span>
@@ -447,6 +454,7 @@ export default function CompaniesPage() {
               value={searchInput}
               onChange={handleSearchInputChange}
               className="pl-10 w-64"
+              data-testid="search-input"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSearchSubmit();
@@ -498,6 +506,7 @@ export default function CompaniesPage() {
             size="sm"
             className="gap-2"
             variant="outline"
+            data-testid="add-company-btn"
             onClick={() => setAddCompanyDrawerOpen(true)}
           >
             <Plus className="h-4 w-4" />
@@ -511,10 +520,22 @@ export default function CompaniesPage() {
             onOpenChange={setAddCompanyDrawerOpen}
             onSubmit={(data) => console.log(data)}
           />
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2 text-sm"
+            disabled={selectedCompanies.size === 0}
+            onClick={() => console.log('Export to CSV clicked')}
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export to CSV</span>
+            <span className="sm:hidden">Export</span>
+            {selectedCompanies.size > 0 && ` (${selectedCompanies.size})`}
+          </Button>
 
           {/* Add Enrichment Button */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
               <Button
                 variant="outline"
                 size="sm"
@@ -555,15 +576,15 @@ export default function CompaniesPage() {
           <Loading />
         </div>
       ) : (
-          <div className="min-h-[400px] bg-white shadow-sm p-6">
-            <CompaniesSection
-              groupBy={groupBy}
-              records={dashboardState.data as DashboardResponse}
-              selectedCompanies={selectedCompanies}
-              onCompanySelect={handleCompanySelect}
-              onSelectAll={handleSelectAll}
-            />
-          </div>
+        <div className="min-h-[400px] bg-white shadow-sm p-6">
+          <CompaniesSection
+            groupBy={groupBy}
+            records={displayData as DashboardResponse}
+            selectedCompanies={selectedCompanies}
+            onCompanySelect={handleCompanySelect}
+            onSelectAll={handleSelectAll}
+          />
+        </div>
       )}
 
       {/* Pagination Controls - Footer Style */}

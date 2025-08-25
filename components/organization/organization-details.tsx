@@ -198,7 +198,7 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
           </CardContent>
         </Card>
 
-        <Card>
+        <Card data-testid="user-role-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Your Role
@@ -221,7 +221,7 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
           </CardContent>
         </Card>
 
-        <Card>
+        <Card data-testid="token-balance-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Token Balance
@@ -274,7 +274,7 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
       </div>
 
       {/* Members List */}
-      <Card>
+      <Card data-testid="organization-members-card">
         <CardHeader>
           <CardTitle>Organization Members</CardTitle>
           <CardDescription>

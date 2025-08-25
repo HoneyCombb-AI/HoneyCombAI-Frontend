@@ -12,12 +12,16 @@ import { OrganizationData } from '../api/organization/route';
 import { CreateOrganizationDialog } from '@/components/organization/create-organization-dialog';
 import { JoinOrganizationDialog } from '@/components/organization/join-organization-dialog';
 import { OrganizationDetails } from '@/components/organization/organization-details';
+import { useTour } from '@/lib/joyride/useTour';
+import { useSearchParams } from 'next/navigation';
 
 
 export default function OrganizationPage() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [organization, setOrganization] = useState<OrganizationData | null>(null);
+  const searchParams = useSearchParams();
+  const { isJoyrideMode } = useTour('organization');
 
   const fetchOrganizationData = async () => {
     if (!user) return;
@@ -71,7 +75,7 @@ export default function OrganizationPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4" data-testid="organization-header">
         <SidebarTrigger className="-ml-1" />
         <div className="flex flex-1 items-center justify-between">
           <h1 className="text-xl font-semibold">Organization</h1>
@@ -92,16 +96,22 @@ export default function OrganizationPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <CreateOrganizationDialog onOrganizationCreated={fetchOrganizationDataWL} />
-                <JoinOrganizationDialog onOrganizationJoined={fetchOrganizationDataWL} />
+                <div data-testid="create-organization-btn">
+                  <CreateOrganizationDialog onOrganizationCreated={fetchOrganizationDataWL} />
+                </div>
+                <div data-testid="join-organization-btn">
+                  <JoinOrganizationDialog onOrganizationJoined={fetchOrganizationDataWL} />
+                </div>
               </div>
             </div>
           </div>
         ) : (
-          <OrganizationDetails
-            organization={organization}
-            onOrganizationUpdated={fetchOrganizationDataWL}
-          />
+          <div data-testid="organization-details">
+            <OrganizationDetails
+              organization={organization}
+              onOrganizationUpdated={fetchOrganizationDataWL}
+            />
+          </div>
         )}
       </main>
     </div>

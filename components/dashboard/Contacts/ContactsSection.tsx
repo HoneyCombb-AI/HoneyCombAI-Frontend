@@ -160,6 +160,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
             <td
               className="px-4 py-3 w-1/4 cursor-pointer"
               onClick={() => handleContactClick(contact)}
+              data-testid="sample-contact"
             >
               <div className="flex items-center gap-3">
                 {/* Profile image with conditional ring - OUTER container for ring */}

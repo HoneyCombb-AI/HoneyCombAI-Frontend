@@ -144,6 +144,7 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
             <td 
               className="px-4 py-3 w-1/3 cursor-pointer"
               onClick={() => handleCompanyClick(company)}
+              data-testid="sample-company"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">

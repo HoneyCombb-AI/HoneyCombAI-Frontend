@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "driver.js/dist/driver.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -254,6 +255,23 @@
 .hexagon-loader .h6 {
   left: 0;
   animation: load6 7.2s ease 3s infinite;
+}
+
+.driver-popover {
+  z-index: 10000 !important;
+}
+
+.driver-overlay {
+  z-index: 9999 !important;
+}
+
+.driver-highlighted-element {
+  z-index: 10001 !important;
+}
+
+.driver-popover-custom {
+  z-index: 10000 !important;
+  margin-left: 280px !important; 
 }
 
 @keyframes load1 {

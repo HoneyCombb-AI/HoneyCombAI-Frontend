@@ -28,6 +28,7 @@ import {
   X,
   Rows2,
   FileUp,
+  Download,
 } from "lucide-react";
 import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
@@ -40,6 +41,8 @@ import type {
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 import { useSearchParams } from "next/navigation";
+import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
+import { useTour } from "@/lib/joyride/useTour";
 
 export type GroupByType = "none" | "company" | "signals" | "location" | "city";
 export type LocationType = "country" | "state" | "city";
@@ -106,8 +109,8 @@ export default function AudiencePage() {
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
 
   const searchParams = useSearchParams();
-  const joyride = searchParams.get("joyride");
-  console.log(joyride);
+  const { isJoyrideMode } = useTour('contacts');
+  const displayData = isJoyrideMode ? SAMPLE_CONTACT_DATA : dashboardState.data;
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -237,18 +240,18 @@ export default function AudiencePage() {
   // Optimized contact states calculation using useMemo
   const contactStates = useMemo(() => {
     const selectedContactsArray = Array.from(selectedContacts.entries());
-    
+
     const states = selectedContactsArray.reduce((acc, [, data]) => {
       acc.total++;
-      
+
       // Tracking states
       if (data.isTracked) acc.tracked++;
       else acc.untracked++;
-      
+
       // Enrichment eligibility states
       if (!data.primaryAnalysisCompleted) acc.eligibleForEnrichment++;
       else acc.ineligibleForEnrichment++;
-      
+
       return acc;
     }, {
       total: 0,
@@ -257,11 +260,11 @@ export default function AudiencePage() {
       eligibleForEnrichment: 0,
       ineligibleForEnrichment: 0
     });
-    
+
     return {
       // Basic counts
       totalSelected: states.total,
-      
+
       // Tracking states
       trackedCount: states.tracked,
       untrackedCount: states.untracked,
@@ -270,7 +273,7 @@ export default function AudiencePage() {
       allTracked: states.total > 0 && states.tracked === states.total,
       allUntracked: states.total > 0 && states.untracked === states.total,
       trackingIsMixed: states.tracked > 0 && states.untracked > 0,
-      
+
       // Enrichment states
       eligibleCount: states.eligibleForEnrichment,
       ineligibleCount: states.ineligibleForEnrichment,
@@ -284,7 +287,7 @@ export default function AudiencePage() {
 
   const getTrackingButtonText = () => {
     if (contactStates.totalSelected === 0) return "Contact Tracking";
-    
+
     if (contactStates.allTracked) {
       return `Disable Tracking (${contactStates.trackedCount})`;
     } else if (contactStates.allUntracked) {
@@ -292,13 +295,13 @@ export default function AudiencePage() {
     } else if (contactStates.trackingIsMixed) {
       return `Toggle Tracking (${contactStates.untrackedCount} enable, ${contactStates.trackedCount} disable)`;
     }
-    
+
     return "Contact Tracking";
   };
 
   const getEnrichmentButtonText = () => {
     if (contactStates.totalSelected === 0) return "Complete Contact Enrichment";
-    
+
     if (contactStates.hasEligible) {
       if (contactStates.enrichmentIsMixed) {
         return `Complete Contact Enrichment (${contactStates.eligibleCount} eligible)`;
@@ -360,7 +363,7 @@ export default function AudiencePage() {
 
     try {
       setEnrichmentLoading(true);
-      
+
       const response = await axios.post("/api/contacts/enrichment", {
         entity_ids: eligibleContactIds,
         entity_type: "contact_id",
@@ -457,9 +460,9 @@ export default function AudiencePage() {
   if (error) {
     return (
       <div className="flex min-h-screen w-full flex-col p-6">
-          <Alert>
-            <AlertDescription>Failed to load data: {error}</AlertDescription>
-          </Alert>
+        <Alert>
+          <AlertDescription>Failed to load data: {error}</AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -471,7 +474,7 @@ export default function AudiencePage() {
         <div className="flex flex-wrap items-center gap-2">
           {/* Group Controls */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild data-testid="group-dropdown">
               <Button variant="outline" size="sm" className="gap-2 text-sm">
                 <Building2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Group:</span>
@@ -564,6 +567,7 @@ export default function AudiencePage() {
               value={searchInput}
               onChange={handleSearchInputChange}
               className="pl-10 w-64"
+              data-testid="search-input"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSearchSubmit();
@@ -610,7 +614,7 @@ export default function AudiencePage() {
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild data-testid="insert-dropdown">
               <Button size="sm" className="gap-2 text-sm">
                 <ChevronDown className="h-3 w-3" />
                 <span className="hidden sm:inline">Insert</span>
@@ -628,6 +632,20 @@ export default function AudiencePage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Export to CSV Button */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2 text-sm"
+            disabled={selectedContacts.size === 0}
+            onClick={() => console.log('Export to CSV clicked')}
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export to CSV</span>
+            <span className="sm:hidden">Export</span>
+            {selectedContacts.size > 0 && ` (${selectedContacts.size})`}
+          </Button>
+
           {/* Add Contact Drawer */}
           <AddContactDrawer
             open={addContactDrawerOpen}
@@ -644,7 +662,7 @@ export default function AudiencePage() {
 
           {/* Add Enrichment Button */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
               <Button
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium"
@@ -689,7 +707,7 @@ export default function AudiencePage() {
         <div className="min-h-[400px] bg-white shadow-sm p-6">
           <ContactsSection
             groupBy={groupBy}
-            records={dashboardState.data as DashboardResponse}
+            records={displayData as DashboardResponse}
             selectedContacts={selectedContacts}
             onContactSelect={handleContactSelect}
             onSelectAll={handleSelectAll}
