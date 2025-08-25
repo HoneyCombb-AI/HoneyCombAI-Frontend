@@ -100,6 +100,7 @@ export default function CompaniesPage() {
   );
   const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
+  const [exportLoading, setExportLoading] = useState<boolean>(false);
 
   const searchParams = useSearchParams();
   const { isJoyrideMode } = useTour('companies');
@@ -318,6 +319,61 @@ export default function CompaniesPage() {
     }
   };
 
+  const handleExportToCSV = async () => {
+    if (selectedCompanies.size === 0) {
+      toast.error("No companies selected for export");
+      return;
+    }
+
+    const selectedCompanyIds = Array.from(selectedCompanies);
+
+    try {
+      setExportLoading(true);
+      
+      const response = await fetch('/api/csv-export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'companies',
+          ids: selectedCompanyIds
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Export failed');
+      }
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition 
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : `companies_export_${new Date().toISOString().split('T')[0]}.csv`;
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`Exported ${selectedCompanyIds.length} companies successfully`);
+      
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Export failed');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   // Check if any filters are applied
   const hasFiltersApplied = () => {
     return (
@@ -527,13 +583,17 @@ export default function CompaniesPage() {
             size="sm"
             variant="outline"
             className="gap-2 text-sm"
-            disabled={selectedCompanies.size === 0}
-            onClick={() => console.log('Export to CSV clicked')}
+            disabled={selectedCompanies.size === 0 || exportLoading}
+            onClick={handleExportToCSV}
           >
             <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Export to CSV</span>
-            <span className="sm:hidden">Export</span>
-            {selectedCompanies.size > 0 && ` (${selectedCompanies.size})`}
+            <span className="hidden sm:inline">
+              {exportLoading ? "Exporting..." : "Export to CSV"}
+            </span>
+            <span className="sm:hidden">
+              {exportLoading ? "Exporting..." : "Export"}
+            </span>
+            {/* {!exportLoading && selectedCompanies.size > 0 && ` (${selectedCompanies.size})`} */}
           </Button>
 
           {/* Add Enrichment Button */}
@@ -547,7 +607,7 @@ export default function CompaniesPage() {
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">
                   {enrichmentLoading ? "Processing..." : "Add enrichment"}{" "}
-                  {!enrichmentLoading && selectedCompanies.size > 0 && `(${selectedCompanies.size})`}
+                  {/* {!enrichmentLoading && selectedCompanies.size > 0 && `(${selectedCompanies.size})`} */}
                 </span>
                 <span className="sm:hidden">
                   {enrichmentLoading ? "Processing..." : "Enrich"}{" "}
