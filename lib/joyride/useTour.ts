@@ -15,14 +15,17 @@ export const useTour = (currentPage: 'contacts' | 'companies' | 'organization', 
   };
 
   const finishTour = () => {
-    // Navigate back to contacts without joyride parameter
+    const activeDriver = (window as any).__driver_js_instance;
+    if (activeDriver) {
+      activeDriver.destroy();
+    }
     router.push('/contacts');
   };
 
   useEffect(() => {
     if (!isJoyrideMode) return;
+    if (currentPage === 'organization' && isDataLoaded === false) return;
 
-    // Small delay to ensure DOM elements are rendered
     const timer = setTimeout(() => {
       switch (currentPage) {
         case 'contacts':
@@ -46,10 +49,10 @@ export const useTour = (currentPage: 'contacts' | 'companies' | 'organization', 
           organizationTour.drive();
           break;
       }
-    }, 500); // 500ms delay to ensure components are mounted
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [isJoyrideMode, currentPage]);
+  }, [isJoyrideMode, currentPage, isDataLoaded]);
 
   return {
     isJoyrideMode,

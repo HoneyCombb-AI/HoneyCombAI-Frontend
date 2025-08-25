@@ -21,7 +21,7 @@ export default function OrganizationPage() {
   const [loading, setLoading] = useState<boolean>(false);
   const [organization, setOrganization] = useState<OrganizationData | null>(null);
   const searchParams = useSearchParams();
-  const { isJoyrideMode } = useTour('organization');
+  const { isJoyrideMode } = useTour('organization', !loading && !authLoading);
 
   const fetchOrganizationData = async () => {
     if (!user) return;

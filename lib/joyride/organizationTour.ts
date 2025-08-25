@@ -54,10 +54,16 @@ export const createOrganizationTour = (onComplete: () => void) => {
   const lastStep = stepsWithCompletion[stepsWithCompletion.length - 1];
   lastStep.popover = {
     ...lastStep.popover,
-    onNextClick: onComplete
+    onNextClick: () => {
+      const driverInstance = (window as any).__driver_js_instance;
+      if (driverInstance) {
+        driverInstance.destroy();
+      }
+      onComplete();
+    }
   };
   
-  return driver({
+  const driverInstance = driver({
     showProgress: true,
     steps: stepsWithCompletion,
     popoverClass: 'driver-popover-custom',
@@ -67,4 +73,7 @@ export const createOrganizationTour = (onComplete: () => void) => {
       window.history.replaceState({}, '', url.toString());
     }
   });
+  
+  (window as any).__driver_js_instance = driverInstance;
+  return driverInstance;
 };
