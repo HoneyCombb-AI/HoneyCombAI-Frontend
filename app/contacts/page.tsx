@@ -2,7 +2,6 @@
 import axios from "axios";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -40,7 +39,6 @@ import type {
 } from "@/app/api/contacts/route";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
-import { useSearchParams } from "next/navigation";
 import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
@@ -109,7 +107,6 @@ export default function AudiencePage() {
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
-  const searchParams = useSearchParams();
   const { isJoyrideMode } = useTour('contacts');
   const displayData = isJoyrideMode ? SAMPLE_CONTACT_DATA : dashboardState.data;
 
@@ -397,7 +394,7 @@ export default function AudiencePage() {
       if (axios.isAxiosError(error) && error.response?.data) {
         const errorData = error.response.data;
         if (errorData.errors && Array.isArray(errorData.errors)) {
-          errorData.errors.forEach((err: any) => {
+          errorData.errors.forEach((err: { message?: string }) => {
             toast.error(err.message || "Unknown error occurred");
           });
         } else {
@@ -710,14 +707,14 @@ export default function AudiencePage() {
           <AddContactDrawer
             open={addContactDrawerOpen}
             onOpenChange={setAddContactDrawerOpen}
-            onSubmit={(data) => fetchDashboardData()}
+            onSubmit={() => fetchDashboardData()}
           />
 
           {/* Import Contacts Drawer */}
           <ImportContactsDrawer
             open={importContactsDrawerOpen}
             onOpenChange={setImportContactsDrawerOpen}
-            onSubmit={(file) => fetchDashboardData()}
+            onSubmit={() => fetchDashboardData()}
           />
 
           {/* Add Enrichment Button */}

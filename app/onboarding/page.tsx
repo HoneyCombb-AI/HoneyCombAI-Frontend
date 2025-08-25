@@ -66,7 +66,7 @@ export default function OnboardingPage() {
     | "intent_priorities.highest_value"
     | "intent_priorities.strategic_focus"
     | "success_metrics") => {
-    const current = (watch(field as any) as string[]) || []
+    const current = (watch(field as keyof OnboardingFormData) as string[]) || []
     if (current.length >= 10) {
       const label =
         field === "success_metrics"
@@ -77,7 +77,7 @@ export default function OnboardingPage() {
       toast.error(label)
       return
     }
-    setValue(field as any, [...current, ""])
+    setValue(field as keyof OnboardingFormData, [...current, ""])
   }
 
   const removeFormArrayItem = (
@@ -87,10 +87,10 @@ export default function OnboardingPage() {
       | "success_metrics",
     index: number
   ) => {
-    const current = (watch(field as any) as string[]) || []
+    const current = (watch(field as keyof OnboardingFormData) as string[]) || []
     const next = current.filter((_, i) => i !== index)
     // Keep at least one item to satisfy schema min(1)
-    setValue(field as any, next.length > 0 ? next : [""])
+    setValue(field as keyof OnboardingFormData, next.length > 0 ? next : [""])
   }
 
   const updateFormArrayItem = (
@@ -101,10 +101,10 @@ export default function OnboardingPage() {
     index: number,
     value: string
   ) => {
-    const current = (watch(field as any) as string[]) || []
+    const current = (watch(field as keyof OnboardingFormData) as string[]) || []
     const next = [...current]
     next[index] = value
-    setValue(field as any, next)
+    setValue(field as keyof OnboardingFormData, next)
   }
 
   // ---------- Step navigation validation ----------
@@ -156,7 +156,7 @@ export default function OnboardingPage() {
 
   // ---------- Step 5 editing helpers (memoized) ----------
   const updateEditableField = React.useCallback(
-    (field: string, value: any) => {
+    (field: string, value: unknown) => {
       if (!editableData) return
 
       if (field.includes(".")) {

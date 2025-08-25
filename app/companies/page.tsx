@@ -39,7 +39,6 @@ import type {
   PaginationInfo,
 } from "@/app/api/companies/route";
 import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
-import { useSearchParams } from "next/navigation";
 import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
@@ -102,7 +101,6 @@ export default function CompaniesPage() {
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
-  const searchParams = useSearchParams();
   const { isJoyrideMode } = useTour('companies');
   const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
 
@@ -305,7 +303,7 @@ export default function CompaniesPage() {
 
         if (errorData.errors && Array.isArray(errorData.errors)) {
           // Show specific error messages
-          errorData.errors.forEach((err: any) => {
+          errorData.errors.forEach((err: { message?: string }) => {
             toast.error(err.message || "Unknown error occurred");
           });
         } else {
@@ -576,7 +574,7 @@ export default function CompaniesPage() {
           <AddCompanyDrawer
             open={addCompanyDrawerOpen}
             onOpenChange={setAddCompanyDrawerOpen}
-            onSubmit={(data) => fetchDashboardData()}
+            onSubmit={() => fetchDashboardData()}
           />
           {/* Export to CSV Button */}
           <Button
