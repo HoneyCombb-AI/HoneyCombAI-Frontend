@@ -120,8 +120,23 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     }
   }
 
-  const handleCompanyAdded = (newCompany: any) => {
-    setCompanies(prev => [...prev, newCompany])
+  const handleCompanyAdded = (newCompany: {
+    id: string;
+    name: string;
+    company_url: string;
+    linkedin_url?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    user_id: string;
+    organization_id?: string;
+    created_at: string;
+  }) => {
+    const companyListItem: CompanyListItem = {
+      id: newCompany.id,
+      name: newCompany.name
+    }
+    setCompanies(prev => [...prev, companyListItem])
     setCompanyDrawerOpen(false)
   }
 

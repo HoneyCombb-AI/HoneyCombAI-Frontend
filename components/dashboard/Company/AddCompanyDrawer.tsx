@@ -37,7 +37,18 @@ const companySchema = z.object({
 type CompanyFormData = z.infer<typeof companySchema>
 
 interface AddCompanyDrawerProps {
-  onSubmit?: (data: CompanyFormData) => void
+  onSubmit?: (data: {
+    id: string;
+    name: string;
+    company_url: string;
+    linkedin_url?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    user_id: string;
+    organization_id?: string;
+    created_at: string;
+  }) => void
   children?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void

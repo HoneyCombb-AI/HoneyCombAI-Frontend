@@ -13,15 +13,13 @@ import { CreateOrganizationDialog } from '@/components/organization/create-organ
 import { JoinOrganizationDialog } from '@/components/organization/join-organization-dialog';
 import { OrganizationDetails } from '@/components/organization/organization-details';
 import { useTour } from '@/lib/joyride/useTour';
-import { useSearchParams } from 'next/navigation';
 
 
 export default function OrganizationPage() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [organization, setOrganization] = useState<OrganizationData | null>(null);
-  const searchParams = useSearchParams();
-  const { isJoyrideMode } = useTour('organization', !loading && !authLoading);
+  useTour('organization', !loading && !authLoading);
 
   const fetchOrganizationData = async () => {
     if (!user) return;
