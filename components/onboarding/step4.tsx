@@ -52,7 +52,7 @@ export default function Step4({
             <TrendingUp className="h-5 w-5" />
             Success Metrics
           </CardTitle>
-          <CardDescription>Define how you'll measure success</CardDescription>
+          <CardDescription>Define how you&apos;ll measure success</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 flex-1">
           <div className="flex items-center justify-between">

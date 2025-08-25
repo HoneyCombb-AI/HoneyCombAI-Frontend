@@ -1,6 +1,13 @@
 import { driver } from "driver.js";
 import { DriveStep } from "driver.js";
 
+// Extend Window interface to include driver.js instance
+declare global {
+  interface Window {
+    __driver_js_instance?: ReturnType<typeof driver>;
+  }
+}
+
 export const organizationTourSteps: DriveStep[] = [
   {
     element: '[data-testid="organization-header"]',
@@ -55,7 +62,7 @@ export const createOrganizationTour = (onComplete: () => void) => {
   lastStep.popover = {
     ...lastStep.popover,
     onNextClick: () => {
-      const driverInstance = (window as any).__driver_js_instance;
+      const driverInstance = window.__driver_js_instance;
       if (driverInstance) {
         driverInstance.destroy();
       }
@@ -74,6 +81,6 @@ export const createOrganizationTour = (onComplete: () => void) => {
     }
   });
   
-  (window as any).__driver_js_instance = driverInstance;
+  window.__driver_js_instance = driverInstance;
   return driverInstance;
 };

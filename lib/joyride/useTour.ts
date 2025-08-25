@@ -3,6 +3,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createContactsTour } from './contactsTour';
 import { createCompaniesTour } from './companiesTour';
 import { createOrganizationTour } from './organizationTour';
+import { driver } from 'driver.js';
+
+declare global {
+  interface Window {
+    __driver_js_instance?: ReturnType<typeof driver>;
+  }
+}
 
 export const useTour = (currentPage: 'contacts' | 'companies' | 'organization', isDataLoaded?: boolean) => {
   const router = useRouter();
@@ -15,7 +22,7 @@ export const useTour = (currentPage: 'contacts' | 'companies' | 'organization', 
   };
 
   const finishTour = () => {
-    const activeDriver = (window as any).__driver_js_instance;
+    const activeDriver = window.__driver_js_instance;
     if (activeDriver) {
       activeDriver.destroy();
     }

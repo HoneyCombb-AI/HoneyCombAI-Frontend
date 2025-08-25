@@ -24,7 +24,7 @@ type OnboardingFormData = {
 
 interface Step5Props {
   editableData: OnboardingFormData
-  updateEditableField: (field: string, value: any) => void
+  updateEditableField: (field: string, value: string) => void
   addEditableArrayItem: (field: string) => void
   removeEditableArrayItem: (field: string, index: number) => void
   updateEditableArrayItem: (field: string, index: number, value: string) => void
