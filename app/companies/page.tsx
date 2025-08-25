@@ -501,18 +501,20 @@ export default function CompaniesPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Add Company Button */}
-          <Button
-            size="sm"
-            className="gap-2"
-            variant="outline"
-            data-testid="add-company-btn"
-            onClick={() => setAddCompanyDrawerOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Company</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild data-testid="add-company-btn">
+              <Button size="sm" className="gap-2 text-sm">
+                <ChevronDown className="h-3 w-3" />
+                <span className="hidden sm:inline">Insert</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setAddCompanyDrawerOpen(true)} >
+                <Plus className="h-4 w-4 mr-2" />
+                <span>Add Company</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Add Company Drawer */}
           <AddCompanyDrawer
@@ -520,6 +522,7 @@ export default function CompaniesPage() {
             onOpenChange={setAddCompanyDrawerOpen}
             onSubmit={(data) => console.log(data)}
           />
+          {/* Export to CSV Button */}
           <Button
             size="sm"
             variant="outline"
@@ -537,13 +540,17 @@ export default function CompaniesPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
               <Button
-                variant="outline"
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium"
                 disabled={selectedCompanies.size === 0 || enrichmentLoading}
               >
-                <span>
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">
                   {enrichmentLoading ? "Processing..." : "Add enrichment"}{" "}
+                  {!enrichmentLoading && selectedCompanies.size > 0 && `(${selectedCompanies.size})`}
+                </span>
+                <span className="sm:hidden">
+                  {enrichmentLoading ? "Processing..." : "Enrich"}{" "}
                   {!enrichmentLoading && selectedCompanies.size > 0 && `(${selectedCompanies.size})`}
                 </span>
                 <ChevronDown className="h-3 w-3" />

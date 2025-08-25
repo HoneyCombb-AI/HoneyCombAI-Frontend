@@ -35,7 +35,7 @@ export const contactsTourSteps: DriveStep[] = [
       title: 'Enrichment Actions',
       description: 'Enhance your contact data with AI-powered enrichment analysis and manage contact tracking settings.',
       side: "over",
-      align: 'center'
+      align: 'end'
     }
   },
   {

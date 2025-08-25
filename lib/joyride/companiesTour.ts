@@ -34,8 +34,8 @@ export const companiesTourSteps: DriveStep[] = [
     popover: {
       title: 'Company Enrichment',
       description: 'Enhance company profiles with AI-powered enrichment including company details, news updates, and employee discovery.',
-      side: "bottom",
-      align: 'start'
+      side: "over",
+      align: 'end'
     }
   },
   {
