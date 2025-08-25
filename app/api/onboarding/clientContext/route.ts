@@ -101,28 +101,24 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get the user's profile with client context
+    // Get the user's onboarding status
     const { data: profile, error: fetchError } = await supabase
       .from('profiles')
-      .select('client_context, is_onboarded')
+      .select('is_onboarded')
       .eq('id', user.id)
       .single()
 
     if (fetchError) {
       console.error('Database fetch error:', fetchError)
       return NextResponse.json(
-        { error: "Failed to fetch client context", details: fetchError.message },
+        { error: "Failed to fetch onboarding status", details: fetchError.message },
         { status: 500 }
       )
     }
 
     return NextResponse.json({
       success: true,
-      data: {
-        user_id: user.id,
-        is_onboarded: profile.is_onboarded,
-        client_context: profile.client_context
-      }
+      is_onboarded: profile.is_onboarded
     }, { status: 200 })
 
   } catch (error) {
