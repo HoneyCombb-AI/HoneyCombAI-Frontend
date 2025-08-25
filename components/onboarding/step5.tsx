@@ -45,7 +45,7 @@ export default function Step5({
       transition={{ duration: 0.3 }}
       key="review-data"
     >
-      <Card className="flex flex-col">
+      <Card className="flex flex-col shadow-2xl">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5" />
@@ -90,9 +90,9 @@ export default function Step5({
 
               {/* Client Specific Guidance  big readable block (no label/field) */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Client Specific Guidance</label>
+                <label className="text-sm font-semibold">Client Specific Guidance</label>
                 <textarea
-                  className="w-full h-64 p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y flex-shrink-0"
+                  className="w-full h-64 p-3 mt-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y flex-shrink-0"
                   value={editableData.client_specific_guidance}
                   onChange={(e) => updateEditableField("client_specific_guidance", e.target.value)}
                   rows={8}
@@ -101,9 +101,9 @@ export default function Step5({
 
               {/* Industry Context  big readable block (no label/field) */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Industry Context</label>
+                <label className="text-sm font-semibold">Industry Context</label>
                 <textarea
-                  className="w-full h-64 p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y flex-shrink-0"
+                  className="w-full h-64 p-3 mt-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y flex-shrink-0"
                   value={editableData.industry_context}
                   onChange={(e) => updateEditableField("industry_context", e.target.value)}
                   rows={8}
@@ -115,7 +115,7 @@ export default function Step5({
             <div className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Highest Value Prospects</h3>
+                  <h3 className="font-semibold">Highest Value Prospects</h3>
                   <Button
                     type="button"
                     variant="outline"
@@ -151,7 +151,7 @@ export default function Step5({
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Strategic Focus Areas</h3>
+                  <h3 className="font-semibold">Strategic Focus Areas</h3>
                   <Button
                     type="button"
                     variant="outline"
@@ -187,7 +187,7 @@ export default function Step5({
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Success Metrics</h3>
+                  <h3 className="font-semibold">Success Metrics</h3>
                   <Button
                     type="button"
                     variant="outline"

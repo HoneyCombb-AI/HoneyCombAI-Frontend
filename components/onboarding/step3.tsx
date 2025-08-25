@@ -35,7 +35,7 @@ export default function Step3({ register, errors }: Step3Props) {
       transition={{ duration: 0.3 }}
       key="guidance-context"
     >
-      <Card className="min-h-[500px] flex flex-col">
+      <Card className="min-h-[500px] flex flex-col shadow-2xl">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-2">

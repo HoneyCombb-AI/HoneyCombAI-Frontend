@@ -46,7 +46,7 @@ export default function Step4({
       transition={{ duration: 0.3 }}
       key="success-metrics"
     >
-      <Card className="min-h-[500px] flex flex-col">
+      <Card className="min-h-[500px] flex flex-col shadow-2xl">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />

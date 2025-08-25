@@ -6,6 +6,60 @@ interface ExportRequest {
   ids: string[];
 }
 
+interface CompanyExportData {
+  company_id: string;
+  name: string;
+  website: string | null;
+  linkedin_url: string | null;
+  industry: string | null;
+  location: string;
+  employee_count: number | null;
+  founded_year: number | null;
+  description: string | null;
+  keywords: string | null;
+  technologies: string | null;
+  news_data: string | null;
+  company_nudges: string | null;
+  logo_url: string | null;
+  created_at: Date;
+}
+
+interface ContactExportData {
+  contact_id: string;
+  full_name: string;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+  location: string;
+  linkedin_url: string | null;
+  twitter_handle: string | null;
+  instagram_handle: string | null;
+  company_name: string | null;
+  company_industry: string | null;
+  company_website: string | null;
+  languages: string | null;
+  experience_summary: string | null;
+  certifications_summary: string | null;
+  projects_summary: string | null;
+  is_tracked: boolean;
+  analysis_completed: boolean;
+  in_crm: boolean;
+  nudges: string | null;
+  nudges_date: Date | null;
+  signal_types: string | null;
+  signals_summary: string | null;
+  highest_confidence_signal: string | null;
+  ai_primary_analysis: string | null;
+  ai_detective_reasoning: string | null;
+  ai_investigation_decision: string | null;
+  ai_strategic_recommendations: string | null;
+  ai_confidence_score: number | null;
+  ai_confidence_reasoning: string | null;
+  created_at: Date;
+  updated_at: Date;
+  analysis_date: Date | null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -33,7 +87,6 @@ export async function POST(request: NextRequest) {
     let filename: string;
 
     if (type === "companies") {
-      // Call companies RPC function
       const { data, error } = await supabase.rpc('export_companies_csv', {
         company_ids: ids
       });
@@ -50,7 +103,6 @@ export async function POST(request: NextRequest) {
       filename = `companies_export_${new Date().toISOString().split('T')[0]}.csv`;
 
     } else if (type === "contacts") {
-      // Call contacts RPC function
       const { data, error } = await supabase.rpc('export_contacts_csv', {
         contact_ids: ids
       });
@@ -72,8 +124,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Return CSV as downloadable file
     return new NextResponse(csvData, {
       status: 200,
       headers: {
@@ -92,21 +142,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function convertToCSV(data: any[], headers: string[]): string {
+function convertToCSV(data: CompanyExportData[] | ContactExportData[], headers: string[]): string {
   if (!data || data.length === 0) {
     return headers.join(',') + '\n';
   }
 
   const csvRows = [
-    headers.join(','), // Header row
+    headers.join(','),
     ...data.map(row => 
       headers.map(header => {
-        const value = row[header.toLowerCase().replace(/ /g, '_')];
-        // Handle null/undefined values
+        const fieldName = header.toLowerCase().replace(/ /g, '_');
+        const value = (row as unknown as Record<string, unknown>)[fieldName];
         if (value === null || value === undefined) {
           return '';
         }
-        // Escape CSV values that contain commas, quotes, or newlines
         const stringValue = String(value);
         if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
           return `"${stringValue.replace(/"/g, '""')}"`;

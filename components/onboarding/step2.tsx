@@ -48,7 +48,7 @@ export default function Step2({
       transition={{ duration: 0.3 }}
       key="intent-priorities"
     >
-      <Card className="min-h-[500px] flex flex-col">
+      <Card className="min-h-[500px] flex flex-col shadow-2xl">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="flex items-center justify-between gap-2">
             <span className="flex items-center gap-2">

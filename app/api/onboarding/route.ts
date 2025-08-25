@@ -1,6 +1,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
+interface IntentPriorities {
+    highest_value: string[];
+    strategic_focus: string[];
+}
+
+interface OnboardingData {
+    company_name: string;
+    industry: string;
+    business_focus: string;
+    target_market: string;
+    intent_priorities: IntentPriorities;
+    client_specific_guidance: string;
+    industry_context: string;
+    success_metrics: string[];
+}
+
 const responseSchema = {
     type: Type.OBJECT,
     required: [
@@ -32,22 +48,22 @@ const responseSchema = {
     },
 };
 
-function validateOnboardingData(data: any): boolean {
+function validateOnboardingData(data: OnboardingData): boolean {
     if (!data || typeof data !== 'object') return false;
 
-    const requiredFields = [
-        'company_name', 'industry', 'business_focus', 'target_market',
-        'intent_priorities', 'client_specific_guidance', 'industry_context', 'success_metrics'
-    ];
-
-    for (const field of requiredFields) {
-        if (!data[field]) return false;
+    // Check all required string fields
+    if (!data.company_name || !data.industry || !data.business_focus || 
+        !data.target_market || !data.client_specific_guidance || !data.industry_context) {
+        return false;
     }
-
-    if (!data.intent_priorities.highest_value || !Array.isArray(data.intent_priorities.highest_value)) return false;
-    if (!data.intent_priorities.strategic_focus || !Array.isArray(data.intent_priorities.strategic_focus)) return false;
+    // Check intent_priorities structure
+    if (!data.intent_priorities || 
+        !data.intent_priorities.highest_value || !Array.isArray(data.intent_priorities.highest_value) ||
+        !data.intent_priorities.strategic_focus || !Array.isArray(data.intent_priorities.strategic_focus)) {
+        return false;
+    }
+    // Check success_metrics array
     if (!Array.isArray(data.success_metrics)) return false;
-
     return true;
 }
 
@@ -124,7 +140,7 @@ ${JSON.stringify(body, null, 2)}`,
 
         try {
             enrichedData = JSON.parse(generatedContent);
-        } catch (parseError) {
+        } catch {
             return NextResponse.json(
                 { error: "Failed to parse AI response as JSON" },
                 { status: 500 }
