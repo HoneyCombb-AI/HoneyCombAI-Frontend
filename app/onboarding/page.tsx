@@ -4,14 +4,16 @@ import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Building2, Target, Lightbulb, TrendingUp, CheckCircle } from "lucide-react"
 import { motion } from "motion/react"
 import axios from "axios"
-
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
+import Step1 from "@/components/onboarding/step1"
+import Step2 from "@/components/onboarding/step2"
+import Step3 from "@/components/onboarding/step3"
+import Step4 from "@/components/onboarding/step4"
+import Step5 from "@/components/onboarding/step5"
 
 const onboardingSchema = z.object({
   company_name: z.string().min(1, "Company name is required"),
@@ -29,13 +31,11 @@ const onboardingSchema = z.object({
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>
 
-
-
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = React.useState(1)
-  const [highestValueInputs, setHighestValueInputs] = React.useState<string[]>([''])
-  const [strategicFocusInputs, setStrategicFocusInputs] = React.useState<string[]>([''])
-  const [successMetricsInputs, setSuccessMetricsInputs] = React.useState<string[]>([''])
+  const [editableData, setEditableData] = React.useState<OnboardingFormData | null>(null)
+  const [isSubmittingFinal, setIsSubmittingFinal] = React.useState(false)
+  const router = useRouter()
 
   const {
     register,
@@ -52,130 +52,97 @@ export default function OnboardingPage() {
       business_focus: "",
       target_market: "",
       intent_priorities: {
-        highest_value: [],
-        strategic_focus: []
+        highest_value: [""],
+        strategic_focus: [""],
       },
       client_specific_guidance: "",
       industry_context: "",
-      success_metrics: []
-    }
+      success_metrics: [""],
+    },
   })
 
-  const addHighestValueInput = () => {
-    if (highestValueInputs.length >= 10) {
-      toast.error("Maximum 10 highest value priorities allowed")
+  // ---------- Helpers for Steps 2 & 4 (single source of truth = RHF) ----------
+  const addFormArrayItem = (field:
+    | "intent_priorities.highest_value"
+    | "intent_priorities.strategic_focus"
+    | "success_metrics") => {
+    const current = (watch(field as any) as string[]) || []
+    if (current.length >= 10) {
+      const label =
+        field === "success_metrics"
+          ? "Maximum 10 success metrics allowed"
+          : field.endsWith("highest_value")
+            ? "Maximum 10 highest value priorities allowed"
+            : "Maximum 10 strategic focus areas allowed"
+      toast.error(label)
       return
     }
-    setHighestValueInputs(prev => ['', ...prev])
+    setValue(field as any, [...current, ""])
   }
 
-  const removeHighestValueInput = (index: number) => {
-    const newInputs = highestValueInputs.filter((_, i) => i !== index)
-    setHighestValueInputs(newInputs)
-
-    const currentValues = watch("intent_priorities.highest_value") || []
-    const newValues = currentValues.filter((_, i) => i !== index)
-    setValue("intent_priorities.highest_value", newValues)
+  const removeFormArrayItem = (
+    field:
+      | "intent_priorities.highest_value"
+      | "intent_priorities.strategic_focus"
+      | "success_metrics",
+    index: number
+  ) => {
+    const current = (watch(field as any) as string[]) || []
+    const next = current.filter((_, i) => i !== index)
+    // Keep at least one item to satisfy schema min(1)
+    setValue(field as any, next.length > 0 ? next : [""])
   }
 
-  const addStrategicFocusInput = () => {
-    if (strategicFocusInputs.length >= 10) {
-      toast.error("Maximum 10 strategic focus areas allowed")
-      return
-    }
-    setStrategicFocusInputs(prev => ['', ...prev])
+  const updateFormArrayItem = (
+    field:
+      | "intent_priorities.highest_value"
+      | "intent_priorities.strategic_focus"
+      | "success_metrics",
+    index: number,
+    value: string
+  ) => {
+    const current = (watch(field as any) as string[]) || []
+    const next = [...current]
+    next[index] = value
+    setValue(field as any, next)
   }
 
-  const removeStrategicFocusInput = (index: number) => {
-    const newInputs = strategicFocusInputs.filter((_, i) => i !== index)
-    setStrategicFocusInputs(newInputs)
-
-    const currentValues = watch("intent_priorities.strategic_focus") || []
-    const newValues = currentValues.filter((_, i) => i !== index)
-    setValue("intent_priorities.strategic_focus", newValues)
-  }
-
-  const addSuccessMetricInput = () => {
-    if (successMetricsInputs.length >= 10) {
-      toast.error("Maximum 10 success metrics allowed")
-      return
-    }
-    setSuccessMetricsInputs(prev => ['', ...prev])
-  }
-
-  const removeSuccessMetricInput = (index: number) => {
-    const newInputs = successMetricsInputs.filter((_, i) => i !== index)
-    setSuccessMetricsInputs(newInputs)
-
-    const currentValues = watch("success_metrics") || []
-    const newValues = currentValues.filter((_, i) => i !== index)
-    setValue("success_metrics", newValues)
-  }
-
-  const updateHighestValueArray = (index: number, value: string) => {
-    if (!value.trim()) return // Prevent empty values
-
-    const currentValues = watch("intent_priorities.highest_value") || []
-    const newValues = [...currentValues]
-    newValues[index] = value
-    setValue("intent_priorities.highest_value", newValues)
-  }
-
-  const updateStrategicFocusArray = (index: number, value: string) => {
-    if (!value.trim()) return // Prevent empty values
-
-    const currentValues = watch("intent_priorities.strategic_focus") || []
-    const newValues = [...currentValues]
-    newValues[index] = value
-    setValue("intent_priorities.strategic_focus", newValues)
-  }
-
-  const updateSuccessMetricsArray = (index: number, value: string) => {
-    if (!value.trim()) return // Prevent empty values
-
-    const currentValues = watch("success_metrics") || []
-    const newValues = [...currentValues]
-    newValues[index] = value
-    setValue("success_metrics", newValues)
-  }
-
+  // ---------- Step navigation validation ----------
   const validateAndProceedToStep2 = async () => {
-    const isValid = await trigger(['company_name', 'industry', 'business_focus', 'target_market'])
-    if (isValid) {
-      setCurrentStep(2)
-    }
+    const isValid = await trigger(["company_name", "industry", "business_focus", "target_market"])
+    if (isValid) setCurrentStep(2)
   }
 
   const validateAndProceedToStep3 = async () => {
-    const isValid = await trigger(['intent_priorities.highest_value', 'intent_priorities.strategic_focus'])
-    if (isValid) {
-      setCurrentStep(3)
-    }
+    const isValid = await trigger(["intent_priorities.highest_value", "intent_priorities.strategic_focus"])
+    if (isValid) setCurrentStep(3)
   }
 
   const validateAndProceedToStep4 = async () => {
-    const isValid = await trigger(['client_specific_guidance', 'industry_context'])
-    if (isValid) {
-      setCurrentStep(4)
-    }
+    const isValid = await trigger(["client_specific_guidance", "industry_context"])
+    if (isValid) setCurrentStep(4)
   }
 
   const goToPreviousStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1)
   }
 
+  // ---------- Prevent auto-submission, only allow manual submit ----------
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (currentStep !== 4) return
+    handleSubmit(onFormSubmit)()
+  }
+
+  // ---------- Submit after Step 4 (enrichment) ----------
   const onFormSubmit = async (data: OnboardingFormData) => {
     try {
-      const response = await axios.post('/api/onboarding', data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await axios.post("/api/onboarding", data, {
+        headers: { "Content-Type": "application/json" },
       })
-
-      console.log("Enriched onboarding data:", response.data.data)
-      toast.success("Onboarding completed successfully!")
+      setEditableData(response.data.data)
+      setCurrentStep(5)
+      toast.success("AI data enrichment completed!")
     } catch (error) {
       console.error("Error submitting onboarding form:", error)
       if (axios.isAxiosError(error)) {
@@ -187,8 +154,162 @@ export default function OnboardingPage() {
     }
   }
 
+  // ---------- Step 5 editing helpers (memoized) ----------
+  const updateEditableField = React.useCallback(
+    (field: string, value: any) => {
+      if (!editableData) return
+
+      if (field.includes(".")) {
+        const [parent, child] = field.split(".")
+        if (parent === "intent_priorities") {
+          setEditableData((prev) => ({
+            ...prev!,
+            intent_priorities: {
+              ...prev!.intent_priorities,
+              [child]: value,
+            },
+          }))
+        }
+      } else {
+        setEditableData((prev) => ({
+          ...prev!,
+          [field as keyof OnboardingFormData]: value,
+        }))
+      }
+    },
+    [editableData]
+  )
+
+  const addEditableArrayItem = React.useCallback(
+    (field: string) => {
+      if (!editableData) return
+
+      if (field === "intent_priorities.highest_value") {
+        setEditableData((prev) => ({
+          ...prev!,
+          intent_priorities: {
+            ...prev!.intent_priorities,
+            highest_value: [...prev!.intent_priorities.highest_value, ""],
+          },
+        }))
+      } else if (field === "intent_priorities.strategic_focus") {
+        setEditableData((prev) => ({
+          ...prev!,
+          intent_priorities: {
+            ...prev!.intent_priorities,
+            strategic_focus: [...prev!.intent_priorities.strategic_focus, ""],
+          },
+        }))
+      } else if (field === "success_metrics") {
+        setEditableData((prev) => ({
+          ...prev!,
+          success_metrics: [...prev!.success_metrics, ""],
+        }))
+      }
+    },
+    [editableData]
+  )
+
+  const removeEditableArrayItem = React.useCallback(
+    (field: string, index: number) => {
+      if (!editableData) return
+
+      if (field === "intent_priorities.highest_value") {
+        setEditableData((prev) => ({
+          ...prev!,
+          intent_priorities: {
+            ...prev!.intent_priorities,
+            highest_value: prev!.intent_priorities.highest_value.filter((_, i) => i !== index),
+          },
+        }))
+      } else if (field === "intent_priorities.strategic_focus") {
+        setEditableData((prev) => ({
+          ...prev!,
+          intent_priorities: {
+            ...prev!.intent_priorities,
+            strategic_focus: prev!.intent_priorities.strategic_focus.filter((_, i) => i !== index),
+          },
+        }))
+      } else if (field === "success_metrics") {
+        setEditableData((prev) => ({
+          ...prev!,
+          success_metrics: prev!.success_metrics.filter((_, i) => i !== index),
+        }))
+      }
+    },
+    [editableData]
+  )
+
+  const updateEditableArrayItem = React.useCallback(
+    (field: string, index: number, value: string) => {
+      if (!editableData) return
+
+      if (field === "intent_priorities.highest_value") {
+        const newArray = [...editableData.intent_priorities.highest_value]
+        newArray[index] = value
+        setEditableData((prev) => ({
+          ...prev!,
+          intent_priorities: { ...prev!.intent_priorities, highest_value: newArray },
+        }))
+      } else if (field === "intent_priorities.strategic_focus") {
+        const newArray = [...editableData.intent_priorities.strategic_focus]
+        newArray[index] = value
+        setEditableData((prev) => ({
+          ...prev!,
+          intent_priorities: { ...prev!.intent_priorities, strategic_focus: newArray },
+        }))
+      } else if (field === "success_metrics") {
+        const newArray = [...editableData.success_metrics]
+        newArray[index] = value
+        setEditableData((prev) => ({
+          ...prev!,
+          success_metrics: newArray,
+        }))
+      }
+    },
+    [editableData]
+  )
+
+  const onFinalConfirm = async () => {
+    if (!editableData) {
+      toast.error("No data to submit")
+      return
+    }
+
+    setIsSubmittingFinal(true)
+    
+    try {
+      const response = await axios.post("/api/onboarding/clientContext", editableData, {
+        headers: { "Content-Type": "application/json" },
+      })
+
+      if (response.data.success) {
+        toast.success("Onboarding completed successfully!")        
+        router.replace("/contacts?joyride=true");
+      } else {
+        toast.error(response.data.error)
+        throw new Error(response.data.error || "Failed to save onboarding data")
+      }
+    } catch (error) {
+      console.error("Error saving final onboarding data:", error)
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.error || "Failed to complete onboarding"
+        toast.error(errorMessage)
+      } else {
+        toast.error("Something went wrong. Please try again.")
+      }
+    } finally {
+      setIsSubmittingFinal(false)
+    }
+  }
+
+  // ---------- Watched arrays for Steps 2 & 4 ----------
+  const highestValue = watch("intent_priorities.highest_value")
+  const strategicFocus = watch("intent_priorities.strategic_focus")
+  const successMetrics = watch("success_metrics")
+
   return (
-    <div className="container mx-auto px-4 py-4 space-y-4">
+    <div className="mx-auto px-4 py-6 space-y-6">
       <motion.div
         className="text-center space-y-1"
         initial={{ opacity: 0, y: -20 }}
@@ -196,319 +317,79 @@ export default function OnboardingPage() {
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-3xl font-bold">Honey Comb AI</h1>
-        <p className="text-muted-foreground">
-          Help us understand your business so we can provide personalized insights
-        </p>
+        <p className="text-muted-foreground">Help us understand your business so we can provide personalized insights</p>
       </motion.div>
 
-      <form onSubmit={handleSubmit(onFormSubmit)}>
+      <form onSubmit={handleFormSubmit}>
         <div className="flex flex-col items-center">
           {/* Navigation Steps */}
           <div className="flex gap-4 mb-6">
-            {[1, 2, 3, 4].map((step) => (
-              <div
-                key={step}
-                className={`w-3 h-3 rounded-full ${currentStep >= step ? 'bg-primary' : 'bg-muted'
-                  }`}
-              />
+            {[1, 2, 3, 4, 5].map((step) => (
+              <div key={step} className={`w-3 h-3 rounded-full ${currentStep >= step ? "bg-primary" : "bg-muted"}`} />
             ))}
           </div>
 
           {/* Card Container with fixed height */}
-          <div className="w-full max-w-md flex flex-col min-h-[600px]">
+          <div className={`w-full flex flex-col  ${currentStep === 5 ? "max-w-6xl" : "max-w-md"}`}>
             <div className="flex-1">
-              {/* Only render the current step */}
+              {/* Step 1 */}
               {currentStep === 1 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 100 }}
-                  transition={{ duration: 0.3 }}
-                  key="company-info"
-                >
-                  <Card className="min-h-[500px] flex flex-col">
-                    <CardHeader className="space-y-1 pb-4">
-                      <CardTitle className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-2">
-                          <Building2 className="h-5 w-5" />
-                          Company Information
-                        </span>
-                      </CardTitle>
-                      <CardDescription>
-                        Tell us about your company and what you do
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 flex-1">
-                      <div className="space-y-2">
-                        <label htmlFor="company_name" className="text-sm font-medium">
-                          Company Name *
-                        </label>
-                        <Input
-                          id="company_name"
-                          placeholder="Enter your company name"
-                          {...register("company_name")}
-                          aria-invalid={!!errors.company_name}
-                        />
-                        {errors.company_name && (
-                          <p className="text-sm text-destructive">{errors.company_name.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <label htmlFor="industry" className="text-sm font-medium">
-                          Industry *
-                        </label>
-                        <Input
-                          id="industry"
-                          placeholder="e.g., AI Agents & Sales Automation"
-                          {...register("industry")}
-                          aria-invalid={!!errors.industry}
-                        />
-                        {errors.industry && (
-                          <p className="text-sm text-destructive">{errors.industry.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <label htmlFor="business_focus" className="text-sm font-medium">
-                          Business Focus *
-                        </label>
-                        <Input
-                          id="business_focus"
-                          placeholder="e.g., AI-Powered Lead Conversion and Sales Process Automation"
-                          {...register("business_focus")}
-                          aria-invalid={!!errors.business_focus}
-                        />
-                        {errors.business_focus && (
-                          <p className="text-sm text-destructive">{errors.business_focus.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <label htmlFor="target_market" className="text-sm font-medium">
-                          Target Market *
-                        </label>
-                        <Input
-                          id="target_market"
-                          placeholder="e.g., B2B Startups and Scale-ups Looking to Automate Sales Processes"
-                          {...register("target_market")}
-                          aria-invalid={!!errors.target_market}
-                        />
-                        {errors.target_market && (
-                          <p className="text-sm text-destructive">{errors.target_market.message}</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <Step1 register={register} errors={errors} />
               )}
 
+              {/* Step 2 */}
               {currentStep === 2 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 100 }}
-                  transition={{ duration: 0.3 }}
-                  key="intent-priorities"
-                >
-                  <Card className="min-h-[500px] flex flex-col">
-                    <CardHeader className="space-y-1 pb-4">
-                      <CardTitle className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-2">
-                          <Target className="h-5 w-5" />
-                          Intent Priorities
-                        </span>
-                      </CardTitle>
-                      <CardDescription>
-                        Define your highest value prospects and strategic focus areas
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 flex-1">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm font-medium">Highest Value Prospects *</label>
-                          <Button type="button" variant="outline" size="sm" onClick={addHighestValueInput}>
-                            Add Item
-                          </Button>
-                        </div>
-                        <div className="space-y-3">
-                          {highestValueInputs.map((_, index) => (
-                            <div key={index} className="flex gap-2">
-                              <Input
-                                placeholder={`Highest value priority ${index + 1}`}
-                                onChange={(e) => updateHighestValueArray(index, e.target.value)}
-                              />
-                              {highestValueInputs.length > 1 && (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => removeHighestValueInput(index)}
-                                >
-                                  Remove
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                          {errors.intent_priorities?.highest_value && (
-                            <p className="text-sm text-destructive">{errors.intent_priorities.highest_value.message}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm font-medium">Strategic Focus Areas *</label>
-                          <Button type="button" variant="outline" size="sm" onClick={addStrategicFocusInput}>
-                            Add Item
-                          </Button>
-                        </div>
-                        <div className="space-y-3">
-                          {strategicFocusInputs.map((_, index) => (
-                            <div key={index} className="flex gap-2">
-                              <Input
-                                placeholder={`Strategic focus area ${index + 1}`}
-                                onChange={(e) => updateStrategicFocusArray(index, e.target.value)}
-                              />
-                              {strategicFocusInputs.length > 1 && (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => removeStrategicFocusInput(index)}
-                                >
-                                  Remove
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                          {errors.intent_priorities?.strategic_focus && (
-                            <p className="text-sm text-destructive">{errors.intent_priorities.strategic_focus.message}</p>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <Step2
+                  errors={errors}
+                  highestValue={highestValue}
+                  strategicFocus={strategicFocus}
+                  addFormArrayItem={addFormArrayItem}
+                  removeFormArrayItem={removeFormArrayItem}
+                  updateFormArrayItem={updateFormArrayItem}
+                />
               )}
 
+              {/* Step 3 */}
               {currentStep === 3 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 100 }}
-                  transition={{ duration: 0.3 }}
-                  key="guidance-context"
-                >
-                  <Card className="min-h-[500px] flex flex-col">
-                    <CardHeader className="space-y-1 pb-4">
-                      <CardTitle className="flex items-center justify-between gap-2">
-                        <span className="flex items-center gap-2">
-                          <Lightbulb className="h-5 w-5" />
-                          Guidance & Context
-                        </span>
-                      </CardTitle>
-                      <CardDescription>
-                        Provide specific guidance and industry context
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 flex-1">
-                      <div className="space-y-2">
-                        <label htmlFor="client_specific_guidance" className="text-sm font-medium">
-                          Client Specific Guidance *
-                        </label>
-                        <textarea
-                          id="client_specific_guidance"
-                          className="w-full min-h-[120px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          placeholder="Provide detailed guidance on your ideal prospects, targeting criteria, and key messaging points..."
-                          {...register("client_specific_guidance")}
-                        />
-                        {errors.client_specific_guidance && (
-                          <p className="text-sm text-destructive">{errors.client_specific_guidance.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <label htmlFor="industry_context" className="text-sm font-medium">
-                          Industry Context *
-                        </label>
-                        <textarea
-                          id="industry_context"
-                          className="w-full min-h-[120px] p-3 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          placeholder="Describe current market dynamics, trends, and opportunities in your industry..."
-                          {...register("industry_context")}
-                        />
-                        {errors.industry_context && (
-                          <p className="text-sm text-destructive">{errors.industry_context.message}</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <Step3 register={register} errors={errors} />
               )}
 
+              {/* Step 4 */}
               {currentStep === 4 && (
-                <motion.div
-                  initial={{ opacity: 0, x: -100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 100 }}
-                  transition={{ duration: 0.3 }}
-                  key="success-metrics"
-                >
-                  <Card className="min-h-[500px] flex flex-col">
-                    <CardHeader className="space-y-1 pb-4">
-                      <CardTitle className="flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5" />
-                        Success Metrics
-                      </CardTitle>
-                      <CardDescription>
-                        Define how you'll measure success
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 flex-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">Success Metrics *</label>
-                        <Button type="button" variant="outline" size="sm" onClick={addSuccessMetricInput}>
-                          Add Metric
-                        </Button>
-                      </div>
-                      <div className="space-y-3">
-                        {successMetricsInputs.map((_, index) => (
-                          <div key={index} className="flex gap-2">
-                            <Input
-                              placeholder={`Success metric ${index + 1}`}
-                              onChange={(e) => updateSuccessMetricsArray(index, e.target.value)}
-                            />
-                            {successMetricsInputs.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeSuccessMetricInput(index)}
-                              >
-                                Remove
-                              </Button>
-                            )}
-                          </div>
-                        ))}
-                        {errors.success_metrics && (
-                          <p className="text-sm text-destructive">{errors.success_metrics.message}</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                <Step4
+                  errors={errors}
+                  successMetrics={successMetrics}
+                  addFormArrayItem={addFormArrayItem}
+                  removeFormArrayItem={removeFormArrayItem}
+                  updateFormArrayItem={updateFormArrayItem}
+                />
               )}
+
+              {/* Step 5 */}
+              {currentStep === 5 && editableData && (
+                <Step5
+                  editableData={editableData}
+                  updateEditableField={updateEditableField}
+                  addEditableArrayItem={addEditableArrayItem}
+                  removeEditableArrayItem={removeEditableArrayItem}
+                  updateEditableArrayItem={updateEditableArrayItem}
+                />
+              )}
+
             </div>
 
-            {/* Navigation Buttons - Now in a fixed position relative to container */}
+            {/* Navigation Buttons */}
             <div className="flex justify-between py-4 mt-auto">
               <Button
                 type="button"
                 variant="link"
-                onClick={goToPreviousStep}
-                disabled={currentStep === 1}
-                className="w-[100px] cursor-pointer transition-colors hover:bg-primary/10"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  goToPreviousStep()
+                }}
+                disabled={currentStep === 1 || currentStep ===5}
+                className="cursor-pointer transition-colors hover:bg-primary/10"
               >
                 Previous
               </Button>
@@ -516,9 +397,11 @@ export default function OnboardingPage() {
               {currentStep < 4 ? (
                 <Button
                   type="button"
-                  className="w-[100px] cursor-pointer transition-colors hover:bg-primary/10"
+                  className="cursor-pointer transition-colors hover:bg-primary/10"
                   variant="link"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
                     switch (currentStep) {
                       case 1:
                         validateAndProceedToStep2()
@@ -534,13 +417,17 @@ export default function OnboardingPage() {
                 >
                   Next
                 </Button>
+              ) : currentStep === 4 ? (
+                <Button type="submit" disabled={isSubmitting} className="cursor-pointer">
+                  {isSubmitting ? "Processing..." : "Process"}
+                </Button>
               ) : (
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-[100px] cursor-pointer transition-colors hover:bg-primary/10"
-                >
-                  {isSubmitting ? "Completing..." : "Complete"}
+                <Button type="button" disabled={isSubmittingFinal} onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onFinalConfirm()
+                }} className="cursor-pointer">
+                  {isSubmittingFinal ? "Saving..." : "Confirm"}
                 </Button>
               )}
             </div>

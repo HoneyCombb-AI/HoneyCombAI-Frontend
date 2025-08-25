@@ -39,6 +39,7 @@ import type {
 } from "@/app/api/contacts/route";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
+import { useSearchParams } from "next/navigation";
 
 export type GroupByType = "none" | "company" | "signals" | "location" | "city";
 export type LocationType = "country" | "state" | "city";
@@ -103,6 +104,10 @@ export default function AudiencePage() {
   const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
+
+  const searchParams = useSearchParams();
+  const joyride = searchParams.get("joyride");
+  console.log(joyride);
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
