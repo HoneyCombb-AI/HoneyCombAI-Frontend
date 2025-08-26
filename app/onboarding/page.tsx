@@ -317,12 +317,14 @@ export default function OnboardingPage() {
         transition={{ duration: 0.5 }}
       >
         <div>
-          <h1 className="text-4xl font-black bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 bg-clip-text text-transparent leading-tight">
+          <h1 className="text-4xl font-black bg-[#dba800] bg-clip-text text-transparent leading-tight">
             Honeycomb
           </h1>
-          <div className="text-xl font-bold text-amber-400/80 -mt-2">AI</div>
+          <h1 className="text-xl font-black bg-[#b98e01] bg-clip-text text-transparent">
+            AI
+          </h1>
         </div>
-        <p className="text-white">Help us understand your business so we can provide personalized insights</p>
+        <p className="text-black">Help us understand your business so we can provide personalized insights</p>
       </motion.div>
 
       <form onSubmit={handleFormSubmit}>
