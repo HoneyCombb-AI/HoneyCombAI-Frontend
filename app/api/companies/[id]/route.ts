@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 /**
  * GET /api/companies/[id] - Fetch detailed company data for drawer
@@ -64,6 +65,34 @@ export async function GET(
     }
 
     const supabase = await createClient();
+    
+    // Get the current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Apply detailed view rate limiting
+    const rateLimit = await rateLimiters.detailViewPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Detail view rate limit exceeded. Please wait before making more requests.'
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': '300',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': new Date(rateLimit.resetTime).toISOString()
+          }
+        }
+      );
+    }
 
     // Use optimized RPC function for maximum performance
     const { data: companies, error } = await supabase.rpc('get_company_details', {

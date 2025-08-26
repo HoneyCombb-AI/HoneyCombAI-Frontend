@@ -118,6 +118,30 @@ export const rateLimiters = {
       limit: 5,
       windowSeconds: 1800, // 30 minutes
       keyPrefix: 'join_org_user'
+    }),
+
+  // CSV export operations
+  csvExportPerUser: (userId: string) =>
+    RateLimiter.checkLimit(userId, {
+      limit: 10,
+      windowSeconds: 3600, // 1 hour
+      keyPrefix: 'csv_export_user'
+    }),
+
+  // List operations
+  listPerUser: (userId: string) =>
+    RateLimiter.checkLimit(userId, {
+      limit: 60,
+      windowSeconds: 3600, // 1 hour
+      keyPrefix: 'list_user'
+    }),
+
+  // Detailed view operations
+  detailViewPerUser: (userId: string) =>
+    RateLimiter.checkLimit(userId, {
+      limit: 400,
+      windowSeconds: 3600, // 1 hour
+      keyPrefix: 'detail_view_user'
     })
 };
 
