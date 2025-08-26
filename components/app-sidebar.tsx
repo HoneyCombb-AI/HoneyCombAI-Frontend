@@ -38,7 +38,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import Link from "next/dist/client/link";
-import { usePathname } from "next/navigation";
+import { usePathname ,useRouter } from "next/navigation";
 import { NotificationPopoverContent } from "@/components/notification-popover";
 
 // Menu items
@@ -55,18 +55,6 @@ const items = [
     url: "/companies",
     hasChevron: false,
   },
-  // {
-  //   title: "AI Copilot",
-  //   icon: Sparkles,
-  //   url: "/",
-  //   hasChevron: false,
-  // },
-  // {
-  //   title: "Automation",
-  //   icon: Zap,
-  //   url: "/automation",
-  //   hasChevron: false,
-  // },
   {
     title: "Integration",
     icon: Puzzle,
@@ -90,13 +78,15 @@ const items = [
 export function AppSidebar() {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
 
   const isPathActive = (path: string) => {
     return pathname === path;
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    router.replace("/");
+    signOut().catch(console.error);
   };
 
   // Get user display name and email
