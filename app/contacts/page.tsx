@@ -460,30 +460,21 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     try {
       setExportLoading(true);
       
-      const response = await fetch('/api/csv-export', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'contacts',
-          ids: selectedContactIds
-        })
+      const response = await axios.post('/api/csv-export', {
+        type: 'contacts',
+        ids: selectedContactIds
+      }, {
+        responseType: 'blob'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Export failed');
-      }
-
       // Get the filename from the response headers
-      const contentDisposition = response.headers.get('Content-Disposition');
+      const contentDisposition = response.headers['content-disposition'];
       const filename = contentDisposition 
         ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
         : `contacts_export_${new Date().toISOString().split('T')[0]}.csv`;
 
       // Create blob and download
-      const blob = await response.blob();
+      const blob = new Blob([response.data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
@@ -498,7 +489,22 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       
     } catch (error) {
       console.error('Export failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Export failed');
+
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+        
+        if (status === 429) {
+          toast.error("Rate limit exceeded. Please wait before exporting more data.");
+        } else if (status === 401) {
+          toast.error("Unauthorized. Please log in again.");
+        } else if (status >= 500) {
+          toast.error("Server error. Please try again later.");
+        } else {
+          toast.error("Export failed. Please try again.");
+        }
+      } else {
+        toast.error("Network error. Please try again.");
+      }
     } finally {
       setExportLoading(false);
     }

@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           message: 'Enrichment rate limit exceeded. Please wait before trying again.',
-          errors: [{ message: `You can try again at ${new Date(rateLimit.resetTime).toISOString()}` }]
+          errors: [{ message: `Rate limit exceeded. You can try again at ${new Date(rateLimit.resetTime).toLocaleString()}` }]
         } as EnrichmentResponse,
         {
           status: 429,

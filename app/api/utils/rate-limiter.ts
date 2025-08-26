@@ -139,9 +139,17 @@ export const rateLimiters = {
   // Detailed view operations
   detailViewPerUser: (userId: string) =>
     RateLimiter.checkLimit(userId, {
-      limit: 400,
+      limit: 500,
       windowSeconds: 3600, // 1 hour
       keyPrefix: 'detail_view_user'
+    }),
+
+  // Onboarding operations
+  onboardingPerUser: (userId: string) =>
+    RateLimiter.checkLimit(userId, {
+      limit: 15,
+      windowSeconds: 3600, // 1 hour
+      keyPrefix: 'onboarding_user'
     })
 };
 

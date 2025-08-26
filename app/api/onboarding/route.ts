@@ -1,5 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { rateLimiters } from "@/app/api/utils/rate-limiter";
 
 interface IntentPriorities {
     highest_value: string[];
@@ -69,6 +71,30 @@ function validateOnboardingData(data: OnboardingData): boolean {
 
 export async function POST(request: NextRequest) {
     try {
+        const supabase = await createClient();
+        
+        // Check authentication
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return NextResponse.json(
+                { error: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        // Apply rate limiting
+        const rateLimit = await rateLimiters.onboardingPerUser(user.id);
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { 
+                    error: "Too many requests", 
+                    resetTime: rateLimit.resetTime,
+                    remaining: rateLimit.remaining 
+                },
+                { status: 429 }
+            );
+        }
+
         const body = await request.json();
 
         if (!validateOnboardingData(body)) {

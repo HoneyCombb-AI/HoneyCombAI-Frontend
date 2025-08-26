@@ -113,8 +113,23 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
       setLoadingCompanies(true)
       const response = await axios.get('/api/companies/list')
       setCompanies(response.data.companies || [])
-    } catch (error) {
-      console.error('Failed to fetch companies:', error)
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status
+        if (status === 429) {
+          toast.error("Too many requests. Can't Load Companies. Please wait before trying again.")
+        } else if (status === 404) {
+          toast.error("Companies not found.")
+        } else if (status >= 500) {
+          toast.error("Server error. Please try again later.")
+        } else {
+          toast.error(`Failed to fetch Companies details: ${err.response.statusText || 'Unknown error'}`)
+        }
+      } else if (axios.isAxiosError(err)) {
+        toast.error("Network error. Please check your connection.")
+      } else {
+        toast.error("An unexpected error occurred while loading contact details.")
+      }
     } finally {
       setLoadingCompanies(false)
     }

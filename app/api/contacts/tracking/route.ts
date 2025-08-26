@@ -31,7 +31,7 @@ interface RPCResult {
 export async function POST(req: NextRequest) {
   try {
     const body: TrackingRequest = await req.json();
-    
+
     // Validate request structure
     if (!body.contact_ids || !Array.isArray(body.contact_ids) || body.contact_ids.length === 0) {
       return NextResponse.json(
@@ -48,10 +48,10 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    
+
     // Get user from auth session
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           message: 'Enrichment rate limit exceeded. Please wait before trying again.',
-          errors: [{ message: `You can try again at ${new Date(rateLimit.resetTime).toISOString()}` }]
+          errors: [{ message: `Rate limit exceeded. You can try again at ${new Date(rateLimit.resetTime).toLocaleString()}` }]
         } as TrackingResponse,
         {
           status: 429,
@@ -96,19 +96,19 @@ export async function POST(req: NextRequest) {
     const foundContacts = contacts || [];
     const foundContactIds = foundContacts.map(c => c.id);
     const missingIds = body.contact_ids.filter(id => !foundContactIds.includes(id));
-    
+
     if (missingIds.length > 0) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: `Contact IDs not found: ${missingIds.join(', ')}` 
+        {
+          success: false,
+          message: `Contact IDs not found: ${missingIds.join(', ')}`
         },
         { status: 404 }
       );
     }
 
     let contactsToEnable = 0;
-    
+
     if (body.action === 'enable') {
       contactsToEnable = foundContacts.length;
     } else if (body.action === 'disable') {
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
           errors: [{ message: tokenError.message }]
         } as TrackingResponse, { status: 500 });
       }
-      
+
       const tokenData = tokenCheck?.[0];
       if (!tokenData?.can_use_tokens) {
         return NextResponse.json({
@@ -140,13 +140,13 @@ export async function POST(req: NextRequest) {
           errors: [{ message: 'You have reached your token usage limit' }]
         } as TrackingResponse, { status: 403 });
       }
-      
+
       if (tokenData.available_tokens < totalTokens) {
         return NextResponse.json({
           success: false,
           message: 'Insufficient tokens',
-          errors: [{ 
-            message: `Not enough tokens available. Need ${totalTokens}, have ${tokenData.available_tokens}` 
+          errors: [{
+            message: `Not enough tokens available. Need ${totalTokens}, have ${tokenData.available_tokens}`
           }]
         } as TrackingResponse, { status: 403 });
       }
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
     let message = '';
     const enabledCount = updatedContacts.filter((c: { id: string; isTracked: boolean }) => c.isTracked).length;
     const disabledCount = updatedContacts.filter((c: { id: string; isTracked: boolean }) => !c.isTracked).length;
-    
+
     if (body.action === 'toggle') {
       const parts = [];
       if (enabledCount > 0) parts.push(`${enabledCount} contact(s) enabled`);
