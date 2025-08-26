@@ -2,7 +2,6 @@
 import axios from "axios";
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -332,7 +331,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
     try {
       setExportLoading(true);
-      
+
       const response = await axios.post('/api/csv-export', {
         type: 'companies',
         ids: selectedCompanyIds
@@ -342,7 +341,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
       // Get the filename from the response headers
       const contentDisposition = response.headers['content-disposition'];
-      const filename = contentDisposition 
+      const filename = contentDisposition
         ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
         : `companies_export_${new Date().toISOString().split('T')[0]}.csv`;
 
@@ -359,13 +358,13 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       document.body.removeChild(a);
 
       toast.success(`Exported ${selectedCompanyIds.length} companies successfully`);
-      
+
     } catch (error) {
       console.error('Export failed:', error);
 
       if (axios.isAxiosError(error) && error.response) {
         const status = error.response.status;
-        
+
         if (status === 429) {
           toast.error("Rate limit exceeded. Please wait before exporting more data.");
         } else if (status === 401) {
@@ -396,18 +395,10 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   // Show error state if there's an error
   if (error) {
     return (
-      <div className="flex min-h-screen w-full flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-xl font-semibold">HoneyComb - Companies</h1>
-          </div>
-        </header>
-        <main className="flex-1 p-6">
-          <Alert>
-            <AlertDescription>Failed to load data: {error}</AlertDescription>
-          </Alert>
-        </main>
+      <div className="flex min-h-screen w-full flex-col p-6">
+        <Alert>
+          <AlertDescription>Failed to load data: {error}</AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -648,8 +639,9 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
       {/* Main Content */}
       {authLoading || fetchLoading ? (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
           <Loading />
+          <p className="text-sm text-muted-foreground mt-4">Loading your companies...</p>
         </div>
       ) : (
         <div className="min-h-[400px] bg-white shadow-sm p-6">

@@ -18,7 +18,7 @@ import { useTour } from '@/lib/joyride/useTour';
 function TourProvider({ children }: { children: (props: { isDataLoaded: boolean }) => React.ReactNode }) {
   const { loading: authLoading } = useAuth();
   useTour('organization', !authLoading);
-  return <>{children({ isDataLoaded:!authLoading })}</>;
+  return <>{children({ isDataLoaded: !authLoading })}</>;
 }
 
 function OrganizationPageContent() {
@@ -71,10 +71,12 @@ function OrganizationPageContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-screen">
+      <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
         <Loading />
+        <p className="text-sm text-muted-foreground mt-4">Loading your organization...</p>
       </div>
-    )}
+    )
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
@@ -125,7 +127,7 @@ export default function OrganizationPage() {
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loading /></div>}>
       <TourProvider>
-        {() => <OrganizationPageContent  />}
+        {() => <OrganizationPageContent />}
       </TourProvider>
     </Suspense>
   );
