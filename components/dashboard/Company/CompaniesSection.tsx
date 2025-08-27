@@ -17,12 +17,20 @@ import type {
 
 type DashboardResponse = CompanyListResponse | IndustryGroupResponse | LocationGroupResponse | EmployeeSizeGroupResponse | SearchResponse;
 
+// Company validation data interface
+interface CompanyValidationData {
+  company_analysis_completed: boolean;
+  company_analysis_requested: boolean;
+  news_requested: boolean;
+  name: string;
+}
+
 interface CompaniesSectionProps {
   groupBy: GroupByType;
   records: DashboardResponse;
-  selectedCompanies: Set<string>;
-  onCompanySelect: (companyId: string) => void;
-  onSelectAll: (companyIds: string[]) => void;
+  selectedCompanies: Map<string, CompanyValidationData>;
+  onCompanySelect: (companyId: string, companyData: CompanyValidationData) => void;
+  onSelectAll: (companiesData: Array<{ id: string, data: CompanyValidationData }>) => void;
 }
 
 interface ProcessedGroup {
@@ -140,7 +148,12 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
             <td className="px-4 py-3 w-12">
               <Checkbox
                 checked={isSelected}
-                onCheckedChange={() => onCompanySelect(company.id)}
+                onCheckedChange={() => onCompanySelect(company.id, {
+                  company_analysis_completed: company.company_analysis_completed,
+                  company_analysis_requested: company.company_analysis_requested,
+                  news_requested: company.news_requested,
+                  name: company.name
+                })}
                 onClick={(e) => e.stopPropagation()}
               />
             </td>
@@ -326,7 +339,17 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                               group.companies.length > 0 && 
                               group.companies.every(company => selectedCompanies.has(company.id))
                             }
-                            onCheckedChange={() => onSelectAll(group.companies.map(company => company.id))}
+                            onCheckedChange={() => onSelectAll(
+                              group.companies.map(company => ({
+                                id: company.id,
+                                data: {
+                                  company_analysis_completed: company.company_analysis_completed,
+                                  company_analysis_requested: company.company_analysis_requested,
+                                  news_requested: company.news_requested,
+                                  name: company.name
+                                }
+                              }))
+                            )}
                           />
                         </th>
                         <th className="px-4 py-2 text-left font-medium w-1/3">Company</th>

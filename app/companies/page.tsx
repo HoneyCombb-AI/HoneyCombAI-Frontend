@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,13 @@ export type LocationType = "country" | "state" | "city";
 export type SortBy = "name" | "created_at";
 export type SortOrder = "asc" | "desc";
 
+interface CompanyValidationData {
+  company_analysis_completed: boolean;
+  company_analysis_requested: boolean;
+  news_requested: boolean;
+  name: string;
+}
+
 export type DashboardResponse =
   | CompanyListResponse
   | IndustryGroupResponse
@@ -99,8 +106,8 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [pageLimit, setPageLimit] = useState<number>(20);
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(
-    new Set()
+  const [selectedCompanies, setSelectedCompanies] = useState<Map<string, CompanyValidationData>>(
+    new Map()
   );
   const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
@@ -227,35 +234,82 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     setSortBy("name");
     setSortOrder("asc");
     setCurrentPage(1);
-    setSelectedCompanies(new Set());
+    setSelectedCompanies(new Map());
   };
 
-  // Company selection handlers
-  const handleCompanySelect = (companyId: string) => {
-    setSelectedCompanies((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(companyId)) {
-        newSet.delete(companyId);
+  // Optimized company states calculation using useMemo
+  const companyStates = useMemo(() => {
+    const selectedCompaniesArray = Array.from(selectedCompanies.entries());
+
+    const states = selectedCompaniesArray.reduce((acc, [, data]) => {
+      acc.total++;
+
+      // Company enrichment eligibility states
+      if (!data.company_analysis_completed && !data.company_analysis_requested) {
+        acc.eligibleForCompanyEnrichment++;
       } else {
-        newSet.add(companyId);
+        acc.ineligibleForCompanyEnrichment++;
       }
-      return newSet;
+
+      // News enrichment eligibility states
+      if (!data.news_requested) {
+        acc.eligibleForNewsEnrichment++;
+      } else {
+        acc.ineligibleForNewsEnrichment++;
+      }
+
+      return acc;
+    }, {
+      total: 0,
+      eligibleForCompanyEnrichment: 0,
+      ineligibleForCompanyEnrichment: 0,
+      eligibleForNewsEnrichment: 0,
+      ineligibleForNewsEnrichment: 0
+    });
+
+    return {
+      // Basic counts
+      totalSelected: states.total,
+
+      // Company enrichment states
+      eligibleCompanyEnrichmentCount: states.eligibleForCompanyEnrichment,
+      ineligibleCompanyEnrichmentCount: states.ineligibleForCompanyEnrichment,
+      hasEligibleForCompanyEnrichment: states.eligibleForCompanyEnrichment > 0,
+
+      // News enrichment states
+      eligibleNewsEnrichmentCount: states.eligibleForNewsEnrichment,
+      ineligibleNewsEnrichmentCount: states.ineligibleForNewsEnrichment,
+      hasEligibleForNewsEnrichment: states.eligibleForNewsEnrichment > 0,
+    };
+  }, [selectedCompanies]);
+
+  // Company selection handlers
+  const handleCompanySelect = (companyId: string, companyData: CompanyValidationData) => {
+    setSelectedCompanies((prev) => {
+      const newMap = new Map(prev);
+      if (newMap.has(companyId)) {
+        newMap.delete(companyId);
+      } else {
+        newMap.set(companyId, companyData);
+      }
+      return newMap;
     });
   };
 
-  const handleSelectAll = (companyIds: string[]) => {
+  const handleSelectAll = (companiesData: Array<{ id: string, data: CompanyValidationData }>) => {
     setSelectedCompanies((prev) => {
-      const newSet = new Set(prev);
-      const allSelected = companyIds.every((id) => newSet.has(id));
+      const newMap = new Map(prev);
+      const companyIds = companiesData.map(company => company.id);
+      const allSelected = companyIds.every((id) => newMap.has(id));
 
       if (allSelected) {
         // Deselect all
-        companyIds.forEach((id) => newSet.delete(id));
+        companyIds.forEach((id) => newMap.delete(id));
       } else {
         // Select all
-        companyIds.forEach((id) => newSet.add(id));
+        companiesData.forEach(({ id, data }) => newMap.set(id, data));
       }
-      return newSet;
+      return newMap;
     });
   };
 
@@ -269,13 +323,30 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       return;
     }
 
-    const selectedCompanyIds = Array.from(selectedCompanies);
+    // Get eligible company IDs based on enrichment type
+    const selectedCompaniesArray = Array.from(selectedCompanies.entries());
+    let eligibleCompanyIds: string[] = [];
+
+    if (type === "company_enrichment") {
+      eligibleCompanyIds = selectedCompaniesArray
+        .filter(([, data]) => !data.company_analysis_completed && !data.company_analysis_requested)
+        .map(([id]) => id);
+    } else if (type === "news_enrichment") {
+      eligibleCompanyIds = selectedCompaniesArray
+        .filter(([, data]) => !data.news_requested)
+        .map(([id]) => id);
+    }
+
+    if (eligibleCompanyIds.length === 0) {
+      toast.error("No eligible companies selected for enrichment");
+      return;
+    }
 
     try {
       setEnrichmentLoading(true);
 
       const response = await axios.post("/api/companies/enrichment", {
-        entity_ids: selectedCompanyIds,
+        entity_ids: eligibleCompanyIds,
         entity_type: "company_id",
         task_type: type
       });
@@ -287,7 +358,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         );
 
         // Clear selected companies after successful enrichment
-        setSelectedCompanies(new Set());
+        setSelectedCompanies(new Map());
 
         // Log request ID for tracking if available
         if (response.data.request_id) {
@@ -325,7 +396,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       return;
     }
 
-    const selectedCompanyIds = Array.from(selectedCompanies);
+    const selectedCompanyIds = Array.from(selectedCompanies.keys());
 
     try {
       setExportLoading(true);
@@ -615,16 +686,30 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("company_enrichment")}
-              >
-                Company Enrichment
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("news_enrichment")}
-              >
-                News Enrichment
-              </DropdownMenuItem>
+              {companyStates.hasEligibleForCompanyEnrichment && (
+                <DropdownMenuItem
+                  onSelect={() => handleEnrichmentAction("company_enrichment")}
+                >
+                  Company Enrichment ({companyStates.eligibleCompanyEnrichmentCount})
+                </DropdownMenuItem>
+              )}
+              {!companyStates.hasEligibleForCompanyEnrichment && selectedCompanies.size > 0 && (
+                <DropdownMenuItem disabled>
+                  Company Enrichment ({companyStates.ineligibleCompanyEnrichmentCount} ineligible)
+                </DropdownMenuItem>
+              )}
+              {companyStates.hasEligibleForNewsEnrichment && (
+                <DropdownMenuItem
+                  onSelect={() => handleEnrichmentAction("news_enrichment")}
+                >
+                  News Enrichment ({companyStates.eligibleNewsEnrichmentCount})
+                </DropdownMenuItem>
+              )}
+              {!companyStates.hasEligibleForNewsEnrichment && selectedCompanies.size > 0 && (
+                <DropdownMenuItem disabled>
+                  News Enrichment ({companyStates.ineligibleNewsEnrichmentCount} ineligible)
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
