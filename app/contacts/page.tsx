@@ -56,6 +56,7 @@ export type SortOrder = "asc" | "desc";
 interface ContactValidationData {
   isTracked: boolean;
   primaryAnalysisCompleted: boolean;
+  primaryAnalysisRequested: boolean;
   full_name: string;
 }
 
@@ -246,38 +247,38 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
     const states = selectedContactsArray.reduce((acc, [, data]) => {
       acc.total++;
-
-      // Tracking states
-      if (data.isTracked) acc.tracked++;
-      else acc.untracked++;
-
-      // Enrichment eligibility states
-      if (!data.primaryAnalysisCompleted) acc.eligibleForEnrichment++;
+      if (data.primaryAnalysisCompleted) {
+        acc.eligibleForTracking++;
+        if (data.isTracked) acc.tracked++;
+        else acc.untracked++;
+      } else {
+        acc.ineligibleForTracking++;
+      }
+      if (!data.primaryAnalysisCompleted && !data.primaryAnalysisRequested) acc.eligibleForEnrichment++;
       else acc.ineligibleForEnrichment++;
-
       return acc;
     }, {
       total: 0,
       tracked: 0,
       untracked: 0,
+      eligibleForTracking: 0,
+      ineligibleForTracking: 0,
       eligibleForEnrichment: 0,
       ineligibleForEnrichment: 0
     });
 
     return {
-      // Basic counts
       totalSelected: states.total,
-
-      // Tracking states
       trackedCount: states.tracked,
       untrackedCount: states.untracked,
+      eligibleForTrackingCount: states.eligibleForTracking,
+      ineligibleForTrackingCount: states.ineligibleForTracking,
       hasTracked: states.tracked > 0,
       hasUntracked: states.untracked > 0,
-      allTracked: states.total > 0 && states.tracked === states.total,
-      allUntracked: states.total > 0 && states.untracked === states.total,
+      hasEligibleForTracking: states.eligibleForTracking > 0,
+      allTracked: states.eligibleForTracking > 0 && states.tracked === states.eligibleForTracking,
+      allUntracked: states.eligibleForTracking > 0 && states.untracked === states.eligibleForTracking,
       trackingIsMixed: states.tracked > 0 && states.untracked > 0,
-
-      // Enrichment states
       eligibleCount: states.eligibleForEnrichment,
       ineligibleCount: states.ineligibleForEnrichment,
       hasEligible: states.eligibleForEnrichment > 0,
@@ -290,7 +291,9 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
   const getTrackingButtonText = () => {
     if (contactStates.totalSelected === 0) return "Contact Tracking";
-
+    if (!contactStates.hasEligibleForTracking) {
+      return `Contact Tracking (${contactStates.ineligibleForTrackingCount} ineligible)`;
+    }
     if (contactStates.allTracked) {
       return `Disable Tracking (${contactStates.trackedCount})`;
     } else if (contactStates.allUntracked) {
@@ -356,7 +359,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     // Get only eligible contact IDs (no validation needed since button is smart)
     const selectedContactsArray = Array.from(selectedContacts.entries());
     const eligibleContactIds = selectedContactsArray
-      .filter(([, data]) => !data.primaryAnalysisCompleted)
+      .filter(([, data]) => !data.primaryAnalysisCompleted && !data.primaryAnalysisRequested)
       .map(([id]) => id);
 
     if (eligibleContactIds.length === 0) {
@@ -418,13 +421,19 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       toast.error("No contacts selected for tracking");
       return;
     }
+    const selectedContactsArray = Array.from(selectedContacts.entries());
+    const eligibleContactIds = selectedContactsArray
+      .filter(([, data]) => data.primaryAnalysisCompleted)
+      .map(([id]) => id);
 
-    const selectedContactIds = Array.from(selectedContacts.keys());
-
+    if (eligibleContactIds.length === 0) {
+      toast.error("No eligible contacts selected for tracking");
+      return;
+    }
     try {
       setEnrichmentLoading(true);
       const response = await axios.post("/api/contacts/tracking", {
-        contact_ids: selectedContactIds,
+        contact_ids: eligibleContactIds,
         action: contactStates.trackingIsMixed ? "toggle" : (contactStates.allTracked ? "disable" : "enable")
       });
 
@@ -756,11 +765,18 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                   {getEnrichmentButtonText()}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                onSelect={() => handleTrackingToggle()}
-              >
-                {getTrackingButtonText()}
-              </DropdownMenuItem>
+              {contactStates.hasEligibleForTracking && (
+                <DropdownMenuItem
+                  onSelect={() => handleTrackingToggle()}
+                >
+                  {getTrackingButtonText()}
+                </DropdownMenuItem>
+              )}
+              {!contactStates.hasEligibleForTracking && selectedContacts.size > 0 && (
+                <DropdownMenuItem disabled>
+                  {getTrackingButtonText()}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

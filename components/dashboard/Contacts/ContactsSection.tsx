@@ -22,6 +22,7 @@ type DashboardResponse = CompanyGroupResponse | SignalGroupResponse | LocationGr
 interface ContactValidationData {
   isTracked: boolean;
   primaryAnalysisCompleted: boolean;
+  primaryAnalysisRequested: boolean;
   full_name: string;
 }
 
@@ -155,6 +156,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                 onCheckedChange={() => onContactSelect(contact.id, {
                   isTracked: contact.isTracked,
                   primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+                  primaryAnalysisRequested: contact.primaryAnalysisRequested,
                   full_name: contact.full_name
                 })}
                 onClick={(e) => e.stopPropagation()}
@@ -363,6 +365,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                                 data: {
                                   isTracked: contact.isTracked,
                                   primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+                                  primaryAnalysisRequested: contact.primaryAnalysisRequested,
                                   full_name: contact.full_name
                                 }
                               })) || []
