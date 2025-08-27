@@ -14,6 +14,7 @@ import type {
 } from '@/app/api/contacts/route';
 import { ContactsDrawer } from './ContactsDrawer';
 import { getSignalBadgeColor, processSignals } from '@/lib/ContactUtils';
+import { RingState } from '../Ring-state';
 
 type DashboardResponse = CompanyGroupResponse | SignalGroupResponse | LocationGroupResponse | SearchResponse;
 
@@ -30,7 +31,7 @@ interface ContactsSectionProps {
   records: DashboardResponse;
   selectedContacts: Map<string, ContactValidationData>;
   onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
-  onSelectAll: (contactsData: Array<{id: string, data: ContactValidationData}>) => void;
+  onSelectAll: (contactsData: Array<{ id: string, data: ContactValidationData }>) => void;
 }
 
 // Interface for processed group data
@@ -137,6 +138,10 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
       contacts.map((contact) => {
         const processedSignals = processSignals(contact.signals);
         const isSelected = selectedContacts.has(contact.id);
+        // Determine ring state once
+        const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
+        const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
+        const isTracked = contact.isTracked;
 
         return (
           <tr
@@ -163,44 +168,13 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
               data-testid="sample-contact"
             >
               <div className="flex items-center gap-3">
-                {/* Profile image with conditional ring - OUTER container for ring */}
-                {contact.isTracked ? (
-                  <div className="w-8 h-8 rounded-full ring-2 ring-[#EAB308] ring-offset-1 flex-shrink-0 p-0.5">
-                    <div className="w-full h-full rounded-full overflow-hidden relative">
-                      {contact.profile_picture ? (
-                        <Image
-                          src={contact.profile_picture}
-                          alt={contact.full_name}
-                          fill
-                          sizes="32px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
-        flex items-center justify-center text-white text-sm font-medium rounded-full">
-                          {contact.full_name.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
-                    {contact.profile_picture ? (
-                      <Image
-                        src={contact.profile_picture}
-                        alt={contact.full_name}
-                        fill
-                        sizes="32px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
-      flex items-center justify-center text-white text-sm font-medium rounded-full">
-                        {contact.full_name.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <RingState
+                  green={hasAnalysisCompleted}
+                  golden={isTracked}
+                  requested={hasAnalysisRequested}
+                  profilePicture={contact.profile_picture}
+                  fullName={contact.full_name}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-gray-900 truncate">
                     {contact.full_name || "Unknown"}
