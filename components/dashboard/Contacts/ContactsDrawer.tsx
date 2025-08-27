@@ -96,8 +96,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                       src={selectedContact.profile_picture}
                       alt={selectedContact.full_name}
                       fill
-                      sizes="32px"
-                      className="object-cover"
+                      sizes="120px"
+                      quality={100}
+                      className="object-cover rounded-full"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
@@ -130,8 +131,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                         src={selectedContact.company.logo_url}
                         alt="Company logo"
                         fill
-                        sizes="px"
-                        className="object-cover"
+                        sizes="120px"
+                        quality={100}
+                        className="object-cover rounded-full"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
