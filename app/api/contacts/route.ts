@@ -41,6 +41,7 @@ export interface DashboardContact {
   state: string | null;
   isTracked : boolean;
   primaryAnalysisCompleted : boolean;
+  primaryAnalysisRequested : boolean;
   country: string | null;
   profile_picture: string | null;
   company: MinimalCompany | null;

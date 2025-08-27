@@ -23,6 +23,9 @@ export interface DashboardCompany {
   state: string | null;
   country: string | null;
   contact_count: number;
+  company_analysis_completed : boolean;
+  company_analysis_requested : boolean;
+  news_requested : boolean;
   nudges: CompanyNudge[];
 }
 
@@ -126,6 +129,9 @@ function formatCompanyFromRPC(company: {
   country: string | null;
   contact_count: number;
   Company_Nudges: CompanyNudges | null;
+  company_analysis_completed?: boolean;
+  company_analysis_requested?: boolean;
+  news_requested?: boolean;
 }): DashboardCompany {
   // Parse and filter nudges to top 3
   let nudges: CompanyNudge[] = [];
@@ -142,6 +148,9 @@ function formatCompanyFromRPC(company: {
     state: company.state,
     country: company.country,
     contact_count: company.contact_count,
+    company_analysis_completed: company.company_analysis_completed || false,
+    company_analysis_requested: company.company_analysis_requested || false,
+    news_requested: company.news_requested || false,
     nudges
   };
 }
@@ -156,6 +165,9 @@ function formatCompanyData(company: {
   state: string | null;
   country: string | null;
   Company_Nudges: CompanyNudges | null;
+  company_analysis_completed?: boolean;
+  company_analysis_requested?: boolean;
+  news_requested?: boolean;
 }, contactCounts: Record<string, number>): DashboardCompany {
   // Parse and filter nudges to top 3
   let nudges: CompanyNudge[] = [];
@@ -172,6 +184,9 @@ function formatCompanyData(company: {
     state: company.state,
     country: company.country,
     contact_count: contactCounts[company.id] || 0,
+    company_analysis_completed: company.company_analysis_completed || false,
+    company_analysis_requested: company.company_analysis_requested || false,
+    news_requested: company.news_requested || false,
     nudges
   };
 }
@@ -272,6 +287,9 @@ async function handleCompanyListing(
     country: string | null;
     contact_count: number;
     Company_Nudges: CompanyNudges | null;
+    company_analysis_completed?: boolean;
+    company_analysis_requested?: boolean;
+    news_requested?: boolean;
   }) => formatCompanyFromRPC(company));
 
   const pagination = getPaginationInfo(page, limit, totalCount);

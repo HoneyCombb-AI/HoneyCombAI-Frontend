@@ -262,9 +262,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const handleEnrichmentAction = async (
     type:
       | "company_enrichment"
-      | "full_workflow"
       | "news_enrichment"
-      | "employee_discovery"
   ) => {
     if (selectedCompanies.size === 0) {
       toast.error("No companies selected for enrichment");
@@ -626,11 +624,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 onSelect={() => handleEnrichmentAction("news_enrichment")}
               >
                 News Enrichment
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("employee_discovery")}
-              >
-                Employee Discovery
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
