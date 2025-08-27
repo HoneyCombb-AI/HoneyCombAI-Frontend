@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GroupByType } from '@/app/companies/page';
 import { CompaniesDrawer } from './CompaniesDrawer';
+import { RingState } from '../Ring-state';
 import type {
   DashboardCompany,
   CompanyListResponse,
@@ -125,6 +126,11 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
       companies.map((company) => {
         const topNudges = company.nudges?.slice(0, 3) || [];
         const isSelected = selectedCompanies.has(company.id);
+        
+        // Determine ring state for company
+        const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
+        const hasAnalysisCompleted = company.company_analysis_completed;
+        const hasNewsRequested = company.news_requested;
 
         return (
           <tr
@@ -147,28 +153,13 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
               data-testid="sample-company"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
-                  {company.logo_url ? (
-                    <Image
-                      src={company.logo_url}
-                      alt={company.name}
-                      fill
-                      sizes="px"
-                      className="object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div 
-                    className={`w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
-                    flex items-center justify-center text-white text-sm font-medium ${company.logo_url ? 'hidden' : ''}`}
-                  >
-                    {company.name.charAt(0)}
-                  </div>
-                </div>
+                <RingState
+                  green={hasAnalysisCompleted}
+                  golden={hasNewsRequested}
+                  requested={hasAnalysisRequested}
+                  profilePicture={company.logo_url}
+                  fullName={company.name}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-gray-900 truncate">
                     {company.name || "Unknown"}
