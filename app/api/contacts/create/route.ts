@@ -49,6 +49,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get user's organization_id from profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to get user profile' },
+        { status: 500 }
+      );
+    }
+
+    // Check if user is part of an organization
+    if (!profile.organization_id) {
+      return NextResponse.json(
+        { success: false, error: 'You are not part of an organization. You need to create or join an organization first.' },
+        { status: 403 }
+      );
+    }
+
     // Apply create operations rate limiting
     const rateLimit = await rateLimiters.createPerUser(user.id);
     if (!rateLimit.allowed) {
@@ -137,6 +160,7 @@ export async function POST(req: NextRequest) {
       twitter_handle: body.twitterProfile?.trim() ? extractTwitterHandle(body.twitterProfile.trim()) : null,
       instagram_handle: body.instagramProfile?.trim() ? extractInstagramHandle(body.instagramProfile.trim()) : null,
       user_id: user.id,
+      organization_id: profile.organization_id,
       istracked: false,
       in_crm: false,
     };

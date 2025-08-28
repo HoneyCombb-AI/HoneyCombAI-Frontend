@@ -172,6 +172,17 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
+    // Check if user is part of an organization  
+    if (!profile?.organization_id) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'You are not part of an organization. You need to create or join an organization first.' 
+        } as BulkImportResponse,
+        { status: 403 }
+      );
+    }
+
     // Call RPC function
     const { data: result, error: rpcError } = await supabase.rpc(
       'import_contacts_bulk',
