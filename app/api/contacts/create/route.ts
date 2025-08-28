@@ -49,10 +49,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user's organization_id from profile
+    // Get user's organization_id and onboarding status from profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('organization_id')
+      .select('organization_id, is_onboarded')
       .eq('id', user.id)
       .single();
 
@@ -68,6 +68,14 @@ export async function POST(req: NextRequest) {
     if (!profile.organization_id) {
       return NextResponse.json(
         { success: false, error: 'You are not part of an organization. You need to create or join an organization first.' },
+        { status: 403 }
+      );
+    }
+
+    // Check if user has completed onboarding
+    if (!profile.is_onboarded) {
+      return NextResponse.json(
+        { success: false, error: 'You haven\'t completed onboarding yet. Please check your notifications to complete onboarding before uploading contacts.' },
         { status: 403 }
       );
     }

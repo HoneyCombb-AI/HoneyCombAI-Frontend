@@ -285,7 +285,7 @@ export default function OnboardingPage() {
 
       if (response.data.success) {
         toast.success("Onboarding completed successfully!")
-        router.replace("/contacts?joyride=true");
+        router.replace("/contacts");
       } else {
         toast.error(response.data.error)
         throw new Error(response.data.error || "Failed to save onboarding data")

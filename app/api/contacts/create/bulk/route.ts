@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('organization_id')
+      .select('organization_id, is_onboarded')
       .eq('id', user.id)
       .single();
 
@@ -178,6 +178,17 @@ export async function POST(request: NextRequest) {
         { 
           success: false,
           error: 'You are not part of an organization. You need to create or join an organization first.' 
+        } as BulkImportResponse,
+        { status: 403 }
+      );
+    }
+
+    // Check if user has completed onboarding
+    if (!profile?.is_onboarded) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'You haven\'t completed onboarding yet. Please check your notifications to complete onboarding before bulk importing contacts.' 
         } as BulkImportResponse,
         { status: 403 }
       );

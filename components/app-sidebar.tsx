@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Puzzle,
   Settings,
@@ -79,6 +80,7 @@ export function AppSidebar() {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   const isPathActive = (path: string) => {
     return pathname === path;
@@ -159,7 +161,7 @@ export function AppSidebar() {
         <div className="space-y-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <Popover>
+              <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
                 <PopoverTrigger asChild>
                   <SidebarMenuButton asChild>
                     <button className="flex items-center w-full">
@@ -168,8 +170,8 @@ export function AppSidebar() {
                     </button>
                   </SidebarMenuButton>
                 </PopoverTrigger>
-                <PopoverContent className="w-80" align="start">
-                  <NotificationPopoverContent />
+                <PopoverContent className="min-w-80" align="start">
+                  <NotificationPopoverContent isOpen={isNotificationOpen} />
                 </PopoverContent>
               </Popover>
             </SidebarMenuItem>

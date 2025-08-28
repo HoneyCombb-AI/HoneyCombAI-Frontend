@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET method to retrieve current client context (optional)
+// GET method to retrieve is_onboarded (optional)
 export async function GET() {
   try {
     const supabase = await createClient()
