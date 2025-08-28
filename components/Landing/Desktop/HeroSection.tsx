@@ -265,29 +265,71 @@ export function HeroSection() {
           </div>
 
           {/* Right section - Grid with logos */}
-          <div className="relative border-b border-[#0f4f48]">
+          <motion.div 
+            className="relative border-b border-[#0f4f48]"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 1.8, ease: "easeOut" }}
+          >
             {/* Top section - placeholder for logo/content */}
-            <div className="h-1/3 border-b border-[#0f4f48] flex items-center justify-center">
-              <div className="text-[#0f4f48] font-medium text-xl">
+            <motion.div 
+              className="h-1/3 border-b border-[#0f4f48] flex items-center justify-center"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 2.0, ease: "easeOut" }}
+            >
+              <motion.div 
+                className="text-[#0f4f48] font-medium text-xl"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3, delay: 2.2, ease: "easeOut" }}
+              >
                 JUST BOOKS INDIA
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Middle section - placeholder for logo/content */}
-            <div className="h-1/3 border-b border-[#0f4f48] flex items-center justify-center">
-              <div className="text-[#0f4f48] font-medium text-xl">
+            <motion.div 
+              className="h-1/3 border-b border-[#0f4f48] flex items-center justify-center"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 2.3, ease: "easeOut" }}
+            >
+              <motion.div 
+                className="text-[#0f4f48] font-medium text-xl"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3, delay: 2.5, ease: "easeOut" }}
+              >
                 BONHOMIA WORLD
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Bottom section - placeholder for logo/content */}
-            <div className="h-1/3 flex items-center justify-center">
-              <div className="text-[#0f4f48] font-medium text-lg">
-                <p className="text-sm"> Backed By </p>
+            <motion.div 
+              className="h-1/3 flex items-center justify-center"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 2.6, ease: "easeOut" }}
+            >
+              <motion.div 
+                className="text-[#0f4f48] font-medium text-lg"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3, delay: 2.8, ease: "easeOut" }}
+              >
+                <motion.p 
+                  className="text-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 2.9 }}
+                > 
+                  Backed By 
+                </motion.p>
                 CoCreate Ventures
-              </div>
-            </div>
-          </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
 
