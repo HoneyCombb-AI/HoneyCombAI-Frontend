@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CheckCircle, Zap } from "lucide-react";
-import React, { JSX } from "react";
+import React, { JSX, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getCalApi } from "@calcom/embed-react";
 
 interface HeaderProps {
   user?: any;
@@ -18,6 +19,13 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
     "Know who to contact, what will resonate, and when to reach out -Automatically",
   ];
   const router = useRouter();
+
+  useEffect(() => {
+    (async function () {
+      const cal = await getCalApi({"namespace":"30min"});
+      cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
+    })();
+  }, []);
 
   const handleLoginClick = () => {
     console.log("click");
@@ -86,6 +94,9 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
                     <Button
                       variant="outline"
                       className="bg-white/20 hover:bg-white/30 border-white/40 text-[#0f4f48] backdrop-blur-sm h-14 px-8 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-lg tracking-[0] leading-6"
+                      data-cal-namespace="30min"
+                      data-cal-link="ankushnagathan/30min"
+                      data-cal-config='{"layout":"month_view"}'
                     >
                       Book demo
                     </Button>

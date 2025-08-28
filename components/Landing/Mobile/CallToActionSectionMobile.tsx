@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CheckCircle, Zap, TrendingUp, Users } from "lucide-react";
-import React, { JSX } from "react";
+import React, { JSX, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { getCalApi } from "@calcom/embed-react";
 
 interface CallToActionSectionMobileProps {
   user?: any;
@@ -27,6 +28,14 @@ export function CallToActionSectionMobile({ user }: CallToActionSectionMobilePro
       router.push("/login");
     }
   };
+
+  useEffect(() => {
+    (async function () {
+      const cal = await getCalApi({"namespace":"30min"});
+      cal("floatingButton", {"calLink":"ankushnagathan/30min","config":{"layout":"month_view"}});
+      cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
+    })();
+  }, []);
 
   return (
     <section className="relative w-full px-4 py-16 md:hidden">
@@ -123,13 +132,6 @@ export function CallToActionSectionMobile({ user }: CallToActionSectionMobilePro
           >
             {user ? "Access Dashboard" : "Get Started Free"}
             <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-
-          <Button
-            variant="outline"
-            className="w-full border-2 border-[#0f4f48]/20 hover:border-[#0f4f48]/40 text-[#0f4f48] h-12 rounded-lg font-semibold text-base"
-          >
-            Book a Demo
           </Button>
         </motion.div>
       </div>
