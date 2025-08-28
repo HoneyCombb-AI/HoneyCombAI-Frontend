@@ -3,31 +3,19 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, CheckCircle, Zap, TrendingUp, Users } from "lucide-react";
-import React, { JSX, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import {  CheckCircle, Zap, TrendingUp, Users } from "lucide-react";
+import React, { JSX, useEffect } from "react";
 import { motion } from "framer-motion";
 import { getCalApi } from "@calcom/embed-react";
 
-interface CallToActionSectionMobileProps {
-  user?: any;
-}
 
-export function CallToActionSectionMobile({ user }: CallToActionSectionMobileProps): JSX.Element {
+
+export function CallToActionSectionMobile(): JSX.Element {
   const features = [
     "Get custom intents unique to your sales process",
     "Complete social understanding of your prospects",
     "Know who to contact, what will resonate, and when to reach out -Automatically",
   ];
-  const router = useRouter();
-
-  const handleLoginClick = () => {
-    if (user) {
-      router.push("/contacts");
-    } else {
-      router.push("/login");
-    }
-  };
 
   useEffect(() => {
     (async function () {
@@ -118,21 +106,6 @@ export function CallToActionSectionMobile({ user }: CallToActionSectionMobilePro
         </motion.div>
 
         {/* CTA Buttons with animation */}
-        <motion.div
-          className="space-y-3"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          viewport={{ once: true, margin: "-50px" }}
-        >
-          <Button
-            onClick={handleLoginClick}
-            className="w-full bg-[#4adf7d] hover:bg-[#4adf7d]/90 text-[#0f4f48] shadow-lg h-12 rounded-lg font-semibold text-base"
-          >
-            {user ? "Access Dashboard" : "Get Started Free"}
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-          
           <Button
             variant="outline"
             className="w-full bg-white hover:bg-gray-50 border-[#0f4f48]/20 text-[#0f4f48] h-12 rounded-lg font-semibold text-base"
@@ -142,7 +115,6 @@ export function CallToActionSectionMobile({ user }: CallToActionSectionMobilePro
           >
             Book Demo
           </Button>
-        </motion.div>
       </div>
     </section>
   );

@@ -67,7 +67,7 @@ export function Header({ user }: HeaderProps): JSX.Element {
 
           {/* RIGHT: Navigation buttons */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-
+            {/* Login button - Desktop only */}
             <Button
               variant="link"
               onClick={handleLoginClick}
@@ -77,18 +77,21 @@ export function Header({ user }: HeaderProps): JSX.Element {
               <div className="absolute w-full h-0.5 -bottom-1 -left-full bg-[#0f4f48] group-hover:left-0 transition-all duration-300" />
             </Button>
 
+            {/* Support button - Visible on both mobile and desktop */}
             <Button
               variant="link"
               onClick={handleSupportClick}
-              className="relative overflow-hidden group cursor-pointer hidden sm:block bg-transparent hover:bg-transparent px-2 sm:px-3 py-2 h-auto text-sm"
+              className="relative overflow-hidden group cursor-pointer bg-transparent hover:bg-transparent px-2 sm:px-3 py-2 h-auto text-xs sm:text-sm"
             >
               Support
               <div className="absolute w-full h-0.5 -bottom-1 -left-full bg-[#0f4f48] group-hover:left-0 transition-all duration-300" />
             </Button>
+
+            {/* Book Demo button - Visible on both mobile and desktop */}
             <Button
               onClick={handleBookDemoClick}
               variant={"link"}
-              className="bg-amber-600 cursor-pointer hover:bg-amber-500 text-white shadow-[0px_1px_2px_#1018280d] h-9 sm:h-11 px-3 sm:px-5 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-xs sm:text-[14.9px] tracking-[0] leading-6"
+              className="bg-amber-600 cursor-pointer hover:bg-amber-500 text-white shadow-[0px_1px_2px_#1018280d] h-8 sm:h-11 px-2 sm:px-5 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-xs sm:text-[14.9px] tracking-[0] leading-6"
             >
               Book Demo
             </Button>
