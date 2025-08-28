@@ -83,11 +83,11 @@ export function TestimonialSection(): JSX.Element {
       {/* Curtains */}
       <div className="fixed inset-0 z-0">
         <motion.div
-          className="absolute top-0 left-0 w-1/2 h-full bg-[#FFC300]"
+          className="absolute top-0 left-0 w-1/2 h-full bg-orange-400"
           style={{ scaleX: curtainScale, transformOrigin: "right center" }}
         />
         <motion.div
-          className="absolute top-0 right-0 w-1/2 h-full bg-[#FFC300]"
+          className="absolute top-0 right-0 w-1/2 h-full bg-orange-400"
           style={{ scaleX: curtainScale, transformOrigin: "left center" }}
         />
       </div>
