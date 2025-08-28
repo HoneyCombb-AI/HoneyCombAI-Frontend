@@ -60,7 +60,7 @@ export const contactsTourSteps: DriveStep[] = [
     element: '[data-testid="sample-contact-split-ring"]',
     popover: {
       title: 'Analysis Complete + Tracking',
-      description: 'The split green and gold ring shows this contact has completed analysis AND is being actively tracked for updates like job changes or company news.',
+      description: 'The split green and gold ring shows this contact has completed analysis AND is being actively tracked for updates and changes.',
       side: "right",
       align: 'start'
     }
