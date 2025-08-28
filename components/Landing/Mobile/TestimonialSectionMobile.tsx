@@ -1,8 +1,8 @@
 "use client";
 
 import React, { JSX, useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function TestimonialSectionMobile(): JSX.Element {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -40,7 +40,7 @@ export function TestimonialSectionMobile(): JSX.Element {
 
   // Auto-advance cards every 5 seconds
   useEffect(() => {
-    const interval = setInterval(nextCard, 5000);
+    const interval = setInterval(nextCard, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -56,51 +56,60 @@ export function TestimonialSectionMobile(): JSX.Element {
           </h2>
         </div>
 
-        <div className="relative">
-          <Card className="w-full bg-white border border-gray-200 shadow-lg min-h-[300px] transition-all duration-500 ease-out transform hover:shadow-xl hover:scale-[1.02]">
-            <CardContent className="p-6 flex flex-col justify-between h-full">
-              <h3 className="font-semibold text-xl text-[#0f4f48] mb-4 leading-tight transition-all duration-300">
-                {cards[currentIndex].heading}
-              </h3>
-              <p className="font-medium text-base text-[#0f4f48] leading-relaxed flex-1 transition-all duration-300">
-                {cards[currentIndex].quote}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="relative overflow-hidden">
+          <motion.div
+            className="flex"
+            animate={{ x: `-${currentIndex * 100}%` }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            drag="x"
+            dragConstraints={{
+              left: -((cards.length - 1) * window.innerWidth || 400),
+              right: 0,
+            }}
+            dragElastic={0.2}
+            onDragEnd={(_, info) => {
+              const threshold = 50;
+              if (info.offset.x > threshold && currentIndex > 0) {
+                prevCard();
+              } else if (info.offset.x < -threshold && currentIndex < cards.length - 1) {
+                nextCard();
+              }
+            }}
+          >
+            {cards.map((card, index) => (
+              <div key={index} className="w-full flex-shrink-0 px-2">
+                <Card className="w-full bg-white border border-gray-200 shadow-lg min-h-[300px] cursor-grab active:cursor-grabbing select-none">
+                  <CardContent className="p-6 flex flex-col justify-between h-full">
+                    <h3 className="font-semibold text-xl text-[#0f4f48] mb-4 leading-tight">
+                      {card.heading}
+                    </h3>
+                    <p className="font-medium text-base text-[#0f4f48] leading-relaxed flex-1">
+                      {card.quote}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </motion.div>
 
-          {/* Navigation buttons */}
-          <div className="flex justify-between items-center mt-6">
-            <button
-              onClick={prevCard}
-              className="p-3 rounded-full bg-gray-100 border border-gray-300 shadow-sm hover:bg-gray-200 transition-colors"
-              aria-label="Previous card"
-            >
-              <ChevronLeft className="w-5 h-5 text-[#0f4f48]" />
-            </button>
-
-            {/* Dots indicator */}
-            <div className="flex space-x-2">
-              {cards.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`w-3 h-3 rounded-full transition-colors ${
-                    index === currentIndex
-                      ? 'bg-[#0f4f48]'
-                      : 'bg-gray-300 hover:bg-gray-400'
-                  }`}
-                  aria-label={`Go to card ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={nextCard}
-              className="p-3 rounded-full bg-gray-100 border border-gray-300 shadow-sm hover:bg-gray-200 transition-colors"
-              aria-label="Next card"
-            >
-              <ChevronRight className="w-5 h-5 text-[#0f4f48]" />
-            </button>
+          {/* Dots indicator */}
+          <div className="flex justify-center space-x-2 mt-6">
+            {cards.map((_, index) => (
+              <motion.div
+                key={index}
+                className={`w-3 h-3 rounded-full cursor-pointer ${
+                  index === currentIndex
+                    ? 'bg-[#0f4f48]'
+                    : 'bg-gray-300'
+                }`}
+                animate={{
+                  scale: index === currentIndex ? 1.2 : 1,
+                  opacity: index === currentIndex ? 1 : 0.6
+                }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setCurrentIndex(index)}
+              />
+            ))}
           </div>
 
           {/* Progress indicator */}
@@ -111,18 +120,7 @@ export function TestimonialSectionMobile(): JSX.Element {
           </div>
         </div>
       </div>
-      
-      {/* Smooth transition to next section */}
-      <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent via-white to-gray-100/50 pointer-events-none"></div>
-      
-      {/* Floating transition elements */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-        <div className="flex space-x-2">
-          <div className="w-2 h-2 bg-[#0f4f48]/20 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
-          <div className="w-2 h-2 bg-[#0f4f48]/30 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
-          <div className="w-2 h-2 bg-[#0f4f48]/40 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
-        </div>
-      </div>
+    
     </section>
   );
 }
