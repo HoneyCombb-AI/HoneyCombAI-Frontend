@@ -79,7 +79,7 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
                       onClick={handleLoginClick}
                       className="bg-[#4adf7d] cursor-pointer hover:bg-[#4adf7d]/90 text-[#0f4f48] shadow-[0px_1px_2px_#1018280d] h-14 px-8 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-lg tracking-[0] leading-6"
                     >
-                      {user ? "Access Dashboard" : "Log in"}
+                      {user ? "Access Dashboard" : "Get Started for free"}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
 
