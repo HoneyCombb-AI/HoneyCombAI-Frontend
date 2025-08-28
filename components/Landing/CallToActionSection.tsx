@@ -13,9 +13,9 @@ interface HeaderProps {
 
 export function CallToActionSection({ user }: HeaderProps): JSX.Element {
   const features = [
-    "Automate 90% of accounting tasks",
-    "Real-time financial insights",
-    "Seamless integrations with all major platforms",
+    "Get custom intents unique to your sales process",
+    "Complete social understanding of your prospects",
+    "Know who to contact, what will resonate, and when to reach out -Automatically",
   ];
   const router = useRouter();
 
@@ -54,16 +54,12 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
 
                   {/* Main heading */}
                   <h2 className="[font-family:'Inter-Medium',Helvetica] font-medium text-[#0f4f48] text-4xl lg:text-5xl leading-tight mb-6">
-                    Ready to transform your
+                    Ready to transform your lead pipeline?
                     <br />
-                    broker accounting?
                   </h2>
 
                   {/* Description */}
-                  <p className="[font-family:'Inter-Regular',Helvetica] font-normal text-[#0f4f48] text-lg leading-relaxed mb-6 opacity-90">
-                    Join thousands of brokers who have already revolutionized
-                    their accounting processes with Comulate.
-                  </p>
+                  <p className="[font-family:'Inter-Regular',Helvetica] font-normal text-[#0f4f48] text-lg leading-relaxed mb-6 opacity-90"></p>
 
                   {/* Features list */}
                   <div className="space-y-3 mb-6">
@@ -137,18 +133,6 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
                     </Card>
 
                     {/* Third floating card */}
-                    <Card className="absolute -bottom-6 -left-6 bg-white/90 backdrop-blur-sm border border-white/50 shadow-lg transform rotate-12 w-36">
-                      <CardContent className="p-3">
-                        <div className="text-center">
-                          <div className="[font-family:'Inter-Medium',Helvetica] font-medium text-[#0f4f48] text-sm">
-                            Time Saved
-                          </div>
-                          <div className="[font-family:'Inter-Medium',Helvetica] font-medium text-[#0f4f48] text-lg">
-                            847 hrs
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
                   </div>
                 </div>
               </div>
