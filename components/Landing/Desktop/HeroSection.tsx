@@ -28,15 +28,15 @@ export function HeroSection() {
             {/* Floating UI cards positioned within the gradient area */}
             <div className="absolute inset-0 pointer-events-none">
               {/* Financial metrics card - aligned with first border */}
-              <div className="absolute top-[25%] right-56">
+              <div className="absolute top-[26%] right-56">
                 <div className="relative">
                   {/* Horizontal connecting line to sidebar */}
-                  <div className="absolute -right-24 top-1/2 w-24 h-px bg-gradient-to-l from-transparent to-[#0f4f48]"></div>
+                  <div className="absolute -right-40 top-1/2 w-40 h-px bg-gradient-to-l from-transparent to-[#0f4f48]"></div>
                   {/* Vertical connecting line */}
-                  <div className="absolute left-1/2 top-full w-px h-32 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
-                  <Card className="w-40 bg-white rounded-md border border-gray-200 shadow-lg">
-                    <CardContent className="p-3">
-                      <div className="space-y-2">
+                  <div className="absolute left-1/2 top-full w-px h-40 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
+                  <Card className="w-44 h-28 bg-white rounded-md border border-gray-200 shadow-lg">
+                    <CardContent className="p-3 h-full flex flex-col justify-center">
+                      <div className="space-y-1">
                         <div className="flex items-center gap-1 px-2 py-1 bg-[#0f4f48]/20 rounded text-xs text-black">
                           ICP MATCH
                           <TrendingUp className="w-3 h-3" />
@@ -56,18 +56,18 @@ export function HeroSection() {
               </div>
 
               {/* Policy card with connecting line - aligned with Bonhomia World bottom border */}
-              <div className="absolute top-[67%] left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <div className="absolute top-[65%] left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                 <div className="relative">
                   {/* Connecting line to the right */}
-                  <div className="absolute -right-24 top-1/2 w-24 h-px bg-gradient-to-l from-transparent to-[#0f4f48]"></div>
+                  <div className="absolute -right-32 top-1/2 w-32 h-px bg-gradient-to-l from-transparent to-[#0f4f48]"></div>
                   {/* Vertical connecting line */}
-                  <div className="absolute left-1/2 top-full w-px h-24 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
-                  <Card className="bg-white rounded-md border border-gray-200 shadow-lg">
-                    <CardContent className="p-2">
-                      <div className="text-xs text-gray-600 mb-2">
+                  <div className="absolute left-1/2 top-full w-px h-40 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
+                  <Card className="w-44 h-28 bg-white rounded-md border border-gray-200 shadow-lg">
+                    <CardContent className="p-3 h-full flex flex-col justify-center">
+                      <div className="text-xs text-gray-600 mb-1">
                         Custom Signals
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <div className="bg-[#ffb84e]/20 px-2 py-1 rounded text-xs text-black flex items-center gap-1">
                           Likes Books
                         </div>
@@ -86,22 +86,25 @@ export function HeroSection() {
               </div>
 
               {/* Amount card - bottom left */}
-              <div className="absolute bottom-32 left-32">
+              <div className="absolute bottom-16 left-32">
                 <div className="relative">
                   {/* Connecting line */}
-                  <div className="absolute -left-24 top-1/2 w-24 h-px bg-gradient-to-r from-transparent to-[#0f4f48]"></div>
+                  <div className="absolute -left-32 top-1/2 w-32 h-px bg-gradient-to-r from-transparent to-[#0f4f48]"></div>
                   {/* Vertical connecting line */}
-                  <div className="absolute left-1/2 top-full w-px h-24 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
-                  <Card className="bg-white rounded-md border border-gray-200 shadow-lg">
-                    <CardContent className="p-2">
-                      <div className="space-y-2">
-                        <div className="bg-[#ff3c11]/20 px-2 py-1 rounded flex items-center gap-1 w-fit">
+                  <div className="absolute left-1/2 top-full w-px h-32 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
+                  <Card className="w-44 h-28 bg-white rounded-md border border-gray-200 shadow-lg">
+                    <CardContent className="p-3 h-full flex flex-col justify-center">
+                      <div className="space-y-1">
+                        <div className="bg-[#ff3c11]/20 px-2 py-1 rounded flex items-center gap-1">
                           <span className="text-xs text-black">CTO under 35</span>
                           <TrendingDown className="w-2 h-2" />
                         </div>
-                        <div className="bg-yellow-100 px-2 py-1 rounded flex items-center gap-1 w-fit">
+                        <div className="bg-yellow-100 px-2 py-1 rounded flex items-center gap-1">
                           <MessageCircle className="w-3 h-3" />
                           <span className="text-xs text-black">Pain Point</span>
+                        </div>
+                        <div className="bg-gray-100 px-2 py-1 rounded flex items-center gap-1">
+                          <span className="text-xs text-black">High Intent</span>
                         </div>
                       </div>
                     </CardContent>
