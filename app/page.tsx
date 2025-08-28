@@ -1,6 +1,5 @@
 "use client"
 
-import { CallToActionSection } from "@/components/Landing/Desktop/CallToActionSection";
 import { FeatureLayoutSection } from "@/components/Landing/Desktop/FeatureLayoutSection";
 import { Header } from "@/components/Landing/Header";
 import { HeroSection } from "@/components/Landing/Desktop/HeroSection";
@@ -9,6 +8,7 @@ import { TestimonialSection } from "@/components/Landing/Desktop/TestimonialSect
 import { HeroSectionMobile } from "@/components/Landing/Mobile/HeroSectionMobile";
 import { FeatureLayoutSectionMobile } from "@/components/Landing/Mobile/FeatureLayoutSectionMobile";
 import { TestimonialSectionMobile } from "@/components/Landing/Mobile/TestimonialSectionMobile";
+import { CallToActionResponsive } from "@/components/Landing/CallToActionResponsive";
 
 import { ResponsiveLayout } from "@/components/Landing/ResponsiveLayout";
 import { Loading } from "@/components/loading";
@@ -48,7 +48,7 @@ const HomePage = (): JSX.Element => {
           mobileComponent={TestimonialSectionMobile} 
           desktopComponent={TestimonialSection} 
         />
-        <CallToActionSection user={user}/>
+        <CallToActionResponsive user={user}/>
       </main>
     </div>
   );
