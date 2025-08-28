@@ -3,7 +3,8 @@
 import React, { JSX, useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { Card, CardContent } from "@/components/ui/card";
-import { TestimonialSectionMobile } from "./TestimonialSectionMobile";
+import { TestimonialSectionMobile } from "../Mobile/TestimonialSectionMobile";
+
 
 export function TestimonialSection(): JSX.Element {
   const sectionRef = useRef<HTMLDivElement>(null);

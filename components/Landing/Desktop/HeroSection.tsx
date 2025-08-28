@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, TrendingDown, TrendingUp, Users, DollarSign, Briefcase, Building, MessageCircle } from "lucide-react";
 import React from "react";
-import { HeroSectionMobile } from "./HeroSectionMobile";
+import { HeroSectionMobile } from "../Mobile/HeroSectionMobile";
 
 const companyLogos = [
   { name: "ALKEME", className: "text-[#0f4f48] font-medium text-lg" },

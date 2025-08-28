@@ -1,13 +1,14 @@
 "use client"
 
-import { CallToActionSection } from "@/components/Landing/CallToActionSection";
-import { FeatureLayoutSection } from "@/components/Landing/FeatureLayoutSection";
+import { CallToActionSection } from "@/components/Landing/Desktop/CallToActionSection";
+import { FeatureLayoutSection } from "@/components/Landing/Desktop/FeatureLayoutSection";
 import { Header } from "@/components/Landing/Header";
-import { HeroSection } from "@/components/Landing/HeroSection";
-import { TestimonialSection } from "@/components/Landing/TestimonialSection";
+import { HeroSection } from "@/components/Landing/Desktop/HeroSection";
+
 import { Loading } from "@/components/loading";
 import { useAuth } from "@/lib/auth-context";
 import { JSX } from "react";
+import { TestimonialSection } from "@/components/Landing/Desktop/TestimonialSection";
 
 const HomePage = (): JSX.Element => {
 
