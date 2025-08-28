@@ -196,21 +196,21 @@ export function FeatureLayoutSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full h-[250vh] overflow-hidden"
+      className="relative w-full h-[200vh] md:h-[250vh] overflow-hidden"
     >
       {/* Fixed container for animated text */}
       <motion.div
-        className="fixed left-1/2 top-[15%] z-10 w-full max-w-4xl px-8"
+        className="fixed left-1/2 top-[10%] md:top-[15%] z-10 w-full max-w-sm sm:max-w-2xl md:max-w-4xl px-4 sm:px-6 md:px-8"
         style={{
           opacity: containerOpacity,
           transform: "translateX(-50%)",
         }}
       >
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-1 md:space-y-2">
           {allLines.map((line, lineIndex) => (
             <div
               key={lineIndex}
-              className="flex flex-wrap items-baseline gap-x-2"
+              className="flex flex-wrap items-baseline gap-x-1 sm:gap-x-2"
             >
               {line.words.map((word, wordIndex) => {
                 const animIdx = animatedIndices.findIndex(
@@ -231,13 +231,11 @@ export function FeatureLayoutSection() {
                 return (
                   <motion.span
                     key={`${lineIndex}-${wordIndex}`}
+                    className="text-lg sm:text-xl md:text-2xl lg:text-3xl leading-tight"
                     style={{
                       color,
                       fontFamily: "'Inter-Medium', Helvetica",
                       fontWeight: 500,
-                      fontSize: "30.1px",
-                      lineHeight: "40px",
-                      whiteSpace: "nowrap",
                     }}
                   >
                     {word.text}
@@ -311,7 +309,7 @@ export function TestimonialSection(): JSX.Element {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full h-[300vh] overflow-hidden"
+      className="relative w-full h-[250vh] md:h-[300vh] overflow-hidden"
     >
       <div className="fixed inset-0 z-0">
         <motion.div
@@ -325,13 +323,13 @@ export function TestimonialSection(): JSX.Element {
       </div>
 
       <motion.div
-        className="fixed left-1/2 top-1/2 z-10"
+        className="fixed left-1/2 top-1/2 z-10 px-4"
         style={{
           opacity: containerOpacity,
           transform: "translate(-50%, -50%)",
         }}
       >
-        <div className="relative w-[600px] h-[400px]">
+        <div className="relative w-[280px] h-[200px] sm:w-[400px] sm:h-[280px] md:w-[500px] md:h-[350px] lg:w-[600px] lg:h-[400px]">
           {cards.map((card, index) => (
             <motion.div
               key={index}
@@ -344,14 +342,14 @@ export function TestimonialSection(): JSX.Element {
               }}
             >
               <Card className="w-full h-full bg-white border border-gray-300 shadow-md">
-                <CardContent className="flex flex-col justify-center items-center p-8 h-full">
-                  <p className="font-medium text-xl text-[#0f4f48] text-center mb-4">
-                    “{card.quote}”
+                <CardContent className="flex flex-col justify-center items-center p-3 sm:p-4 md:p-6 lg:p-8 h-full">
+                  <p className="font-medium text-sm sm:text-base md:text-lg lg:text-xl text-[#0f4f48] text-center mb-2 sm:mb-3 md:mb-4">
+                    "{card.quote}"
                   </p>
-                  <span className="font-medium text-[#0f4f48]">
+                  <span className="font-medium text-xs sm:text-sm md:text-base text-[#0f4f48] text-center">
                     {card.author}
                   </span>
-                  <span className="text-sm text-[#0f4f48]">
+                  <span className="text-xs sm:text-xs md:text-sm text-[#0f4f48] text-center">
                     {card.position}
                   </span>
                 </CardContent>

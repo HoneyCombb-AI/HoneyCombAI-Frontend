@@ -32,16 +32,16 @@ export function Header({ user }: HeaderProps): JSX.Element {
 
   return (
     <header className="bg-white border-b [border-bottom-style:solid] border-[#0f4f4880] w-full">
-      <div className="relative w-full max-w-[1152px] h-[79px] mx-auto px-4 lg:px-[136px]">
+      <div className="relative w-full max-w-[1152px] h-[79px] mx-auto px-4 sm:px-6 lg:px-[136px]">
         <div className="flex items-center justify-between w-full h-full">
           {/* LEFT: Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative">
-              <HexagonIcon className="w-8 h-8 text-amber-500" />
+              <HexagonIcon className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500" />
               <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-yellow-500 opacity-20 rounded blur-sm"></div>
             </div>
-            <span className="font-bold text-xl text-[#0f4f48]">HoneyComb</span>
-            <span className="text-sm">AI</span>
+            <span className="font-bold text-lg sm:text-xl text-[#0f4f48]">HoneyComb</span>
+            <span className="text-xs sm:text-sm">AI</span>
           </div>
           
           {/* Background decorative elements */}
@@ -52,11 +52,11 @@ export function Header({ user }: HeaderProps): JSX.Element {
           </div>
 
           {/* RIGHT: Log in + Book demo */}
-          <div className="flex items-center gap-4 lg:gap-[67px]">
+          <div className="flex items-center gap-2 sm:gap-4 lg:gap-[67px]">
             <Button
               variant="ghost"
               onClick={handleLoginClick}
-              className="relative overflow-hidden group cursor-pointer hidden md:block bg-transparent hover:bg-transparent px-3 py-2 h-auto"
+              className="relative overflow-hidden group cursor-pointer hidden sm:block bg-transparent hover:bg-transparent px-2 sm:px-3 py-2 h-auto text-sm"
             >
                {user ? "Dashboard" : "Log in"}
               <div className="absolute w-full h-0.5 -bottom-1 -left-full bg-[#0f4f48] group-hover:left-0 transition-all duration-300" />
@@ -64,9 +64,9 @@ export function Header({ user }: HeaderProps): JSX.Element {
 
             <Button 
               onClick={handleBookDemoClick}
-              className="bg-[#4adf7d] hover:bg-[#4adf7d]/90 text-[#0f4f48] shadow-[0px_1px_2px_#1018280d] h-11 px-5 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-[14.9px] tracking-[0] leading-6"
+              className="bg-[#4adf7d] hover:bg-[#4adf7d]/90 text-[#0f4f48] shadow-[0px_1px_2px_#1018280d] h-9 sm:h-11 px-3 sm:px-5 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-xs sm:text-[14.9px] tracking-[0] leading-6"
             >
-              Book demo
+              {user ? "Dashboard" : "Book demo"}
             </Button>
           </div>
         </div>

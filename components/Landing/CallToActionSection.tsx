@@ -17,10 +17,10 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
     "Real-time financial insights",
     "Seamless integrations with all major platforms",
   ];
-    const router = useRouter();
+  const router = useRouter();
 
   const handleLoginClick = () => {
-    console.log("click")
+    console.log("click");
     if (user) {
       router.push("/contacts");
     } else {
@@ -79,7 +79,10 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
 
                   {/* CTA buttons */}
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Button onClick={handleLoginClick} className="bg-[#4adf7d] cursor-pointer hover:bg-[#4adf7d]/90 text-[#0f4f48] shadow-[0px_1px_2px_#1018280d] h-14 px-8 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-lg tracking-[0] leading-6">
+                    <Button
+                      onClick={handleLoginClick}
+                      className="bg-[#4adf7d] cursor-pointer hover:bg-[#4adf7d]/90 text-[#0f4f48] shadow-[0px_1px_2px_#1018280d] h-14 px-8 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-lg tracking-[0] leading-6"
+                    >
                       {user ? "Access Dashboard" : "Log in"}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>

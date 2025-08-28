@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, TrendingDown, TrendingUp, Users, DollarSign, Briefcase, Building, MessageCircle } from "lucide-react";
 import React from "react";
+import { HeroSectionMobile } from "./HeroSectionMobile";
 
 const companyLogos = [
   { name: "ALKEME", className: "text-[#0f4f48] font-medium text-lg" },
@@ -12,9 +13,14 @@ const companyLogos = [
 
 export function HeroSection() {
   return (
-    <section className="relative w-full mb-40">
+    <>
+      {/* Mobile version */}
+      <HeroSectionMobile />
+      
+      {/* Desktop version */}
+      <section className="relative w-full mb-40 hidden md:block">
       {/* Main hero container with grid structure */}
-      <div className="relative w-full h-[85vh] border-t border-[#0f4f48]">
+      <div className="relative w-full h-auto min-h-[60vh] md:h-[85vh] border-t border-[#0f4f48]">
         {/* Main content grid */}
         <div className="grid grid-cols-4 h-full">
           {/* Left section - Hero content with gradient background */}
@@ -147,6 +153,7 @@ export function HeroSection() {
       </div>
 
       {/* Company logos section at bottom */}
-    </section>
+      </section>
+    </>
   );
 }
