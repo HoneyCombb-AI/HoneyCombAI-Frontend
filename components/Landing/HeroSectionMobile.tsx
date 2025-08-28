@@ -1,5 +1,6 @@
 import { ArrowRight, TrendingDown, TrendingUp, Users, DollarSign, Briefcase, Building, MessageCircle } from "lucide-react";
 import React from "react";
+import { motion } from "framer-motion";
 
 export function HeroSectionMobile() {
   return (
@@ -29,67 +30,107 @@ export function HeroSectionMobile() {
             
             {/* ICP Match badge */}
             <div className="absolute top-[40%] left-2">
-              <div className="flex items-center gap-0.5 px-2 py-1 bg-[#0f4f48]/20 rounded text-[10px] text-black w-fit pointer-events-auto shadow-sm">
+              <motion.div 
+                className="flex items-center gap-0.5 px-2 py-1 bg-[#0f4f48]/20 rounded text-[10px] text-black w-fit pointer-events-auto shadow-sm"
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+              >
                 ICP MATCH
                 <TrendingUp className="w-2 h-2" />
-              </div>
+              </motion.div>
             </div>
 
             {/* Recently Funded badge */}
             <div className="absolute top-[48%] left-2">
-              <div className="flex items-center gap-0.5 px-2 py-1 bg-green-100 rounded text-[10px] text-black w-fit pointer-events-auto shadow-sm">
+              <motion.div 
+                className="flex items-center gap-0.5 px-2 py-1 bg-green-100 rounded text-[10px] text-black w-fit pointer-events-auto shadow-sm"
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
+              >
                 Recently Funded
                 <DollarSign className="w-2 h-2" />
-              </div>
+              </motion.div>
             </div>
 
             {/* Open Roles badge */}
             <div className="absolute top-[56%] left-2">
-              <div className="flex items-center gap-0.5 px-2 py-1 bg-blue-100 rounded text-[10px] text-black w-fit pointer-events-auto shadow-sm">
+              <motion.div 
+                className="flex items-center gap-0.5 px-2 py-1 bg-blue-100 rounded text-[10px] text-black w-fit pointer-events-auto shadow-sm"
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6, ease: "easeOut" }}
+              >
                 3 Open Roles
                 <Users className="w-2 h-2" />
-              </div>
+              </motion.div>
             </div>
 
             {/* Likes Books badge */}
             <div className="absolute top-[64%] left-2">
-              <div className="bg-[#ffb84e]/20 px-2 py-1 rounded text-[10px] text-black flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm">
+              <motion.div 
+                className="bg-[#ffb84e]/20 px-2 py-1 rounded text-[10px] text-black flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm"
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.8, ease: "easeOut" }}
+              >
                 Likes Books
-              </div>
+              </motion.div>
             </div>
 
             {/* RIGHT SIDE BADGES */}
 
             {/* CTO New Hire badge */}
             <div className="absolute top-[40%] right-2">
-              <div className="bg-purple-100 px-2 py-1 rounded text-[10px] text-black flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm">
+              <motion.div 
+                className="bg-purple-100 px-2 py-1 rounded text-[10px] text-black flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm"
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3, ease: "easeOut" }}
+              >
                 CTO New Hire
                 <Briefcase className="w-2 h-2" />
-              </div>
+              </motion.div>
             </div>
 
             {/* Expansion badge */}
             <div className="absolute top-[48%] right-2">
-              <div className="bg-orange-100 px-2 py-1 rounded text-[10px] text-black flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm">
+              <motion.div 
+                className="bg-orange-100 px-2 py-1 rounded text-[10px] text-black flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm"
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+              >
                 Expansion
                 <Building className="w-2 h-2" />
-              </div>
+              </motion.div>
             </div>
 
             {/* CTO under 35 badge */}
             <div className="absolute top-[56%] right-2">
-              <div className="bg-[#ff3c11]/20 px-2 py-1 rounded flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm">
+              <motion.div 
+                className="bg-[#ff3c11]/20 px-2 py-1 rounded flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm"
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.7, ease: "easeOut" }}
+              >
                 <span className="text-[10px] text-black">CTO under 35</span>
                 <TrendingDown className="w-2 h-2" />
-              </div>
+              </motion.div>
             </div>
 
             {/* Pain Point badge */}
             <div className="absolute top-[64%] right-2">
-              <div className="bg-yellow-100 px-2 py-1 rounded flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm">
+              <motion.div 
+                className="bg-yellow-100 px-2 py-1 rounded flex items-center gap-0.5 w-fit pointer-events-auto shadow-sm"
+                initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9, ease: "easeOut" }}
+              >
                 <span className="text-[10px] text-black">Pain Point</span>
                 <MessageCircle className="w-2 h-2" />
-              </div>
+              </motion.div>
             </div>
 
           </div>
