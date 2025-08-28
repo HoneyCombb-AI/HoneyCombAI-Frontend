@@ -48,10 +48,37 @@ export const contactsTourSteps: DriveStep[] = [
     }
   },
   {
+    element: '[data-testid="sample-contact-green-ring"]',
+    popover: {
+      title: 'Analysis Complete',
+      description: 'The green ring around this contact\'s profile picture indicates that AI-powered enrichment analysis has been completed, providing you with valuable insights about this person.',
+      side: "right",
+      align: 'end'
+    }
+  },
+  {
+    element: '[data-testid="sample-contact-split-ring"]',
+    popover: {
+      title: 'Analysis Complete + Tracking',
+      description: 'The split green and gold ring shows this contact has completed analysis AND is being actively tracked for updates like job changes or company news.',
+      side: "right",
+      align: 'start'
+    }
+  },
+  {
+    element: '[data-testid="sample-contact-loading-ring"]',
+    popover: {
+      title: 'Analysis In Progress',
+      description: 'The animated quarter ring indicates that AI analysis is currently being processed for this contact. This typically takes a some time to complete.',
+      side: "right",
+      align: 'start'
+    }
+  },
+  {
     element: 'body',
     popover: {
       title: 'Next: Companies',
-      description: 'Great! Now let\'s explore the Companies section to see how you can manage and analyze your company data.',
+      description: 'Great! Now you understand the different contact analysis states. Let\'s explore the Companies section to see how you can manage and analyze your company data.',
       side: "bottom",
       align: 'center'
     }
