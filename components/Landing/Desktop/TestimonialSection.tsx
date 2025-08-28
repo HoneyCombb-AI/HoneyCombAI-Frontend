@@ -3,7 +3,6 @@
 import React, { JSX, useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { Card, CardContent } from "@/components/ui/card";
-import { TestimonialSectionMobile } from "../Mobile/TestimonialSectionMobile";
 
 
 export function TestimonialSection(): JSX.Element {
@@ -77,15 +76,10 @@ export function TestimonialSection(): JSX.Element {
   );
 
   return (
-    <>
-      {/* Mobile version */}
-      <TestimonialSectionMobile />
-      
-      {/* Desktop version */}
-      <section
-        ref={sectionRef}
-        className="relative w-full h-[300vh] overflow-hidden hidden md:block"
-      >
+    <section
+      ref={sectionRef}
+      className="relative w-full h-[300vh] overflow-hidden"
+    >
       {/* Curtains */}
       <div className="fixed inset-0 z-0">
         <motion.div
@@ -135,6 +129,5 @@ export function TestimonialSection(): JSX.Element {
         </div>
       </motion.div>
       </section>
-    </>
   );
 }
