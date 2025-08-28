@@ -55,7 +55,9 @@ const HomePage = (): JSX.Element => {
           mobileComponent={TestimonialSectionMobile} 
           desktopComponent={TestimonialSection} 
         />
-        <CallToActionResponsive user={user}/>
+        <div id="call-to-action">
+          <CallToActionResponsive user={user}/>
+        </div>
       </main>
     </div>
   );
