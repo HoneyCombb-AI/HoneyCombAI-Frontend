@@ -93,7 +93,7 @@ export function TestimonialSectionMobile(): JSX.Element {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             drag="x"
             dragConstraints={{
-              left: -((cards.length - 1) * window.innerWidth || 400),
+              left: -((cards.length - 1) * (typeof window !== 'undefined' ? window.innerWidth : 400)),
               right: 0,
             }}
             dragElastic={0.2}

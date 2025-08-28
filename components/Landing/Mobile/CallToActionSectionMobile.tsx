@@ -32,7 +32,6 @@ export function CallToActionSectionMobile({ user }: CallToActionSectionMobilePro
   useEffect(() => {
     (async function () {
       const cal = await getCalApi({"namespace":"30min"});
-      cal("floatingButton", {"calLink":"ankushnagathan/30min","config":{"layout":"month_view"}});
       cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
     })();
   }, []);
@@ -132,6 +131,16 @@ export function CallToActionSectionMobile({ user }: CallToActionSectionMobilePro
           >
             {user ? "Access Dashboard" : "Get Started Free"}
             <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="w-full bg-white hover:bg-gray-50 border-[#0f4f48]/20 text-[#0f4f48] h-12 rounded-lg font-semibold text-base"
+            data-cal-namespace="30min"
+            data-cal-link="ankushnagathan/30min"
+            data-cal-config='{"layout":"month_view"}'
+          >
+            Book Demo
           </Button>
         </motion.div>
       </div>
