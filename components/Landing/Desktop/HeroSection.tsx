@@ -84,87 +84,182 @@ export function HeroSection() {
             <div className="absolute inset-0 pointer-events-none">
               {/* Financial metrics card - aligned with first border */}
               <div className="absolute top-[26%] right-56">
-                <div className="relative">
+                <motion.div 
+                  className="relative"
+                  initial={{ opacity: 0, x: 50, y: 20 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  transition={{ duration: 0.6, delay: 2.5, ease: "easeOut" }}
+                >
                   {/* Horizontal connecting line to sidebar */}
-                  <div className="absolute -right-40 top-1/2 w-40 h-px bg-gradient-to-l from-transparent to-[#0f4f48]"></div>
+                  <motion.div 
+                    className="absolute -right-40 top-1/2 w-40 h-px bg-gradient-to-l from-transparent to-[#0f4f48]"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    animate={{ scaleX: 1, opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 2.8, ease: "easeOut" }}
+                  ></motion.div>
                   {/* Vertical connecting line */}
-                  <div className="absolute left-1/2 top-full w-px h-40 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
+                  <motion.div 
+                    className="absolute left-1/2 top-full w-px h-40 bg-gradient-to-b from-[#0f4f48] to-transparent"
+                    initial={{ scaleY: 0, opacity: 0 }}
+                    animate={{ scaleY: 1, opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 2.9, ease: "easeOut" }}
+                  ></motion.div>
                   <Card className="w-44 h-28 bg-white rounded-md border border-gray-200 shadow-lg">
                     <CardContent className="p-3 h-full flex flex-col justify-center">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-1 px-2 py-1 bg-[#0f4f48]/20 rounded text-xs text-black">
+                        <motion.div 
+                          className="flex items-center gap-1 px-2 py-1 bg-[#0f4f48]/20 rounded text-xs text-black"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 3.0, ease: "easeOut" }}
+                        >
                           ICP MATCH
                           <TrendingUp className="w-3 h-3" />
-                        </div>
-                        <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded text-xs text-black">
+                        </motion.div>
+                        <motion.div 
+                          className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded text-xs text-black"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 3.1, ease: "easeOut" }}
+                        >
                           Recently Funded
                           <DollarSign className="w-3 h-3" />
-                        </div>
-                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded text-xs text-black">
+                        </motion.div>
+                        <motion.div 
+                          className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded text-xs text-black"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 3.2, ease: "easeOut" }}
+                        >
                           3 Open Roles
                           <Users className="w-3 h-3" />
-                        </div>
+                        </motion.div>
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                </motion.div>
               </div>
 
               {/* Policy card with connecting line - aligned with Bonhomia World bottom border */}
               <div className="absolute top-[65%] left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                <div className="relative">
+                <motion.div 
+                  className="relative"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 3.3, ease: "easeOut" }}
+                >
                   {/* Connecting line to the right */}
-                  <div className="absolute -right-32 top-1/2 w-32 h-px bg-gradient-to-l from-transparent to-[#0f4f48]"></div>
+                  <motion.div 
+                    className="absolute -right-32 top-1/2 w-32 h-px bg-gradient-to-l from-transparent to-[#0f4f48]"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    animate={{ scaleX: 1, opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 3.6, ease: "easeOut" }}
+                  ></motion.div>
                   {/* Vertical connecting line */}
-                  <div className="absolute left-1/2 top-full w-px h-40 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
+                  <motion.div 
+                    className="absolute left-1/2 top-full w-px h-40 bg-gradient-to-b from-[#0f4f48] to-transparent"
+                    initial={{ scaleY: 0, opacity: 0 }}
+                    animate={{ scaleY: 1, opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 3.7, ease: "easeOut" }}
+                  ></motion.div>
                   <Card className="w-44 h-28 bg-white rounded-md border border-gray-200 shadow-lg">
                     <CardContent className="p-3 h-full flex flex-col justify-center">
-                      <div className="text-xs text-gray-600 mb-1">
+                      <motion.div 
+                        className="text-xs text-gray-600 mb-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 3.8, ease: "easeOut" }}
+                      >
                         Custom Signals
-                      </div>
+                      </motion.div>
                       <div className="space-y-1">
-                        <div className="bg-[#ffb84e]/20 px-2 py-1 rounded text-xs text-black flex items-center gap-1">
+                        <motion.div 
+                          className="bg-[#ffb84e]/20 px-2 py-1 rounded text-xs text-black flex items-center gap-1"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 3.9, ease: "easeOut" }}
+                        >
                           Likes Books
-                        </div>
-                        <div className="bg-purple-100 px-2 py-1 rounded text-xs text-black flex items-center gap-1">
+                        </motion.div>
+                        <motion.div 
+                          className="bg-purple-100 px-2 py-1 rounded text-xs text-black flex items-center gap-1"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 4.0, ease: "easeOut" }}
+                        >
                           <Briefcase className="w-3 h-3" />
                           CTO New Hire
-                        </div>
-                        <div className="bg-orange-100 px-2 py-1 rounded text-xs text-black flex items-center gap-1">
+                        </motion.div>
+                        <motion.div 
+                          className="bg-orange-100 px-2 py-1 rounded text-xs text-black flex items-center gap-1"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 4.1, ease: "easeOut" }}
+                        >
                           <Building className="w-3 h-3" />
                           Expansion
-                        </div>
+                        </motion.div>
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                </motion.div>
               </div>
 
               {/* Amount card - bottom left */}
               <div className="absolute bottom-16 left-32">
-                <div className="relative">
+                <motion.div 
+                  className="relative"
+                  initial={{ opacity: 0, x: -50, y: 20 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
+                  transition={{ duration: 0.6, delay: 4.2, ease: "easeOut" }}
+                >
                   {/* Connecting line */}
-                  <div className="absolute -left-32 top-1/2 w-32 h-px bg-gradient-to-r from-transparent to-[#0f4f48]"></div>
+                  <motion.div 
+                    className="absolute -left-32 top-1/2 w-32 h-px bg-gradient-to-r from-transparent to-[#0f4f48]"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    animate={{ scaleX: 1, opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 4.5, ease: "easeOut" }}
+                  ></motion.div>
                   {/* Vertical connecting line */}
-                  <div className="absolute left-1/2 top-full w-px h-32 bg-gradient-to-b from-[#0f4f48] to-transparent"></div>
+                  <motion.div 
+                    className="absolute left-1/2 top-full w-px h-32 bg-gradient-to-b from-[#0f4f48] to-transparent"
+                    initial={{ scaleY: 0, opacity: 0 }}
+                    animate={{ scaleY: 1, opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 4.6, ease: "easeOut" }}
+                  ></motion.div>
                   <Card className="w-44 h-28 bg-white rounded-md border border-gray-200 shadow-lg">
                     <CardContent className="p-3 h-full flex flex-col justify-center">
                       <div className="space-y-1">
-                        <div className="bg-[#ff3c11]/20 px-2 py-1 rounded flex items-center gap-1">
+                        <motion.div 
+                          className="bg-[#ff3c11]/20 px-2 py-1 rounded flex items-center gap-1"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 4.7, ease: "easeOut" }}
+                        >
                           <span className="text-xs text-black">CTO under 35</span>
                           <TrendingDown className="w-2 h-2" />
-                        </div>
-                        <div className="bg-yellow-100 px-2 py-1 rounded flex items-center gap-1">
+                        </motion.div>
+                        <motion.div 
+                          className="bg-yellow-100 px-2 py-1 rounded flex items-center gap-1"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 4.8, ease: "easeOut" }}
+                        >
                           <MessageCircle className="w-3 h-3" />
                           <span className="text-xs text-black">Pain Point</span>
-                        </div>
-                        <div className="bg-gray-100 px-2 py-1 rounded flex items-center gap-1">
+                        </motion.div>
+                        <motion.div 
+                          className="bg-gray-100 px-2 py-1 rounded flex items-center gap-1"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 4.9, ease: "easeOut" }}
+                        >
                           <span className="text-xs text-black">High Intent</span>
-                        </div>
+                        </motion.div>
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
