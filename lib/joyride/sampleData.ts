@@ -21,6 +21,44 @@ export const SAMPLE_COMPANY_DATA = {
       hasPrev: false
     }
   };
+
+
+export const SAMPLE_ORGANIZATION_DATA = {
+  id: "sample-org-123",
+  name: "HoneyComb Demo",
+  invite_code: "DEMO12345678",
+  created_by: "current-user-id",
+  created_at: "2024-01-15T10:00:00Z",
+  total_tokens: 25000,
+  memberCount: 4,
+  isOwner: true,
+  members: [
+    {
+      id: "member-1",
+      user_id: "current-user-id",
+      full_name: "Sarah Johnson",
+      token_limit: null,
+      tokens_used: 2500,
+      joined_at: "2024-01-15T10:00:00Z"
+    },
+    {
+      id: "member-2", 
+      user_id: "user-2",
+      full_name: "Michael Chen",
+      token_limit: 5000,
+      tokens_used: 3200,
+      joined_at: "2024-02-01T14:30:00Z"
+    },
+    {
+      id: "member-3",
+      user_id: "user-3", 
+      full_name: "Emma Rodriguez",
+      token_limit: 3000,
+      tokens_used: 1800,
+      joined_at: "2024-02-15T09:15:00Z"
+    },
+  ]
+};
   
 
   export const SAMPLE_CONTACT_DATA = {
@@ -39,6 +77,7 @@ export const SAMPLE_COMPANY_DATA = {
         profile_picture: "https://media.licdn.com/dms/image/v2/C4E03AQGc0hsy5t0cfQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1660897129896?e=1756944000&v=beta&t=nVwwkghR_HtWSaQqPSN4yqc2-blvE8Is8HWKApMrj1Y",
         isTracked: false,
         primaryAnalysisCompleted: true,
+        primaryAnalysisRequested: true,
         in_crm: false,
         created_at: "2025-08-02 03:23:45.810097",
         updated_at: "2025-08-02 03:23:45.810097",
@@ -70,7 +109,7 @@ export const SAMPLE_COMPANY_DATA = {
             confidence_score: 88
           }
         ]
-      }
+      },
     ],
     pagination: {
       page: 1,

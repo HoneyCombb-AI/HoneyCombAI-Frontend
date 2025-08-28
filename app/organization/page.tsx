@@ -13,18 +13,22 @@ import { CreateOrganizationDialog } from '@/components/organization/create-organ
 import { JoinOrganizationDialog } from '@/components/organization/join-organization-dialog';
 import { OrganizationDetails } from '@/components/organization/organization-details';
 import { useTour } from '@/lib/joyride/useTour';
+import { SAMPLE_ORGANIZATION_DATA } from '@/lib/joyride/sampleData';
 
 // Component that uses useSearchParams wrapped in Suspense
-function TourProvider({ children }: { children: (props: { isDataLoaded: boolean }) => React.ReactNode }) {
+function TourProvider({ children }: { children: (props: { isDataLoaded: boolean, isJoyrideMode: boolean }) => React.ReactNode }) {
   const { loading: authLoading } = useAuth();
-  useTour('organization', !authLoading);
-  return <>{children({ isDataLoaded: !authLoading })}</>;
+  const { isJoyrideMode } = useTour('organization', !authLoading);
+  return <>{children({ isDataLoaded: !authLoading, isJoyrideMode })}</>;
 }
 
-function OrganizationPageContent() {
+function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [organization, setOrganization] = useState<OrganizationData | null>(null);
+
+  // Use sample data during joyride mode
+  const displayOrganization = isJoyrideMode ? SAMPLE_ORGANIZATION_DATA : organization;
 
   const fetchOrganizationData = async () => {
     if (!user) return;
@@ -62,14 +66,14 @@ function OrganizationPageContent() {
   };
 
   useEffect(() => {
-    if (user && !authLoading) {
+    if (user && !authLoading && !isJoyrideMode) {
       fetchOrganizationData();
     }
-  }, [authLoading]);
+  }, [authLoading, isJoyrideMode]);
 
 
 
-  if (authLoading || loading) {
+  if ((authLoading || loading) && !isJoyrideMode) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
         <Loading />
@@ -88,8 +92,8 @@ function OrganizationPageContent() {
       </header>
 
       <main className="flex-1 p-4 md:p-6">
-        {!organization ? (
-          // No organization state
+        {!displayOrganization ? (
+          // No organization state - only show when not in joyride mode
           <div className="max-w-4xl mx-auto">
             <div className="text-center py-12">
               <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -113,7 +117,7 @@ function OrganizationPageContent() {
         ) : (
           <div data-testid="organization-details">
             <OrganizationDetails
-              organization={organization}
+              organization={displayOrganization}
               onOrganizationUpdated={fetchOrganizationDataWL}
             />
           </div>
@@ -127,7 +131,7 @@ export default function OrganizationPage() {
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loading /></div>}>
       <TourProvider>
-        {() => <OrganizationPageContent />}
+        {({ isJoyrideMode }) => <OrganizationPageContent isJoyrideMode={isJoyrideMode} />}
       </TourProvider>
     </Suspense>
   );
