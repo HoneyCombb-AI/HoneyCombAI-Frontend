@@ -1,11 +1,13 @@
 "use client";
 
-import React, { JSX, useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { JSX, useState, useEffect, useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function TestimonialSectionMobile(): JSX.Element {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const titleRef = useRef(null);
+  const isInView = useInView(titleRef, { once: true, amount: 0.3 });
   
   const cards = [
     {
@@ -51,9 +53,37 @@ export function TestimonialSectionMobile(): JSX.Element {
       
       <div className="relative z-10 px-4">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-semibold text-[#0f4f48] mb-4">
-            Why Choose HoneyComb AI?
-          </h2>
+          <motion.h2 
+            ref={titleRef}
+            className="text-2xl font-semibold text-[#0f4f48] mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isInView ? 1 : 0 }}
+            transition={{ duration: 0.1 }}
+          >
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isInView ? 1 : 0 }}
+              transition={{
+                duration: 2,
+                ease: "easeInOut",
+              }}
+            >
+              {"Why Choose HoneyComb AI?".split("").map((char, index) => (
+                <motion.span
+                  key={index}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: isInView ? 1 : 0 }}
+                  transition={{
+                    duration: 0.1,
+                    delay: isInView ? index * 0.05 : 0,
+                    ease: "easeInOut",
+                  }}
+                >
+                  {char}
+                </motion.span>
+              ))}
+            </motion.span>
+          </motion.h2>
         </div>
 
         <div className="relative overflow-hidden">
