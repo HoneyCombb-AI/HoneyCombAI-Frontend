@@ -9,10 +9,10 @@ import { useRouter } from "next/navigation";
 import { getCalApi } from "@calcom/embed-react";
 
 interface HeaderProps {
-  user?: any;
+  userEmail?: string | null;
 }
 
-export function CallToActionSection({ user }: HeaderProps): JSX.Element {
+export function CallToActionSection({ userEmail }: HeaderProps): JSX.Element {
   const features = [
     "Get custom intents unique to your sales process",
     "Complete social understanding of your prospects",
@@ -29,7 +29,7 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
 
   const handleLoginClick = () => {
     console.log("click");
-    if (user) {
+    if (userEmail) {
       router.push("/contacts");
     } else {
       router.push("/login");
@@ -87,7 +87,7 @@ export function CallToActionSection({ user }: HeaderProps): JSX.Element {
                       onClick={handleLoginClick}
                       className="bg-[#4adf7d] cursor-pointer hover:bg-[#4adf7d]/90 text-[#0f4f48] shadow-[0px_1px_2px_#1018280d] h-14 px-8 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-lg tracking-[0] leading-6"
                     >
-                      {user ? "Access Dashboard" : "Get Started for free"}
+                      {userEmail ? "Access Dashboard" : "Get Started for free"}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
 

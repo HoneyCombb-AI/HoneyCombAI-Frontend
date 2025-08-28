@@ -60,7 +60,7 @@ const HomePage = (): JSX.Element => {
           desktopComponent={TestimonialSection}
         />
         <div id="call-to-action">
-          <CallToActionResponsive user={user} />
+          <CallToActionResponsive userEmail={userEmail} />
         </div>
         <ResponsiveLayout
           mobileComponent={FooterSectionMobile}

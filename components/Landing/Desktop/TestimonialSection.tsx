@@ -63,10 +63,21 @@ export function TestimonialSection(): JSX.Element {
   ];
 
   // Motion values for each card
-  const cardMotion = ranges.map(([start, end]) => ({
-    opacity: useTransform(scrollYProgress, [start, end], [0, 1]),
-    rotateY: useTransform(scrollYProgress, [start, end], [-90, 0]),
-  }));
+  const cardOpacities = [
+    useTransform(scrollYProgress, ranges[0], [0, 1]),
+    useTransform(scrollYProgress, ranges[1], [0, 1]),
+    useTransform(scrollYProgress, ranges[2], [0, 1]),
+    useTransform(scrollYProgress, ranges[3], [0, 1]),
+    useTransform(scrollYProgress, ranges[4], [0, 1]),
+  ];
+
+  const cardRotations = [
+    useTransform(scrollYProgress, ranges[0], [-90, 0]),
+    useTransform(scrollYProgress, ranges[1], [-90, 0]),
+    useTransform(scrollYProgress, ranges[2], [-90, 0]),
+    useTransform(scrollYProgress, ranges[3], [-90, 0]),
+    useTransform(scrollYProgress, ranges[4], [-90, 0]),
+  ];
 
   // Container fades in after curtains open, fades out before curtains start closing
   const containerOpacity = useTransform(
@@ -106,8 +117,8 @@ export function TestimonialSection(): JSX.Element {
               key={index}
               className="absolute inset-0 flex justify-center items-center"
               style={{
-                opacity: cardMotion[index].opacity,
-                rotateY: cardMotion[index].rotateY,
+                opacity: cardOpacities[index],
+                rotateY: cardRotations[index],
                 rotateX: cardTilts[index].x,
                 rotateZ: cardTilts[index].z,
                 translateZ: cardTilts[index].depth,

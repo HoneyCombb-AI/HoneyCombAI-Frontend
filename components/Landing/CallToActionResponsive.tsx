@@ -6,12 +6,11 @@ import { CallToActionSection } from "./Desktop/CallToActionSection";
 import { CallToActionSectionMobile } from "./Mobile/CallToActionSectionMobile";
 
 interface CallToActionResponsiveProps {
-  user?: any;
+  userEmail?: string | null;
 }
-
-export function CallToActionResponsive({ user }: CallToActionResponsiveProps) {
-  const MobileComponent = () => <CallToActionSectionMobile user={user} />;
-  const DesktopComponent = () => <CallToActionSection user={user} />;
+export function CallToActionResponsive({ userEmail }: CallToActionResponsiveProps) {
+  const MobileComponent = () => <CallToActionSectionMobile />;
+  const DesktopComponent = () => <CallToActionSection userEmail={userEmail} />;
 
   return (
     <ResponsiveLayout 

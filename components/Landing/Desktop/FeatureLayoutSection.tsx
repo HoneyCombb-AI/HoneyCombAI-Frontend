@@ -1,8 +1,7 @@
 "use client";
 
-import React, { JSX, useRef } from "react";
+import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
-import { Card, CardContent } from "@/components/ui/card";
 
 type WordData = {
   text: string;
@@ -177,7 +176,7 @@ export function FeatureLayoutSection() {
     return [s, s + segment] as [number, number];
   });
 
-  // Motion values for color: light to dark
+  // Motion values for color: light to dark - create transforms at top level
   const wordColors = colorRanges.map(([start, end]) =>
     useTransform(
       scrollYProgress,
