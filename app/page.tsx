@@ -13,12 +13,19 @@ import { CallToActionResponsive } from "@/components/Landing/CallToActionRespons
 import { ResponsiveLayout } from "@/components/Landing/ResponsiveLayout";
 import { Loading } from "@/components/loading";
 import { useAuth } from "@/lib/auth-context";
-import { JSX } from "react";
+import { JSX, useEffect, useState } from "react";
 
 const HomePage = (): JSX.Element => {
-
   const { user, loading } = useAuth();
-  if (loading) {
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure we're on the client side to prevent hydration issues
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Show loading during SSR/hydration or auth initialization
+  if (!isClient || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
         <div className="text-center">
