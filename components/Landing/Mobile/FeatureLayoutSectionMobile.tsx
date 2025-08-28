@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef } from "react";
-import { motion, useScroll, useTransform, MotionValue } from "motion/react";
+import React from "react";
+import { motion } from "motion/react";
 
 type WordData = {
   text: string;
@@ -92,70 +92,23 @@ const allWordsData: WordData[] = [
 ];
 
 export function FeatureLayoutSectionMobile() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-
-  // Collect indices of animated words
-  const animatedIndices: number[] = [];
-  allWordsData.forEach((word, i) => {
-    if (word.animated) animatedIndices.push(i);
-  });
-
-  // Allocate scroll ranges for each animated word - much faster animation
-  const startReading = 0.25;
-  const endReading = 0.55;
-  const segment =
-    animatedIndices.length > 0
-      ? (endReading - startReading) / animatedIndices.length
-      : 0;
-  const colorRanges = animatedIndices.map((_, idx) => {
-    const s = startReading + idx * segment;
-    return [s, s + segment] as [number, number];
-  });
-
-  // Motion values for color: light to dark
-  const wordColors: MotionValue<string>[] = colorRanges.map(([start, end]) =>
-    useTransform(
-      scrollYProgress,
-      [start, end],
-      ["rgba(15,79,72,0.3)", "#0f4f48"]
-    )
-  );
-
-  // Fade-in/out of the whole container
-  const containerOpacity = useTransform(
-    scrollYProgress,
-    [startReading - 0.05, startReading, endReading, endReading + 0.2],
-    [0, 1, 1, 0]
-  );
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative w-full h-[75vh] overflow-hidden md:hidden"
-    >
-      {/* Sticky container for animated text */}
+    <section className="relative w-full py-20 overflow-hidden md:hidden">
+      {/* Simple container for text */}
       <motion.div
-        className="sticky top-[10%] left-1/2 z-10 w-full max-w-sm px-4 mx-auto"
-        style={{
-          opacity: containerOpacity,
-        }}
+        className="max-w-sm mx-auto px-4"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        viewport={{ once: true, margin: "-100px" }}
       >
         <div className="flex flex-wrap items-baseline gap-x-1 text-justify leading-relaxed space-y-2">
           {allWordsData.map((word, wordIndex) => {
-            const animIdx = animatedIndices.findIndex(
-              (ai) => ai === wordIndex
-            );
-            
-            // Handle special color for "UNTIL NOW" words
+            // Simple color handling
             let color;
             if (word.isSpecial) {
-              color = "#ff6b35"; // Vibrant orange that complements the teal theme
-            } else if (animIdx >= 0) {
-              color = wordColors[animIdx];
+              color = "#ff6b35"; // Vibrant orange
             } else {
               color = "#0f4f48";
             }
@@ -167,7 +120,7 @@ export function FeatureLayoutSectionMobile() {
             return (
               <React.Fragment key={`word-${wordIndex}`}>
                 {shouldBreakBefore && <div className="w-full" key={`break-before-${wordIndex}`}></div>}
-                <motion.span
+                <span
                   className="text-lg leading-relaxed"
                   style={{
                     color,
@@ -176,7 +129,7 @@ export function FeatureLayoutSectionMobile() {
                   }}
                 >
                   {word.text}
-                </motion.span>
+                </span>
                 {shouldBreakAfter && <div className="w-full" key={`break-after-${wordIndex}`}></div>}
               </React.Fragment>
             );

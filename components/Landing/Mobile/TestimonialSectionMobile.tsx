@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export function TestimonialSectionMobile(): JSX.Element {
   const [currentIndex, setCurrentIndex] = useState(0);
   const titleRef = useRef(null);
-  const isInView = useInView(titleRef, { once: true, amount: 0.3 });
+  const isInView = useInView(titleRef, { once: true, amount: 0.8 });
   
   const cards = [
     {

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef } from "react";
-import { motion, useScroll, useTransform } from "motion/react";
+import React from "react";
+import { motion } from "motion/react";
 
 type WordData = {
   text: string;
@@ -149,61 +149,18 @@ const animatedTextData: { line: number; words: WordData[] }[] = [
 
 // Feature layout section
 export function FeatureLayoutSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-
-  // Combine lines and collect indices of animated words
+  // Combine lines
   const allLines = [...firstParagraphData, ...animatedTextData];
-  const animatedIndices: { lineIndex: number; wordIndex: number }[] = [];
-  allLines.forEach((line, i) => {
-    line.words.forEach((word, j) => {
-      if (word.animated) animatedIndices.push({ lineIndex: i, wordIndex: j });
-    });
-  });
-
-  // Allocate scroll ranges for each animated word
-  const startReading = 0.2;
-  const endReading = 0.8;
-  const segment =
-    animatedIndices.length > 0
-      ? (endReading - startReading) / animatedIndices.length
-      : 0;
-  const colorRanges = animatedIndices.map((_, idx) => {
-    const s = startReading + idx * segment;
-    return [s, s + segment] as [number, number];
-  });
-
-  // Motion values for color: light to dark - create transforms at top level
-  const wordColors = colorRanges.map(([start, end]) =>
-    useTransform(
-      scrollYProgress,
-      [start, end],
-      ["rgba(15,79,72,0.3)", "#0f4f48"]
-    )
-  );
-
-  // Fade-in/out of the whole container
-  const containerOpacity = useTransform(
-    scrollYProgress,
-    [startReading - 0.05, startReading, endReading, endReading + 0.05],
-    [0, 1, 1, 0]
-  );
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative w-full h-[200vh] md:h-[250vh] overflow-hidden"
-    >
-      {/* Fixed container for animated text */}
+    <section className="relative w-full py-20 overflow-hidden">
+      {/* Simple container for text */}
       <motion.div
-        className="fixed left-1/2 top-[10%] md:top-[15%] z-10 w-full max-w-sm sm:max-w-2xl md:max-w-4xl px-4 sm:px-6 md:px-8"
-        style={{
-          opacity: containerOpacity,
-          transform: "translateX(-50%)",
-        }}
+        className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        viewport={{ once: true, margin: "-100px" }}
       >
         <div className="flex flex-col space-y-1 md:space-y-2">
           {allLines.map((line, lineIndex) => (
@@ -212,24 +169,19 @@ export function FeatureLayoutSection() {
               className="flex flex-wrap items-baseline gap-x-1 sm:gap-x-2"
             >
               {line.words.map((word, wordIndex) => {
-                const animIdx = animatedIndices.findIndex(
-                  (ai) =>
-                    ai.lineIndex === lineIndex && ai.wordIndex === wordIndex
-                );
+                const wordKey = `${lineIndex}-${wordIndex}`;
                 
-                // Handle special color for "UNTIL NOW" words
+                // Simple color handling
                 let color;
                 if (word.isSpecial) {
-                  color = "#ff6b35"; // Vibrant orange that complements the teal theme
-                } else if (animIdx >= 0) {
-                  color = wordColors[animIdx];
+                  color = "#ff6b35"; // Vibrant orange
                 } else {
                   color = "#0f4f48";
                 }
 
                 return (
-                  <motion.span
-                    key={`${lineIndex}-${wordIndex}`}
+                  <span
+                    key={wordKey}
                     className="text-lg sm:text-xl md:text-2xl lg:text-3xl leading-tight"
                     style={{
                       color,
@@ -238,7 +190,7 @@ export function FeatureLayoutSection() {
                     }}
                   >
                     {word.text}
-                  </motion.span>
+                  </span>
                 );
               })}
             </div>
