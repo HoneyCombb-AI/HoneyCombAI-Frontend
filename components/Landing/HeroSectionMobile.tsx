@@ -194,18 +194,18 @@ export function HeroSectionMobile() {
         {/* Company logos section below gradient */}
         <div className="bg-white border-b border-[#0f4f48] grid grid-cols-3">
           <div className="h-20 border-r border-[#0f4f48] flex items-center justify-center">
-            <div className="text-[#0f4f48] font-medium text-sm text-center">
+            <p className="text-[#0f4f48] font-medium text-sm text-center">
               JUST BOOKS INDIA
-            </div>
+            </p>
           </div>
           <div className="h-20 border-r border-[#0f4f48] flex items-center justify-center">
-            <div className="text-[#0f4f48] font-medium text-sm text-center">
+            <p className="text-[#0f4f48] font-medium text-sm text-center">
               BONHOMIA WORLD
-            </div>
+            </p>
           </div>
           <div className="h-20 flex items-center justify-center">
             <div className="text-[#0f4f48] font-medium text-xs text-center">
-              <p className="text-xs mb-1">Backed By</p>
+              <p className="text-[10px] mb-1">Backed By</p>
               <p className="text-sm">CoCreate Ventures</p>
             </div>
           </div>
