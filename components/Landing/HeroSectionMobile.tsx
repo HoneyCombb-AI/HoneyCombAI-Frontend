@@ -14,12 +14,67 @@ export function HeroSectionMobile() {
           {/* Hero headline - positioned like desktop */}
           <div className="relative z-10 pt-8 pb-4">
             <div className="space-y-1">
-              <h1 className="font-medium text-[#0f4f48] text-3xl sm:text-4xl leading-tight">
-                How the top Businesses
-              </h1>
-              <h1 className="font-medium text-[#0f4f48] text-3xl sm:text-4xl leading-tight">
-                get intents in 2025
-              </h1>
+              <motion.h1 
+                className="font-medium text-[#0f4f48] text-3xl sm:text-4xl leading-tight"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.1 }}
+              >
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{
+                    duration: 2,
+                    ease: "easeInOut",
+                  }}
+                >
+                  {"How the top Businesses".split("").map((char, index) => (
+                    <motion.span
+                      key={index}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{
+                        duration: 0.1,
+                        delay: index * 0.05,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      {char}
+                    </motion.span>
+                  ))}
+                </motion.span>
+              </motion.h1>
+              <motion.h1 
+                className="font-medium text-[#0f4f48] text-3xl sm:text-4xl leading-tight"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.1, delay: 1.2 }}
+              >
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{
+                    duration: 2,
+                    delay: 1.2,
+                    ease: "easeInOut",
+                  }}
+                >
+                  {"get intents in 2025".split("").map((char, index) => (
+                    <motion.span
+                      key={index}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{
+                        duration: 0.1,
+                        delay: 1.2 + index * 0.05,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      {char}
+                    </motion.span>
+                  ))}
+                </motion.span>
+              </motion.h1>
             </div>
           </div>
 
