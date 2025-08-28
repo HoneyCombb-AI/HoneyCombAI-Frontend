@@ -14,10 +14,10 @@ export function TestimonialSection(): JSX.Element {
     offset: ["start end", "end start"],
   });
 
-  // Curtains open later (0.1) with more delay, close smoothly over longer duration
+  // Curtains open much later (0.4) with more delay, close smoothly over longer duration
   const curtainScale = useTransform(
     scrollYProgress,
-    [0, 0.1, 0.75, 0.9],
+    [0, 0.4, 0.75, 0.9],
     [0, 1, 1, 0]
   );
 

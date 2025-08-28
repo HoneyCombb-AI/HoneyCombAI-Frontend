@@ -153,10 +153,10 @@ export function FeatureLayoutSection() {
   const allLines = [...firstParagraphData, ...animatedTextData];
 
   return (
-    <section className="relative w-full py-20 overflow-hidden">
+    <section className="relative w-full py-20 min-h-[150vh] overflow-hidden">
       {/* Simple container for text */}
       <motion.div
-        className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8"
+        className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-center min-h-screen"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
