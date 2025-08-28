@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 export function HeroSectionMobile() {
   return (
-    <section className="relative w-full mb-16 md:hidden">
+    <section className="relative w-full mb-16 md:hidden z-0">
       {/* Mobile hero container - stacked vertically */}
       <div className="relative w-full border-t border-[#0f4f48]">
 
