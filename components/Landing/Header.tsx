@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import React, { JSX } from "react";
 
 interface HeaderProps {
-  user?: any;
+  userEmail?: string | null;
 }
 
 const HoneyCombIcon = ({ className }: { className?: string }) => (
@@ -21,12 +21,12 @@ const HoneyCombIcon = ({ className }: { className?: string }) => (
   </div>
 );
 
-export function Header({ user }: HeaderProps): JSX.Element {
+export function Header({ userEmail }: HeaderProps): JSX.Element {
   const router = useRouter();
 
   const handleLoginClick = () => {
     console.log("click")
-    if (user) {
+    if (userEmail) {
       router.push("/contacts");
     } else {
       router.push("/login");
@@ -73,7 +73,7 @@ export function Header({ user }: HeaderProps): JSX.Element {
               onClick={handleLoginClick}
               className="relative overflow-hidden group cursor-pointer hidden sm:block bg-transparent hover:bg-transparent px-2 sm:px-3 py-2 h-auto text-sm"
             >
-              {user ? "Dashboard" : "Log in"}
+              {userEmail ? "Dashboard" : "Log in"}
               <div className="absolute w-full h-0.5 -bottom-1 -left-full bg-[#0f4f48] group-hover:left-0 transition-all duration-300" />
             </Button>
 

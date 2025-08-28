@@ -21,6 +21,7 @@ import { JSX, useEffect, useState } from "react";
 const HomePage = (): JSX.Element => {
   const { user, loading } = useAuth();
   const [isClient, setIsClient] = useState(false);
+  const userEmail = user?.email || null
 
   // Ensure we're on the client side to prevent hydration issues
   useEffect(() => {
@@ -41,29 +42,29 @@ const HomePage = (): JSX.Element => {
       </div>
     );
   }
-  
+
   return (
     <div className="bg-white w-full min-h-screen">
-      <Header user={user} />
+      <Header userEmail={userEmail} />
       <main className="flex flex-col w-full">
-        <ResponsiveLayout 
-          mobileComponent={HeroSectionMobile} 
-          desktopComponent={HeroSection} 
+        <ResponsiveLayout
+          mobileComponent={HeroSectionMobile}
+          desktopComponent={HeroSection}
         />
-        <ResponsiveLayout 
-          mobileComponent={FeatureLayoutSectionMobile} 
-          desktopComponent={FeatureLayoutSection} 
+        <ResponsiveLayout
+          mobileComponent={FeatureLayoutSectionMobile}
+          desktopComponent={FeatureLayoutSection}
         />
-        <ResponsiveLayout 
-          mobileComponent={TestimonialSectionMobile} 
-          desktopComponent={TestimonialSection} 
+        <ResponsiveLayout
+          mobileComponent={TestimonialSectionMobile}
+          desktopComponent={TestimonialSection}
         />
         <div id="call-to-action">
-          <CallToActionResponsive user={user}/>
+          <CallToActionResponsive user={user} />
         </div>
-        <ResponsiveLayout 
-          mobileComponent={FooterSectionMobile} 
-          desktopComponent={FooterSection} 
+        <ResponsiveLayout
+          mobileComponent={FooterSectionMobile}
+          desktopComponent={FooterSection}
         />
       </main>
     </div>
