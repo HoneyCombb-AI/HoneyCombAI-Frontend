@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion, useScroll, useTransform, MotionValue } from "motion/react";
 
 type WordData = {
   text: string;
@@ -117,13 +117,17 @@ export function FeatureLayoutSectionMobile() {
   });
 
   // Motion values for color: light to dark
-  const wordColors = colorRanges.map(([start, end]) =>
-    useTransform(
-      scrollYProgress,
-      [start, end],
-      ["rgba(15,79,72,0.3)", "#0f4f48"]
-    )
-  );
+  const wordColors: MotionValue<string>[] = [];
+  for (let i = 0; i < colorRanges.length; i++) {
+    const [start, end] = colorRanges[i];
+    wordColors.push(
+      useTransform(
+        scrollYProgress,
+        [start, end],
+        ["rgba(15,79,72,0.3)", "#0f4f48"]
+      )
+    );
+  }
 
   // Fade-in/out of the whole container
   const containerOpacity = useTransform(

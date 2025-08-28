@@ -1,4 +1,4 @@
-import { ArrowRight, TrendingDown, TrendingUp, Users, DollarSign, Briefcase, Building, MessageCircle } from "lucide-react";
+import {  TrendingDown, TrendingUp, Users, DollarSign, Briefcase, Building, MessageCircle } from "lucide-react";
 import React from "react";
 import { motion } from "framer-motion";
 
