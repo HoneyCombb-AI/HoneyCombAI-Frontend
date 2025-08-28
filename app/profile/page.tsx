@@ -29,6 +29,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuth();
@@ -37,13 +38,20 @@ export default function ProfilePage() {
     name: "",
     email: "",
   });
+  const router = useRouter();
 
   if (loading) {
-    return <Loading />;
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
+        <Loading />
+        <p className="text-sm text-muted-foreground mt-4">Loading settings...</p>
+      </div>
+    )
   }
 
   if (!user) {
-    return null;
+    router.replace("/login");
+    return;
   }
 
   const displayName =

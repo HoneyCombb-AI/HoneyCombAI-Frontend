@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Papa from 'papaparse';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
+
 
 const EXPECTED_HEADERS = [
   'full_name',
@@ -55,6 +57,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' } as BulkImportResponse,
         { status: 401 }
+      );
+    }
+
+    // Apply bulk import rate limiting
+    const rateLimit = await rateLimiters.bulkImportPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Bulk import rate limit exceeded. Please wait before importing again.',
+          details: `You can import again at ${new Date(rateLimit.resetTime).toISOString()}`
+        } as BulkImportResponse,
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
       );
     }
 
@@ -145,9 +168,31 @@ export async function POST(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('organization_id')
+      .select('organization_id, is_onboarded')
       .eq('id', user.id)
       .single();
+
+    // Check if user is part of an organization  
+    if (!profile?.organization_id) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'You are not part of an organization. You need to create or join an organization first.' 
+        } as BulkImportResponse,
+        { status: 403 }
+      );
+    }
+
+    // Check if user has completed onboarding
+    if (!profile?.is_onboarded) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'You haven\'t completed onboarding yet. Please check your notifications to complete onboarding before bulk importing contacts.' 
+        } as BulkImportResponse,
+        { status: 403 }
+      );
+    }
 
     // Call RPC function
     const { data: result, error: rpcError } = await supabase.rpc(

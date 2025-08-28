@@ -7,6 +7,8 @@ import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Buildin
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { parseISO, format } from "date-fns"
+import axios from "axios"
+import { toast } from "sonner"
 import {
   Drawer,
   DrawerContent,
@@ -51,17 +53,29 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
     setError(null)
 
     try {
-      const response = await fetch(`/api/contacts/${contactId}`)
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch contact details: ${response.status}`)
-      }
-
-      const data = await response.json()
-      console.log("Contact Data", data)
-      setDrawerContact(data.contact)
+      const response = await axios.get(`/api/contacts/${contactId}`)
+      console.log("Contact Data", response.data)
+      setDrawerContact(response.data.contact)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred')
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status
+        if (status === 429) {
+          toast.error("Too many requests. Please wait before trying again.")
+        } else if (status === 404) {
+          toast.error("Contact not found.")
+        } else if (status >= 500) {
+          toast.error("Server error. Please try again later.")
+        } else {
+          toast.error(`Failed to fetch contact details: ${err.response.statusText || 'Unknown error'}`)
+        }
+        setError(err.response.data?.message || err.message)
+      } else if (axios.isAxiosError(err)) {
+        toast.error("Network error. Please check your connection.")
+        setError(err.message)
+      } else {
+        toast.error("An unexpected error occurred while loading contact details.")
+        setError(err instanceof Error ? err.message : 'Unknown error occurred')
+      }
       setDrawerContact(null)
     } finally {
       setLoading(false)
@@ -82,8 +96,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                       src={selectedContact.profile_picture}
                       alt={selectedContact.full_name}
                       fill
-                      sizes="32px"
-                      className="object-cover"
+                      sizes="120px"
+                      quality={100}
+                      className="object-cover rounded-full"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
@@ -116,8 +131,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                         src={selectedContact.company.logo_url}
                         alt="Company logo"
                         fill
-                        sizes="px"
-                        className="object-cover"
+                        sizes="120px"
+                        quality={100}
+                        className="object-cover rounded-full"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;

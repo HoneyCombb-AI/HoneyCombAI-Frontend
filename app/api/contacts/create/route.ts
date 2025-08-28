@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 interface CreateContactRequest {
   fullName: string;
@@ -45,6 +46,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Get user's organization_id and onboarding status from profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id, is_onboarded')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to get user profile' },
+        { status: 500 }
+      );
+    }
+
+    // Check if user is part of an organization
+    if (!profile.organization_id) {
+      return NextResponse.json(
+        { success: false, error: 'You are not part of an organization. You need to create or join an organization first.' },
+        { status: 403 }
+      );
+    }
+
+    // Check if user has completed onboarding
+    if (!profile.is_onboarded) {
+      return NextResponse.json(
+        { success: false, error: 'You haven\'t completed onboarding yet. Please check your notifications to complete onboarding before uploading contacts.' },
+        { status: 403 }
+      );
+    }
+
+    // Apply create operations rate limiting
+    const rateLimit = await rateLimiters.createPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Create rate limit exceeded. Please wait before creating more contacts.'
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '50',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
       );
     }
 
@@ -116,6 +168,7 @@ export async function POST(req: NextRequest) {
       twitter_handle: body.twitterProfile?.trim() ? extractTwitterHandle(body.twitterProfile.trim()) : null,
       instagram_handle: body.instagramProfile?.trim() ? extractInstagramHandle(body.instagramProfile.trim()) : null,
       user_id: user.id,
+      organization_id: profile.organization_id,
       istracked: false,
       in_crm: false,
     };

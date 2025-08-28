@@ -51,8 +51,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!data.session) {
-      console.error("No session created after code exchange");
+    if (!data.session || !data.user) {
+      console.error("No session or user created after code exchange");
       const errorParams = new URLSearchParams({
         error: "no_session",
         description: "Failed to create user session",
@@ -62,18 +62,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Determine if this is a new user or returning user
+    const user = data.user;
+    const createdAt = new Date(user.created_at);
+    const lastSignInAt = new Date(user.last_sign_in_at || user.created_at);
+    
+    // If the difference between creation and last sign-in is less than 30 seconds,
+    // this is likely their first sign-in (new user)
+    const isNewUser = (lastSignInAt.getTime() - createdAt.getTime()) < 30000; // 30 seconds
+    
+    // Determine the final destination based on user type
+    let finalDestination = next;
+    if (next === '/contacts') {
+      finalDestination = isNewUser ? '/contacts?joyride=true' : '/contacts';
+    }
+
     // Determine redirect URL based on environment
     const forwardedHost = request.headers.get("x-forwarded-host");
     const isLocalEnv = process.env.NODE_ENV === "development";
 
     let redirectUrl: string;
     if (isLocalEnv) {
-      redirectUrl = `${origin}${next}`;
+      redirectUrl = `${origin}${finalDestination}`;
     } else if (forwardedHost) {
-      redirectUrl = `https://${forwardedHost}${next}`;
+      redirectUrl = `https://${forwardedHost}${finalDestination}`;
     } else {
-      redirectUrl = `${origin}${next}`;
+      redirectUrl = `${origin}${finalDestination}`;
     }
+    
+    console.log(`User ${user.id} - Created: ${user.created_at}, Last Sign-in: ${user.last_sign_in_at}, Is New: ${isNewUser}, Redirecting to: ${redirectUrl}`);
+    
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error("Unexpected error in callback:", error);

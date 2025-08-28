@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 interface CreateCompanyRequest {
   companyName: string;
@@ -40,10 +41,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user's organization_id from profile
+    // Apply create operations rate limiting
+    const rateLimit = await rateLimiters.createPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Create rate limit exceeded. Please wait before creating more companies.'
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '50',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
+      );
+    }
+
+    // Get user's organization_id and onboarding status from profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('organization_id')
+      .select('organization_id, is_onboarded')
       .eq('id', user.id)
       .single();
 
@@ -52,6 +73,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Failed to get user profile' },
         { status: 500 }
+      );
+    }
+
+    // Check if user is part of an organization
+    if (!profile.organization_id) {
+      return NextResponse.json(
+        { success: false, error: 'You are not part of an organization. You need to create or join an organization first.' },
+        { status: 403 }
+      );
+    }
+
+    // Check if user has completed onboarding
+    if (!profile.is_onboarded) {
+      return NextResponse.json(
+        { success: false, error: 'You haven\'t completed onboarding yet. Please check your notifications to complete onboarding before creating companies.' },
+        { status: 403 }
       );
     }
 

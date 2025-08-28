@@ -37,10 +37,22 @@ const companySchema = z.object({
 type CompanyFormData = z.infer<typeof companySchema>
 
 interface AddCompanyDrawerProps {
-  onSubmit?: (data: CompanyFormData) => void
+  onSubmit?: (data: {
+    id: string;
+    name: string;
+    company_url: string;
+    linkedin_url?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    user_id: string;
+    organization_id?: string;
+    created_at: string;
+  }) => void
   children?: React.ReactNode
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  direction?: "left" | "right"
 }
 
 const customDrawerStyles = {
@@ -48,7 +60,7 @@ const customDrawerStyles = {
   maxWidth: '35vw'
 };
 
-export function AddCompanyDrawer({ onSubmit, children, open: controlledOpen, onOpenChange }: AddCompanyDrawerProps) {
+export function AddCompanyDrawer({ onSubmit, children, open: controlledOpen, onOpenChange, direction = "right" }: AddCompanyDrawerProps) {
   const [internalOpen, setInternalOpen] = React.useState(false)
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
@@ -86,7 +98,7 @@ export function AddCompanyDrawer({ onSubmit, children, open: controlledOpen, onO
   }
 
   return (
-    <Drawer direction="right" open={open} onOpenChange={setOpen}>
+    <Drawer direction={direction} open={open} onOpenChange={setOpen}>
       {children && (
         <DrawerTrigger asChild>
           {children}

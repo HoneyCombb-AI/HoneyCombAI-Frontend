@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select"
 import type { CompanyListItem } from "@/app/api/companies/list/route"
 import { toast } from "sonner";
+import { AddCompanyDrawer } from "../Company/AddCompanyDrawer"
 
 const contactSchema = z.object({
   fullName: z.string().trim().min(1, "Person's name is required"),
@@ -87,6 +88,7 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
   const [internalOpen, setInternalOpen] = React.useState(false)
   const [companies, setCompanies] = React.useState<CompanyListItem[]>([])
   const [loadingCompanies, setLoadingCompanies] = React.useState(false)
+  const [companyDrawerOpen, setCompanyDrawerOpen] = React.useState(false)
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
   const {
@@ -111,11 +113,46 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
       setLoadingCompanies(true)
       const response = await axios.get('/api/companies/list')
       setCompanies(response.data.companies || [])
-    } catch (error) {
-      console.error('Failed to fetch companies:', error)
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status
+        if (status === 429) {
+          toast.error("Too many requests. Can't Load Companies. Please wait before trying again.")
+        } else if (status === 404) {
+          toast.error("Companies not found.")
+        } else if (status >= 500) {
+          toast.error("Server error. Please try again later.")
+        } else {
+          toast.error(`Failed to fetch Companies details: ${err.response.statusText || 'Unknown error'}`)
+        }
+      } else if (axios.isAxiosError(err)) {
+        toast.error("Network error. Please check your connection.")
+      } else {
+        toast.error("An unexpected error occurred while loading contact details.")
+      }
     } finally {
       setLoadingCompanies(false)
     }
+  }
+
+  const handleCompanyAdded = (newCompany: {
+    id: string;
+    name: string;
+    company_url: string;
+    linkedin_url?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    user_id: string;
+    organization_id?: string;
+    created_at: string;
+  }) => {
+    const companyListItem: CompanyListItem = {
+      id: newCompany.id,
+      name: newCompany.name
+    }
+    setCompanies(prev => [...prev, companyListItem])
+    setCompanyDrawerOpen(false)
   }
 
   const onFormSubmit = async (data: ContactFormData) => {
@@ -201,25 +238,38 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
                   <Building2 className="h-4 w-4" />
                   Company
                 </label>
-                <Controller
-                  name="companyId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={loadingCompanies ? "Loading companies..." : "Select a company"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no-company">No company</SelectItem>
-                        {companies.map((company) => (
-                          <SelectItem key={company.id} value={company.id}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Controller
+                      name="companyId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={loadingCompanies ? "Loading companies..." : "Select a company"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="no-company">No company</SelectItem>
+                            {companies.map((company) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setCompanyDrawerOpen(true)}
+                    className="shrink-0"
+                  >
+                    Add Company
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -370,6 +420,12 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
           </form>
         </div>
       </DrawerContent>
+      <AddCompanyDrawer 
+        open={companyDrawerOpen} 
+        onOpenChange={setCompanyDrawerOpen}
+        direction="left"
+        onSubmit={handleCompanyAdded}
+      />
     </Drawer>
   )
 }

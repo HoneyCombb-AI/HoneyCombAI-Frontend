@@ -7,6 +7,8 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { parseISO, format } from "date-fns"
 import Image from "next/image"
+import axios from "axios"
+import { toast } from "sonner"
 import {
   Drawer,
   DrawerContent,
@@ -54,17 +56,29 @@ export function CompaniesDrawer({ open, onOpenChange, trigger, selectedCompany }
     setError(null)
 
     try {
-      const response = await fetch(`/api/companies/${companyId}`)
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch company details: ${response.status}`)
-      }
-
-      const data = await response.json()
-      console.log("Company Data", data)
-      setDrawerCompany(data.company)
+      const response = await axios.get(`/api/companies/${companyId}`)
+      console.log("Company Data", response.data)
+      setDrawerCompany(response.data.company)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred')
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status
+        if (status === 429) {
+          toast.error("Too many requests. Please wait a moment before trying again.")
+        } else if (status === 404) {
+          toast.error("Company not found.")
+        } else if (status >= 500) {
+          toast.error("Server error. Please try again later.")
+        } else {
+          toast.error(`Failed to fetch company details: ${err.response.statusText || 'Unknown error'}`)
+        }
+        setError(err.response.data?.message || err.message)
+      } else if (axios.isAxiosError(err)) {
+        toast.error("Network error. Please check your connection.")
+        setError(err.message)
+      } else {
+        toast.error("An unexpected error occurred while loading company details.")
+        setError(err instanceof Error ? err.message : 'Unknown error occurred')
+      }
       setDrawerCompany(null)
     } finally {
       setLoading(false)

@@ -1,11 +1,11 @@
 import { ChevronDown, ChevronRight, MoreHorizontal, MapPin } from 'lucide-react';
 import React, { useState, useMemo, useCallback } from 'react';
-import Image from 'next/image';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GroupByType } from '@/app/companies/page';
 import { CompaniesDrawer } from './CompaniesDrawer';
+import { RingState } from '../Ring-state';
 import type {
   DashboardCompany,
   CompanyListResponse,
@@ -17,12 +17,20 @@ import type {
 
 type DashboardResponse = CompanyListResponse | IndustryGroupResponse | LocationGroupResponse | EmployeeSizeGroupResponse | SearchResponse;
 
+// Company validation data interface
+interface CompanyValidationData {
+  company_analysis_completed: boolean;
+  company_analysis_requested: boolean;
+  news_requested: boolean;
+  name: string;
+}
+
 interface CompaniesSectionProps {
   groupBy: GroupByType;
   records: DashboardResponse;
-  selectedCompanies: Set<string>;
-  onCompanySelect: (companyId: string) => void;
-  onSelectAll: (companyIds: string[]) => void;
+  selectedCompanies: Map<string, CompanyValidationData>;
+  onCompanySelect: (companyId: string, companyData: CompanyValidationData) => void;
+  onSelectAll: (companiesData: Array<{ id: string, data: CompanyValidationData }>) => void;
 }
 
 interface ProcessedGroup {
@@ -125,6 +133,11 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
       companies.map((company) => {
         const topNudges = company.nudges?.slice(0, 3) || [];
         const isSelected = selectedCompanies.has(company.id);
+        
+        // Determine ring state for company
+        const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
+        const hasAnalysisCompleted = company.company_analysis_completed;
+        const hasNewsRequested = company.news_requested;
 
         return (
           <tr
@@ -135,7 +148,12 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
             <td className="px-4 py-3 w-12">
               <Checkbox
                 checked={isSelected}
-                onCheckedChange={() => onCompanySelect(company.id)}
+                onCheckedChange={() => onCompanySelect(company.id, {
+                  company_analysis_completed: company.company_analysis_completed,
+                  company_analysis_requested: company.company_analysis_requested,
+                  news_requested: company.news_requested,
+                  name: company.name
+                })}
                 onClick={(e) => e.stopPropagation()}
               />
             </td>
@@ -144,30 +162,16 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
             <td 
               className="px-4 py-3 w-1/3 cursor-pointer"
               onClick={() => handleCompanyClick(company)}
+              data-testid="sample-company"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
-                  {company.logo_url ? (
-                    <Image
-                      src={company.logo_url}
-                      alt={company.name}
-                      fill
-                      sizes="px"
-                      className="object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div 
-                    className={`w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
-                    flex items-center justify-center text-white text-sm font-medium ${company.logo_url ? 'hidden' : ''}`}
-                  >
-                    {company.name.charAt(0)}
-                  </div>
-                </div>
+                <RingState
+                  green={hasAnalysisCompleted}
+                  golden={hasNewsRequested}
+                  requested={hasAnalysisRequested}
+                  profilePicture={company.logo_url}
+                  fullName={company.name}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-gray-900 truncate">
                     {company.name || "Unknown"}
@@ -335,7 +339,17 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                               group.companies.length > 0 && 
                               group.companies.every(company => selectedCompanies.has(company.id))
                             }
-                            onCheckedChange={() => onSelectAll(group.companies.map(company => company.id))}
+                            onCheckedChange={() => onSelectAll(
+                              group.companies.map(company => ({
+                                id: company.id,
+                                data: {
+                                  company_analysis_completed: company.company_analysis_completed,
+                                  company_analysis_requested: company.company_analysis_requested,
+                                  news_requested: company.news_requested,
+                                  name: company.name
+                                }
+                              }))
+                            )}
                           />
                         </th>
                         <th className="px-4 py-2 text-left font-medium w-1/3">Company</th>

@@ -51,22 +51,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-
       setUser(null);
       setSession(null);
-      router.push("/");
+      setError(null);
     } catch (error: unknown) {
       console.error("Error signing out:", error);
       setError(
         error instanceof Error ? error.message : "Unknown error occurred"
       );
-    } finally {
-      setLoading(false);
     }
-  }, [router, supabase]);
+  }, [supabase]);
 
   useEffect(() => {
     // Get initial session
@@ -103,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (event === "SIGNED_OUT") {
-        router.push("/login");
+        router.push("/");
       }
     });
 

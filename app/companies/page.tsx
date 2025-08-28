@@ -1,12 +1,12 @@
 "use client";
 import axios from "axios";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Download,
 } from "lucide-react";
 import CompaniesSection from "@/components/dashboard/Company/CompaniesSection";
 import type {
@@ -37,11 +38,26 @@ import type {
   PaginationInfo,
 } from "@/app/api/companies/route";
 import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
+import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
+import { useTour } from "@/lib/joyride/useTour";
+
+// Component that uses useSearchParams wrapped in Suspense
+function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean }) => React.ReactNode }) {
+  const { isJoyrideMode } = useTour('companies');
+  return <>{children({ isJoyrideMode })}</>;
+}
 
 export type GroupByType = "none" | "industry" | "location" | "employee_size";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name" | "created_at";
 export type SortOrder = "asc" | "desc";
+
+interface CompanyValidationData {
+  company_analysis_completed: boolean;
+  company_analysis_requested: boolean;
+  news_requested: boolean;
+  name: string;
+}
 
 export type DashboardResponse =
   | CompanyListResponse
@@ -67,7 +83,7 @@ interface FetchParams {
   sortOrder?: SortOrder;
 }
 
-export default function CompaniesPage() {
+function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const { loading: authLoading } = useAuth();
   const [dashboardState, setDashboardState] = useState<DashboardState>({
     data: null,
@@ -90,10 +106,14 @@ export default function CompaniesPage() {
   const [pageLimit, setPageLimit] = useState<number>(20);
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [selectedCompanies, setSelectedCompanies] = useState<Set<string>>(
-    new Set()
+  const [selectedCompanies, setSelectedCompanies] = useState<Map<string, CompanyValidationData>>(
+    new Map()
   );
   const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
+  const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
+  const [exportLoading, setExportLoading] = useState<boolean>(false);
+
+  const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -214,56 +234,221 @@ export default function CompaniesPage() {
     setSortBy("name");
     setSortOrder("asc");
     setCurrentPage(1);
-    setSelectedCompanies(new Set());
+    setSelectedCompanies(new Map());
   };
 
-  // Company selection handlers
-  const handleCompanySelect = (companyId: string) => {
-    setSelectedCompanies((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(companyId)) {
-        newSet.delete(companyId);
+  // Optimized company states calculation using useMemo
+  const companyStates = useMemo(() => {
+    const selectedCompaniesArray = Array.from(selectedCompanies.entries());
+
+    const states = selectedCompaniesArray.reduce((acc, [, data]) => {
+      acc.total++;
+
+      // Company enrichment eligibility states
+      if (!data.company_analysis_completed && !data.company_analysis_requested) {
+        acc.eligibleForCompanyEnrichment++;
       } else {
-        newSet.add(companyId);
+        acc.ineligibleForCompanyEnrichment++;
       }
-      return newSet;
+
+      // News enrichment eligibility states
+      if (!data.news_requested) {
+        acc.eligibleForNewsEnrichment++;
+      } else {
+        acc.ineligibleForNewsEnrichment++;
+      }
+
+      return acc;
+    }, {
+      total: 0,
+      eligibleForCompanyEnrichment: 0,
+      ineligibleForCompanyEnrichment: 0,
+      eligibleForNewsEnrichment: 0,
+      ineligibleForNewsEnrichment: 0
+    });
+
+    return {
+      // Basic counts
+      totalSelected: states.total,
+
+      // Company enrichment states
+      eligibleCompanyEnrichmentCount: states.eligibleForCompanyEnrichment,
+      ineligibleCompanyEnrichmentCount: states.ineligibleForCompanyEnrichment,
+      hasEligibleForCompanyEnrichment: states.eligibleForCompanyEnrichment > 0,
+
+      // News enrichment states
+      eligibleNewsEnrichmentCount: states.eligibleForNewsEnrichment,
+      ineligibleNewsEnrichmentCount: states.ineligibleForNewsEnrichment,
+      hasEligibleForNewsEnrichment: states.eligibleForNewsEnrichment > 0,
+    };
+  }, [selectedCompanies]);
+
+  // Company selection handlers
+  const handleCompanySelect = (companyId: string, companyData: CompanyValidationData) => {
+    setSelectedCompanies((prev) => {
+      const newMap = new Map(prev);
+      if (newMap.has(companyId)) {
+        newMap.delete(companyId);
+      } else {
+        newMap.set(companyId, companyData);
+      }
+      return newMap;
     });
   };
 
-  const handleSelectAll = (companyIds: string[]) => {
+  const handleSelectAll = (companiesData: Array<{ id: string, data: CompanyValidationData }>) => {
     setSelectedCompanies((prev) => {
-      const newSet = new Set(prev);
-      const allSelected = companyIds.every((id) => newSet.has(id));
+      const newMap = new Map(prev);
+      const companyIds = companiesData.map(company => company.id);
+      const allSelected = companyIds.every((id) => newMap.has(id));
 
       if (allSelected) {
         // Deselect all
-        companyIds.forEach((id) => newSet.delete(id));
+        companyIds.forEach((id) => newMap.delete(id));
       } else {
         // Select all
-        companyIds.forEach((id) => newSet.add(id));
+        companiesData.forEach(({ id, data }) => newMap.set(id, data));
       }
-      return newSet;
+      return newMap;
     });
   };
 
-  const handleEnrichmentAction = (
+  const handleEnrichmentAction = async (
     type:
       | "company_enrichment"
-      | "full_workflow"
       | "news_enrichment"
-      | "employee_discovery"
   ) => {
     if (selectedCompanies.size === 0) {
-      console.log("No companies selected for enrichment");
+      toast.error("No companies selected for enrichment");
       return;
     }
 
-    const selectedCompanyIds = Array.from(selectedCompanies);
-    console.log(
-      `${type.charAt(0).toUpperCase() + type.slice(1)
-      } Enrichment - Selected Company IDs:`,
-      selectedCompanyIds
-    );
+    // Get eligible company IDs based on enrichment type
+    const selectedCompaniesArray = Array.from(selectedCompanies.entries());
+    let eligibleCompanyIds: string[] = [];
+
+    if (type === "company_enrichment") {
+      eligibleCompanyIds = selectedCompaniesArray
+        .filter(([, data]) => !data.company_analysis_completed && !data.company_analysis_requested)
+        .map(([id]) => id);
+    } else if (type === "news_enrichment") {
+      eligibleCompanyIds = selectedCompaniesArray
+        .filter(([, data]) => !data.news_requested)
+        .map(([id]) => id);
+    }
+
+    if (eligibleCompanyIds.length === 0) {
+      toast.error("No eligible companies selected for enrichment");
+      return;
+    }
+
+    try {
+      setEnrichmentLoading(true);
+
+      const response = await axios.post("/api/companies/enrichment", {
+        entity_ids: eligibleCompanyIds,
+        entity_type: "company_id",
+        task_type: type
+      });
+
+      if (response.data.success) {
+        toast.success(
+          `${response.data.message}${response.data.tokens_used ? ` (${response.data.tokens_used} tokens used)` : ""
+          }`
+        );
+
+        // Clear selected companies after successful enrichment
+        setSelectedCompanies(new Map());
+        fetchDashboardData()
+        // Log request ID for tracking if available
+        if (response.data.request_id) {
+          console.log("Enrichment Request ID:", response.data.request_id);
+        }
+      } else {
+        // Handle API success:false responses
+        toast.error(response.data.message || "Enrichment request failed");
+      }
+    } catch (error) {
+      console.error("Enrichment request failed:", error);
+
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorData = error.response.data;
+
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          // Show specific error messages
+          errorData.errors.forEach((err: { message?: string }) => {
+            toast.error(err.message || "Unknown error occurred");
+          });
+        } else {
+          toast.error(errorData.message || "Enrichment request failed");
+        }
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setEnrichmentLoading(false);
+    }
+  };
+
+  const handleExportToCSV = async () => {
+    if (selectedCompanies.size === 0) {
+      toast.error("No companies selected for export");
+      return;
+    }
+
+    const selectedCompanyIds = Array.from(selectedCompanies.keys());
+
+    try {
+      setExportLoading(true);
+
+      const response = await axios.post('/api/csv-export', {
+        type: 'companies',
+        ids: selectedCompanyIds
+      }, {
+        responseType: 'blob'
+      });
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers['content-disposition'];
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : `companies_export_${new Date().toISOString().split('T')[0]}.csv`;
+
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`Exported ${selectedCompanyIds.length} companies successfully`);
+
+    } catch (error) {
+      console.error('Export failed:', error);
+
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+
+        if (status === 429) {
+          toast.error("Rate limit exceeded. Please wait before exporting more data.");
+        } else if (status === 401) {
+          toast.error("Unauthorized. Please log in again.");
+        } else if (status >= 500) {
+          toast.error("Server error. Please try again later.");
+        } else {
+          toast.error("Export failed. Please try again.");
+        }
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   // Check if any filters are applied
@@ -279,18 +464,10 @@ export default function CompaniesPage() {
   // Show error state if there's an error
   if (error) {
     return (
-      <div className="flex min-h-screen w-full flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <div className="flex flex-1 items-center justify-between">
-            <h1 className="text-xl font-semibold">HoneyComb - Companies</h1>
-          </div>
-        </header>
-        <main className="flex-1 p-6">
-          <Alert>
-            <AlertDescription>Failed to load data: {error}</AlertDescription>
-          </Alert>
-        </main>
+      <div className="flex min-h-screen w-full flex-col p-6">
+        <Alert>
+          <AlertDescription>Failed to load data: {error}</AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -302,7 +479,7 @@ export default function CompaniesPage() {
         <div className="flex flex-wrap items-center gap-2">
           {/* Group Controls */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild data-testid="group-dropdown">
               <Button variant="outline" size="sm" className="gap-2 text-sm">
                 <Building2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Group:</span>
@@ -402,6 +579,7 @@ export default function CompaniesPage() {
               value={searchInput}
               onChange={handleSearchInputChange}
               className="pl-10 w-64"
+              data-testid="search-input"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleSearchSubmit();
@@ -448,57 +626,90 @@ export default function CompaniesPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Add Company Button */}
-          <Button
-            size="sm"
-            className="gap-2"
-            variant="outline"
-            onClick={() => setAddCompanyDrawerOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Company</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild data-testid="add-company-btn">
+              <Button size="sm" className="gap-2 text-sm">
+                <ChevronDown className="h-3 w-3" />
+                <span className="hidden sm:inline">Insert</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setAddCompanyDrawerOpen(true)} >
+                <Plus className="h-4 w-4 mr-2" />
+                <span>Add Company</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Add Company Drawer */}
           <AddCompanyDrawer
             open={addCompanyDrawerOpen}
             onOpenChange={setAddCompanyDrawerOpen}
-            onSubmit={(data) => console.log(data)}
+            onSubmit={() => fetchDashboardData()}
           />
+          {/* Export to CSV Button */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2 text-sm"
+            disabled={selectedCompanies.size === 0 || exportLoading}
+            onClick={handleExportToCSV}
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">
+              {exportLoading ? "Exporting..." : "Export to CSV"}
+            </span>
+            <span className="sm:hidden">
+              {exportLoading ? "Exporting..." : "Export"}
+            </span>
+            {/* {!exportLoading && selectedCompanies.size > 0 && ` (${selectedCompanies.size})`} */}
+          </Button>
 
           {/* Add Enrichment Button */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
               <Button
-                variant="outline"
                 size="sm"
                 className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium"
-                disabled={selectedCompanies.size === 0}
+                disabled={selectedCompanies.size === 0 || enrichmentLoading}
               >
-                <span>
-                  Add enrichment{" "}
-                  {selectedCompanies.size > 0 && `(${selectedCompanies.size})`}
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {enrichmentLoading ? "Processing..." : "Add enrichment"}{" "}
+                  {/* {!enrichmentLoading && selectedCompanies.size > 0 && `(${selectedCompanies.size})`} */}
+                </span>
+                <span className="sm:hidden">
+                  {enrichmentLoading ? "Processing..." : "Enrich"}{" "}
+                  {!enrichmentLoading && selectedCompanies.size > 0 && `(${selectedCompanies.size})`}
                 </span>
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("company_enrichment")}
-              >
-                Company Enrichment
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("news_enrichment")}
-              >
-                News Enrichment
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleEnrichmentAction("employee_discovery")}
-              >
-                Employee Discovery
-              </DropdownMenuItem>
+              {companyStates.hasEligibleForCompanyEnrichment && (
+                <DropdownMenuItem
+                  onSelect={() => handleEnrichmentAction("company_enrichment")}
+                >
+                  Company Enrichment ({companyStates.eligibleCompanyEnrichmentCount})
+                </DropdownMenuItem>
+              )}
+              {!companyStates.hasEligibleForCompanyEnrichment && selectedCompanies.size > 0 && (
+                <DropdownMenuItem disabled>
+                  Company Enrichment ({companyStates.ineligibleCompanyEnrichmentCount} ineligible)
+                </DropdownMenuItem>
+              )}
+              {companyStates.hasEligibleForNewsEnrichment && (
+                <DropdownMenuItem
+                  onSelect={() => handleEnrichmentAction("news_enrichment")}
+                >
+                  News Enrichment ({companyStates.eligibleNewsEnrichmentCount})
+                </DropdownMenuItem>
+              )}
+              {!companyStates.hasEligibleForNewsEnrichment && selectedCompanies.size > 0 && (
+                <DropdownMenuItem disabled>
+                  News Enrichment ({companyStates.ineligibleNewsEnrichmentCount} ineligible)
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -506,19 +717,20 @@ export default function CompaniesPage() {
 
       {/* Main Content */}
       {authLoading || fetchLoading ? (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
           <Loading />
+          <p className="text-sm text-muted-foreground mt-4">Loading your companies...</p>
         </div>
       ) : (
-          <div className="min-h-[400px] bg-white shadow-sm p-6">
-            <CompaniesSection
-              groupBy={groupBy}
-              records={dashboardState.data as DashboardResponse}
-              selectedCompanies={selectedCompanies}
-              onCompanySelect={handleCompanySelect}
-              onSelectAll={handleSelectAll}
-            />
-          </div>
+        <div className="min-h-[400px] bg-white shadow-sm p-6">
+          <CompaniesSection
+            groupBy={groupBy}
+            records={displayData as DashboardResponse}
+            selectedCompanies={selectedCompanies}
+            onCompanySelect={handleCompanySelect}
+            onSelectAll={handleSelectAll}
+          />
+        </div>
       )}
 
       {/* Pagination Controls - Footer Style */}
@@ -606,5 +818,15 @@ export default function CompaniesPage() {
           </footer>
         )}
     </div>
+  );
+}
+
+export default function CompaniesPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loading /></div>}>
+      <TourProvider>
+        {({ isJoyrideMode }) => <CompaniesPageContent isJoyrideMode={isJoyrideMode} />}
+      </TourProvider>
+    </Suspense>
   );
 }

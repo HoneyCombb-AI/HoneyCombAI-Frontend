@@ -52,7 +52,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white overflow-hidden">
+    <div className="col-span-3 relative bg-gradient-to-br from-yellow-300 via-orange-400 to-red-500 border-r border-[#0f4f48]">
       {/* Animated Background Pattern */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-500/10 to-yellow-500/5 rounded-full blur-3xl animate-pulse"></div>

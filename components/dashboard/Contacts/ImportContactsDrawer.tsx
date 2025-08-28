@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { FileUp, Upload, X } from "lucide-react"
 import { toast } from "sonner"
+import axios from "axios"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -64,21 +65,15 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
       formData.append('csv', selectedFile)
 
       // Call the bulk import API
-      const response = await fetch('/api/contacts/create/bulk', {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post('/api/contacts/create/bulk', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        toast.error(result.error || 'Import failed')
-        return
-      }
-
-      if (result.success) {
+      if (response.data.success) {
         // Show success message with summary
-        const { total_processed, contacts_created, contacts_updated, companies_created, contacts_skipped } = result
+        const { total_processed, contacts_created, contacts_updated, companies_created, contacts_skipped } = response.data
         
         let message = `Successfully processed ${total_processed} rows`
         const details = []
@@ -100,11 +95,27 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
         setSelectedFile(null)
         setOpen(false)
       } else {
-        toast.error(result.error || 'Import failed')
+        toast.error(response.data.error || 'Import failed')
       }
     } catch (error) {
       console.error("Error uploading file:", error)
-      toast.error("Network error during import. Please try again.")
+
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status
+        
+        if (status === 429) {
+          toast.error("Rate limit exceeded. Please wait before importing more data.")
+        } else if (status === 401) {
+          toast.error("Unauthorized. Please log in again.")
+        } else if (status >= 500) {
+          toast.error("Server error. Please try again later.")
+        } else {
+          console.log(error.response)
+          toast.error(`Import failed! ${error.response.data.error}`)
+        }
+      } else {
+        toast.error("Network error. Please try again.")
+      }
     } finally {
       setIsUploading(false)
     }
