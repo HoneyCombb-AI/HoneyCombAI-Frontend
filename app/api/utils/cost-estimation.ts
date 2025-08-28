@@ -2,7 +2,7 @@ export enum TaskType {
   COMPANY_ENRICHMENT = "company_enrichment",
   NEWS_ENRICHMENT = "news_enrichment",
   EMPLOYEE_DISCOVERY = "employee_discovery",
-  COMPLETE_CONTACT_ENRICHMENT = "complete_contact_enrichment",
+  COMPLETE_CONTACT_ENRICHMENT = "complete_contact_workflow",
   SIGNALS_AGENT = "signals_agent"
 }
 

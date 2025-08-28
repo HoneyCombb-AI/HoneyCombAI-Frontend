@@ -349,7 +349,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   };
 
   const handleEnrichmentAction = async (
-    type: "complete_contact_enrichment"
+    type: "complete_contact_workflow"
   ) => {
     if (selectedContacts.size === 0) {
       toast.error("No contacts selected for enrichment");
@@ -392,6 +392,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           existingRequests.push(requestData);
 
           localStorage.setItem('enrichmentRequests', JSON.stringify(existingRequests));
+          fetchDashboardData()
         }
       } else {
         toast.error(response.data.message || "Enrichment request failed");
@@ -760,7 +761,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             <DropdownMenuContent align="end">
               {contactStates.hasEligible && (
                 <DropdownMenuItem
-                  onSelect={() => handleEnrichmentAction("complete_contact_enrichment")}
+                  onSelect={() => handleEnrichmentAction("complete_contact_workflow")}
                 >
                   {getEnrichmentButtonText()}
                 </DropdownMenuItem>

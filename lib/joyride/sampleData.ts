@@ -38,7 +38,7 @@ export const SAMPLE_COMPANY_DATA = {
         linkedin_url: "https://www.linkedin.com/in/ACwAAAAT53oBIckJIrePgJEOcsOoN9s40sjHx9A",
         profile_picture: "https://media.licdn.com/dms/image/v2/C4E03AQGc0hsy5t0cfQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1660897129896?e=1756944000&v=beta&t=nVwwkghR_HtWSaQqPSN4yqc2-blvE8Is8HWKApMrj1Y",
         isTracked: false,
-        primaryAnalysisCompleted: false,
+        primaryAnalysisCompleted: true,
         in_crm: false,
         created_at: "2025-08-02 03:23:45.810097",
         updated_at: "2025-08-02 03:23:45.810097",

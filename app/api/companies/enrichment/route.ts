@@ -183,6 +183,25 @@ export async function POST(req: NextRequest) {
 
       // Handle different backend response formats
       if (backendResult.status === 'success') {
+        let updateData = {};
+
+        if (body.task_type === 'company_enrichment') {
+          updateData = { company_analysis_requested: true };
+        } else if (body.task_type === 'news_enrichment') {
+          updateData = { news_requested: true };
+        }
+
+        if (Object.keys(updateData).length > 0) {
+          const { error: updateError } = await supabase
+            .from('companies')
+            .update(updateData)
+            .in('id', body.entity_ids);
+
+          if (updateError) {
+            console.error('Error updating company fields:', updateError);
+          }
+        }
+
         return NextResponse.json({
           success: true,
           message: backendResult.message || 'Enrichment request submitted successfully',
@@ -228,8 +247,8 @@ export async function POST(req: NextRequest) {
         // For all other errors (400s, etc.)
         return NextResponse.json({
           success: false,
-          message: 'Unable to process enrichment request',
-          errors: [{ message: 'Please check your company selection and try again. If the issue persists, contact support.' }]
+          message: 'Enrichment service is currently unavailable',
+          errors: [{ message: 'Our AI enrichment service is temporarily down. Please try again after sometime.' }]
         } as EnrichmentResponse, { status: 400 });
       }
 

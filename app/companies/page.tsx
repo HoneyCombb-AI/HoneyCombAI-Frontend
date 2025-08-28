@@ -359,7 +359,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
         // Clear selected companies after successful enrichment
         setSelectedCompanies(new Map());
-
+        fetchDashboardData()
         // Log request ID for tracking if available
         if (response.data.request_id) {
           console.log("Enrichment Request ID:", response.data.request_id);

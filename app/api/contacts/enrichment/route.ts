@@ -193,6 +193,14 @@ export async function POST(req: NextRequest) {
 
       // Handle different backend response formats
       if (backendResult.status === 'success') {
+        const { error: updateError } = await supabase
+          .from('contacts')
+          .update({ primary_analysis_requested: true })
+          .in('id', body.entity_ids);
+        if (updateError) {
+          console.error('Error updating primary_analysis_requested:', updateError);
+        }
+
         return NextResponse.json({
           success: true,
           message: backendResult.message || 'Enrichment request submitted successfully',
