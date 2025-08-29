@@ -44,29 +44,17 @@ export default function LoginForm() {
   };
 
   return (
-    <Card className="border-amber-400/30 shadow-2xl shadow-amber-500/20 backdrop-blur-3xl">
-      <CardHeader className="text-center">
-        <div className="flex justify-center mb-4">
-          <div className="relative h-16 w-16">
-            <div className="h-16 w-16 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
-            </div>
-            <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
-            <div className="absolute inset-0 flex items-end justify-end p-1 pointer-events-none">
-              <svg className="w-8 h-8 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <CardTitle className="text-2xl font-bold">
+    <Card className="border-amber-400/30 shadow-2xl shadow-amber-500/20 backdrop-blur-3xl min-h-[600px] flex flex-col">
+      <CardHeader className="text-center py-8">
+        <CardTitle className="text-3xl font-bold mb-2">
           Welcome to HoneyComb
         </CardTitle>
-        <CardDescription className="text-base">
+        <CardDescription className="text-lg">
           Sign in with Google to access your dashboard
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-6">
+      <CardContent className="flex-1 flex flex-col justify-center">
+        <div className="flex flex-col gap-8">
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -74,16 +62,17 @@ export default function LoginForm() {
             </Alert>
           )}
 
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               placeholder="m@example.com"
               disabled
+              className="h-12"
             />
           </div>
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             <div className="flex items-center">
               <Label htmlFor="password">Password</Label>
               <a
@@ -93,15 +82,15 @@ export default function LoginForm() {
                 Forgot your password?
               </a>
             </div>
-            <Input id="password" type="password" disabled />
+            <Input id="password" type="password" disabled className="h-12" />
           </div>
-          <div className="flex flex-col gap-3">
-            <Button type="button" className="w-full" disabled>
+          <div className="flex flex-col gap-4">
+            <Button type="button" className="w-full h-12" disabled>
               Email Login (Coming Soon)
             </Button>
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full h-12"
               onClick={handleGoogleLogin}
               disabled={isLoading}
             >
@@ -136,7 +125,7 @@ export default function LoginForm() {
             </Button>
           </div>
 
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm text-muted-foreground mt-6">
             By signing in, you agree to our{" "}
             <a href="#" className="underline underline-offset-4">
               Terms of Service

@@ -8,7 +8,7 @@ interface HeaderProps {
   userEmail?: string | null;
 }
 
-const HoneyCombIcon = ({ className }: { className?: string }) => (
+export const HoneyCombIcon = ({ className }: { className?: string }) => (
   <div className={`relative ${className}`}>
     <div className="h-16 w-16 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
     </div>
