@@ -8,27 +8,32 @@ export function TestimonialSectionMobile(): JSX.Element {
   const [currentIndex, setCurrentIndex] = useState(0);
   const titleRef = useRef(null);
   const isInView = useInView(titleRef, { once: true, amount: 0.8 });
-  
+
   const cards = [
     {
       heading: "Custom Intent Signals",
-      quote: "HoneyComb AI provides real-time, custom intent signals that are unique to your specific sales process and ideal customer profile (ICP). This allows you to know who is in the market to buy, what they care about, and how to approach them for maximum impact.",
+      quote:
+        "HoneyComb AI provides real-time, custom intent signals that are unique to your specific sales process and ideal customer profile (ICP). This allows you to know who is in the market to buy, what they care about, and how to approach them for maximum impact.",
     },
     {
       heading: "Deep Social and Web Research",
-      quote: "HoneyComb AI utilizes agents to scan digital presences across platforms to uncover hidden buying signals and behavioral patterns. This social intelligence helps you understand your prospects' recent activities, interests, and personal triggers.",
+      quote:
+        "HoneyComb AI utilizes agents to scan prospects complete social and web activity to uncover hidden buying signals and behavioral patterns. This social intelligence helps you understand your prospects' recent activities, interests, and personal triggers.",
     },
     {
-      heading: "Automated Lead Scoring", 
-      quote: "HoneyComb AI automates the process of assessing ICP fit, generating intent scores, and identifying \"explainable triggers\" for each contact. This eliminates guesswork and helps you focus on timely, tailored conversations.",
+      heading: "Automated Lead Scoring",
+      quote:
+        'HoneyComb AI automates the process of assessing ICP fit, generating intent scores, and identifying "explainable triggers" for each contact. This eliminates guesswork and helps you focus on timely, tailored conversations.',
     },
     {
       heading: "Relationship Manager Agent",
-      quote: "The AI-powered Relationship Manager Agent continuously nurtures leads over time. It re-engages prospects precisely when new signals emerge, so you never miss a window of opportunity.",
+      quote:
+        "The AI-powered Relationship Manager Agent continuously nurtures leads over time. It re-engages prospects precisely when new signals emerge, so you never miss a window of opportunity.",
     },
     {
       heading: "Hyperpersonalized Outreach",
-      quote: "By providing a deep understanding of who a buyer is, their role in the decision-making process, and what matters most to them, the platform enables confident, relevant, and personalized outreach. You'll know who to contact, what will resonate, and when to reach out—automatically.",
+      quote:
+        "By providing a deep understanding of who a buyer is, their role in the decision-making process, and what matters most to them, the platform enables confident, relevant, and personalized outreach. You'll know who to contact, what will resonate, and when to reach out—automatically.",
     },
   ];
 
@@ -42,7 +47,7 @@ export function TestimonialSectionMobile(): JSX.Element {
 
   // Auto-advance cards every 5 seconds
   useEffect(() => {
-    const interval = setInterval(nextCard, 5000);
+    const interval = setInterval(nextCard, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -50,10 +55,10 @@ export function TestimonialSectionMobile(): JSX.Element {
     <section className="relative w-full py-12 md:hidden bg-white overflow-hidden">
       {/* Subtle animated background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-white via-gray-50/30 to-white animate-pulse"></div>
-      
+
       <div className="relative z-10 px-4">
         <div className="text-center mb-8">
-          <motion.h2 
+          <motion.h2
             ref={titleRef}
             className="text-2xl font-semibold text-[#0f4f48] mb-4"
             initial={{ opacity: 0 }}
@@ -93,7 +98,10 @@ export function TestimonialSectionMobile(): JSX.Element {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             drag="x"
             dragConstraints={{
-              left: -((cards.length - 1) * (typeof window !== 'undefined' ? window.innerWidth : 400)),
+              left: -(
+                (cards.length - 1) *
+                (typeof window !== "undefined" ? window.innerWidth : 400)
+              ),
               right: 0,
             }}
             dragElastic={0.2}
@@ -101,7 +109,10 @@ export function TestimonialSectionMobile(): JSX.Element {
               const threshold = 50;
               if (info.offset.x > threshold && currentIndex > 0) {
                 prevCard();
-              } else if (info.offset.x < -threshold && currentIndex < cards.length - 1) {
+              } else if (
+                info.offset.x < -threshold &&
+                currentIndex < cards.length - 1
+              ) {
                 nextCard();
               }
             }}
@@ -128,13 +139,11 @@ export function TestimonialSectionMobile(): JSX.Element {
               <motion.div
                 key={index}
                 className={`w-3 h-3 rounded-full cursor-pointer ${
-                  index === currentIndex
-                    ? 'bg-[#0f4f48]'
-                    : 'bg-gray-300'
+                  index === currentIndex ? "bg-[#0f4f48]" : "bg-gray-300"
                 }`}
                 animate={{
                   scale: index === currentIndex ? 1.2 : 1,
-                  opacity: index === currentIndex ? 1 : 0.6
+                  opacity: index === currentIndex ? 1 : 0.6,
                 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setCurrentIndex(index)}
@@ -150,7 +159,6 @@ export function TestimonialSectionMobile(): JSX.Element {
           </div>
         </div>
       </div>
-    
     </section>
   );
 }
