@@ -155,7 +155,7 @@ export const rateLimiters = {
   // Support message operations  
   supportPerIP: (ip: string) =>
     RateLimiter.checkLimit(ip, {
-      limit: 10,
+      limit: 2,
       windowSeconds: 3600, // 1 hour
       keyPrefix: 'support_ip'
     })

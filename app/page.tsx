@@ -10,9 +10,6 @@ import { FeatureLayoutSectionMobile } from "@/components/Landing/Mobile/FeatureL
 import { TestimonialSectionMobile } from "@/components/Landing/Mobile/TestimonialSectionMobile";
 import { CallToActionResponsive } from "@/components/Landing/CallToActionResponsive";
 
-import { FooterSection } from "@/components/Landing/Desktop/FooterSection";
-import { FooterSectionMobile } from "@/components/Landing/Mobile/FooterSectionMobile";
-
 import { ResponsiveLayout } from "@/components/Landing/ResponsiveLayout";
 import { Loading } from "@/components/loading";
 import { useAuth } from "@/lib/auth-context";
@@ -62,10 +59,6 @@ const HomePage = (): JSX.Element => {
         <div id="call-to-action">
           <CallToActionResponsive userEmail={userEmail} />
         </div>
-        <ResponsiveLayout
-          mobileComponent={FooterSectionMobile}
-          desktopComponent={FooterSection}
-        />
       </main>
     </div>
   );
