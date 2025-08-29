@@ -3,11 +3,11 @@
 import React from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
-export type ActiveSection = "contacts" | "companies";
+export type ActiveSection = "contacts" | "companies" | "support";
 
 
 interface HeaderProps {
-  title: "Contacts" | "Companies";
+  title: "Contacts" | "Companies" | "Support";
 }
 
 const Header: React.FC<HeaderProps> = ({ title }) => {
