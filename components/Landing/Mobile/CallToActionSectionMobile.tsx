@@ -108,7 +108,7 @@ export function CallToActionSectionMobile(): JSX.Element {
         {/* CTA Buttons with animation */}
           <Button
             variant="outline"
-            className="w-full bg-white hover:bg-gray-50 border-[#0f4f48]/20 text-[#0f4f48] h-12 rounded-lg font-semibold text-base"
+            className="w-full bg-amber-600 hover:bg-amber-500 border-[#0f4f48]/20 text-white h-12 rounded-lg font-semibold text-base"
             data-cal-namespace="30min"
             data-cal-link="ankushnagathan/30min"
             data-cal-config='{"layout":"month_view"}'
