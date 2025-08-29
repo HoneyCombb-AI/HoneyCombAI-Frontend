@@ -177,10 +177,10 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <a href="#" className="flex items-center w-full">
+                <Link href="/support?layout=dashboard" className="flex items-center w-full">
                   <MessageSquare className="h-4 w-4" />
                   <span>Support</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
