@@ -47,7 +47,7 @@ export function TestimonialSectionMobile(): JSX.Element {
 
   // Auto-advance cards every 5 seconds
   useEffect(() => {
-    const interval = setInterval(nextCard, 3000);
+    const interval = setInterval(nextCard, 4500);
     return () => clearInterval(interval);
   }, []);
 

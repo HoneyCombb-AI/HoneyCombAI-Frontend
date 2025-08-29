@@ -22,8 +22,8 @@ export function CallToActionSection({ userEmail }: HeaderProps): JSX.Element {
 
   useEffect(() => {
     (async function () {
-      const cal = await getCalApi({"namespace":"30min"});
-      cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
+      const cal = await getCalApi({ namespace: "30min" });
+      cal("ui", { hideEventTypeDetails: false, layout: "month_view" });
     })();
   }, []);
 
@@ -87,7 +87,7 @@ export function CallToActionSection({ userEmail }: HeaderProps): JSX.Element {
                       onClick={handleLoginClick}
                       className="bg-[#4adf7d] cursor-pointer hover:bg-[#4adf7d]/90 text-[#0f4f48] shadow-[0px_1px_2px_#1018280d] h-14 px-8 rounded [font-family:'Inter-Medium',Helvetica] font-medium text-lg tracking-[0] leading-6"
                     >
-                      {userEmail ? "Access Dashboard" : "Get Started for free"}
+                      {userEmail ? "Access Dashboard" : "View Dashboard"}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
 
@@ -113,7 +113,7 @@ export function CallToActionSection({ userEmail }: HeaderProps): JSX.Element {
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <span className="[font-family:'Inter-Medium',Helvetica] font-medium text-[#0f4f48] text-sm">
-                              Monthly Revenue
+                              Monthly Revenue ++
                             </span>
                             <Badge className="bg-green-100 text-green-800">
                               +23.5%
