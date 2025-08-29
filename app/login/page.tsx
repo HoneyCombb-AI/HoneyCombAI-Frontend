@@ -47,7 +47,15 @@ export default function LoginForm() {
     <Card className="border-amber-400/30 shadow-2xl shadow-amber-500/20 backdrop-blur-3xl min-h-[600px] flex flex-col">
       <CardHeader className="text-center py-8">
         <CardTitle className="text-3xl font-bold mb-2">
-          Welcome to HoneyComb
+          <div className="flex justify-center items-center gap-2">
+            Welcome to
+            <span className="font-bold text-3xl bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent tracking-tight hidden sm:block">
+              HoneyComb
+            </span>
+            <span className="text-sm font-medium text-[#0f4f48] hidden sm:block">
+              AI
+            </span>
+          </div>
         </CardTitle>
         <CardDescription className="text-lg">
           Sign in with Google to access your dashboard

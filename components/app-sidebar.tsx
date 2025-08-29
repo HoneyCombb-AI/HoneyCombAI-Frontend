@@ -39,7 +39,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import Link from "next/dist/client/link";
-import { usePathname ,useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { NotificationPopoverContent } from "@/components/notification-popover";
 
 // Menu items
@@ -113,14 +113,19 @@ export function AppSidebar() {
             <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
             <div className="absolute inset-0 flex items-end justify-end p-1 pointer-events-none">
               <svg className="w-8 h-8 mt-1 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z"/>
+                <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z" />
               </svg>
             </div>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-xl text-foreground tracking-tight">
-              HoneyComb
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-xl bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent tracking-tight hidden sm:block">
+                HoneyComb
+              </span>
+              <span className="text-sm font-medium text-[#0f4f48] hidden sm:block">
+                AI
+              </span>
+            </div>
             <span className="text-xs text-muted-foreground font-medium">
               Business Intelligence
             </span>
