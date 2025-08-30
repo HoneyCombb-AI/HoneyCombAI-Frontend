@@ -26,9 +26,15 @@ export default function OnboardingLayout({
 
       try {
         const response = await axios.get("/api/onboarding/clientContext");
-        if (response.data.success && response.data.is_onboarded) {
-          router.replace("/contacts");
-          return;
+        if (response.data.success) {
+          if (!response.data.has_organization) {
+            router.replace("/organization");
+            return;
+          }
+          if (response.data.is_onboarded) {
+            router.replace("/contacts");
+            return;
+          }
         }
         setIsLoading(false);
       } catch (error) {

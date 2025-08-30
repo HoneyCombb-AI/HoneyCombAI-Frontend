@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { Loading } from "@/components/loading";
 
 function ErrorContent() {
   const searchParams = useSearchParams();
@@ -161,8 +162,9 @@ export default function AuthCodeErrorPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-svh w-full items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
+          <Loading />
+          <p className="text-sm text-muted-foreground mt-4">Loading...</p>
         </div>
       }
     >
