@@ -48,7 +48,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
                   {signal.key}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs bg-amber-700/70 backdrop-blur-sm border border-amber-700/50 text-amber-50">
+              <TooltipContent className="max-w-xs bg-amber-800/70 backdrop-blur-sm border border-amber-900/50 text-white">
                 <div className="space-y-1">
                   <p className="font-semibold">{signal.key}</p>
                   <p className="text-xs">Confidence: {Math.round(signal.score)}%</p>

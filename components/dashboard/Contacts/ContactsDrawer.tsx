@@ -114,11 +114,20 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
             </DrawerTitle>
             <div className="text-muted-foreground text-sm">
               <div className="flex w-full justify-between items-center">
-                <div
-                  className="text-md font-semibold text-gray-600"
-                  title={selectedContact.title || "No title"}
-                >
-                  {selectedContact.title || ""}
+                <div className="flex items-center gap-2">
+                  <div
+                    className="text-md font-semibold text-gray-600"
+                    title={selectedContact.title || "No title"}
+                  >
+                    {selectedContact.title || ""}
+                  </div>
+                  {selectedContact.company?.name && (
+                    <>
+                      <div className="text-sm text-gray-500">
+                        at {selectedContact.company.name}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Company Redirect */}

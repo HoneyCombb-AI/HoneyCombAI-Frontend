@@ -33,7 +33,7 @@ export const contactsTourSteps: DriveStep[] = [
     element: '[data-testid="enrichment-dropdown"]',
     popover: {
       title: 'Enrichment Actions',
-      description: 'Enhance your contact data with AI-powered enrichment analysis and manage contact tracking settings.',
+      description: 'Access two powerful enrichment options: Contact Tracking to monitor contact updates and changes, and Complete Contact Enrichment to perform comprehensive AI-powered analysis of contact profiles.',
       side: "over",
       align: 'center'
     }
