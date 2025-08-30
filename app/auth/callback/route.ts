@@ -71,6 +71,52 @@ export async function GET(request: NextRequest) {
     // this is likely their first sign-in (new user)
     const isNewUser = (lastSignInAt.getTime() - createdAt.getTime()) < 30000; // 30 seconds
     
+    // Auto-join new users to default organization
+    if (isNewUser) {
+      try {
+        // Check if default organization exists
+        const { data: defaultOrg } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('invite_code', 'SI9FCogHD_-C')
+          .single();
+
+        if (defaultOrg) {
+          // Check if user is already in an organization (safety check)
+          const { data: existingMembership } = await supabase
+            .from('organization_members')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (!existingMembership) {
+            // Add user to default organization
+            const { error: memberError } = await supabase
+              .from('organization_members')
+              .insert({
+                organization_id: defaultOrg.id,
+                user_id: user.id
+              });
+
+            if (!memberError) {
+              // Connect user's existing companies to organization
+              await supabase.rpc('update_user_companies_organization', {
+                target_user_id: user.id,
+                target_organization_id: defaultOrg.id
+              });
+              console.log(`New user ${user.id} successfully joined default organization`);
+            } else {
+              console.error('Failed to add new user to default organization:', memberError);
+            }
+          }
+        } else {
+          console.warn('Default organization with invite code  not found');
+        }
+      } catch (error) {
+        console.error('Error auto-joining new user to default organization:', error);
+      }
+    }
+
     // Determine the final destination based on user type
     let finalDestination = next;
     if (next === '/contacts') {
