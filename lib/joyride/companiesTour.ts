@@ -33,7 +33,7 @@ export const companiesTourSteps: DriveStep[] = [
     element: '[data-testid="enrichment-dropdown"]',
     popover: {
       title: 'Company Enrichment',
-      description: 'Enhance company profiles with AI-powered enrichment including company details, news updates, and employee discovery.',
+      description: 'Access two enrichment options: Company Enrichment to gather comprehensive company data and insights, and News Enrichment to stay updated with the latest company news and developments.',
       side: "over",
       align: 'end'
     }

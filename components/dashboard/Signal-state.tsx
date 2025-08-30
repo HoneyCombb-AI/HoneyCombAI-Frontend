@@ -28,7 +28,10 @@ export const SignalState: React.FC<SignalStateProps> = ({
   }
 
   return (
-    <div className={`flex flex-wrap gap-1 max-w-full overflow-hidden ${className}`}>
+    <div 
+      className={`flex flex-wrap gap-1 max-w-full overflow-hidden ${className}`}
+      data-testid="sample-contact-signals"
+    >
       {processedSignals.map((signal, idx) => {
         const colorClass = getSignalBadgeColor(signal.key);
         
@@ -45,15 +48,15 @@ export const SignalState: React.FC<SignalStateProps> = ({
                   {signal.key}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
+              <TooltipContent className="max-w-xs bg-amber-800/70 backdrop-blur-sm border border-amber-900/50 text-white">
                 <div className="space-y-1">
                   <p className="font-semibold">{signal.key}</p>
                   <p className="text-xs">Confidence: {Math.round(signal.score)}%</p>
                   {signal.description && (
-                    <p className="text-xs text-gray-200">{signal.description}</p>
+                    <p className="text-xs">{signal.description}</p>
                   )}
                   {signal.source && (
-                    <p className="text-xs text-gray-300">Source: {signal.source}</p>
+                    <p className="text-xs">Source: {signal.source}</p>
                   )}
                 </div>
               </TooltipContent>
