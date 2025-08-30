@@ -49,7 +49,7 @@ export const organizationTourSteps: DriveStep[] = [
     element: 'body',
     popover: {
       title: 'Tour Complete!',
-      description: 'You\'ve successfully completed the HoneyComb AI tour! You now know how to manage contacts, companies, and organizations. Start building your network and leveraging AI-powered insights.',
+      description: 'You\'ve successfully completed the HoneyComb AI tour! You now know how to manage contacts, companies, and organizations. A default organization has been created with demo contacts that have AI analysis completed for testing. When ready to create your own organization, simply leave this one. Start building your network and leveraging AI-powered insights.',
       side: "bottom",
       align: 'center'
     }

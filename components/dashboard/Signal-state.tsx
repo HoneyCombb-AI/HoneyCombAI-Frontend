@@ -28,7 +28,10 @@ export const SignalState: React.FC<SignalStateProps> = ({
   }
 
   return (
-    <div className={`flex flex-wrap gap-1 max-w-full overflow-hidden ${className}`}>
+    <div 
+      className={`flex flex-wrap gap-1 max-w-full overflow-hidden ${className}`}
+      data-testid="sample-contact-signals"
+    >
       {processedSignals.map((signal, idx) => {
         const colorClass = getSignalBadgeColor(signal.key);
         

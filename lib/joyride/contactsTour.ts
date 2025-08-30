@@ -35,7 +35,7 @@ export const contactsTourSteps: DriveStep[] = [
       title: 'Enrichment Actions',
       description: 'Enhance your contact data with AI-powered enrichment analysis and manage contact tracking settings.',
       side: "over",
-      align: 'end'
+      align: 'center'
     }
   },
   {
@@ -44,6 +44,15 @@ export const contactsTourSteps: DriveStep[] = [
       title: 'Contact Profile',
       description: 'When this contact is clicked, a drawer will open displaying complete details including enrichment analysis if completed. This shows all the valuable insights you can gather about your contacts.',
       side: "bottom",
+      align: 'start'
+    }
+  },
+  {
+    element: '[data-testid="sample-contact-signals"]',
+    popover: {
+      title: 'Intent Signals',
+      description: 'These badges represent intent signals detected for this contact through AI analysis. They help identify potential opportunities, interests, and behavioral patterns to enhance your intelligence and outreach strategy.',
+      side: "over",
       align: 'start'
     }
   },
