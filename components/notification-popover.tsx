@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, BellOff, Loader2, User } from "lucide-react";
+import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useRouter } from "next/navigation";
+import { Loading } from "./loading";
 
 interface Notification {
   id: number;
@@ -38,25 +38,9 @@ interface NotificationPopoverContentProps {
 export function NotificationPopoverContent({ isOpen }: NotificationPopoverContentProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const router = useRouter();
 
-  const fetchOnboardingStatus = async () => {
-    try {
-      const response = {"success": true ,"is_onboarded" : true}
-      if (!response.success) {
-        throw new Error('Failed to fetch onboarding status');
-      }
-      setIsOnboarded(response.is_onboarded);
-      return response.is_onboarded;
-    } catch (err) {
-      console.error('Error fetching onboarding status:', err);
-      setError('Failed to load onboarding status');
-      return null;
-    }
-  };
 
   const fetchNotifications = async () => {
     try {
@@ -74,15 +58,12 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
 
   const loadData = async () => {
     if (hasLoaded) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const onboardedStatus = await fetchOnboardingStatus();
-      if (onboardedStatus) {
-        await fetchNotifications();
-      }
+      await fetchNotifications();
       setHasLoaded(true);
     } finally {
       setIsLoading(false);
@@ -95,9 +76,6 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
     }
   }, [isOpen, hasLoaded]);
 
-  const handleOnboardNow = () => {
-    router.push('/onboarding');
-  };
 
   const getInitials = (name: string) => {
     return name
@@ -112,7 +90,7 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     const diffInDays = Math.floor(diffInHours / 24);
@@ -127,17 +105,17 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">Loading notifications...</p>
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <Loading />
+          <p className="text-sm text-muted-foreground mt-4">Loading Notifications...</p>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <BellOff className="h-12 w-12 text-destructive mb-3" />
           <p className="text-sm text-destructive mb-3">{error}</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               setHasLoaded(false);
               setError(null);
@@ -145,19 +123,6 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
           >
             Try Again
           </Button>
-        </div>
-      ) : isOnboarded === false ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
-          <User className="h-12 w-12 text-muted-foreground mb-3" />
-          <div>
-            <p className="text-sm font-medium mb-2">Complete Your Onboarding</p>
-            <p className="text-xs text-muted-foreground mb-4">
-              To receive personalized notifications, please complete your onboarding process.
-            </p>
-            <Button onClick={handleOnboardNow} size="sm">
-              Onboard Now
-            </Button>
-          </div>
         </div>
       ) : notifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -169,14 +134,14 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {notifications.map((notification) => (
-            <div 
-              key={notification.id} 
+            <div
+              key={notification.id}
               className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border hover:bg-muted/50 transition-colors"
             >
               <Avatar className="h-8 w-8 mt-0.5">
-                <AvatarImage 
-                  src={notification.contact.profile_picture} 
-                  alt={notification.contact.full_name} 
+                <AvatarImage
+                  src={notification.contact.profile_picture}
+                  alt={notification.contact.full_name}
                 />
                 <AvatarFallback className="text-xs">
                   {getInitials(notification.contact.full_name)}
