@@ -11,6 +11,13 @@ interface CreateCompanyRequest {
   country?: string;
 }
 
+interface OrganizationStatus {
+  has_organization: boolean;
+  organization_id: string | null;
+  organization_name: string | null;
+  is_organization_onboarded: boolean;
+}
+
 interface CreateCompanyResponse {
   success: boolean;
   company?: {
@@ -61,33 +68,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user's organization_id and onboarding status from profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('organization_id, is_onboarded')
-      .eq('id', user.id)
-      .single();
+    // Check user's organization membership and onboarding status
+    const { data: orgStatus, error: orgStatusError } = await supabase
+      .rpc('check_user_organization_status', { input_user_id: user.id })
+      .single() as { data: OrganizationStatus | null; error: unknown };
 
-    if (profileError) {
-      console.error('Error fetching user profile:', profileError);
+    if (orgStatusError) {
+      console.error('Error checking organization status:', orgStatusError);
       return NextResponse.json(
-        { success: false, error: 'Failed to get user profile' },
+        { success: false, error: 'Failed to check organization status' },
         { status: 500 }
       );
     }
 
     // Check if user is part of an organization
-    if (!profile.organization_id) {
+    if (!orgStatus || !orgStatus.has_organization) {
       return NextResponse.json(
         { success: false, error: 'You are not part of an organization. You need to create or join an organization first.' },
         { status: 403 }
       );
     }
 
-    // Check if user has completed onboarding
-    if (!profile.is_onboarded) {
+    // Check if organization has completed onboarding
+    if (!orgStatus.is_organization_onboarded) {
       return NextResponse.json(
-        { success: false, error: 'You haven\'t completed onboarding yet. Please check your notifications to complete onboarding before creating companies.' },
+        { success: false, error: 'Your organization hasn\'t completed onboarding yet. Please contact support to complete onboarding before creating companies.' },
         { status: 403 }
       );
     }
@@ -120,7 +125,7 @@ export async function POST(req: NextRequest) {
       state: body.state?.trim() || null,
       country: body.country?.trim() || null,
       user_id: user.id,
-      organization_id: profile.organization_id,
+      organization_id: orgStatus.organization_id,
     };
 
     // Insert the company

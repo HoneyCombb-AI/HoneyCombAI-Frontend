@@ -34,6 +34,13 @@ interface CSVContactData {
   company_url: string;
 }
 
+interface OrganizationStatus {
+  has_organization: boolean;
+  organization_id: string | null;
+  organization_name: string | null;
+  is_organization_onboarded: boolean;
+}
+
 interface BulkImportResponse {
   success: boolean;
   total_processed?: number;
@@ -166,14 +173,24 @@ export async function POST(request: NextRequest) {
       row_number: index + 2
     }));
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('organization_id, is_onboarded')
-      .eq('id', user.id)
-      .single();
+    // Check user's organization membership and onboarding status
+    const { data: orgStatus, error: orgStatusError } = await supabase
+      .rpc('check_user_organization_status', { input_user_id: user.id })
+      .single() as { data: OrganizationStatus | null; error: unknown };
 
-    // Check if user is part of an organization  
-    if (!profile?.organization_id) {
+    if (orgStatusError) {
+      console.error('Error checking organization status:', orgStatusError);
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'Failed to check organization status' 
+        } as BulkImportResponse,
+        { status: 500 }
+      );
+    }
+
+    // Check if user is part of an organization
+    if (!orgStatus || !orgStatus.has_organization) {
       return NextResponse.json(
         { 
           success: false,
@@ -183,12 +200,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has completed onboarding
-    if (!profile?.is_onboarded) {
+    // Check if organization has completed onboarding
+    if (!orgStatus.is_organization_onboarded) {
       return NextResponse.json(
         { 
           success: false,
-          error: 'You haven\'t completed onboarding yet. Please check your notifications to complete onboarding before bulk importing contacts.' 
+          error: 'Your organization hasn\'t completed onboarding yet. Please contact support to complete onboarding before bulk importing contacts.' 
         } as BulkImportResponse,
         { status: 403 }
       );
@@ -200,7 +217,7 @@ export async function POST(request: NextRequest) {
       {
         contacts_data: contactsWithRowNumbers,
         user_id: user.id,
-        organization_id: profile?.organization_id || null
+        organization_id: orgStatus.organization_id
       }
     );
 
