@@ -129,7 +129,12 @@ function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) 
 
 export default function OrganizationPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loading /></div>}>
+    <Suspense fallback={
+      <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
+        <Loading />
+        <p className="text-sm text-muted-foreground mt-4">Loading your organization...</p>
+      </div>
+    }>
       <TourProvider>
         {({ isJoyrideMode }) => <OrganizationPageContent isJoyrideMode={isJoyrideMode} />}
       </TourProvider>
