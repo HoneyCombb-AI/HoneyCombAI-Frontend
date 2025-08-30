@@ -13,8 +13,8 @@ import type {
   SearchResponse
 } from '@/app/api/contacts/route';
 import { ContactsDrawer } from './ContactsDrawer';
-import { getSignalBadgeColor, processSignals } from '@/lib/ContactUtils';
 import { RingState } from '../Ring-state';
+import { SignalState } from '../Signal-state';
 
 type DashboardResponse = CompanyGroupResponse | SignalGroupResponse | LocationGroupResponse | SearchResponse;
 
@@ -137,7 +137,6 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
   const renderContacts = useMemo(() =>
     (contacts: DashboardContact[]) =>
       contacts.map((contact) => {
-        const processedSignals = processSignals(contact.signals);
         const isSelected = selectedContacts.has(contact.id);
         // Determine ring state once
         const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
@@ -210,24 +209,10 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
               className="px-2 py-3 w-1/3 cursor-pointer"
               onClick={() => handleContactClick(contact)}
             >
-              <div className="flex flex-wrap gap-1 max-w-full overflow-hidden">
-                {processedSignals.length > 0 ? (
-                  processedSignals.map((signal, idx) => {
-                    const colorClass = getSignalBadgeColor(signal.key);
-                    return (
-                      <Badge
-                        key={`${contact.id}-${signal.type}-${idx}`}
-                        className={`text-xs px-1.5 py-0.5 ${colorClass} border-0 whitespace-nowrap truncate`}
-                        title={`${signal.key}: ${signal.score}`}
-                      >
-                        {signal.key}
-                      </Badge>
-                    );
-                  })
-                ) : (
-                  <span className="text-sm text-gray-400">—</span>
-                )}
-              </div>
+              <SignalState 
+                signals={contact.signals}
+                contactId={contact.id}
+              />
             </td>
 
           </tr>

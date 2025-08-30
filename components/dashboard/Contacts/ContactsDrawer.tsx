@@ -5,7 +5,6 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Building, Clock, Languages, Instagram } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
 import { parseISO, format } from "date-fns"
 import axios from "axios"
 import { toast } from "sonner"
@@ -19,9 +18,8 @@ import {
 import { DashboardContact } from "@/app/api/contacts/route"
 import { DrawerContact } from "@/app/api/contacts/[id]/route"
 import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { getSignalBadgeColor, processSignals } from "@/lib/ContactUtils"
 import { NudgesSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
+import { SignalState } from "../Signal-state"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
 
 
@@ -155,48 +153,23 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
 
           ) : (
             <div className="px-6 py-2 space-y-3">
-              {drawerContact?.signals && drawerContact.signals.length > 0 && (() => {
-                const processedSignals = processSignals(drawerContact.signals, true);
-                return processedSignals.length > 0 && (
-                  <>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-gray-600">Social Intents</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {processedSignals.map((signal: { score: number; key: string; description?: string; source?: string }, idx: number) => (
-                          <Tooltip key={idx}>
-                            <TooltipTrigger asChild>
-                              <Badge
-                                className={cn(
-                                  "text-xs px-2 py-1 transition-colors",
-                                  getSignalBadgeColor(signal.key),
-                                  "border-0 cursor-help"
-                                )}
-                              >
-                                {signal.key}
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <div className="space-y-1">
-                                <p className="font-semibold">{signal.key}</p>
-                                <p className="text-xs">Confidence: {Math.round(signal.score)}%</p>
-                                {signal.description && (
-                                  <p className="text-xs text-gray-200">{signal.description}</p>
-                                )}
-                                {signal.source && (
-                                  <p className="text-xs text-gray-300">Source: {signal.source}</p>
-                                )}
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        ))}
-                      </div>
+              {drawerContact?.signals && drawerContact.signals.length > 0 && (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-600">Social Intents</span>
                     </div>
-                    <Separator className="my-4" />
-                  </>
-                );
-              })()}
+                    <SignalState 
+                      signals={drawerContact.signals}
+                      contactId={drawerContact.id || selectedContact.id}
+                      showTooltips={true}
+                      detailed={true}
+                      className="gap-2"
+                    />
+                  </div>
+                  <Separator className="my-4" />
+                </>
+              )}
               <div className="flex gap-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
