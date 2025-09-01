@@ -3,12 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {  CheckCircle, Zap, TrendingUp, Users } from "lucide-react";
+import { CheckCircle, Zap, TrendingUp, Users } from "lucide-react";
 import React, { JSX, useEffect } from "react";
 import { motion } from "framer-motion";
 import { getCalApi } from "@calcom/embed-react";
-
-
 
 export function CallToActionSectionMobile(): JSX.Element {
   const features = [
@@ -19,15 +17,14 @@ export function CallToActionSectionMobile(): JSX.Element {
 
   useEffect(() => {
     (async function () {
-      const cal = await getCalApi({"namespace":"30min"});
-      cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
+      const cal = await getCalApi({ namespace: "30min" });
+      cal("ui", { hideEventTypeDetails: false, layout: "month_view" });
     })();
   }, []);
 
   return (
     <section className="relative w-full px-4 py-16 md:hidden">
       <div className="max-w-sm mx-auto">
-
         {/* Header section with animation */}
         <motion.div
           className="text-center mb-8"
@@ -87,9 +84,13 @@ export function CallToActionSectionMobile(): JSX.Element {
               <CardContent className="p-3 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <TrendingUp className="w-4 h-4 text-[#4adf7d]" />
-                  <span className="font-bold text-lg text-[#0f4f48]">85%</span>
+                  <span className="font-bold text-lg text-[#0f4f48]">
+                    98.7%
+                  </span>
                 </div>
-                <span className="text-xs text-[#0f4f48] font-medium">Pipeline Growth</span>
+                <span className="text-xs text-[#0f4f48] font-medium">
+                  Accuracy
+                </span>
               </CardContent>
             </Card>
 
@@ -99,22 +100,24 @@ export function CallToActionSectionMobile(): JSX.Element {
                   <Users className="w-4 h-4 text-[#ff6b35]" />
                   <span className="font-bold text-lg text-[#0f4f48]">3x</span>
                 </div>
-                <span className="text-xs text-[#0f4f48] font-medium">More Leads</span>
+                <span className="text-xs text-[#0f4f48] font-medium">
+                  More Deals
+                </span>
               </CardContent>
             </Card>
           </div>
         </motion.div>
 
         {/* CTA Buttons with animation */}
-          <Button
-            variant="outline"
-            className="w-full bg-amber-600 hover:bg-amber-500 border-[#0f4f48]/20 text-white h-12 rounded-lg font-semibold text-base"
-            data-cal-namespace="30min"
-            data-cal-link="ankushnagathan/30min"
-            data-cal-config='{"layout":"month_view"}'
-          >
-            Book Demo
-          </Button>
+        <Button
+          variant="outline"
+          className="w-full bg-amber-600 hover:bg-amber-500 border-[#0f4f48]/20 text-white h-12 rounded-lg font-semibold text-base"
+          data-cal-namespace="30min"
+          data-cal-link="ankushnagathan/30min"
+          data-cal-config='{"layout":"month_view"}'
+        >
+          Book Demo
+        </Button>
       </div>
     </section>
   );
