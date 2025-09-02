@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
       'import_contacts_bulk',
       {
         contacts_data: contactsWithRowNumbers,
-        user_id: user.id,
+        p_user_id: user.id,
         organization_id: orgStatus.organization_id
       }
     );
