@@ -173,7 +173,6 @@ export async function POST(req: NextRequest) {
       twitter_handle: body.twitterProfile?.trim() ? extractTwitterHandle(body.twitterProfile.trim()) : null,
       instagram_handle: body.instagramProfile?.trim() ? extractInstagramHandle(body.instagramProfile.trim()) : null,
       user_id: user.id,
-      organization_id: orgStatus.organization_id,
       istracked: false,
       in_crm: false,
     };
