@@ -21,6 +21,7 @@ export interface DrawerContactSignal {
   confidence_score: number;
   description: string | null;
   source: string | null;
+  source_date: string | null;
   created_at: string;
 }
 

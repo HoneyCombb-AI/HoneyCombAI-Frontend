@@ -58,6 +58,9 @@ export const SignalState: React.FC<SignalStateProps> = ({
                   {signal.source && (
                     <p className="text-xs">Source: {signal.source}</p>
                   )}
+                  {signal.source_date && (
+                    <p className="text-xs">Source Date: {signal.source_date}</p>
+                  )}
                 </div>
               </TooltipContent>
             </Tooltip>

@@ -81,18 +81,22 @@ export const processSignals = (signals: ContactSignal[] = [], showAll: boolean =
         type: string;
         description?: string;
         source?: string;
+        source_date?: string;
       } = {
         key: signalTypeMap[signal.signal_type] || normalizeSignalText(signal.signal_type),
         score: signal.confidence_score,
         type: signal.signal_type
       };
 
-      // Only include description and source if they exist (backward compatibility)
+      // Only include description, source, and source_date if they exist (backward compatibility)
       if ('description' in signal && signal.description) {
         processedSignal.description = typeof signal.description === 'string' ? signal.description : undefined;
       }
       if ('source' in signal && signal.source) {
         processedSignal.source = typeof signal.source === 'string' ? signal.source : undefined;
+      }
+      if ('source_date' in signal && signal.source_date) {
+        processedSignal.source_date = typeof signal.source_date === 'string' ? signal.source_date : undefined;
       }
 
       return processedSignal;
