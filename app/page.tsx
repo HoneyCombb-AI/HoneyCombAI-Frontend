@@ -1,45 +1,49 @@
-import Customization from "@/components/Landing/Desktop/customization";
-import DailySignals from "@/components/Landing/Desktop/daily-signals";
-import Faq from "@/components/Landing/Desktop/faq";
-import FinalCta from "@/components/Landing/Desktop/final-cta";
-import Footer from "@/components/Landing/Desktop/footer";
-import Header from "@/components/Landing/Desktop/header";
-import HeroSection from "@/components/Landing/Desktop/hero";
-import ImplementationTimeline from "@/components/Landing/Desktop/implementation-timeline";
-import InDepthResearch from "@/components/Landing/Desktop/in-depth-research";
-import Integrations from "@/components/Landing/Desktop/integrations";
-import SocialProof from "@/components/Landing/Desktop/social-proof";
-import Testimonials from "@/components/Landing/Desktop/testimonials";
+"use client"
 
-export default function Home() {
-  return (
-    <>
-      <Header />
-      <main>
-        <HeroSection />
-        <SocialProof />
-        {/* Make DailySignals full-bleed with its own dark background */}
-        <DailySignals />
-        <div className="bg-white">
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
-            {/* <FeaturesIntro /> */}
-            {/* DailySignals moved above to span full width */}
-            <div className="py-20">
-              <InDepthResearch />
-            </div>
-          </div>
+import DesktopLanding from "@/components/Landing/DesktopLanding";
+import MobileLanding from "@/components/Landing/MobileLanding";
+import { Loading } from "@/components/loading";
+import { useAuth } from "@/lib/auth-context";
+import { JSX, useEffect, useState } from "react";
+
+const HomePage = (): JSX.Element => {
+  const { user, loading } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+  const userEmail = user?.email || null
+
+  // Ensure we're on the client side to prevent hydration issues
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Show loading during SSR/hydration or auth initialization
+  if (!isClient || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loading />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent mb-2">
+            Honeycomb AI
+          </h1>
+          <p className="text-slate-400 animate-pulse">Gathering your experience...</p>
         </div>
-        <ImplementationTimeline />
-        <Customization />
-        <Integrations />
-        <Testimonials />
-        <Faq />
-        {/* Simple final CTA replacement */}
-        {/* remove simple button section and restore FinalCta */}
-        <FinalCta />
-        {/* <FinalCta /> */}
-      </main>
-      <Footer />
-    </>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white w-full min-h-screen">
+      {/* Desktop - hidden on mobile */}
+      <div className="hidden md:block">
+        <DesktopLanding userEmail={userEmail} />
+      </div>
+
+      {/* Mobile - hidden on desktop */}
+      <div className="block md:hidden">
+        <MobileLanding userEmail={userEmail} />
+      </div>
+    </div>
   );
-}
+};
+
+export default HomePage;
