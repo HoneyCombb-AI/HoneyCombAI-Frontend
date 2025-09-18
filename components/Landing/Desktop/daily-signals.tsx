@@ -1,0 +1,83 @@
+import Image from "next/image";
+
+const DailySignals = () => {
+  return (
+    <section className="bg-black">
+      <div className="mx-auto max-w-[1200px] px-6 py-[120px] md:px-10">
+        <div className="mb-20 text-center">
+          <h1
+            style={{
+              fontSize: "var(--text-h2)",
+              fontWeight: "var(--font-weight-h2)",
+              lineHeight: "var(--leading-h2)",
+            }}
+            className="text-white"
+          >
+            Every Sales Team Needs a Researcher
+          </h1>
+        </div>
+
+        <section>
+          <div className="grid grid-cols-1 items-start gap-x-12 lg:grid-cols-2">
+            <div>
+              <p
+                style={{
+                  fontSize: "var(--text-body-large)",
+                  lineHeight: "var(--leading-body-large)",
+                }}
+                className="text-gray-400"
+              >
+                "Honeycomb has transformed our outbound strategy"
+              </p>
+              <h2
+                style={{
+                  fontSize: "var(--text-h2)",
+                  fontWeight: "var(--font-weight-h2)",
+                  lineHeight: "var(--leading-h2)",
+                }}
+                className="mt-4 text-white"
+              >
+                Daily Signals
+              </h2>
+            </div>
+            <div className="mt-8 lg:mt-0">
+              <p
+                style={{
+                  fontSize: "var(--text-body-large)",
+                  lineHeight: "var(--leading-body-large)",
+                }}
+                className="text-gray-300"
+              >
+                Track sales signals across all your accounts to{" "}
+                <strong className="font-semibold text-white">
+                  uncover opportunities as they happen
+                </strong>
+                . From specific keywords in job postings to executives
+                discussing next year's plans, sales signals help you{" "}
+                <strong className="font-semibold text-white">
+                  engage at the right time
+                </strong>
+                .
+              </p>
+            </div>
+          </div>
+
+          <a href="#" className="mt-16 block">
+            <div className="flex w-full items-center justify-center bg-black rounded-lg overflow-hidden p-4">
+              <Image
+                src="/Signals.png"
+                alt="Daily Signals Dashboard"
+                width={900}
+                height={500}
+                className="w-full max-w-4xl h-auto object-contain rounded border border-white/20"
+              />
+            </div>
+          </a>
+          <p className="mt-3 text-center text-xs text-white/70">"Unique to our Sales requirements"</p>
+        </section>
+      </div>
+    </section>
+  );
+};
+
+export default DailySignals;

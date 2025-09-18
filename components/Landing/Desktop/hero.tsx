@@ -1,0 +1,65 @@
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { ChevronRight, Play } from "lucide-react";
+
+const HeroSection = () => {
+  return (
+    <header className="bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100">
+      <div className="mx-auto max-w-[1200px] px-10">
+        <div className="py-24 sm:py-32 lg:py-28">
+          <div
+            className="grid grid-cols-1 items-center 
+            gap-y-16 lg:grid-cols-2 lg:gap-x-12"
+          >
+            {/* Left Content */}
+            <div className="text-center lg:text-left">
+              {/* Headline */}
+              <h1 className="text-5xl font-extrabold tracking-tight text-black sm:text-6xl lg:text-[72px] lg:leading-[1.1]">
+                Start selling to customers who already want to buy
+              </h1>
+
+              {/* Subtitle */}
+              <p className="mt-6 text-xl leading-8 text-neutral-700 !whitespace-pre-line">
+                Honeycomb monitors news, social media, job postings, and company
+                research, then routes verified signals so your reps act first
+                with full context.
+              </p>
+
+              {/* CTAs */}
+              <div className="mt-10 flex flex-col items-stretch gap-4 sm:flex-row sm:justify-center lg:justify-start">
+                <Link
+                  href="https://www.honeycombai.in/"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-black px-8 py-4 text-base font-medium text-white shadow-sm transition-colors hover:bg-black/90"
+                >
+                  Book a demo
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Image */}
+            <div className="relative">
+              <div
+                className="rounded-xl border 
+           border-black/10 bg-white/60 shadow-[0_8px_24px_rgba(0,0,0,0.08)] p-3 w-full max-w-[650px]"
+              >
+                <Image
+                  src="/Dashboard.png"
+                  alt="Dashboard: Signals, Social Intelligence, Custom Signals"
+                  width={650}
+                  height={500}
+                  className="w-full h-auto object-contain rounded-lg border border-black/20"
+                />
+              </div>
+              <p className="mt-2 text-center text-xs text-neutral-600">
+                "Unique to our Sales requirements"
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default HeroSection;
