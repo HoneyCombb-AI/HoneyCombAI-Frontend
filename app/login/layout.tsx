@@ -16,8 +16,8 @@ export default function RootLayout({
               <Image
                 src="/iconLogin.png"
                 alt="Honeycomb AI Logo"
-                width={102}
-                height={64}
+                width={84}
+                height={48}
                 className="mb-6"
               />
               <h1 className="text-5xl font-black text-black leading-tight mb-6">
