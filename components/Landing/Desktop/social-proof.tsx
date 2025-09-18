@@ -47,7 +47,7 @@ const SocialProof = () => {
               </div>
               <div className="h-16 w-56 flex items-center justify-center bg-white rounded-md p-4 border border-gray-200">
                 <Image
-                  src="/Just bookslogo.svg"
+                  src="/Justbooks.webp"
                   alt="Just Books"
                   width={180}
                   height={50}

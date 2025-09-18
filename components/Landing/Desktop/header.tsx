@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCalApi } from "@calcom/embed-react";
 
 
 export const HoneyCombIcon = ({ className }: { className?: string }) => (
@@ -28,14 +27,6 @@ interface HeaderProps {
 const Header = ({ userEmail }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    (async function () {
-      const cal = await getCalApi({ namespace: "30min" });
-      cal("ui", { hideEventTypeDetails: false, layout: "month_view" });
-    })();
-  }, []);
-
 
   const handleLoginClick = () => {
     if (userEmail) {
@@ -69,20 +60,20 @@ const Header = ({ userEmail }: HeaderProps) => {
           <Button
             variant="link"
             onClick={handleLoginClick}
-            className="cursor-pointer text-nav text-black px-4 py-2 hover:bg-black/5 rounded-md"
+            className="cursor-pointer text-nav text-black px-4 py-2 hover:bg-white rounded-md"
           >
             {userEmail ? "Dashboard" : "Login"}
           </Button>
           <Button
             variant="link"
             onClick={handleSupportClick}
-            className="cursor-pointer text-nav text-black px-4 py-2 hover:bg-black/5 rounded-md"
+            className="cursor-pointer text-nav text-black px-4 py-2 hover:bg-white rounded-md"
           >
            Support
           </Button>
           <Button
             variant="outline"
-            className="cursor-pointer bg-black text-white hover:bg-gray-900 hover:text-white rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
+            className="cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
             data-cal-namespace="30min"
             data-cal-link="ankushnagathan/30min"
             data-cal-config='{"layout":"month_view"}'

@@ -10,12 +10,21 @@ import InDepthResearch from "@/components/Landing/Desktop/in-depth-research";
 import Integrations from "@/components/Landing/Desktop/integrations";
 import SocialProof from "@/components/Landing/Desktop/social-proof";
 import Testimonials from "@/components/Landing/Desktop/testimonials";
+import { getCalApi } from "@calcom/embed-react";
+import { useEffect } from "react";
 
 interface DesktopLandingProps {
   userEmail?: string | null;
 }
 
 export default function DesktopLanding({ userEmail }: DesktopLandingProps) {
+    useEffect(() => {
+        (async function () {
+          const cal = await getCalApi({ namespace: "30min" });
+          cal("ui", { hideEventTypeDetails: false, layout: "month_view" });
+        })();
+      }, []);
+      
   return (
     <>
       <Header userEmail={userEmail} />

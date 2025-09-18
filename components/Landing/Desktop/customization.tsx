@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 export default function Customization() {
   return (
     <section className="bg-white py-[120px]">
@@ -38,12 +40,15 @@ export default function Customization() {
         </div>
 
         <div className="mt-12 text-center">
-          <a
-            href="https://cal.com/ankushkothari/honeycomb-demo"
-            className="inline-flex items-center justify-center rounded-lg bg-black px-8 py-4 text-base font-medium text-white hover:opacity-90"
+          <Button
+            variant="outline"
+            className="cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
+            data-cal-namespace="30min"
+            data-cal-link="ankushnagathan/30min"
+            data-cal-config='{"layout":"month_view"}'
           >
-            Talk Through Your Process
-          </a>
+           Talk Through Your Process
+          </Button>
         </div>
       </div>
     </section>

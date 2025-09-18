@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
   return (
@@ -28,12 +29,15 @@ const HeroSection = () => {
 
               {/* CTAs */}
               <div className="mt-10 flex flex-col items-stretch gap-4 sm:flex-row sm:justify-center lg:justify-start">
-                <Link
-                  href="https://www.honeycombai.in/"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-black px-8 py-4 text-base font-medium text-white shadow-sm transition-colors hover:bg-black/90"
+                <Button
+                  variant="outline"
+                  className="cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
+                  data-cal-namespace="30min"
+                  data-cal-link="ankushnagathan/30min"
+                  data-cal-config='{"layout":"month_view"}'
                 >
-                  Book a demo
-                </Link>
+                  Book demo
+                </Button>
               </div>
             </div>
 
