@@ -66,9 +66,9 @@ const logos = [
 export default function Integrations() {
   return (
     <section className="bg-white py-[120px]">
-      <div className="container mx-auto">
-        <div className="flex items-center justify-center gap-16">
-          <div className="flex-shrink-0">
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-16">
+          <div className="flex-shrink-0 text-center lg:text-left">
             <h2 className="text-[32px] font-semibold leading-[1.3] text-foreground">
               Export the data to your favorite tools.
             </h2>
