@@ -83,7 +83,7 @@ export default function Footer() {
           </div>
           <div className="text-sm text-gray-400 text-center sm:text-right">
             <p>
-              Copyright © 2025 Honeycomb AI
+              © 2025 Honeycomb AI
             </p>
           </div>
         </div>

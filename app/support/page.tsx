@@ -82,17 +82,14 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Contact Support</h1>
-          <p className="mt-2 text-gray-600">
-            Need help? Send us a message and we&apos;ll get back to you.
-          </p>
-        </div>
-
-        <div className="bg-white py-8 px-6 border border-amber-600 shadow-2xl rounded-lg">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <div className="w-full">
+      <div className="text-left mb-8 md:hidden">
+        <h1 className="text-2xl font-bold text-gray-900">Contact Support</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Need help? Send us a message and we&apos;ll get back to you.
+        </p>
+      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Name
@@ -157,16 +154,14 @@ export default function SupportPage() {
               )}
             </div>
 
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full"
-            >
-              {isSubmitting ? 'Sending...' : 'Send Message'}
-            </Button>
-          </form>
-        </div>
-      </div>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full"
+        >
+          {isSubmitting ? 'Sending...' : 'Send Message'}
+        </Button>
+      </form>
     </div>
   );
 }

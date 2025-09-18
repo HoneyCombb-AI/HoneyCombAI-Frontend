@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
   return (
-    <header className="bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100">
+    <header className="bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90">
       <div className="mx-auto max-w-[1400px] px-6">
         <div className="py-32 sm:py-40 lg:py-44">
           <div

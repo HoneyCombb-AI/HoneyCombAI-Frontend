@@ -28,10 +28,10 @@ export function CallToActionSectionMobile(): JSX.Element {
         {/* Header section with animation */}
         <motion.div
           className="text-center mb-8"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          viewport={{ once: true, margin: "-100px" }}
         >
           <Badge
             variant="outline"
@@ -51,16 +51,16 @@ export function CallToActionSectionMobile(): JSX.Element {
           className="space-y-4 mb-8"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          viewport={{ once: true, margin: "-100px" }}
         >
           {features.map((feature, index) => (
             <motion.div
               key={index}
               className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-100 shadow-sm"
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -10 }}
               whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
+              transition={{ duration: 0.2, delay: 0.15 + index * 0.05 }}
               viewport={{ once: true }}
             >
               <CheckCircle className="w-5 h-5 text-[#4adf7d] flex-shrink-0 mt-0.5" />
@@ -74,10 +74,10 @@ export function CallToActionSectionMobile(): JSX.Element {
         {/* Floating stats cards */}
         <motion.div
           className="relative mb-8"
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          viewport={{ once: true, margin: "-100px" }}
         >
           <div className="flex justify-center gap-3">
             <Card className="bg-gradient-to-br from-[#4adf7d]/20 to-[#4adf7d]/10 border-[#4adf7d]/30 shadow-sm">
