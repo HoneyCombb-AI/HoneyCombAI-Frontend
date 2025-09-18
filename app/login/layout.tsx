@@ -10,7 +10,7 @@ export default function RootLayout({
     <>
       <SimpleHeader currentPage="login" />
       <main className="h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-2">
-        <div className="hidden md:flex flex-col justify-between bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100/90">
+        <div className="hidden md:flex flex-col justify-between bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90">
           <div className="w-full flex-1 flex flex-col justify-center items-center px-16">
             <div className="max-w-2xl ml-12">
               <Image

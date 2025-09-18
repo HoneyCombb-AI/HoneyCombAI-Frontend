@@ -37,7 +37,7 @@ const Header = ({ userEmail }: HeaderProps) => {
     router.push("/support");
   };
   return (
-    <header className="fixed px-30 top-0 left-0 right-0 z-[1000] h-20 bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90 backdrop-blur supports-[backdrop-filter]:bg-yellow-100/80 border-b border-black/5">
+    <header className="fixed px-30 top-0 left-0 right-0 z-[1000] h-20 bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90 backdrop-blur supports-[backdrop-filter]:bg-yellow-100/80">
       <div className="container mx-auto flex h-full items-center justify-between">
         <Link href="/" className="inline-block">
           <div className="flex items-center gap-3">

@@ -27,7 +27,7 @@ export function SimpleHeader({ currentPage }: SimpleHeaderProps): JSX.Element {
     <header className="sticky top-0 z-50 w-full">
       <div className="h-20 grid grid-cols-1 md:grid-cols-2">
         {/* Left side - matches the golden gradient */}
-        <div className="hidden md:flex bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100/90 items-center px-30">
+        <div className="hidden md:flex bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90 items-center px-30">
           <Link href="/" className="inline-block">
             <div className="flex items-center gap-3">
               <HoneyCombIcon />
