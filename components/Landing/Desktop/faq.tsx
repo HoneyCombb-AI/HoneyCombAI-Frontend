@@ -31,38 +31,40 @@ const faqData = [
 export default function Faq() {
   return (
     <section className="bg-black">
-      <div className="container py-24 lg:py-30">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-y-12 lg:gap-x-24 items-start">
-          <div>
-            <h2
-              id="faq"
-              className="mt-4 text-[48px] font-bold tracking-tight text-white leading-tight scroll-mt-28"
-            >
-              Common Questions
-            </h2>
-            <div className="mt-4 text-xl text-gray-300 leading-8 !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line">
-              Anything you need to know about the product. Can't find the answer
-              you're looking for? Reach out at ankush@honeycombai.in
-            </div>
-          </div>
-          <div>
-            <Accordion type="single" collapsible className="w-full">
-              {faqData.map((faq, index) => (
-                <AccordionItem
-                  key={index}
-                  value={faq.value}
-                  className="border-b border-white/10 last:border-b-0"
-                >
-                  <AccordionTrigger className="py-6 text-left text-xl font-medium text-white hover:no-underline">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-base text-gray-300 leading-relaxed pr-8">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
+      <div className="max-w-7xl mx-auto px-6 py-24 lg:py-30 flex flex-col lg:flex-row items-start lg:items-center gap-24">
+        {/* Left side */}
+        <div className="flex-1">
+          <h2
+            id="faq"
+            className="text-[48px] font-bold tracking-tight text-white leading-tight"
+          >
+            Common Questions
+          </h2>
+          <p className="mt-4 text-xl text-gray-300 leading-8">
+            Anything you need to know about the product. Can't find the answer
+            you're looking for? Reach out at{" "}
+            <span className="text-white">ankush@honeycombai.in</span>
+          </p>
+        </div>
+
+        {/* Right side */}
+        <div className="flex-1 w-full">
+          <Accordion type="single" collapsible className="w-full">
+            {faqData.map((faq, index) => (
+              <AccordionItem
+                key={index}
+                value={faq.value}
+                className="border-b border-white/10 last:border-b-0"
+              >
+                <AccordionTrigger className="py-6 text-left text-xl font-medium text-white hover:no-underline">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-base text-gray-300 leading-relaxed pr-4">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         </div>
       </div>
     </section>

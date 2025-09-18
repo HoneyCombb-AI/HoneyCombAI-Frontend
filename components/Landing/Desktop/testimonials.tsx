@@ -58,8 +58,8 @@ const TestimonialCard = ({ name, title, quoteHeadline, quoteBody, avatarUrl, ava
 const Testimonials = () => {
   return (
     <section className="bg-white py-[120px]">
-      <div className="container">
-        <div className="text-center max-w-4xl mx-auto">
+      <div className="container mx-auto px-4">
+        <div className="text-center max-w-6xl mx-auto">
           <h2 className="font-bold text-black text-[48px] leading-[1.2]">
             Don't Just Take Our
             <br />
@@ -69,10 +69,12 @@ const Testimonials = () => {
             Trusted by modern outbound and revenue teams.
           </p>
         </div>
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-8">
-          {testimonialsData.map((testimonial) =>
-          <TestimonialCard key={testimonial.name} {...testimonial} />
-          )}
+        <div className="mt-20 flex justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl w-full">
+            {testimonialsData.map((testimonial) =>
+              <TestimonialCard key={testimonial.name} {...testimonial} />
+            )}
+          </div>
         </div>
       </div>
     </section>);
