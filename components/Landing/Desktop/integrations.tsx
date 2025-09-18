@@ -66,9 +66,9 @@ const logos = [
 export default function Integrations() {
   return (
     <section className="bg-white py-[120px]">
-      <div className="container">
-        <div className="grid grid-cols-1 items-center gap-x-16 gap-y-12 lg:grid-cols-2">
-          <div>
+      <div className="container mx-auto">
+        <div className="flex items-center justify-center gap-16">
+          <div className="flex-shrink-0">
             <h2 className="text-[32px] font-semibold leading-[1.3] text-foreground">
               Export the data to your favorite tools.
             </h2>

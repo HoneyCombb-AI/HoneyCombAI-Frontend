@@ -2,12 +2,12 @@ import Image from "next/image";
 
 const SocialProof = () => {
   return (
-    <section className="bg-background text-foreground py-20 lg:py-20">
-      <div className="container px-4">
+    <section className="bg-white text-foreground py-20 lg:py-20">
+      <div className="container px-4 mx-auto">
         {/* Testimonial Section */}
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-4xl text-center">
           <p className="text-center text-xl font-medium text-black mb-10">Loved By Sales Teams...</p>
-          <div className="testimonial-wrapper rounded-3xl border border-border bg-white p-10 shadow-lg text-center">
+          <div className="testimonial-wrapper rounded-3xl border border-border bg-white p-10 shadow-lg text-center mx-auto">
             <div className="testimonial-content flex flex-col items-center">
               <p className="text-center text-2xl lg:text-3xl font-medium leading-normal text-[#2c2c2c] max-w-3xl mx-auto !whitespace-pre-line">"Honeycomb helps us focus on the few accounts that actually matter right now by surfacing the right buying signals at the right time."
 
@@ -34,8 +34,8 @@ const SocialProof = () => {
 
         {/* Logo Grid Section */}
         <div className="py-12 mt-4">
-          <div className="mx-auto max-w-6xl">
-            <div className="flex flex-wrap justify-center items-center gap-x-16 gap-y-10">
+          <div className="mx-auto max-w-6xl text-center">
+            <div className="flex flex-wrap justify-center items-center gap-x-16 gap-y-10 mx-auto">
               <div className="h-16 w-56 flex items-center justify-center bg-black rounded-md p-4 border border-gray-200">
                 <Image
                   src="/Bonhomia logo.png"

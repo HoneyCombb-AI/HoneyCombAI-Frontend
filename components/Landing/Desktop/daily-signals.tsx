@@ -5,14 +5,7 @@ const DailySignals = () => {
     <section className="bg-black">
       <div className="mx-auto max-w-[1200px] px-6 py-[120px] md:px-10">
         <div className="mb-20 text-center">
-          <h1
-            style={{
-              fontSize: "var(--text-h2)",
-              fontWeight: "var(--font-weight-h2)",
-              lineHeight: "var(--leading-h2)",
-            }}
-            className="text-white"
-          >
+          <h1 className="text-white text-5xl font-bold leading-tight">
             Every Sales Team Needs a Researcher
           </h1>
         </div>
@@ -20,34 +13,15 @@ const DailySignals = () => {
         <section>
           <div className="grid grid-cols-1 items-start gap-x-12 lg:grid-cols-2">
             <div>
-              <p
-                style={{
-                  fontSize: "var(--text-body-large)",
-                  lineHeight: "var(--leading-body-large)",
-                }}
-                className="text-gray-400"
-              >
+              <p className="text-gray-400 text-xl leading-relaxed">
                 "Honeycomb has transformed our outbound strategy"
               </p>
-              <h2
-                style={{
-                  fontSize: "var(--text-h2)",
-                  fontWeight: "var(--font-weight-h2)",
-                  lineHeight: "var(--leading-h2)",
-                }}
-                className="mt-4 text-white"
-              >
+              <h2 className="mt-4 text-white text-5xl font-bold leading-tight">
                 Daily Signals
               </h2>
             </div>
             <div className="mt-8 lg:mt-0">
-              <p
-                style={{
-                  fontSize: "var(--text-body-large)",
-                  lineHeight: "var(--leading-body-large)",
-                }}
-                className="text-gray-300"
-              >
+              <p className="text-gray-300 text-xl leading-relaxed">
                 Track sales signals across all your accounts to{" "}
                 <strong className="font-semibold text-white">
                   uncover opportunities as they happen

@@ -49,7 +49,7 @@ const TestimonialCard = ({ name, title, quoteHeadline, quoteBody, avatarUrl, ava
       </p>
       <div className="mt-auto">
         <p className="font-semibold text-base text-white">{name}</p>
-        <p className="text-sm text-gray-400 !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line">{title}</p>
+        <p className="text-sm text-gray-400 !whitespace-pre-line">{title}</p>
       </div>
     </div>);
 

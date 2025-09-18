@@ -60,7 +60,7 @@ const TimelineCard: React.FC<TimelineStep> = ({ title, items }) =>
             {items.map((item, index) =>
     <li key={index} className="flex items-start gap-3">
                     <CheckIcon />
-                    <span className="text-base text-[#475467] leading-normal !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line">{item.text}</span>
+                    <span className="text-base text-[#475467] leading-normal !whitespace-pre-line">{item.text}</span>
                 </li>
     )}
         </ul>
