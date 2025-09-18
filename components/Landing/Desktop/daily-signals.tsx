@@ -14,7 +14,7 @@ const DailySignals = () => {
           <div className="grid grid-cols-1 items-start gap-x-12 lg:grid-cols-2">
             <div>
               <p className="text-gray-400 text-xl leading-relaxed">
-                "Honeycomb has transformed our outbound strategy"
+                &ldquo;Honeycomb has transformed our outbound strategy&rdquo;
               </p>
               <h2 className="mt-4 text-white text-5xl font-bold leading-tight">
                 Daily Signals
@@ -27,7 +27,7 @@ const DailySignals = () => {
                   uncover opportunities as they happen
                 </strong>
                 . From specific keywords in job postings to executives
-                discussing next year's plans, sales signals help you{" "}
+                discussing next year&apos;s plans, sales signals help you{" "}
                 <strong className="font-semibold text-white">
                   engage at the right time
                 </strong>
@@ -47,7 +47,7 @@ const DailySignals = () => {
               />
             </div>
           </a>
-          <p className="mt-3 text-center text-xs text-white/70">"Unique to our Sales requirements"</p>
+          <p className="mt-3 text-center text-xs text-white/70">&ldquo;Unique to our Sales requirements&rdquo;</p>
         </section>
       </div>
     </section>

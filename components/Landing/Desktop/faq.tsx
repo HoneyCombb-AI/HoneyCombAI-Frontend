@@ -41,8 +41,8 @@ export default function Faq() {
             Common Questions
           </h2>
           <p className="mt-4 text-xl text-gray-300 leading-8">
-            Anything you need to know about the product. Can't find the answer
-            you're looking for? Reach out at{" "}
+            Anything you need to know about the product. Can&apos;t find the answer
+            you&apos;re looking for? Reach out at{" "}
             <span className="text-white">ankush@honeycombai.in</span>
           </p>
         </div>

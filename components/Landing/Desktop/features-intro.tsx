@@ -14,7 +14,7 @@ const FeaturesIntro = () => {
           <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-2 md:items-center md:gap-12">
             <div className="flex flex-col gap-2">
               <p className="text-xl font-medium leading-8 text-gray-300">
-                "Honeycomb has transformed our outbound strategy"
+                &ldquo;Honeycomb has transformed our outbound strategy&rdquo;
               </p>
               <h2 className="text-[48px] font-bold leading-tight text-white md:leading-[1.2]">
                 Daily Signals
@@ -27,7 +27,7 @@ const FeaturesIntro = () => {
                   uncover opportunities as they happen
                 </strong>
                 . From specific keywords in job postings to executives
-                discussing next year's plans, sales signals help you{" "}
+                discussing next year&apos;s plans, sales signals help you{" "}
                 <strong className="font-bold text-white">
                   engage at the right time
                 </strong>
