@@ -19,7 +19,7 @@ const HeroSection = () => {
               </h1>
 
               {/* Subtitle */}
-              <p className="mt-6 text-xl leading-8 text-neutral-700 !whitespace-pre-line">
+              <p className="mt-6 text-xl leading-8 text-neutral-900 !whitespace-pre-line">
                 Honeycomb monitors news, social media, job postings, and company
                 research, then routes verified signals so your reps act first
                 with full context.
@@ -53,7 +53,7 @@ const HeroSection = () => {
                   className="w-full h-auto object-contain rounded-lg border border-black/20"
                 />
               </div>
-              <p className="mt-2 text-center text-xs text-neutral-600">
+              <p className="mt-2 text-center font-semibold text-xs text-black">
                 &ldquo;Unique to our Sales requirements&rdquo;
               </p>
             </div>

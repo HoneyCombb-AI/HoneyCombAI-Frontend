@@ -37,6 +37,7 @@ const TestimonialCard = ({ name, title, quoteHeadline, quoteBody, avatarUrl, ava
           alt={avatarAlt}
           width={96}
           height={96}
+          loading="lazy"
           className="w-full h-full object-cover"
         />
       </div>

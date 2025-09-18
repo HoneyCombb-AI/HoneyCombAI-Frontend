@@ -76,6 +76,7 @@ export default function Footer() {
                 alt="LinkedIn Logo"
                 width={24}
                 height={24}
+                loading="lazy"
                 className="invert"
               />
               <span className="sr-only">LinkedIn</span>

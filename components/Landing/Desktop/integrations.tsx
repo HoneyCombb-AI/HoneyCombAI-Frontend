@@ -85,6 +85,7 @@ export default function Integrations() {
                     alt={logo.alt}
                     width={logo.width}
                     height={logo.height}
+                    loading="lazy"
                     className="max-h-12 w-auto object-contain"
                   />
                 </div>

@@ -43,11 +43,12 @@ const DailySignals = () => {
                 alt="Daily Signals Dashboard"
                 width={900}
                 height={500}
+                loading="lazy"
                 className="w-full max-w-4xl h-auto object-contain rounded border border-white/20"
               />
             </div>
           </a>
-          <p className="mt-3 text-center text-xs text-white/70">&ldquo;Unique to our Sales requirements&rdquo;</p>
+          <p className="mt-2 text-center font-semibold text-xs text-white">&ldquo;Unique to our Sales requirements&rdquo;</p>
         </section>
       </div>
     </section>

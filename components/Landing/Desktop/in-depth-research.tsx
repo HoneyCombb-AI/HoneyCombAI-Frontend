@@ -31,6 +31,7 @@ const InDepthResearch = () => {
                 alt="In-Depth Research - Social Activity Analysis"
                 width={700}
                 height={450}
+                loading="lazy"
                 className="w-full h-full object-cover border-r border-black/20"
               />
             </div>
@@ -40,11 +41,12 @@ const InDepthResearch = () => {
                 alt="In-Depth Research - Strategic Recommendations"
                 width={700}
                 height={450}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             </div>
           </div>
-          <p className="mt-2 text-center text-xs text-neutral-600">&ldquo;Unique to our Sales requirements&rdquo;</p>
+          <p className="mt-3 text-center font-semibold text-xs text-black">&ldquo;Unique to our Sales requirements&rdquo;</p>
         </div>
       </div>
     </section>

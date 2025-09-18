@@ -48,6 +48,7 @@ const CheckIcon = () =>
     alt="Check mark icon"
     width={20}
     height={20}
+    loading="lazy"
     className="w-full h-full" />
 
     </div>;

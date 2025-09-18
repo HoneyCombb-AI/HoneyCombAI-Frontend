@@ -20,6 +20,7 @@ const SocialProof = () => {
                   alt="Suresh Narasimha"
                   width={65}
                   height={65}
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -42,7 +43,9 @@ const SocialProof = () => {
                   alt="Bonhomia Coffee"
                   width={180}
                   height={50}
-                  className="object-contain max-h-12"
+                  loading="lazy"
+                  sizes="180px"
+                  className="object-contain max-h-12 w-auto h-auto"
                 />
               </div>
               <div className="h-16 w-56 flex items-center justify-center bg-white rounded-md p-4 border border-gray-200">
@@ -51,7 +54,9 @@ const SocialProof = () => {
                   alt="Just Books"
                   width={180}
                   height={50}
-                  className="object-contain max-h-12"
+                  loading="lazy"
+                  sizes="180px"
+                  className="object-contain max-h-12 w-auto h-auto"
                 />
               </div>
             </div>

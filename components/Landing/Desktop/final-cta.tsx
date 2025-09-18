@@ -10,7 +10,8 @@ const FeatureCheckIcon = () =>
       src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/2dd489b6-fdb0-4898-abbb-cc7b5e9464d3-getbirddog-ai/assets/svgs/68c6c8fedb31ef060a4d7aa1_52718cb75317ef8a94fa10bc31cb9fd1_icon-line-check-rounded-color-elements-brix-templates-4.svg?"
       alt="Checkmark icon"
       width={24}
-      height={24} />
+      height={24}
+      loading="lazy" />
 
   </div>;
 
