@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function TestimonialSectionMobile(): JSX.Element {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isUserInteracting, setIsUserInteracting] = useState(false);
   const titleRef = useRef(null);
   const isInView = useInView(titleRef, { once: true, amount: 0.8 });
 
@@ -45,11 +46,21 @@ export function TestimonialSectionMobile(): JSX.Element {
     setCurrentIndex((prev) => (prev - 1 + cards.length) % cards.length);
   };
 
-  // Auto-advance cards every 5 seconds
+  // Auto-advance cards every 4.5 seconds, but pause when user is interacting
   useEffect(() => {
+    if (isUserInteracting) return;
     const interval = setInterval(nextCard, 4500);
     return () => clearInterval(interval);
-  }, []);
+  }, [isUserInteracting]);
+
+  // Resume auto-advance after user stops interacting
+  useEffect(() => {
+    if (!isUserInteracting) return;
+    const timeout = setTimeout(() => {
+      setIsUserInteracting(false);
+    }, 5000); // Resume after 5 seconds of inactivity
+    return () => clearTimeout(timeout);
+  }, [isUserInteracting]);
 
   return (
     <section className="relative w-full py-12 md:hidden bg-white overflow-hidden">
@@ -97,22 +108,14 @@ export function TestimonialSectionMobile(): JSX.Element {
             animate={{ x: `-${currentIndex * 100}%` }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             drag="x"
-            dragConstraints={{
-              left: -(
-                (cards.length - 1) *
-                (typeof window !== "undefined" ? window.innerWidth : 400)
-              ),
-              right: 0,
-            }}
+            dragConstraints={false}
             dragElastic={0.2}
+            onDragStart={() => setIsUserInteracting(true)}
             onDragEnd={(_, info) => {
               const threshold = 50;
-              if (info.offset.x > threshold && currentIndex > 0) {
+              if (info.offset.x > threshold) {
                 prevCard();
-              } else if (
-                info.offset.x < -threshold &&
-                currentIndex < cards.length - 1
-              ) {
+              } else if (info.offset.x < -threshold) {
                 nextCard();
               }
             }}
@@ -146,7 +149,10 @@ export function TestimonialSectionMobile(): JSX.Element {
                   opacity: index === currentIndex ? 1 : 0.6,
                 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => {
+                  setCurrentIndex(index);
+                  setIsUserInteracting(true);
+                }}
               />
             ))}
           </div>
