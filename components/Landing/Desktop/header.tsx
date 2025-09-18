@@ -1,12 +1,9 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Menu, X } from "lucide-react";
-
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 const platformLinks: { title: string; href: string; description: string }[] = [
   {
@@ -59,28 +56,37 @@ const companyLinks: { title: string; href: string; description: string }[] = [
 
 export const HoneyCombIcon = ({ className }: { className?: string }) => (
   <div className={`relative ${className}`}>
-    <div className="h-12 w-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-lg transform rotate-12 relative">
-      <div className="absolute bottom-1 right-1">
-        <svg className="w-6 h-6 text-black" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z" />
-        </svg>
-      </div>
+    <div className="h-12 w-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
+    </div>
+    <div className="absolute -inset-2 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
+    <div className="absolute inset-0 flex items-end justify-end p-1 pointer-events-none">
+      <svg className="w-6 h-6 mt-1 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z" />
+      </svg>
     </div>
   </div>
 );
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <header className="fixed px-30 top-0 left-0 right-0 z-[1000] h-20 bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90 backdrop-blur supports-[backdrop-filter]:bg-yellow-100/80 border-b border-black/5">
       <div className="container mx-auto flex h-full items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
-          <HoneyCombIcon className="h-10 w-10" />
-          <span className="text-2xl font-extrabold tracking-tight text-black">
-            Honeycomb AI
-          </span>
-        </Link>
+      <Link href="/" className="inline-block">
+        <div className="flex items-center gap-3">
+          <HoneyCombIcon />
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-xl bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent tracking-tight">
+              HoneyComb
+            </span>
+
+            <span className="text-sm font-medium text-black">
+              AI
+            </span>
+          </div>
+        </div>
+      </Link>
         <div className="hidden lg:flex items-center gap-2 ml-auto">
           <Link href="/dashboard" className="text-nav text-black px-4 py-2 hover:bg-black/5 rounded-md">Dashboard</Link>
           <Link href="/support" className="text-nav text-black px-4 py-2 hover:bg-black/5 rounded-md">Support</Link>

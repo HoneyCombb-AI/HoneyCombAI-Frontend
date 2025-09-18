@@ -46,8 +46,16 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-6 lg:px-8 py-12 sm:py-16">
         <div className="flex flex-col lg:flex-row justify-between gap-8">
           <div className="lg:w-1/3">
-            <Link href="/#" className="inline-block">
-              <span className="text-2xl font-extrabold tracking-tight text-[#F5E617]">Honeycomb AI</span>
+            <Link href="/" className="inline-block">
+            <div className="flex items-center gap-2">
+            <span className="font-bold text-xl bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent tracking-tight">
+              HoneyComb
+            </span>
+
+            <span className="text-sm font-medium text-white">
+              AI
+            </span>
+          </div>
             </Link>
             <p className="mt-6 text-base text-gray-300">
               <em className="font-normal italic">We are not interested in using AI to replace humans.</em>
