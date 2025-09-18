@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
+import { Linkedin } from 'lucide-react';
 
 
 const resourcesLinks = [
@@ -71,14 +71,7 @@ export default function Footer() {
         <div className="mt-10 pt-6 border-t border-white/10 flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <a href="https://www.linkedin.com/in/ankush-nagathan-100946308/" target="_blank" rel="noopener noreferrer">
-              <Image
-                src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/2dd489b6-fdb0-4898-abbb-cc7b5e9464d3-getbirddog-ai/assets/svgs/62434fa732124a389912aad8_linkedin%20small-9.svg?"
-                alt="LinkedIn Logo"
-                width={24}
-                height={24}
-                loading="lazy"
-                className="invert"
-              />
+              <Linkedin className="h-6 w-6 text-white hover:text-[#F5E617] transition-colors" />
               <span className="sr-only">LinkedIn</span>
             </a>
           </div>

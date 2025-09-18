@@ -1,18 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { CalendarCheck, ShieldCheck, Ban, TrendingUp } from "lucide-react";
+import { CalendarCheck, ShieldCheck, Ban, TrendingUp, CheckCircle } from "lucide-react";
 
 const FeatureCheckIcon = () =>
   <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
-    <Image
-      src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/2dd489b6-fdb0-4898-abbb-cc7b5e9464d3-getbirddog-ai/assets/svgs/68c6c8fedb31ef060a4d7aa1_52718cb75317ef8a94fa10bc31cb9fd1_icon-line-check-rounded-color-elements-brix-templates-4.svg?"
-      alt="Checkmark icon"
-      width={24}
-      height={24}
-      loading="lazy" />
-
+    <CheckCircle className="h-6 w-6 text-green-500" />
   </div>;
 
 
