@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import React, { JSX } from "react";
-import { HoneyCombIcon } from "@/components/Landing/Header";
+import { HoneyCombIcon } from "./Landing/Desktop/header";
 
 interface SimpleHeaderProps {
   currentPage: 'login' | 'support';

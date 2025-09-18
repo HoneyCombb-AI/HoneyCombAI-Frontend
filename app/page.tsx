@@ -1,16 +1,7 @@
 "use client"
 
-import { FeatureLayoutSection } from "@/components/Landing/Desktop/FeatureLayoutSection";
-import { Header } from "@/components/Landing/Header";
-import { HeroSection } from "@/components/Landing/Desktop/HeroSection";
-import { TestimonialSection } from "@/components/Landing/Desktop/TestimonialSection";
-
-import { HeroSectionMobile } from "@/components/Landing/Mobile/HeroSectionMobile";
-import { FeatureLayoutSectionMobile } from "@/components/Landing/Mobile/FeatureLayoutSectionMobile";
-import { TestimonialSectionMobile } from "@/components/Landing/Mobile/TestimonialSectionMobile";
-import { CallToActionResponsive } from "@/components/Landing/CallToActionResponsive";
-
-import { ResponsiveLayout } from "@/components/Landing/ResponsiveLayout";
+import DesktopLanding from "@/components/Landing/DesktopLanding";
+import MobileLanding from "@/components/Landing/MobileLanding";
 import { Loading } from "@/components/loading";
 import { useAuth } from "@/lib/auth-context";
 import { JSX, useEffect, useState } from "react";
@@ -42,24 +33,15 @@ const HomePage = (): JSX.Element => {
 
   return (
     <div className="bg-white w-full min-h-screen">
-      <Header userEmail={userEmail} />
-      <main className="flex flex-col w-full">
-        <ResponsiveLayout
-          mobileComponent={HeroSectionMobile}
-          desktopComponent={HeroSection}
-        />
-        <ResponsiveLayout
-          mobileComponent={FeatureLayoutSectionMobile}
-          desktopComponent={FeatureLayoutSection}
-        />
-        <ResponsiveLayout
-          mobileComponent={TestimonialSectionMobile}
-          desktopComponent={TestimonialSection}
-        />
-        <div id="call-to-action">
-          <CallToActionResponsive userEmail={userEmail} />
-        </div>
-      </main>
+      {/* Desktop - hidden on mobile */}
+      <div className="hidden md:block">
+        <DesktopLanding userEmail={userEmail} />
+      </div>
+
+      {/* Mobile - hidden on desktop */}
+      <div className="block md:hidden">
+        <MobileLanding userEmail={userEmail} />
+      </div>
     </div>
   );
 };
