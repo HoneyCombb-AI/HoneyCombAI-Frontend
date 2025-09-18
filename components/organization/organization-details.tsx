@@ -55,6 +55,7 @@ interface OrganizationDetailsProps {
 export function OrganizationDetails({ organization, onOrganizationUpdated }: OrganizationDetailsProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
+  const [leavingOrganization, setLeavingOrganization] = useState<boolean>(false);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
   const [showTokenLimitDialog, setShowTokenLimitDialog] = useState<boolean>(false);
   const [selectedMember, setSelectedMember] = useState<string>('');
@@ -65,7 +66,7 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
     }
     
     try {
-      setLoading(true);
+      setLeavingOrganization(true);
       await axios.delete('/api/organization/leave');
       toast.success('Successfully left organization');
       onOrganizationUpdated?.();
@@ -74,13 +75,13 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
       const isAxiosError = (err: unknown): err is { response?: { data?: { error?: string } } } => {
         return typeof err === 'object' && err !== null && 'response' in err;
       };
-      const errorMessage = isAxiosError(error) && error.response?.data?.error 
-        ? error.response.data.error 
+      const errorMessage = isAxiosError(error) && error.response?.data?.error
+        ? error.response.data.error
         : 'Failed to leave organization';
-      
+
       toast.error(errorMessage);
     } finally {
-      setLoading(false);
+      setLeavingOrganization(false);
     }
   };
 
@@ -170,12 +171,12 @@ export function OrganizationDetails({ organization, onOrganizationUpdated }: Org
               <Button
                 variant="destructive"
                 size="sm"
-                // disabled={organization.isOwner}
+                disabled={leavingOrganization}
                 onClick={handleLeaveOrganization}
                 className="gap-2"
               >
                 <LogOut className="h-4 w-4" />
-                Leave
+                {leavingOrganization ? 'Leaving...' : 'Leave'}
               </Button>
             </div>
           </div>
