@@ -36,7 +36,7 @@ export default function Faq() {
         <div className="flex-1">
           <h2
             id="faq"
-            className="text-[48px] font-bold tracking-tight text-white leading-tight"
+            className="text-[48px] font-bold tracking-tight text-white leading-tight scroll-mt-100"
           >
             Common Questions
           </h2>
