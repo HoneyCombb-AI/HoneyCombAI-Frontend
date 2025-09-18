@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 
@@ -25,7 +23,6 @@ interface HeaderProps {
 }
 
 const Header = ({ userEmail }: HeaderProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
 
   const handleLoginClick = () => {
@@ -56,34 +53,29 @@ const Header = ({ userEmail }: HeaderProps) => {
             </div>
           </div>
         </Link>
-        <div className="hidden lg:flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           <Button
             variant="link"
             onClick={handleLoginClick}
-            className="cursor-pointer text-nav text-black px-4 py-2 hover:bg-white rounded-md"
+            className="cursor-pointer text-nav text-black px-2 sm:px-4 py-2 hover:bg-white rounded-md text-sm sm:text-base"
           >
             {userEmail ? "Dashboard" : "Login"}
           </Button>
           <Button
             variant="link"
             onClick={handleSupportClick}
-            className="cursor-pointer text-nav text-black px-4 py-2 hover:bg-white rounded-md"
+            className="cursor-pointer text-nav text-black px-2 sm:px-4 py-2 hover:bg-white rounded-md text-sm sm:text-base"
           >
            Support
           </Button>
           <Button
             variant="outline"
-            className="cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
+            className="hidden sm:flex cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
             data-cal-namespace="30min"
             data-cal-link="ankushnagathan/30min"
             data-cal-config='{"layout":"month_view"}'
           >
             Book demo
-          </Button>
-        </div>
-        <div className="lg:hidden">
-          <Button onClick={() => setIsMenuOpen(!isMenuOpen)} variant="ghost" size="icon" className="text-black">
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
         </div>
       </div>
