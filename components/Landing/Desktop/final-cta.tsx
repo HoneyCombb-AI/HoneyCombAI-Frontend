@@ -32,19 +32,7 @@ const promoBadges = [
 const CtaForm = () => {
   return (
     <div className="w-full">
-      {/* <Button
-        asChild
-        className="h-14 rounded-lg bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-gray-300">
-
-                <a
-          href="https://cal.com/ankushhc/honeycomb-demo"
-          target="_blank"
-          rel="noopener noreferrer">
-
-                  Book a demo
-                </a>
-            </Button> */}
-      <Button
+         <Button
         variant="outline"
         className="cursor-pointer bg-white text-black transition-colors hover:bg-white hover:text-amber-400 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
         data-cal-namespace="30min"
@@ -59,7 +47,7 @@ const CtaForm = () => {
 
 const FinalCta = () => {
   return (
-    <section className="bg-white">
+    <section id="final-cta-section" className="bg-white">
       <div className="max-w-7xl mx-auto px-6 py-24 md:py-32">
         <div className="rounded-2xl bg-black p-8 sm:p-10 md:p-16">
           <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-[1.2fr_1fr] lg:gap-20">
