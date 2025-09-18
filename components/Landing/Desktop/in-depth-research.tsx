@@ -5,7 +5,7 @@ const InDepthResearch = () => {
     <section className="hero-heading-left mt-20">
       <div className="w-layout-grid uui-layout23_component grid grid-cols-1 items-start gap-x-8 gap-y-8 lg:grid-cols-[0.75fr_1fr]">
         <div className="uui-layout23_content-left">
-          <div className="uui-heading-subheading-4 mb-4 text-base font-medium text-gray-400">
+          <div className="uui-heading-subheading-4 mb-4 text-sm font-semibold text-black">
             &quot;I don&apos;t know any software that lets you do this.&quot;
           </div>
           <h2 className="pro---feature-title-2 text-[48px] font-bold leading-tight text-black">

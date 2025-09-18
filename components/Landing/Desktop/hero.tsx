@@ -51,6 +51,7 @@ const HeroSection = () => {
                   width={800}
                   height={600}
                   className="w-full h-auto object-contain rounded-lg border border-black/20"
+                  priority
                 />
               </div>
               <p className="mt-2 text-center font-semibold text-xs text-black">
