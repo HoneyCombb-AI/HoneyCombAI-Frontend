@@ -72,10 +72,10 @@ const ImplementationTimeline = () => {
     <section className="bg-white py-20 lg:py-[120px]">
       <div className="max-w-[1200px] mx-auto px-10 md:px-6">
         <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-block bg-black text-white text-sm font-semibold py-2 px-3 rounded-full mb-4 !whitespace-pre-line">New software shouldn't take a year to see results.
+          <div className="inline-block bg-black text-white text-sm font-semibold py-2 px-3 rounded-full mb-4 !whitespace-pre-line">New software shouldn&apos;t take a year to see results.
 
           </div>
-          <h2 className="text-[48px] font-bold text-black tracking-tight leading-[1.2] !whitespace-pre-line">Here's what you can get done with Honeycomb in just 7 days.
+          <h2 className="text-[48px] font-bold text-black tracking-tight leading-[1.2] !whitespace-pre-line">Here&apos;s what you can get done with Honeycomb in just 7 days.
 
           </h2>
         </div>

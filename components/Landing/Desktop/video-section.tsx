@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 type FormState = "idle" | "loading" | "success" | "error";
 
@@ -22,7 +22,7 @@ export default function VideoSection() {
         throw new Error("Invalid email");
       }
       setFormState("success");
-    } catch (error) {
+    } catch {
       setFormState("error");
     }
   };

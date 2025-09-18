@@ -1,7 +1,5 @@
 import React from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
@@ -56,7 +54,7 @@ const HeroSection = () => {
                 />
               </div>
               <p className="mt-2 text-center text-xs text-neutral-600">
-                "Unique to our Sales requirements"
+                &ldquo;Unique to our Sales requirements&rdquo;
               </p>
             </div>
           </div>

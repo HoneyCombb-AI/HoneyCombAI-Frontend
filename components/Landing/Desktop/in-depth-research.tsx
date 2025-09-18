@@ -16,7 +16,7 @@ const InDepthResearch = () => {
           <div className="uui-text-size-large-4 text-xl leading-8 text-gray-700">
             We surface the data that matters most to you.{" "}
             <strong className="font-bold text-black">
-              If it's on the internet, we can track it
+              If it&apos;s on the internet, we can track it
             </strong>
             , analyze it, and deliver it directly to your workflow.
           </div>
@@ -44,7 +44,7 @@ const InDepthResearch = () => {
               />
             </div>
           </div>
-          <p className="mt-2 text-center text-xs text-neutral-600">"Unique to our Sales requirements"</p>
+          <p className="mt-2 text-center text-xs text-neutral-600">&ldquo;Unique to our Sales requirements&rdquo;</p>
         </div>
       </div>
     </section>

@@ -9,7 +9,7 @@ const SocialProof = () => {
           <p className="text-center text-xl font-medium text-black mb-10">Loved By Sales Teams...</p>
           <div className="testimonial-wrapper rounded-3xl border border-border bg-white p-10 shadow-lg text-center mx-auto">
             <div className="testimonial-content flex flex-col items-center">
-              <p className="text-center text-2xl lg:text-3xl font-medium leading-normal text-[#2c2c2c] max-w-3xl mx-auto !whitespace-pre-line">"Honeycomb helps us focus on the few accounts that actually matter right now by surfacing the right buying signals at the right time."
+              <p className="text-center text-2xl lg:text-3xl font-medium leading-normal text-[#2c2c2c] max-w-3xl mx-auto !whitespace-pre-line">&ldquo;Honeycomb helps us focus on the few accounts that actually matter right now by surfacing the right buying signals at the right time.&rdquo;
 
               </p>
             </div>

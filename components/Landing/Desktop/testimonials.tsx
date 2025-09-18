@@ -61,7 +61,7 @@ const Testimonials = () => {
       <div className="container mx-auto px-4">
         <div className="text-center max-w-6xl mx-auto">
           <h2 className="font-bold text-black text-[48px] leading-[1.2]">
-            Don't Just Take Our
+            Don&apos;t Just Take Our
             <br />
             Word for It
           </h2>

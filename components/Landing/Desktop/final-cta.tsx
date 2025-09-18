@@ -67,7 +67,7 @@ const FinalCta = () => {
             {/* Left side */}
             <div className="flex flex-col justify-center text-white text-left">
               <h2 className="text-[48px] font-bold leading-tight">
-                Don't wish you started sooner.
+                Don&apos;t wish you started sooner.
               </h2>
               <ul className="mb-12 mt-8 space-y-4">
                 {featureList.map((feature, index) => (
