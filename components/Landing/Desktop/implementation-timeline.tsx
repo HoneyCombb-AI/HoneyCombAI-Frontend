@@ -1,5 +1,5 @@
 import React from 'react';
-import Image from 'next/image';
+import { CheckCircle } from 'lucide-react';
 
 interface ListItem {
   text: string;
@@ -43,13 +43,7 @@ const timelineData: TimelineStep[] = [
 
 const CheckIcon = () =>
 <div className="w-5 h-5 flex-shrink-0">
-        <Image
-    src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/2dd489b6-fdb0-4898-abbb-cc7b5e9464d3-getbirddog-ai/assets/svgs/68c6c8fedb31ef060a4d7aa1_52718cb75317ef8a94fa10bc31cb9fd1_icon-line-check-rounded-color-elements-brix-templates-4.svg?"
-    alt="Check mark icon"
-    width={20}
-    height={20}
-    className="w-full h-full" />
-
+        <CheckCircle className="w-5 h-5 text-purple-500" />
     </div>;
 
 

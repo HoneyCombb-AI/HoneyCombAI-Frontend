@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 
 
 export const HoneyCombIcon = ({ className }: { className?: string }) => (
@@ -24,6 +26,45 @@ interface HeaderProps {
 
 const Header = ({ userEmail }: HeaderProps) => {
   const router = useRouter();
+  const [showBookDemo, setShowBookDemo] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const heroSection = document.getElementById('hero-section');
+      const finalCtaSection = document.getElementById('final-cta-section');
+      const headerHeight = 80;
+
+      let shouldShowButton = true;
+
+      // Hide button if hero section is visible
+      if (heroSection) {
+        const heroBottom = heroSection.getBoundingClientRect().bottom;
+        if (heroBottom > headerHeight) {
+          shouldShowButton = false;
+        }
+      }
+
+      // Hide button if final CTA section is visible
+      if (finalCtaSection && shouldShowButton) {
+        const finalCtaRect = finalCtaSection.getBoundingClientRect();
+        const finalCtaTop = finalCtaRect.top;
+        const finalCtaBottom = finalCtaRect.bottom;
+        const windowHeight = window.innerHeight;
+        const triggerDistance = 300;
+        // Check if final CTA section is in viewport with buffer
+        if (finalCtaTop < (windowHeight - triggerDistance) && finalCtaBottom > headerHeight) {
+          shouldShowButton = false;
+        }
+      }
+
+      setShowBookDemo(shouldShowButton);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLoginClick = () => {
     if (userEmail) {
@@ -32,7 +73,7 @@ const Header = ({ userEmail }: HeaderProps) => {
       router.push("/login");
     }
   };
-  
+
   const handleSupportClick = () => {
     router.push("/support");
   };
@@ -68,15 +109,26 @@ const Header = ({ userEmail }: HeaderProps) => {
           >
            Support
           </Button>
-          <Button
-            variant="outline"
-            className="hidden sm:flex cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
-            data-cal-namespace="30min"
-            data-cal-link="ankushnagathan/30min"
-            data-cal-config='{"layout":"month_view"}'
-          >
-            Book demo
-          </Button>
+          <AnimatePresence>
+            {showBookDemo && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <Button
+                  variant="outline"
+                  className="hidden sm:flex cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
+                  data-cal-namespace="30min"
+                  data-cal-link="ankushnagathan/30min"
+                  data-cal-config='{"layout":"month_view"}'
+                >
+                  Book demo
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>

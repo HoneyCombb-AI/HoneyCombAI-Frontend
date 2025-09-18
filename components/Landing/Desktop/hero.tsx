@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
   return (
-    <header className="bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90">
+    <header id="hero-section" className="bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90">
       <div className="mx-auto max-w-[1400px] px-6">
         <div className="py-32 sm:py-40 lg:py-44">
           <div
@@ -19,7 +19,7 @@ const HeroSection = () => {
               </h1>
 
               {/* Subtitle */}
-              <p className="mt-6 text-xl leading-8 text-neutral-700 !whitespace-pre-line">
+              <p className="mt-6 text-xl leading-8 text-neutral-900 !whitespace-pre-line">
                 Honeycomb monitors news, social media, job postings, and company
                 research, then routes verified signals so your reps act first
                 with full context.
@@ -51,9 +51,10 @@ const HeroSection = () => {
                   width={800}
                   height={600}
                   className="w-full h-auto object-contain rounded-lg border border-black/20"
+                  priority
                 />
               </div>
-              <p className="mt-2 text-center text-xs text-neutral-600">
+              <p className="mt-2 text-center font-semibold text-xs text-black">
                 &ldquo;Unique to our Sales requirements&rdquo;
               </p>
             </div>

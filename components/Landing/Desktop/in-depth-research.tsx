@@ -5,7 +5,7 @@ const InDepthResearch = () => {
     <section className="hero-heading-left mt-20">
       <div className="w-layout-grid uui-layout23_component grid grid-cols-1 items-start gap-x-8 gap-y-8 lg:grid-cols-[0.75fr_1fr]">
         <div className="uui-layout23_content-left">
-          <div className="uui-heading-subheading-4 mb-4 text-base font-medium text-gray-400">
+          <div className="uui-heading-subheading-4 mb-4 text-sm font-semibold text-black">
             &quot;I don&apos;t know any software that lets you do this.&quot;
           </div>
           <h2 className="pro---feature-title-2 text-[48px] font-bold leading-tight text-black">
@@ -31,6 +31,7 @@ const InDepthResearch = () => {
                 alt="In-Depth Research - Social Activity Analysis"
                 width={700}
                 height={450}
+                loading="lazy"
                 className="w-full h-full object-cover border-r border-black/20"
               />
             </div>
@@ -40,11 +41,12 @@ const InDepthResearch = () => {
                 alt="In-Depth Research - Strategic Recommendations"
                 width={700}
                 height={450}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             </div>
           </div>
-          <p className="mt-2 text-center text-xs text-neutral-600">&ldquo;Unique to our Sales requirements&rdquo;</p>
+          <p className="mt-3 text-center font-semibold text-xs text-black">&ldquo;Unique to our Sales requirements&rdquo;</p>
         </div>
       </div>
     </section>
