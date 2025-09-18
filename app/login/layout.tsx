@@ -10,15 +10,21 @@ export default function RootLayout({
       <SimpleHeader currentPage="login" />
       <main className="h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-2">
         <div className="hidden md:flex flex-col justify-between bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100/90">
-          <div className="max-w-lg flex-1 flex flex-col justify-center px-16">
-            <h1 className="text-5xl font-black text-black leading-tight mb-6">
-              Hello
-              <br />
-              <span className="text-amber-600">Honeycomb</span>
-            </h1>
-            <p className="text-lg font-semibold text-gray-800">
-              Win Your Next Big Deal with Honeycomb's Real-Time Pipeline Signals & Smart Account Research
-            </p>
+          <div className="w-full flex-1 flex flex-col justify-center items-center px-16">
+            <div className="max-w-lg ml-12">
+              <h1 className="text-5xl font-black text-black leading-tight mb-6">
+                Hello
+                <br />
+                <span className="text-black">Honeycomb</span>
+              </h1>
+              <p className="text-lg font-semibold text-gray-800">
+                Win Your Next Big Opportunity with
+                <br />
+                Honeycomb's Real-Time Pipeline Signals &
+                <br />
+                Smart Account Research
+              </p>
+            </div>
           </div>
           <div className="flex justify-between items-center text-xs mt-6 px-4 py-4">
             <div className="font-semibold text-black">© 2025 Honeycomb AI</div>

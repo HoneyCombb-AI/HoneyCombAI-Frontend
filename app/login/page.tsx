@@ -53,30 +53,31 @@ export default function LoginForm() {
       >
         <div className="grid gap-2">
           <Label htmlFor="email" className="text-sm">Enter your email</Label>
-          <Input id="email" type="email" placeholder="Enter your email" className="h-12" />
+          <Input id="email" type="email" placeholder="example@gmail.com" className="h-12" disabled />
         </div>
 
         <div className="grid gap-2">
-          <div className="flex items-center">
-            <Label htmlFor="password" className="text-sm">Enter your password</Label>
-            <a href="#" className="ml-auto text-sm underline">Forgot password?</a>
+          <Label htmlFor="password" className="text-sm">Enter your password</Label>
+          <Input id="password" type="password" placeholder="••••••••" className="h-12" disabled />
+          <div className="flex justify-end">
+            <a href="#" className="text-sm underline">Forgot password?</a>
           </div>
-          <Input id="password" type="password" placeholder="Enter your password" className="h-12" />
         </div>
 
         <div>
           <button
             type="submit"
-            className="w-full h-12 rounded-md bg-black text-white text-sm font-medium"
+            className="w-full h-12 rounded-md bg-gray-300 text-gray-500 text-sm font-medium cursor-not-allowed"
+            disabled
           >
-            Sign in
+            Email Login coming soon
           </button>
         </div>
 
         <div>
           <Button
             variant="outline"
-            className="w-full h-12 flex items-center justify-center"
+            className="w-full h-12 flex items-center justify-center bg-black text-white hover:bg-green-700 hover:text-white"
             onClick={handleGoogleLogin}
             disabled={isLoading}
           >
