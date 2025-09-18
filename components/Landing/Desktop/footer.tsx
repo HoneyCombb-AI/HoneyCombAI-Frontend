@@ -2,10 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 
-const companyLinks = [
-  { text: "Sign Up", href: "https://www.honeycombai.in/" },
-  { text: "Sign In", href: "https://www.honeycombai.in/" },
-];
 
 const resourcesLinks = [
   { text: "FAQ", href: "/#faq" },
@@ -60,7 +56,7 @@ export default function Footer() {
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-2 gap-8 lg:w-1/2">
-            <FooterColumn title="COMPANY" links={companyLinks} />
+            {/* <FooterColumn title="COMPANY" links={companyLinks} /> */}
             <FooterColumn title="RESOURCES" links={resourcesLinks} />
           </div>
         </div>
@@ -80,8 +76,6 @@ export default function Footer() {
           <div className="text-sm text-gray-400 text-center sm:text-right">
             <p>
               Copyright © 2025 Honeycomb AI
-              <br />
-              ankush@honeycombai.in
             </p>
           </div>
         </div>

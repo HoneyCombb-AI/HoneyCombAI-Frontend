@@ -34,7 +34,7 @@ const CtaForm = () => {
     <div className="w-full">
             <Button
         asChild
-        className="h-14 rounded-lg bg-black px-8 text-base font-semibold text-white transition-colors hover:bg-gray-800">
+        className="h-14 rounded-lg bg-white px-8 text-base font-semibold text-black transition-colors hover:bg-gray-300">
 
                 <a
           href="https://cal.com/ankushhc/honeycomb-demo"
@@ -50,25 +50,28 @@ const CtaForm = () => {
 
 const FinalCta = () => {
   return (
-    <section className="bg-[#2C2C2C]">
-      <div className="container py-24 md:py-32">
-        <div className="rounded-2xl bg-white/5 p-8 sm:p-10 md:p-16 lg:px-20">
-          <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2 lg:gap-20">
-            <div className="flex flex-col justify-center text-white">
-              <h2 className="text-[48px] font-bold leading-tight text-white">
+    <section className="bg-white">
+      <div className="max-w-7xl mx-auto px-6 py-24 md:py-32">
+        <div className="rounded-2xl bg-black p-8 sm:p-10 md:p-16">
+          <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-[1.2fr_1fr] lg:gap-20">
+            
+            {/* Left side */}
+            <div className="flex flex-col justify-center text-white text-left">
+              <h2 className="text-[48px] font-bold leading-tight">
                 Don't wish you started sooner.
               </h2>
               <ul className="mb-12 mt-8 space-y-4">
-                {featureList.map((feature, index) =>
-                <li key={index} className="flex items-center gap-4">
+                {featureList.map((feature, index) => (
+                  <li key={index} className="flex items-center gap-4">
                     <FeatureCheckIcon />
                     <span className="text-xl font-bold">{feature}</span>
                   </li>
-                )}
+                ))}
               </ul>
               <CtaForm />
             </div>
 
+            {/* Right side */}
             <div className="grid grid-cols-2 gap-4 sm:gap-6">
               {promoBadges.map(({ icon: Icon, label }) => (
                 <div
@@ -82,11 +85,12 @@ const FinalCta = () => {
                 </div>
               ))}
             </div>
+
           </div>
         </div>
       </div>
-    </section>);
-
+    </section>
+  );
 };
 
 export default FinalCta;

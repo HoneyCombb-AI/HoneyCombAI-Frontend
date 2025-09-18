@@ -6,11 +6,11 @@ import { ChevronRight, Play } from "lucide-react";
 const HeroSection = () => {
   return (
     <header className="bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100">
-      <div className="mx-auto max-w-[1200px] px-10">
-        <div className="py-24 sm:py-32 lg:py-28">
+      <div className="mx-auto max-w-[1400px] px-6">
+        <div className="py-32 sm:py-40 lg:py-44">
           <div
-            className="grid grid-cols-1 items-center 
-            gap-y-16 lg:grid-cols-2 lg:gap-x-12"
+            className="grid grid-cols-1 items-center
+            gap-y-16 lg:grid-cols-2 lg:gap-x-8"
           >
             {/* Left Content */}
             <div className="text-center lg:text-left">
@@ -40,14 +40,14 @@ const HeroSection = () => {
             {/* Right Image */}
             <div className="relative">
               <div
-                className="rounded-xl border 
-           border-black/10 bg-white/60 shadow-[0_8px_24px_rgba(0,0,0,0.08)] p-3 w-full max-w-[650px]"
+                className="rounded-xl border
+           border-black/10 bg-white/60 shadow-[0_8px_24px_rgba(0,0,0,0.08)] p-3 w-full"
               >
                 <Image
                   src="/Dashboard.png"
                   alt="Dashboard: Signals, Social Intelligence, Custom Signals"
-                  width={650}
-                  height={500}
+                  width={800}
+                  height={600}
                   className="w-full h-auto object-contain rounded-lg border border-black/20"
                 />
               </div>

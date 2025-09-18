@@ -10,9 +10,9 @@ import {
 const faqData = [
   {
     value: "item-1",
-    question: "What to expect on the 15-min demo call?",
+    question: "What to expect on the 30-min demo call?",
     answer:
-      "During the call, we'll upload the accounts you're currently working on. Within just 15 minutes, you'll see a full view of Honeycomb in action, complete with account details, signals, and insights tailored to your pipeline.",
+      "During the call, we'll upload the accounts you're currently working on. Within just 30 minutes, you'll see a full view of Honeycomb in action, complete with account details, signals, and insights tailored to your pipeline.",
   },
   {
     value: "item-2",
