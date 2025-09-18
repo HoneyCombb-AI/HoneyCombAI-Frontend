@@ -25,7 +25,11 @@ function SupportLayoutContent({
                     <AppSidebar />
                     <div className='flex-1'>
                         <Header title="Support" />
-                        <main className="flex-1 flex flex-col w-full">{children}</main>
+                        <main className="flex-1 flex items-center justify-center p-6 min-h-[calc(100vh-80px)] bg-gradient-to-br from-gray-50 to-gray-100">
+                            <div className="w-full max-w-md bg-white p-8 py-12 rounded-lg shadow-lg border border-gray-200">
+                                {children}
+                            </div>
+                        </main>
                     </div>
                 </SidebarProvider>
             </AuthProvider>
