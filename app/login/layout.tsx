@@ -1,4 +1,5 @@
 import { SimpleHeader } from "@/components/SimpleHeader";
+import Image from "next/image";
 
 export default function RootLayout({
   children,
@@ -11,18 +12,25 @@ export default function RootLayout({
       <main className="h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-2">
         <div className="hidden md:flex flex-col justify-between bg-gradient-to-br from-amber-300 via-amber-200 to-yellow-100/90">
           <div className="w-full flex-1 flex flex-col justify-center items-center px-16">
-            <div className="max-w-lg ml-12">
+            <div className="max-w-2xl ml-12">
+              <Image
+                src="/iconLogin.png"
+                alt="Honeycomb AI Logo"
+                width={102}
+                height={64}
+                className="mb-6"
+              />
               <h1 className="text-5xl font-black text-black leading-tight mb-6">
                 Hello
                 <br />
                 <span className="text-black">Honeycomb</span>
               </h1>
-              <p className="text-lg font-semibold text-gray-800">
+              <p className="text-xl font-semibold text-gray-800">
                 Win Your Next Big Opportunity with
                 <br />
                 Honeycomb's Real-Time Pipeline Signals &
                 <br />
-                Smart Account Research
+                Smart Prospect Research
               </p>
             </div>
           </div>
