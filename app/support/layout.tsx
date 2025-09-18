@@ -48,9 +48,9 @@ function SupportLayoutContent({
                                 <span className="text-black">Help?</span>
                             </h1>
                             <p className="text-xl font-semibold text-gray-800">
-                                We're here to support you every step of the way.
+                                We&apos;re here to support you every step of the way.
                                 <br />
-                                Send us a message and we'll get back to you
+                                Send us a message and we&apos;ll get back to you
                                 <br />
                                 as soon as possible.
                             </p>

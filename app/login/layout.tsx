@@ -28,7 +28,7 @@ export default function RootLayout({
               <p className="text-xl font-semibold text-gray-800">
                 Win Your Next Big Opportunity with
                 <br />
-                Honeycomb's Real-Time Pipeline Signals &
+                Honeycomb&apos;s Real-Time Pipeline Signals &
                 <br />
                 Smart Prospect Research
               </p>
