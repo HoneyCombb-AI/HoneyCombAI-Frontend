@@ -36,8 +36,8 @@ export default function LoginForm() {
 
   return (
     <div>
-      <h2 className="text-4xl font-extrabold mb-2">Welcome Back!</h2>
-      <p className="text-sm text-gray-600 mb-6">Please enter login details below</p>
+      <h2 className="text-4xl font-black text-black mb-2">Welcome Back!</h2>
+      <p className="text-sm font-medium text-gray-800 mb-6">Please enter login details below</p>
 
       {error && (
         <Alert variant="destructive" className="mb-4">
@@ -99,11 +99,6 @@ export default function LoginForm() {
           </Button>
         </div>
 
-        <div className="text-xs text-gray-500 mt-4">
-          By signing in, you agree to our{" "}
-          <a href="#" className="underline">Terms of Service</a> and{" "}
-          <a href="#" className="underline">Privacy Policy</a>.
-        </div>
       </form>
     </div>
   );
