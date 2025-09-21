@@ -39,73 +39,18 @@ export const SignalState: React.FC<SignalStateProps> = ({
   detailed = false
 }) => {
   const { getFontSizeClass } = useFontSize();
-  // Memoize time boundaries - only recalculate when component mounts or date changes
-  const timeBoundaries = useMemo(() => {
-    const now = new Date();
-    return {
-      threeMonthsAgo: new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()),
-      oneYearAgo: new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
-    };
-  }, []);
 
-  // Memoize processed signals with all computations done once
-  const processedSignals: ProcessedSignal[] = useMemo(() => {
-    const rawProcessed = processSignals(signals, detailed);
-
-    return rawProcessed.map(signal => {
-      const urls = signal.source ? Array.from(getUrls(signal.source)) : [];
-      const parsedDate = signal.source_date ? chrono.parseDate(signal.source_date) : null;
-
-      let timeCategory: 'veryRecent' | 'recent' | 'older' = 'older';
-      if (parsedDate) {
-        if (parsedDate >= timeBoundaries.threeMonthsAgo) {
-          timeCategory = 'veryRecent';
-        } else if (parsedDate >= timeBoundaries.oneYearAgo) {
-          timeCategory = 'recent';
-        }
-      }
-
-      return {
-        ...signal,
-        colorClass: getSignalBadgeColor(signal.key),
-        urls,
-        parsedDate,
-        timeCategory
-      };
-    });
-  }, [signals, detailed, timeBoundaries]);
-
-  // Memoize grouped signals
-  const groupedSignals = useMemo(() => {
-    if (!showTooltips || !detailed) {
-      return { ungrouped: processedSignals };
-    }
-
-    const veryRecent = processedSignals.filter(s => s.timeCategory === 'veryRecent');
-    const recent = processedSignals.filter(s => s.timeCategory === 'recent');
-    const older = processedSignals.filter(s => s.timeCategory === 'older');
-
-    return { veryRecent, recent, older };
-  }, [processedSignals, showTooltips, detailed]);
-
-  // Early return if no signals
-  if (processedSignals.length === 0) {
-    return <span className="text-sm text-gray-400">—</span>;
-  }
-
-  // Memoized URL click handler to prevent recreating functions
+  // All hooks must be called unconditionally at the top level
   const handleUrlClick = useCallback((url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 
-  // Memoized confidence bar class calculation
   const getConfidenceClass = useCallback((score: number) => {
     return score >= 80 ? 'bg-green-500' :
            score >= 60 ? 'bg-yellow-500' :
            score >= 40 ? 'bg-orange-500' : 'bg-red-400';
   }, []);
 
-  // Optimized SourceDisplay component
   const SourceDisplay = useCallback(({ signal }: { signal: ProcessedSignal }) => {
     if (!signal.source) return null;
 
@@ -131,7 +76,6 @@ export const SignalState: React.FC<SignalStateProps> = ({
     );
   }, [handleUrlClick]);
 
-  // Optimized Signal Badge component
   const SignalBadge = useCallback(({ signal, idx, groupTitle }: {
     signal: ProcessedSignal;
     idx: number;
@@ -195,9 +139,8 @@ export const SignalState: React.FC<SignalStateProps> = ({
         {signal.key}
       </Badge>
     );
-  }, [contactId, showTooltips, detailed, getConfidenceClass, SourceDisplay]);
+  }, [contactId, showTooltips, detailed, getConfidenceClass, SourceDisplay, getFontSizeClass]);
 
-  // Optimized signal group renderer
   const renderSignalGroup = useCallback((
     signals: ProcessedSignal[],
     mainTitle?: string,
@@ -234,6 +177,60 @@ export const SignalState: React.FC<SignalStateProps> = ({
       </div>
     );
   }, [SignalBadge]);
+
+  // Memoize time boundaries - only recalculate when component mounts or date changes
+  const timeBoundaries = useMemo(() => {
+    const now = new Date();
+    return {
+      threeMonthsAgo: new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()),
+      oneYearAgo: new Date(now.getFullYear() - 1, now.getMonth(), now.getDate())
+    };
+  }, []);
+
+  // Memoize processed signals with all computations done once
+  const processedSignals: ProcessedSignal[] = useMemo(() => {
+    const rawProcessed = processSignals(signals, detailed);
+
+    return rawProcessed.map(signal => {
+      const urls = signal.source ? Array.from(getUrls(signal.source)) : [];
+      const parsedDate = signal.source_date ? chrono.parseDate(signal.source_date) : null;
+
+      let timeCategory: 'veryRecent' | 'recent' | 'older' = 'older';
+      if (parsedDate) {
+        if (parsedDate >= timeBoundaries.threeMonthsAgo) {
+          timeCategory = 'veryRecent';
+        } else if (parsedDate >= timeBoundaries.oneYearAgo) {
+          timeCategory = 'recent';
+        }
+      }
+
+      return {
+        ...signal,
+        colorClass: getSignalBadgeColor(signal.key),
+        urls,
+        parsedDate,
+        timeCategory
+      };
+    });
+  }, [signals, detailed, timeBoundaries]);
+
+  // Memoize grouped signals
+  const groupedSignals = useMemo(() => {
+    if (!showTooltips || !detailed) {
+      return { ungrouped: processedSignals };
+    }
+
+    const veryRecent = processedSignals.filter(s => s.timeCategory === 'veryRecent');
+    const recent = processedSignals.filter(s => s.timeCategory === 'recent');
+    const older = processedSignals.filter(s => s.timeCategory === 'older');
+
+    return { veryRecent, recent, older };
+  }, [processedSignals, showTooltips, detailed]);
+
+  // Early return if no signals
+  if (processedSignals.length === 0) {
+    return <span className="text-sm text-gray-400">—</span>;
+  }
 
   return (
     <div
