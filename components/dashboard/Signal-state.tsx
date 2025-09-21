@@ -42,7 +42,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
           if (!signal.source) return null;
 
           if (urls.length === 0) {
-            return <p className="text-xs">Source: {signal.source}</p>;
+            return <p className="text-xs py-1 text-gray-100">Source: {signal.source}</p>;
           }
 
           return (
@@ -78,11 +78,26 @@ export const SignalState: React.FC<SignalStateProps> = ({
               </TooltipTrigger>
               <TooltipContent className="max-w-sm bg-amber-800/70 backdrop-blur-sm border border-amber-900/50 text-white">
                 <div className="space-y-2">
-                  <p className="font-bold">{signal.key}</p>
-                  <p className="text-xs">Confidence: {Math.round(signal.score)}%</p>
+                  <div className="flex items-center justify-between py-3">
+                    <p className="font-bold text-sm">{signal.key}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-100">Confidence</span>
+                      <div className="w-16 h-2 bg-amber-900/50 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            signal.score >= 80 ? 'bg-green-500' :
+                            signal.score >= 60 ? 'bg-yellow-500' :
+                            signal.score >= 40 ? 'bg-orange-500' : 'bg-red-400'
+                          }`}
+                          style={{ width: `${Math.round(signal.score)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-white w-8">{Math.round(signal.score)}%</span>
+                    </div>
+                  </div>
                   {signal.description && (
                     <>
-                      <p className="text-base text-left mb-3">{signal.description}</p>
+                      <p className="text-base text-left mb-4 text-white">{signal.description}</p>
                       <div className="border-t border-white"></div>
                     </>
                   )}

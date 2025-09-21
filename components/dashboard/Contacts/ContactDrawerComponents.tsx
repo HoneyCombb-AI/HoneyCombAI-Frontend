@@ -101,7 +101,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
               </TooltipTrigger>
               {analysis.confidence_reasoning && (
                 <TooltipContent className="max-w-md">
-                  <p className="text-xs">{sentenceCase(analysis.confidence_reasoning)}</p>
+                  <p className="text-sm py-1">{sentenceCase(analysis.confidence_reasoning)}</p>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -168,7 +168,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionContent>
                   <ul className="space-y-2 pt-2">
                     {analysis.detective_reasoning.map((item: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">
+                      <li key={i} className="flex items-start gap-2 text-sm text-black leading-relaxed">
                         <span className="text-blue-600 mt-2 text-xs">•</span>
                         <span>{item}.</span>
                       </li>
@@ -253,7 +253,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                       {analysis.strategic_recommendations.map((item: string, i: number) => (
                         <li
                           key={i}
-                          className={`flex items-start gap-2 text-sm text-gray-700 leading-relaxed transform transition-all duration-300 ${loadedStates[`recommendations-${index}`]
+                          className={`flex items-start gap-2 text-sm text-black leading-relaxed transform transition-all duration-300 ${loadedStates[`recommendations-${index}`]
                             ? 'translate-y-0 opacity-100'
                             : 'translate-y-2 opacity-100'
                             }`}
@@ -310,7 +310,7 @@ export function NudgesSection({ NudgesData }: NudgesSectionProps) {
       </div>
       <ul className="space-y-2">
         {NudgesData.nudges.map((nudge: string, index: number) => (
-          <li key={index} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">
+          <li key={index} className="flex items-start gap-2 text-sm text-black leading-relaxed">
             <span className="text-blue-600 mt-2 text-xs">•</span>
             <span>{nudge}</span>
           </li>
