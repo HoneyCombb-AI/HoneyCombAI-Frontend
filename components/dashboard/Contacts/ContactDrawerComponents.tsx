@@ -120,17 +120,15 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <div className="flex items-center justify-between w-full">
                     <span>Primary Data Analysis</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
+                    <div
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleCopy(analysis.primary_data_analysis ?? [], 'Primary Data Analysis')
                       }}
                     >
                       <Copy className="h-4 w-4" />
-                    </Button>
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -152,17 +150,15 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <div className="flex items-center justify-between w-full">
                     <span>Detective Reasoning</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
+                    <div
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleCopy(analysis.detective_reasoning ?? [], 'Detective Reasoning')
                       }}
                     >
                       <Copy className="h-4 w-4" />
-                    </Button>
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -206,17 +202,15 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <div className="flex items-center justify-between w-full">
                     <span>Strategic Recommendations</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
+                    <div
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleCopy(analysis.strategic_recommendations ?? [], 'Strategic Recommendations')
                       }}
                     >
                       <Copy className="h-4 w-4" />
-                    </Button>
+                    </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
