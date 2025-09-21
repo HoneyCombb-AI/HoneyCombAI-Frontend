@@ -5,6 +5,9 @@ import { cn } from "@/lib/utils";
 import { getSignalBadgeColor, processSignals } from '@/lib/ContactUtils';
 import { ContactSignal } from '@/app/api/contacts/route';
 import { DrawerContactSignal } from '@/app/api/contacts/[id]/route';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ExternalLink } from "lucide-react";
+import getUrls from 'get-urls';
 
 interface SignalStateProps {
   signals: ContactSignal[] | DrawerContactSignal[];
@@ -14,9 +17,9 @@ interface SignalStateProps {
   detailed?: boolean;
 }
 
-export const SignalState: React.FC<SignalStateProps> = ({ 
-  signals, 
-  contactId, 
+export const SignalState: React.FC<SignalStateProps> = ({
+  signals,
+  contactId,
   className = "",
   showTooltips = false,
   detailed = false
@@ -28,13 +31,51 @@ export const SignalState: React.FC<SignalStateProps> = ({
   }
 
   return (
-    <div 
+    <div
       className={`flex flex-wrap gap-1 max-w-full overflow-hidden ${className}`}
       data-testid="sample-contact-signals"
     >
       {processedSignals.map((signal, idx) => {
         const colorClass = getSignalBadgeColor(signal.key);
-        
+        const urls = signal.source ? Array.from(getUrls(signal.source)) : [];
+
+        const SourceDisplay = () => {
+          if (!signal.source) return null;
+
+          if (urls.length === 0) {
+            return <p className="text-xs">Source: {signal.source}</p>;
+          }
+
+          return (
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-4">
+                {urls.map((url, urlIdx) => (
+                  <button
+                    key={urlIdx}
+                    onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
+                    className="text text-black hover:text-blue-300 flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    Source {urlIdx + 1}
+                    <ExternalLink className="h-3 w-3" />
+                  </button>
+                ))}
+              </div>
+              <div className="border-t border-white pt-2">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="raw-source" className="border-none">
+                    <AccordionTrigger className="text-xs py-1 hover:no-underline">
+                      Show raw source
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs text-gray-300 pt-2">
+                      {signal.source}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </div>
+          );
+        };
+
         if (showTooltips && detailed) {
           return (
             <Tooltip key={`${contactId}-${signal.type}-${idx}`}>
@@ -48,16 +89,14 @@ export const SignalState: React.FC<SignalStateProps> = ({
                   {signal.key}
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs bg-amber-800/70 backdrop-blur-sm border border-amber-900/50 text-white">
-                <div className="space-y-1">
+              <TooltipContent className="max-w-sm bg-amber-800/70 backdrop-blur-sm border border-amber-900/50 text-white">
+                <div className="space-y-2">
                   <p className="font-semibold">{signal.key}</p>
                   <p className="text-xs">Confidence: {Math.round(signal.score)}%</p>
                   {signal.description && (
-                    <p className="text-xs">{signal.description}</p>
+                    <p className="text-sm">{signal.description}</p>
                   )}
-                  {signal.source && (
-                    <p className="text-xs">Source: {signal.source}</p>
-                  )}
+                  <SourceDisplay />
                   {signal.source_date && (
                     <p className="text-xs">Source Date: {signal.source_date}</p>
                   )}
