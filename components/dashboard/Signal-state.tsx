@@ -152,7 +152,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
           </TooltipTrigger>
           <TooltipContent className="max-w-sm bg-amber-800/70 backdrop-blur-sm border border-amber-900/50 text-white">
             <div className="space-y-2">
-              <div className="flex items-center justify-between py-3">
+              <div className="flex items-center justify-between py-3 gap-3">
                 <p className="font-bold text-sm">{signal.key}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-100">Confidence</span>
