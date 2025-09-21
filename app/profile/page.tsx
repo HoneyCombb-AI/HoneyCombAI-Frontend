@@ -24,6 +24,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuth();
@@ -61,7 +62,13 @@ export default function ProfilePage() {
 
   const handleSignOut = async () => {
     router.replace("/");
-    signOut().catch(console.error);
+    signOut()
+    .then(() => {
+      toast.success("Signed out successfully");
+    })
+    .catch(() => {
+      toast.error("Sign out failed");
+    });
   };
 
   return (
