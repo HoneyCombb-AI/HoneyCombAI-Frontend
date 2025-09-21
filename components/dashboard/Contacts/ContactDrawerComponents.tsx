@@ -11,6 +11,10 @@ import { formatTimeSpent, getActivityLevelBadgeColor } from "@/lib/ContactUtils"
 import { parseISO, format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Instagram, LinkedinIcon, Twitter } from "lucide-react"
+import { Copy } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { useFontSize } from "@/lib/font-size-context"
 
 interface SocialIntelligenceSectionProps {
   aiAnalysis: DrawerAIAnalysis[]
@@ -18,10 +22,17 @@ interface SocialIntelligenceSectionProps {
 
 
 export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSectionProps) {
+  const { getFontSizeClass } = useFontSize()
   const [loadingStates, setLoadingStates] = React.useState<{ [key: string]: boolean }>({})
   const [loadedStates, setLoadedStates] = React.useState<{ [key: string]: boolean }>({})
   const [openAccordions, setOpenAccordions] = React.useState<string[]>([])
   const accordionRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({})
+
+  const handleCopy = (content: string[], section: string) => {
+    const textToCopy = content.join('\n')
+    navigator.clipboard.writeText(textToCopy)
+    toast.success(`${section} copied to clipboard`)
+  }
 
   // Initialize open accordions on mount
   React.useEffect(() => {
@@ -92,7 +103,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
               </TooltipTrigger>
               {analysis.confidence_reasoning && (
                 <TooltipContent className="max-w-md">
-                  <p className="text-xs">{sentenceCase(analysis.confidence_reasoning)}</p>
+                  <p className="text-sm py-1">{sentenceCase(analysis.confidence_reasoning)}</p>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -109,12 +120,23 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
             {analysis.primary_data_analysis && analysis.primary_data_analysis.length > 0 && (
               <AccordionItem value={`primary-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  Primary Data Analysis
+                  <div className="flex items-center justify-between w-full">
+                    <span>Primary Data Analysis</span>
+                    <div
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopy(analysis.primary_data_analysis ?? [], 'Primary Data Analysis')
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </div>
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <ul className="space-y-2 pt-2">
                     {analysis.primary_data_analysis.map((item: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">
+                      <li key={i} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
                         <span className="text-blue-600 mt-2 text-xs">•</span>
                         <span>{item}.</span>
                       </li>
@@ -128,12 +150,23 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
             {analysis.detective_reasoning && analysis.detective_reasoning.length > 0 && (
               <AccordionItem value={`detective-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  Detective Reasoning
+                  <div className="flex items-center justify-between w-full">
+                    <span>Detective Reasoning</span>
+                    <div
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopy(analysis.detective_reasoning ?? [], 'Detective Reasoning')
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </div>
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <ul className="space-y-2 pt-2">
                     {analysis.detective_reasoning.map((item: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">
+                      <li key={i} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
                         <span className="text-blue-600 mt-2 text-xs">•</span>
                         <span>{item}.</span>
                       </li>
@@ -169,7 +202,18 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 ref={(el) => { accordionRefs.current[`recommendations-${index}`] = el }}
               >
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  Strategic Recommendations
+                  <div className="flex items-center justify-between w-full">
+                    <span>Strategic Recommendations</span>
+                    <div
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopy(analysis.strategic_recommendations ?? [], 'Strategic Recommendations')
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </div>
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   {loadingStates[`recommendations-${index}`] ? (
@@ -205,7 +249,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                       {analysis.strategic_recommendations.map((item: string, i: number) => (
                         <li
                           key={i}
-                          className={`flex items-start gap-2 text-sm text-gray-700 leading-relaxed transform transition-all duration-300 ${loadedStates[`recommendations-${index}`]
+                          className={`flex items-start gap-2 text-black leading-relaxed transform transition-all duration-300 ${getFontSizeClass()} ${loadedStates[`recommendations-${index}`]
                             ? 'translate-y-0 opacity-100'
                             : 'translate-y-2 opacity-100'
                             }`}
@@ -235,15 +279,35 @@ interface NudgesSectionProps {
 }
 
 export function NudgesSection({ NudgesData }: NudgesSectionProps) {
+  const { getFontSizeClass } = useFontSize()
+
   if (!NudgesData?.nudges || NudgesData.nudges.length === 0) {
     return null
   }
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText((NudgesData.nudges ?? []).join('\n'))
+    toast.success("Nudges copied to clipboard")
+  }
+
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-600">Social Nudges</h3>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
+          onClick={handleCopy}
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
+      </div>
       <ul className="space-y-2">
         {NudgesData.nudges.map((nudge: string, index: number) => (
-          <li key={index} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">
+          <li key={index} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
             <span className="text-blue-600 mt-2 text-xs">•</span>
             <span>{nudge}</span>
           </li>
@@ -257,6 +321,7 @@ interface SocialActivitySection {
 }
 
 export function SocialActivitySection({ social_activity }: SocialActivitySection) {
+  const { getFontSizeClass } = useFontSize()
 
   return (
     <>
@@ -329,7 +394,7 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
                   {allPlatforms.map((item, idx) => {
                     const IconComponent = item.icon;
                     return (
-                      <div key={idx} className="flex items-center text-sm">
+                      <div key={idx} className={`flex items-center ${getFontSizeClass()}`}>
                         <IconComponent className="h-4 w-4 text-gray-500 mr-2" />
                         <span className="text-gray-700 mr-3">{item.platform}</span>
                         <span className="font-medium">{item.time > 0 ? formatTimeSpent(item.time) : '-'}</span>
@@ -346,7 +411,7 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
                   {allPlatforms.map((item, idx) => {
                     const IconComponent = item.icon;
                     return (
-                      <div key={idx} className="flex items-center text-sm">
+                      <div key={idx} className={`flex items-center ${getFontSizeClass()}`}>
                         <IconComponent className="h-4 w-4 text-gray-500 mr-2" />
                         <span className="text-gray-700 mr-3">{item.platform}</span>
                         <span className="font-medium">{item.posts > 0 ? item.posts : '-'}</span>
@@ -374,7 +439,7 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
                 {approachTimes.map((item, idx) => {
                   const IconComponent = item.icon;
                   return (
-                    <div key={idx} className="flex items-center justify-between text-sm">
+                    <div key={idx} className={`flex items-center justify-between ${getFontSizeClass()}`}>
                       <div className="flex items-center gap-2">
                         <IconComponent className="h-4 w-4 text-blue-600" />
                         <span className="text-blue-700">{item.platform}</span>

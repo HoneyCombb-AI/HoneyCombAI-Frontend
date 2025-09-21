@@ -41,6 +41,7 @@ import {
 import Link from "next/dist/client/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationPopoverContent } from "@/components/notification-popover";
+import { toast } from "sonner";
 
 // Menu items
 const items = [
@@ -88,7 +89,13 @@ export function AppSidebar() {
 
   const handleSignOut = async () => {
     router.replace("/");
-    signOut().catch(console.error);
+    signOut()
+    .then(() => {
+      toast.success("Signed out successfully");
+    })
+    .catch(() => {
+      toast.error("Sign out failed");
+    });
   };
 
   // Get user display name and email

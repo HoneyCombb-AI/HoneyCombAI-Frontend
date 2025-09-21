@@ -164,7 +164,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
             <div className="px-6 py-2 space-y-3">
               {drawerContact?.signals && drawerContact.signals.length > 0 && (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-gray-600">Social Intents</span>
                     </div>
@@ -323,9 +323,6 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
               {drawerContact?.nudges?.[0] && (
                 <>
                   <Separator className="my-5" />
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-semibold text-gray-600">Social Nudges</h3>
-                  </div>
                   <NudgesSection NudgesData={drawerContact?.nudges?.[0]} />
                 </>
               )}

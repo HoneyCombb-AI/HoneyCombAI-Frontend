@@ -1,11 +1,29 @@
+"use client"
+
+import { Loading } from "@/components/loading";
 import { SimpleHeader } from "@/components/SimpleHeader";
+import { useAuth } from "@/lib/auth-context";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
+        <Loading />
+        <p className="text-sm text-muted-foreground mt-4">Checking user status...</p>
+      </div>
+    )
+  }
+  if (user) {
+    redirect('/contacts');
+  }
   return (
     <>
       <SimpleHeader currentPage="login" />
