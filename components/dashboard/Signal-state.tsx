@@ -196,21 +196,36 @@ export const SignalState: React.FC<SignalStateProps> = ({
   }, [contactId, showTooltips, detailed, getConfidenceClass, SourceDisplay]);
 
   // Optimized signal group renderer
-  const renderSignalGroup = useCallback((signals: ProcessedSignal[], groupTitle?: string) => {
+  const renderSignalGroup = useCallback((
+    signals: ProcessedSignal[],
+    mainTitle?: string,
+    description?: string
+  ) => {
+    const groupKey = mainTitle || 'ungrouped';
+
     return (
-      <div key={groupTitle} className="space-y-4">
-        {groupTitle && (
-          <div className="text-xs font-semibold text-amber-800 border-b border-amber-700/30 pb-1">
-            {groupTitle}
+      <div key={groupKey} className="space-y-4">
+        {mainTitle && (
+          <div className="border-b border-green-700/30 pb-1">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-semibold text-amber-800">
+                {mainTitle}
+              </span>
+              {description && (
+                <span className="text-xs text-gray-500">
+                  {description}
+                </span>
+              )}
+            </div>
           </div>
         )}
         <div className="flex flex-wrap gap-1">
           {signals.map((signal, idx) => (
             <SignalBadge
-              key={`${signal.key}-${idx}-${groupTitle || 'ungrouped'}`}
+              key={`${signal.key}-${idx}-${groupKey}`}
               signal={signal}
               idx={idx}
-              groupTitle={groupTitle}
+              groupTitle={mainTitle}
             />
           ))}
         </div>
@@ -226,11 +241,11 @@ export const SignalState: React.FC<SignalStateProps> = ({
       {showTooltips && detailed ? (
         <div className="space-y-4 w-full">
           {groupedSignals.veryRecent && groupedSignals.veryRecent.length > 0 &&
-            renderSignalGroup(groupedSignals.veryRecent, "Very Recent (< 3 months)")}
+            renderSignalGroup(groupedSignals.veryRecent, "Very Recent", "less than 3 months")}
           {groupedSignals.recent && groupedSignals.recent.length > 0 &&
-            renderSignalGroup(groupedSignals.recent, "Recent (3-12 months)")}
+            renderSignalGroup(groupedSignals.recent, "Recent", "3 to 12 months")}
           {groupedSignals.older && groupedSignals.older.length > 0 &&
-            renderSignalGroup(groupedSignals.older, "Older / No Date")}
+            renderSignalGroup(groupedSignals.older, "Older", "beyond 1 year or no date")}
         </div>
       ) : (
         groupedSignals.ungrouped?.map((signal, idx) => (
