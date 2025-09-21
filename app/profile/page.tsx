@@ -22,12 +22,16 @@ import {
   Shield,
   Crown,
   LogOut,
+  Accessibility,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useFontSize, fontSizeLabels, FontSize } from "@/lib/font-size-context";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ProfilePage() {
   const { user, loading, signOut } = useAuth();
+  const { fontSize, setFontSize } = useFontSize();
   const router = useRouter();
 
   if (loading) {
@@ -160,6 +164,41 @@ export default function ProfilePage() {
                 <Badge variant="outline" className="bg-blue-50 text-blue-700">
                   Secure
                 </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Accessibility Settings */}
+          <Card className="bg-gray-50 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Accessibility className="h-5 w-5" />
+                Accessibility Settings
+              </CardTitle>
+              <CardDescription>
+                Customize your reading experience
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Text Size</p>
+                  <p className="text-sm text-muted-foreground">
+                    Adjust the font size for better readability
+                  </p>
+                </div>
+                <Select value={fontSize} onValueChange={(value: FontSize) => setFontSize(value)}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(fontSizeLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>

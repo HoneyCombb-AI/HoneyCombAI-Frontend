@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./custom.css"
 import { AuthProvider } from "@/lib/auth-context";
+import { FontSizeProvider } from "@/lib/font-size-context";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
@@ -30,8 +31,10 @@ export default function RootLayout({
         className="antialiased"
       >
         <AuthProvider>
-          <main className="flex-1 flex flex-col w-full">{children}</main>
-          <Toaster />
+          <FontSizeProvider>
+            <main className="flex-1 flex flex-col w-full">{children}</main>
+            <Toaster />
+          </FontSizeProvider>
         </AuthProvider>
       </body>
     </html>

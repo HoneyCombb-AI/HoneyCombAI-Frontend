@@ -14,6 +14,7 @@ import { Instagram, LinkedinIcon, Twitter } from "lucide-react"
 import { Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { useFontSize } from "@/lib/font-size-context"
 
 interface SocialIntelligenceSectionProps {
   aiAnalysis: DrawerAIAnalysis[]
@@ -21,6 +22,7 @@ interface SocialIntelligenceSectionProps {
 
 
 export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSectionProps) {
+  const { getFontSizeClass } = useFontSize()
   const [loadingStates, setLoadingStates] = React.useState<{ [key: string]: boolean }>({})
   const [loadedStates, setLoadedStates] = React.useState<{ [key: string]: boolean }>({})
   const [openAccordions, setOpenAccordions] = React.useState<string[]>([])
@@ -134,8 +136,8 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionContent>
                   <ul className="space-y-2 pt-2">
                     {analysis.primary_data_analysis.map((item: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-black  leading-relaxed">
-                        <span className="text-blue-600 mt-2 text">•</span>
+                      <li key={i} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
+                        <span className="text-blue-600 mt-2 text-xs">•</span>
                         <span>{item}.</span>
                       </li>
                     ))}
@@ -164,7 +166,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionContent>
                   <ul className="space-y-2 pt-2">
                     {analysis.detective_reasoning.map((item: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-black leading-relaxed">
+                      <li key={i} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
                         <span className="text-blue-600 mt-2 text-xs">•</span>
                         <span>{item}.</span>
                       </li>
@@ -247,7 +249,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                       {analysis.strategic_recommendations.map((item: string, i: number) => (
                         <li
                           key={i}
-                          className={`flex items-start gap-2 text-sm text-black leading-relaxed transform transition-all duration-300 ${loadedStates[`recommendations-${index}`]
+                          className={`flex items-start gap-2 text-black leading-relaxed transform transition-all duration-300 ${getFontSizeClass()} ${loadedStates[`recommendations-${index}`]
                             ? 'translate-y-0 opacity-100'
                             : 'translate-y-2 opacity-100'
                             }`}
@@ -277,6 +279,7 @@ interface NudgesSectionProps {
 }
 
 export function NudgesSection({ NudgesData }: NudgesSectionProps) {
+  const { getFontSizeClass } = useFontSize()
 
   if (!NudgesData?.nudges || NudgesData.nudges.length === 0) {
     return null
@@ -304,7 +307,7 @@ export function NudgesSection({ NudgesData }: NudgesSectionProps) {
       </div>
       <ul className="space-y-2">
         {NudgesData.nudges.map((nudge: string, index: number) => (
-          <li key={index} className="flex items-start gap-2 text-sm text-black leading-relaxed">
+          <li key={index} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
             <span className="text-blue-600 mt-2 text-xs">•</span>
             <span>{nudge}</span>
           </li>
@@ -318,6 +321,7 @@ interface SocialActivitySection {
 }
 
 export function SocialActivitySection({ social_activity }: SocialActivitySection) {
+  const { getFontSizeClass } = useFontSize()
 
   return (
     <>
@@ -390,7 +394,7 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
                   {allPlatforms.map((item, idx) => {
                     const IconComponent = item.icon;
                     return (
-                      <div key={idx} className="flex items-center text-sm">
+                      <div key={idx} className={`flex items-center ${getFontSizeClass()}`}>
                         <IconComponent className="h-4 w-4 text-gray-500 mr-2" />
                         <span className="text-gray-700 mr-3">{item.platform}</span>
                         <span className="font-medium">{item.time > 0 ? formatTimeSpent(item.time) : '-'}</span>
@@ -407,7 +411,7 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
                   {allPlatforms.map((item, idx) => {
                     const IconComponent = item.icon;
                     return (
-                      <div key={idx} className="flex items-center text-sm">
+                      <div key={idx} className={`flex items-center ${getFontSizeClass()}`}>
                         <IconComponent className="h-4 w-4 text-gray-500 mr-2" />
                         <span className="text-gray-700 mr-3">{item.platform}</span>
                         <span className="font-medium">{item.posts > 0 ? item.posts : '-'}</span>
@@ -435,7 +439,7 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
                 {approachTimes.map((item, idx) => {
                   const IconComponent = item.icon;
                   return (
-                    <div key={idx} className="flex items-center justify-between text-sm">
+                    <div key={idx} className={`flex items-center justify-between ${getFontSizeClass()}`}>
                       <div className="flex items-center gap-2">
                         <IconComponent className="h-4 w-4 text-blue-600" />
                         <span className="text-blue-700">{item.platform}</span>

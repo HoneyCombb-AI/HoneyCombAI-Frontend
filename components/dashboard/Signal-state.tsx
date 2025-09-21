@@ -8,6 +8,7 @@ import { DrawerContactSignal } from '@/app/api/contacts/[id]/route';
 import { ExternalLink } from "lucide-react";
 import getUrls from 'get-urls';
 import * as chrono from 'chrono-node';
+import { useFontSize } from '@/lib/font-size-context';
 
 interface SignalStateProps {
   signals: ContactSignal[] | DrawerContactSignal[];
@@ -37,6 +38,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
   showTooltips = false,
   detailed = false
 }) => {
+  const { getFontSizeClass } = useFontSize();
   // Memoize time boundaries - only recalculate when component mounts or date changes
   const timeBoundaries = useMemo(() => {
     const now = new Date();
@@ -167,7 +169,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
               </div>
               {signal.description && (
                 <>
-                  <p className="text-base text-left mb-4 text-white">{signal.description}</p>
+                  <p className={`${getFontSizeClass()} text-left mb-4 text-white`}>{signal.description}</p>
                   <div className="border-t border-white"></div>
                 </>
               )}
