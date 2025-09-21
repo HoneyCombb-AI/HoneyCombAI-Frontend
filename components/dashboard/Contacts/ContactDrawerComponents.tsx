@@ -11,6 +11,9 @@ import { formatTimeSpent, getActivityLevelBadgeColor } from "@/lib/ContactUtils"
 import { parseISO, format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Instagram, LinkedinIcon, Twitter } from "lucide-react"
+import { Copy } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 interface SocialIntelligenceSectionProps {
   aiAnalysis: DrawerAIAnalysis[]
@@ -22,6 +25,12 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
   const [loadedStates, setLoadedStates] = React.useState<{ [key: string]: boolean }>({})
   const [openAccordions, setOpenAccordions] = React.useState<string[]>([])
   const accordionRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({})
+
+  const handleCopy = (content: string[], section: string) => {
+    const textToCopy = content.join('\n')
+    navigator.clipboard.writeText(textToCopy)
+    toast.success(`${section} copied to clipboard`)
+  }
 
   // Initialize open accordions on mount
   React.useEffect(() => {
@@ -109,13 +118,26 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
             {analysis.primary_data_analysis && analysis.primary_data_analysis.length > 0 && (
               <AccordionItem value={`primary-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  Primary Data Analysis
+                  <div className="flex items-center justify-between w-full">
+                    <span>Primary Data Analysis</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopy(analysis.primary_data_analysis ?? [], 'Primary Data Analysis')
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <ul className="space-y-2 pt-2">
                     {analysis.primary_data_analysis.map((item: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">
-                        <span className="text-blue-600 mt-2 text-xs">•</span>
+                      <li key={i} className="flex items-start gap-2 text-black  leading-relaxed">
+                        <span className="text-blue-600 mt-2 text">•</span>
                         <span>{item}.</span>
                       </li>
                     ))}
@@ -128,7 +150,20 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
             {analysis.detective_reasoning && analysis.detective_reasoning.length > 0 && (
               <AccordionItem value={`detective-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  Detective Reasoning
+                  <div className="flex items-center justify-between w-full">
+                    <span>Detective Reasoning</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopy(analysis.detective_reasoning ?? [], 'Detective Reasoning')
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   <ul className="space-y-2 pt-2">
@@ -169,7 +204,20 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 ref={(el) => { accordionRefs.current[`recommendations-${index}`] = el }}
               >
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  Strategic Recommendations
+                  <div className="flex items-center justify-between w-full">
+                    <span>Strategic Recommendations</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopy(analysis.strategic_recommendations ?? [], 'Strategic Recommendations')
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
                   {loadingStates[`recommendations-${index}`] ? (
@@ -235,12 +283,31 @@ interface NudgesSectionProps {
 }
 
 export function NudgesSection({ NudgesData }: NudgesSectionProps) {
+
   if (!NudgesData?.nudges || NudgesData.nudges.length === 0) {
     return null
   }
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText((NudgesData.nudges ?? []).join('\n'))
+    toast.success("Nudges copied to clipboard")
+  }
+
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-600">Social Nudges</h3>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
+          onClick={handleCopy}
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
+      </div>
       <ul className="space-y-2">
         {NudgesData.nudges.map((nudge: string, index: number) => (
           <li key={index} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">

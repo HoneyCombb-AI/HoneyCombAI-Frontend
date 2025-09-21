@@ -323,9 +323,6 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
               {drawerContact?.nudges?.[0] && (
                 <>
                   <Separator className="my-5" />
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-semibold text-gray-600">Social Nudges</h3>
-                  </div>
                   <NudgesSection NudgesData={drawerContact?.nudges?.[0]} />
                 </>
               )}
