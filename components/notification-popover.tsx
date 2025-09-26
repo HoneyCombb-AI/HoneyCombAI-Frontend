@@ -236,11 +236,18 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
                       <span className="text-xs text-muted-foreground/80">
                         {formatTimeAgo(notification.created_at)}
                       </span>
-                      {notification.type && (
-                        <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full capitalize font-medium">
-                          {notification.type}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {notification.group_count && notification.group_count > 1 && (
+                          <span className="text-xs px-1.5 py-0.5 bg-muted text-muted-foreground rounded-full font-medium min-w-[20px] text-center">
+                            {notification.group_count}
+                          </span>
+                        )}
+                        {notification.type && (
+                          <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded-full capitalize font-medium">
+                            {notification.type}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
