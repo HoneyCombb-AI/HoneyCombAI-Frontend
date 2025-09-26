@@ -124,22 +124,18 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
 
   return (
     <div className="space-y-4 w-full h-full">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Bell className="h-5 w-5" />
-          <h4 className="font-semibold">Notifications</h4>
+      <div className="flex items-center justify-between h-6">
+        <div className="flex items-center gap-2 h-full">
+          <Bell className="h-4 w-4" />
+          <h4 className="font-semibold text-sm">Notifications</h4>
           {unreadCount > 0 && (
-            <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+            <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full h-5 flex items-center">
               {unreadCount}
             </span>
           )}
         </div>
-        {notifications.length > 0 && unreadCount > 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-          >
+        <div className="h-full flex items-center">
+          {notifications.length > 0 && unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -149,8 +145,8 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
               <CheckCheck className="h-3 w-3 mr-1" />
               Mark all read
             </Button>
-          </motion.div>
-        )}
+          )}
+        </div>
       </div>
 
       {isLoading ? (
