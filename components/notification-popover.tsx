@@ -189,10 +189,10 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
               <motion.div
                 key={notification.id}
                 layout="position"
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{
                   opacity: notification.is_read ? 0.7 : 1,
-                  y: 0
+                  scale: 1
                 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{
