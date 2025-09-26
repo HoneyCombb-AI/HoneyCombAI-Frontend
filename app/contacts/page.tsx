@@ -544,7 +544,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
       {/* Enhanced Actions Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b bg-white px-6 py-3">
+      <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
           {/* Group Controls */}
           <DropdownMenu>
