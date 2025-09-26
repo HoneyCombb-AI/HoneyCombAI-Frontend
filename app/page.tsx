@@ -40,7 +40,7 @@ const HomePage = (): JSX.Element => {
 
       {/* Mobile - hidden on desktop */}
       <div className="block md:hidden">
-        <MobileLanding userEmail={userEmail} />
+        <MobileLanding />
       </div>
     </div>
   );
