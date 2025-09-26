@@ -69,6 +69,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         },
         () => {
           if (!isComponentMounted.current) return;
+          console.log('🔥 INSERT Event - New notification:');
           fetchCount();
           toast.success("New notifications are available", { id: 'new-notifications' });
         }
@@ -83,6 +84,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
         },
         () => {
           if (!isComponentMounted.current) return;
+          console.log('📝 UPDATE Event - Notification updated:');
           fetchCount();
         }
       )
