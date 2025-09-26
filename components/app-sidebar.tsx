@@ -27,6 +27,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { useNotifications } from "@/lib/notification-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,6 +80,7 @@ const items = [
 
 export function AppSidebar() {
   const { user, signOut } = useAuth();
+  const { unreadCount } = useNotifications(); 
   const pathname = usePathname();
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -176,9 +178,16 @@ export function AppSidebar() {
               <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
                 <PopoverTrigger asChild>
                   <SidebarMenuButton asChild>
-                    <button className="flex items-center w-full">
-                      <Bell className="h-4 w-4" />
-                      <span className="flex-1">Notification</span>
+                    <button className="flex items-center w-full relative">
+                      <div className="relative">
+                        <Bell className="h-4 w-4" />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium min-w-4">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      <span className="flex-1 ml-2">Notification</span>
                     </button>
                   </SidebarMenuButton>
                 </PopoverTrigger>
