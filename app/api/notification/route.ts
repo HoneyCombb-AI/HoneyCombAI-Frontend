@@ -31,8 +31,7 @@ export async function GET(request: NextRequest) {
         type,
         batch_id,
         is_read,
-        created_at,
-        updated_at
+        created_at
       `)
       .eq('user_id', user.id)
       .gte('created_at', threeDaysAgo.toISOString())
@@ -65,7 +64,6 @@ export async function GET(request: NextRequest) {
           batch_id: notification.batch_id,
           is_read: notification.is_read,
           created_at: notification.created_at,
-          updated_at: notification.updated_at,
           group_count: 0 // Will be set below
         })
       }
