@@ -1,3 +1,4 @@
+import { optimizeImageUrl } from '@/lib/ContactUtils';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -21,6 +22,7 @@ export function RingState({ green, golden, requested, profilePicture, fullName }
     };
 
     const shouldShowImage = profilePicture && !imageError;
+    const optimizedProfilePicture = profilePicture ? optimizeImageUrl(profilePicture) : null;
 
     const initialsDiv = (
         <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium rounded-full">
@@ -36,11 +38,11 @@ export function RingState({ green, golden, requested, profilePicture, fullName }
                 <div className="contact-ring-image">
                     {shouldShowImage ? (
                         <Image
-                            src={profilePicture}
+                            src={optimizedProfilePicture!}
                             alt={fullName}
                             fill
                             sizes="120px"
-                            quality={40}
+                            quality={100}
                             className="object-cover rounded-full"
                             onError={handleImageError}
                         />
@@ -58,11 +60,11 @@ export function RingState({ green, golden, requested, profilePicture, fullName }
                 <div className="contact-ring-image">
                     {shouldShowImage ? (
                         <Image
-                            src={profilePicture}
+                            src={optimizedProfilePicture!}
                             alt={fullName}
                             fill
                             sizes="120px"
-                            quality={40}
+                            quality={100}
                             className="object-cover rounded-full"
                             onError={handleImageError}
                         />
@@ -80,11 +82,11 @@ export function RingState({ green, golden, requested, profilePicture, fullName }
                 <div className="contact-ring-image">
                     {shouldShowImage ? (
                         <Image
-                            src={profilePicture}
+                            src={optimizedProfilePicture!}
                             alt={fullName}
                             fill
                             sizes="120px"
-                            quality={40}
+                            quality={100}
                             className="object-cover rounded-full"
                             onError={handleImageError}
                         />
@@ -102,11 +104,11 @@ export function RingState({ green, golden, requested, profilePicture, fullName }
                 <div className="contact-ring-image">
                     {shouldShowImage ? (
                         <Image
-                            src={profilePicture}
+                            src={optimizedProfilePicture!}
                             alt={fullName}
                             fill
                             sizes="120px"
-                            quality={40}
+                            quality={100}
                             className="object-cover rounded-full"
                             onError={handleImageError}
                         />
@@ -122,11 +124,11 @@ export function RingState({ green, golden, requested, profilePicture, fullName }
             <div className="w-8 h-8 rounded-full overflow-hidden relative" data-testid="sample-contact-no-ring">
                 {shouldShowImage ? (
                     <Image
-                        src={profilePicture}
+                        src={optimizedProfilePicture!}
                         alt={fullName}
                         fill
                         sizes="120px"
-                        quality={40}
+                        quality={100}
                         className="object-cover rounded-full"
                         onError={handleImageError}
                     />
