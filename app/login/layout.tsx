@@ -15,9 +15,14 @@ export default function RootLayout({
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-        <Loading />
-        <p className="text-sm text-muted-foreground mt-4">Checking user status...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loading />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent mb-2">
+            Honeycomb AI
+          </h1>
+          <p className="text-slate-400 animate-pulse">Gathering your experience...</p>
+        </div>
       </div>
     )
   }
