@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -29,7 +30,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
-  const channelRef = useRef<any>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
   const isComponentMounted = useRef(true);
 
   // Simple function to fetch count
