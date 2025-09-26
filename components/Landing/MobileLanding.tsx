@@ -6,9 +6,7 @@ import { FeatureLayoutSectionMobile } from "@/components/Landing/Mobile/FeatureL
 import { TestimonialSectionMobile } from "@/components/Landing/Mobile/TestimonialSectionMobile";
 import { CallToActionSectionMobile } from "@/components/Landing/Mobile/CallToActionSectionMobile";
 
-interface MobileLandingProps {}
-
-export default function MobileLanding({}: MobileLandingProps) {
+export default function MobileLanding() {
   return (
     <>
       <MobileHeader />

@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import React, { JSX } from "react";
 
-interface MobileHeaderProps {}
-
 const HoneyCombIcon = ({ className }: { className?: string }) => (
   <div className={`relative ${className}`}>
     <div className="h-12 w-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
@@ -19,9 +17,8 @@ const HoneyCombIcon = ({ className }: { className?: string }) => (
   </div>
 );
 
-export function MobileHeader({}: MobileHeaderProps): JSX.Element {
+export function MobileHeader(): JSX.Element {
   const router = useRouter();
-
 
   const handleBookDemoClick = () => {
     const callToActionElement = document.querySelector('#call-to-action');
