@@ -205,12 +205,11 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
                 whileTap={{ scale: 0.995 }}
                 onClick={() => !notification.is_read && markGroupAsRead(notification.type || 'default')}
                 className={`
-                  group relative px-3 py-3 cursor-pointer shadow-sm transition-colors duration-200
+                  group relative px-4 py-3 cursor-pointer rounded-xl mb-2
                   ${notification.is_read
-                    ? 'hover:bg-muted/20 hover:shadow-sm'
-                    : 'hover:bg-muted/30 border-l-4 border-l-primary rounded-l-lg shadow-md hover:shadow-lg'
+                    ? 'bg-background shadow-md hover:shadow-lg hover:bg-muted/20'
+                    : 'bg-background shadow-lg hover:shadow-xl hover:bg-muted/20 border-l-4 border-l-primary'
                   }
-                  ${index !== sortedNotifications.length - 1 ? 'border-b border-border/20' : ''}
                 `}
               >
                 <div className="flex items-start gap-3">
