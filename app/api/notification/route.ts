@@ -17,37 +17,13 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
-    const countOnly = searchParams.get('count_only') === 'true'
     const limit = parseInt(searchParams.get('limit') || '20', 10)
     const offset = parseInt(searchParams.get('offset') || '0', 10)
     const threeDaysAgo = new Date()
     threeDaysAgo.setUTCDate(threeDaysAgo.getUTCDate() - 3)
 
-    // If only count is requested, return lightweight count query
-    if (countOnly) {
-      const { count: unreadCount, error: countError } = await supabase
-        .from('notifications')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false)
-        .gte('created_at', threeDaysAgo.toISOString())
-
-      if (countError) {
-        console.error('Unread count fetch error:', countError)
-        return NextResponse.json(
-          { error: "Failed to fetch notification count", details: countError.message },
-          { status: 500 }
-        )
-      }
-
-      return NextResponse.json({
-        success: true,
-        unread_count: unreadCount || 0
-      }, { status: 200 })
-    }
-
-    // Fetch full notifications from past 3 days for the current user
-    const { data: notifications, error: fetchError } = await supabase
+    // Fetch all notifications from past 3 days for the current user
+    const { data: allNotifications, error: fetchError } = await supabase
       .from('notifications')
       .select(`
         id,
@@ -61,7 +37,6 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .gte('created_at', threeDaysAgo.toISOString())
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
 
     if (fetchError) {
       console.error('Database fetch error:', fetchError)
@@ -71,36 +46,51 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Transform the data to match expected format
-    const transformedNotifications = notifications?.map(notification => ({
-      id: notification.id,
-      message: notification.text,
-      type: notification.type,
-      batch_id: notification.batch_id,
-      is_read: notification.is_read,
-      created_at: notification.created_at,
-      updated_at: notification.updated_at
-    })) || []
+    // Group notifications by type and get the most recent from each group
+    const groupedNotifications = new Map()
+    const groupCounts = new Map()
 
-    // Get total count for pagination (past 3 days only)
-    const { count, error: countError } = await supabase
-      .from('notifications')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', threeDaysAgo.toISOString())
+    allNotifications?.forEach(notification => {
+      const type = notification.type || 'default'
 
-    if (countError) {
-      console.error('Count fetch error:', countError)
-    }
+      // Count total notifications in this group
+      groupCounts.set(type, (groupCounts.get(type) || 0) + 1)
+
+      // Keep only the most recent notification for each type (already sorted by created_at desc)
+      if (!groupedNotifications.has(type)) {
+        groupedNotifications.set(type, {
+          id: notification.id,
+          message: notification.text,
+          type: notification.type,
+          batch_id: notification.batch_id,
+          is_read: notification.is_read,
+          created_at: notification.created_at,
+          updated_at: notification.updated_at,
+          group_count: 0 // Will be set below
+        })
+      }
+    })
+
+    // Set group counts
+    groupedNotifications.forEach((notification, type) => {
+      notification.group_count = groupCounts.get(type) || 1
+    })
+
+    // Convert to array and apply pagination
+    const transformedNotifications = Array.from(groupedNotifications.values())
+      .slice(offset, offset + limit)
+
+    // Get total count of groups (past 3 days only)
+    const totalGroups = groupedNotifications.size
 
     return NextResponse.json({
       success: true,
       data: transformedNotifications,
       pagination: {
-        total: count || 0,
+        total: totalGroups,
         limit,
         offset,
-        hasMore: (count || 0) > offset + limit
+        hasMore: totalGroups > offset + limit
       }
     }, { status: 200 })
 
@@ -128,7 +118,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { action, notification_id } = body
+    const { action, notification_id, notification_type } = body
 
     if (action === 'mark_all_read') {
       // Mark all unread notifications as read for the user
@@ -172,9 +162,31 @@ export async function PATCH(request: NextRequest) {
         message: "Notification marked as read"
       }, { status: 200 })
 
+    } else if (action === 'mark_group_read' && notification_type) {
+      // Mark all notifications of a specific type as read for the user
+      const { error: updateError } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', user.id)
+        .eq('type', notification_type)
+        .eq('is_read', false)
+
+      if (updateError) {
+        console.error('Mark group read error:', updateError)
+        return NextResponse.json(
+          { error: "Failed to mark group as read", details: updateError.message },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Group notifications marked as read"
+      }, { status: 200 })
+
     } else {
       return NextResponse.json(
-        { error: "Invalid action or missing notification_id" },
+        { error: "Invalid action or missing required parameters" },
         { status: 400 }
       )
     }
