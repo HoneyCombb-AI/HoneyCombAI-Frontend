@@ -44,10 +44,10 @@ export default function Customization() {
             variant="outline"
             className="cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
             data-cal-namespace="30min"
-            data-cal-link="ankushnagathan/30min"
+            data-cal-link="shahzad-mir/30min"
             data-cal-config='{"layout":"month_view"}'
           >
-           Talk Through Your Process
+            Talk Through Your Process
           </Button>
         </div>
       </div>
