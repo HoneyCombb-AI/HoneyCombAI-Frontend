@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Mail, User, CheckCircle2, Clock } from "lucide-react";
 import { optimizeImageUrl } from "@/lib/ContactUtils";
+import Image from 'next/image';
 
 export interface OutreachMessage {
   id: string;
@@ -37,6 +38,8 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
     ? optimizeImageUrl(message.profile_picture)
     : null;
 
+  const date = new Date(message.updated_at);
+
   const getStatusBadge = () => {
     if (message.outreach_completed) {
       return (
@@ -62,11 +65,17 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
       <div className="p-6">
         <div className="flex items-start gap-4 mb-4">
           {optimizedPicture ? (
-            <img
-              src={optimizedPicture}
-              alt={message.full_name}
-              className="h-16 w-16 rounded-full object-cover"
-            />
+            <div className="relative w-16 h-16 rounded-full overflow-hidden">
+              <Image
+                src={optimizedPicture}
+                alt={message.full_name}
+                fill
+                className="object-cover"
+                sizes="48px"
+                quality={100}
+              />
+            </div>
+
           ) : (
             <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
               <User className="h-8 w-8 text-gray-500" />
@@ -80,7 +89,7 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
               <div className="flex items-center gap-1 text-sm text-gray-500">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  {new Date(message.updated_at).toLocaleString()}
+                  {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
             </div>
@@ -90,12 +99,6 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
         <Separator className="my-4" />
 
         <div className="prose max-w-none">
-          <div className="flex items-center gap-2 mb-3">
-            <Mail className="h-4 w-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">
-              Outreach Message
-            </span>
-          </div>
           <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800 font-sans">
             {message.outreach_message}
           </pre>

@@ -4,6 +4,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, User } from "lucide-react";
 import { optimizeImageUrl } from "@/lib/ContactUtils";
+import Image from 'next/image';
 
 export interface OutreachMessage {
   id: string;
@@ -31,7 +32,7 @@ const MessageListItem = React.memo(({
   onClick: () => void;
 }) => {
   const date = new Date(message.updated_at);
-  const snippet = message.outreach_message.replace(/\n/g, " ").slice(0, 80);
+  const snippet = message.outreach_message.replace(/\n/g, " ").slice(20, 50);
   const optimizedPicture = message.profile_picture
     ? optimizeImageUrl(message.profile_picture)
     : null;
@@ -58,18 +59,24 @@ const MessageListItem = React.memo(({
 
   return (
     <li
-      className={`cursor-pointer px-4 py-2 hover:bg-gray-50 transition-colors ${
-        isActive ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
-      }`}
+      className={`cursor-pointer px-4 py-2 hover:bg-gray-50 transition-colors ${isActive ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
+        }`}
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
         {optimizedPicture ? (
-          <img
-            src={optimizedPicture}
-            alt={message.full_name}
-            className="h-10 w-10 rounded-full object-cover flex-shrink-0"
-          />
+
+          <div className="relative w-8 h-8 rounded-full overflow-hidden">
+            <Image
+              src={optimizedPicture}
+              alt={message.full_name}
+              fill
+              className="object-cover"
+              sizes="48px"
+              quality={100}
+            />
+          </div>
+
         ) : (
           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
             <User className="h-5 w-5 text-gray-500" />
