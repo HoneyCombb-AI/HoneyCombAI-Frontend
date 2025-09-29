@@ -58,7 +58,7 @@ const MessageListItem = React.memo(({
 
   return (
     <li
-      className={`cursor-pointer px-4 py-3 hover:bg-gray-50 transition-colors ${
+      className={`cursor-pointer px-4 py-2 hover:bg-gray-50 transition-colors ${
         isActive ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
       }`}
       onClick={onClick}
@@ -81,16 +81,18 @@ const MessageListItem = React.memo(({
             <span className="font-medium text-sm truncate">
               {message.full_name}
             </span>
-            <span className="text-xs text-gray-500 ml-2">
-              {date.toLocaleDateString()}
-            </span>
+            {getStatusBadge()}
           </div>
 
-          <div className="mb-2">{getStatusBadge()}</div>
-
-          <p className="text-sm text-gray-600 line-clamp-2">
+          <p className="text-sm text-gray-600 line-clamp-2 mb-1">
             {snippet}...
           </p>
+
+          <div className="flex justify-end">
+            <span className="text-xs text-gray-400">
+              {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+          </div>
         </div>
       </div>
     </li>

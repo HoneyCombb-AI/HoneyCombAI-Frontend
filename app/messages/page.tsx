@@ -165,10 +165,10 @@ export default function MessagesPage() {
           </p>
         </div>
       ) : (
-        <>
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0">
+        <div className="flex flex-col flex-1">
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0 overflow-hidden">
             {/* Message List */}
-            <div className="border-r bg-white lg:col-span-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
+            <div className="border-r bg-white lg:col-span-1 overflow-y-auto">
               <MessageList
                 messages={messages}
                 selectedId={selectedId}
@@ -177,7 +177,7 @@ export default function MessagesPage() {
             </div>
 
             {/* Message Viewer */}
-            <div className="lg:col-span-2 p-6 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
+            <div className="lg:col-span-2 p-6 overflow-y-auto">
               <MessageViewer message={selectedMessage} />
             </div>
           </div>
@@ -191,7 +191,7 @@ export default function MessagesPage() {
               onPageChange={handlePageChange}
             />
           )}
-        </>
+        </div>
       )}
     </div>
   );

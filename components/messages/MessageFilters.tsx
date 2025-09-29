@@ -39,6 +39,18 @@ export const MessageFilters = React.memo(({
   hasActiveFilters,
   onResetFilters
 }: MessageFiltersProps) => {
+  const [localSearch, setLocalSearch] = React.useState(search);
+
+  React.useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onSearchChange(localSearch);
+    }
+  };
+
   return (
     <div className="flex items-center gap-3 px-6 py-3 border-t bg-gray-50/50 flex-wrap">
       <div className="flex-1 max-w-md min-w-[200px]">
@@ -46,8 +58,9 @@ export const MessageFilters = React.memo(({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search messages..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="pl-9"
           />
         </div>
