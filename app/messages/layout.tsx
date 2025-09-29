@@ -10,7 +10,6 @@ export default function RootLayout({
       <SidebarProvider>
         <AppSidebar />
         <div className="flex-1">
-          <Header title="Messages" />
           <main className="flex-1 flex flex-col w-full">{children}</main>
         </div>
       </SidebarProvider>
