@@ -5,7 +5,7 @@ const generateSignalColor = (signalText: string): string => {
   // Glass-style color palette with light backgrounds and colored borders
   const colors = [
     "bg-blue-50 text-blue-700 border-blue-300",
-    "bg-green-50 text-green-700 border-green-300", 
+    "bg-green-50 text-green-700 border-green-300",
     "bg-purple-50 text-purple-700 border-purple-300",
     "bg-indigo-50 text-indigo-700 border-indigo-300",
     "bg-pink-50 text-pink-700 border-pink-300",
@@ -27,9 +27,9 @@ const generateSignalColor = (signalText: string): string => {
   for (let i = 0; i < normalizedText.length; i++) {
     const char = normalizedText.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; 
+    hash = hash & hash;
   }
-  
+
   return colors[Math.abs(hash) % colors.length];
 };
 
@@ -46,12 +46,12 @@ export const getSignalBadgeColor = (scoreOrText: number | string, signalText?: s
 
 const normalizeSignalText = (text: string): string => {
   if (!text) return "";
-  
+
   const normalized = text
     .toLowerCase()
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (char) => char.toUpperCase());
-  
+
   return normalized;
 };
 
@@ -127,4 +127,11 @@ export const formatTimeSpent = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+};
+
+export const optimizeImageUrl = (url: string) => {
+  if (url.includes('linkedin.com')) {
+    return url.replace(/shrink_\d+_\d+/g, 'shrink_100_100');
+  }
+  return url;
 };

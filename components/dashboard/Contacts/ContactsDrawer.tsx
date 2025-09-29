@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { NudgesSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
 import { SignalState } from "../Signal-state"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
+import { optimizeImageUrl } from "@/lib/ContactUtils"
 
 
 interface DrawerDemoProps {
@@ -38,11 +39,13 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
   const [drawerContact, setDrawerContact] = useState<DrawerContact | null>(null)
   const [loading, setLoading] = useState(false)
   const [, setError] = useState<string | null>(null)
+  const [imageError, setImageError] = useState(false)
 
   // Fetch detailed contact data when drawer opens
   useEffect(() => {
     if (open && selectedContact?.id) {
       fetchContactDetails(selectedContact.id)
+      setImageError(false)
     }
   }, [open, selectedContact?.id])
 
@@ -79,6 +82,18 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
       setLoading(false)
     }
   }
+
+  const handleImageError = () => {
+    setImageError(true)
+  }
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)
+  }
+
+  const shouldShowImage = selectedContact.profile_picture && !imageError
+  const optimizedProfilePicture = selectedContact.profile_picture ? optimizeImageUrl(selectedContact.profile_picture) : null;
+
   return (
     <Drawer direction="right" open={open} onOpenChange={onOpenChange}>
       {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
@@ -89,19 +104,20 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
             <DrawerTitle>
               <div className="flex items-center gap-4">
                 <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
-                  {selectedContact.profile_picture ? (
+                  {shouldShowImage ? (
                     <Image
-                      src={selectedContact.profile_picture}
+                      src={optimizedProfilePicture!}
                       alt={selectedContact.full_name}
                       fill
                       sizes="120px"
                       quality={100}
                       className="object-cover rounded-full"
+                      onError={handleImageError}
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600
                     flex items-center justify-center text-white text-sm font-medium">
-                      {selectedContact.full_name.charAt(0)}
+                      {getInitials(selectedContact.full_name)}
                     </div>
                   )}
                 </div>
@@ -168,7 +184,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-gray-600">Social Intents</span>
                     </div>
-                    <SignalState 
+                    <SignalState
                       signals={drawerContact.signals}
                       contactId={drawerContact.id || selectedContact.id}
                       showTooltips={true}

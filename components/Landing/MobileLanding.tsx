@@ -6,14 +6,10 @@ import { FeatureLayoutSectionMobile } from "@/components/Landing/Mobile/FeatureL
 import { TestimonialSectionMobile } from "@/components/Landing/Mobile/TestimonialSectionMobile";
 import { CallToActionSectionMobile } from "@/components/Landing/Mobile/CallToActionSectionMobile";
 
-interface MobileLandingProps {
-  userEmail?: string | null;
-}
-
-export default function MobileLanding({ userEmail }: MobileLandingProps) {
+export default function MobileLanding() {
   return (
     <>
-      <MobileHeader userEmail={userEmail} />
+      <MobileHeader />
       <main>
         <HeroSectionMobile />
         <FeatureLayoutSectionMobile />

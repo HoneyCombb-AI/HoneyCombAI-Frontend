@@ -8,6 +8,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
 
@@ -27,8 +28,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
   const router = useRouter();
+
+  const supabase = useMemo(() => createClient(), []);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -104,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, []);
 
   const value = {
     user,

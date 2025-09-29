@@ -20,11 +20,7 @@ export const HoneyCombIcon = ({ className }: { className?: string }) => (
   </div>
 );
 
-interface HeaderProps {
-  userEmail?: string | null;
-}
-
-const Header = ({ userEmail }: HeaderProps) => {
+const Header = () => {
   const router = useRouter();
   const [showBookDemo, setShowBookDemo] = useState(false);
 
@@ -66,12 +62,8 @@ const Header = ({ userEmail }: HeaderProps) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLoginClick = () => {
-    if (userEmail) {
-      router.push("/contacts");
-    } else {
-      router.push("/login");
-    }
+  const handleEnterAppClick = () => {
+    router.push("/login");
   };
 
   const handleSupportClick = () => {
@@ -97,10 +89,10 @@ const Header = ({ userEmail }: HeaderProps) => {
         <div className="flex items-center gap-2 ml-auto">
           <Button
             variant="link"
-            onClick={handleLoginClick}
+            onClick={handleEnterAppClick}
             className="cursor-pointer text-nav text-black px-2 sm:px-4 py-2 hover:bg-white rounded-md text-sm sm:text-base"
           >
-            {userEmail ? "Dashboard" : "Login"}
+            Enter App
           </Button>
           <Button
             variant="link"
@@ -121,7 +113,7 @@ const Header = ({ userEmail }: HeaderProps) => {
                   variant="outline"
                   className="hidden sm:flex cursor-pointer bg-black text-white hover:bg-black/90 hover:text-amber-300 rounded-lg text-base font-medium px-6 py-3 h-auto ml-2"
                   data-cal-namespace="30min"
-                  data-cal-link="ankushnagathan/30min"
+                  data-cal-link="shahzad-mir/30min"
                   data-cal-config='{"layout":"month_view"}'
                 >
                   Book demo

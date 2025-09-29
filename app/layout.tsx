@@ -3,6 +3,7 @@ import "./globals.css";
 import "./custom.css"
 import { AuthProvider } from "@/lib/auth-context";
 import { FontSizeProvider } from "@/lib/font-size-context";
+import { NotificationProvider } from "@/lib/notification-context";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
@@ -32,8 +33,10 @@ export default function RootLayout({
       >
         <AuthProvider>
           <FontSizeProvider>
-            <main className="flex-1 flex flex-col w-full">{children}</main>
-            <Toaster />
+            <NotificationProvider>
+              <main className="flex-1 flex flex-col w-full">{children}</main>
+              <Toaster />
+            </NotificationProvider>
           </FontSizeProvider>
         </AuthProvider>
       </body>

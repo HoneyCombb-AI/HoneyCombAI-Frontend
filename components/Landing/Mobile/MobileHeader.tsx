@@ -4,10 +4,6 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import React, { JSX } from "react";
 
-interface MobileHeaderProps {
-  userEmail?: string | null;
-}
-
 const HoneyCombIcon = ({ className }: { className?: string }) => (
   <div className={`relative ${className}`}>
     <div className="h-12 w-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
@@ -21,17 +17,8 @@ const HoneyCombIcon = ({ className }: { className?: string }) => (
   </div>
 );
 
-export function MobileHeader({ userEmail }: MobileHeaderProps): JSX.Element {
+export function MobileHeader(): JSX.Element {
   const router = useRouter();
-
-  const handleLoginClick = () => {
-    console.log("click")
-    if (userEmail) {
-      router.push("/contacts");
-    } else {
-      router.push("/login");
-    }
-  };
 
   const handleBookDemoClick = () => {
     const callToActionElement = document.querySelector('#call-to-action');
@@ -67,15 +54,6 @@ export function MobileHeader({ userEmail }: MobileHeaderProps): JSX.Element {
 
           {/* RIGHT: Navigation buttons */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-            {/* Login button - Desktop only */}
-            <Button
-              variant="link"
-              onClick={handleLoginClick}
-              className="relative overflow-hidden group cursor-pointer hidden sm:block bg-transparent hover:bg-transparent px-2 sm:px-3 py-2 h-auto text-sm"
-            >
-              {userEmail ? "Dashboard" : "Log in"}
-              <div className="absolute w-full h-0.5 -bottom-1 -left-full bg-[#0f4f48] group-hover:left-0 transition-all duration-300" />
-            </Button>
 
             {/* Support button - Visible on both mobile and desktop */}
             <Button

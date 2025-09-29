@@ -3,13 +3,10 @@
 import DesktopLanding from "@/components/Landing/DesktopLanding";
 import MobileLanding from "@/components/Landing/MobileLanding";
 import { Loading } from "@/components/loading";
-import { useAuth } from "@/lib/auth-context";
 import { JSX, useEffect, useState } from "react";
 
 const HomePage = (): JSX.Element => {
-  const { user, loading } = useAuth();
   const [isClient, setIsClient] = useState(false);
-  const userEmail = user?.email || null
 
   // Ensure we're on the client side to prevent hydration issues
   useEffect(() => {
@@ -17,7 +14,7 @@ const HomePage = (): JSX.Element => {
   }, []);
 
   // Show loading during SSR/hydration or auth initialization
-  if (!isClient || loading) {
+  if (!isClient) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
         <div className="text-center">
@@ -35,12 +32,12 @@ const HomePage = (): JSX.Element => {
     <div className="bg-white w-full min-h-screen">
       {/* Desktop - hidden on mobile */}
       <div className="hidden md:block">
-        <DesktopLanding userEmail={userEmail} />
+        <DesktopLanding />
       </div>
 
       {/* Mobile - hidden on desktop */}
       <div className="block md:hidden">
-        <MobileLanding userEmail={userEmail} />
+        <MobileLanding />
       </div>
     </div>
   );

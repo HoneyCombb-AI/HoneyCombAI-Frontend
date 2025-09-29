@@ -3,7 +3,7 @@
 import { Loading } from "@/components/loading";
 import { SimpleHeader } from "@/components/SimpleHeader";
 import { useAuth } from "@/lib/auth-context";
-import Image from "next/image";
+import { AnimatedLogo } from "@/components/AnimatedLogo";
 import { redirect } from "next/navigation";
 
 export default function RootLayout({
@@ -15,9 +15,14 @@ export default function RootLayout({
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-        <Loading />
-        <p className="text-sm text-muted-foreground mt-4">Checking user status...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loading />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent mb-2">
+            Honeycomb AI
+          </h1>
+          <p className="text-slate-400 animate-pulse">Gathering your experience...</p>
+        </div>
       </div>
     )
   }
@@ -31,11 +36,9 @@ export default function RootLayout({
         <div className="hidden md:flex flex-col justify-between bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90">
           <div className="w-full flex-1 flex flex-col justify-center items-center px-16">
             <div className="max-w-2xl ml-12">
-              <Image
-                src="/iconLogin.png"
-                alt="Honeycomb AI Logo"
-                width={84}
-                height={48}
+              <AnimatedLogo
+                width={102}
+                height={96}
                 className="mb-6"
               />
               <h1 className="text-5xl font-black text-black leading-tight mb-6">

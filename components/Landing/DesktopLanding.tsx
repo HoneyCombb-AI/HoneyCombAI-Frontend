@@ -13,30 +13,23 @@ import Testimonials from "@/components/Landing/Desktop/testimonials";
 import { getCalApi } from "@calcom/embed-react";
 import { useEffect } from "react";
 
-interface DesktopLandingProps {
-  userEmail?: string | null;
-}
-
-export default function DesktopLanding({ userEmail }: DesktopLandingProps) {
-    useEffect(() => {
-        (async function () {
-          const cal = await getCalApi({ namespace: "30min" });
-          cal("ui", { hideEventTypeDetails: false, layout: "month_view" });
-        })();
-      }, []);
+export default function DesktopLanding() {
+  useEffect(() => {
+    (async function () {
+      const cal = await getCalApi({"namespace":"30min"});
+      cal("ui", {"hideEventTypeDetails":false,"layout":"month_view"});
+    })();
+  }, [])
       
   return (
     <>
-      <Header userEmail={userEmail} />
+      <Header />
       <main>
         <HeroSection />
         <SocialProof />
-        {/* Make DailySignals full-bleed with its own dark background */}
         <DailySignals />
         <div className="bg-white">
           <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
-            {/* <FeaturesIntro /> */}
-            {/* DailySignals moved above to span full width */}
             <div className="py-20">
               <InDepthResearch />
             </div>
@@ -47,10 +40,7 @@ export default function DesktopLanding({ userEmail }: DesktopLandingProps) {
         <Integrations />
         <Testimonials />
         <Faq />
-        {/* Simple final CTA replacement */}
-        {/* remove simple button section and restore FinalCta */}
         <FinalCta />
-        {/* <FinalCta /> */}
       </main>
       <Footer />
     </>
