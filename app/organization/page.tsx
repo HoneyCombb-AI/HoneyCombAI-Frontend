@@ -84,14 +84,7 @@ function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) 
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4" data-testid="organization-header">
-        <SidebarTrigger className="-ml-1" />
-        <div className="flex flex-1 items-center justify-between">
-          <h1 className="text-xl font-semibold">Organization</h1>
-        </div>
-      </header>
-
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1 p-4 md:p-6" data-testid="organization-header">
         {!displayOrganization ? (
           // No organization state - only show when not in joyride mode
           <div className="max-w-4xl mx-auto">
