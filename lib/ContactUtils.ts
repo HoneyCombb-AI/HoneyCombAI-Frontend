@@ -34,6 +34,10 @@ const generateSignalColor = (signalText: string): string => {
 };
 
 export const getSignalBadgeColor = (scoreOrText: number | string, signalText?: string) => {
+  const textToCheck = signalText || (typeof scoreOrText === 'string' ? scoreOrText : '');
+  if (textToCheck.toLowerCase().startsWith('custom:')) {
+    return "bg-yellow-100 text-yellow-900 border-yellow-400 border-2 shadow-sm";
+  }
   if (signalText) {
     return generateSignalColor(signalText);
   }

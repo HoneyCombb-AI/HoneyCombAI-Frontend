@@ -34,7 +34,7 @@ const MessageListItem = React.memo(({
   const [imageError, setImageError] = useState(false);
   const date = new Date(message.updated_at);
   const snippet = message.outreach_message
-    ? message.outreach_message.replace(/\n/g, " ").slice(0, 50)
+    ? message.outreach_message.replace(/\n/g, " ").slice(20, 50)
     : "Generating message...";
   const optimizedPicture = message.profile_picture
     ? optimizeImageUrl(message.profile_picture)
