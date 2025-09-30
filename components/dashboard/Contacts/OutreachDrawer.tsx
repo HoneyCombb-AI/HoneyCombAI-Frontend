@@ -76,7 +76,7 @@ export function OutreachDrawer({
 
     const onFormSubmit = async (data: OutreachFormData) => {
         try {
-            const response = await axios.post("/api/contacts/enrichment", {
+            const response = await axios.post("/api/contacts/outreach", {
                 entity_ids: eligibleContactIds,
                 entity_type: "contact_id",
                 task_type: "outreach_generation",
