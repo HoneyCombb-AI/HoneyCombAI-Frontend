@@ -135,3 +135,24 @@ export const optimizeImageUrl = (url: string) => {
   }
   return url;
 };
+
+export const getSectionHeadingBadgeColor = (sectionName: string): string => {
+  const headingColorMap: Record<string, string> = {
+    // Main sections
+    'social_intents': 'bg-gray-50/80 text-gray-700 border border-gray-200 font-semibold text-sm',
+    'personal_information': 'bg-gray-50/80 text-gray-700 border border-gray-200 font-semibold text-sm',
+    'social_nudges': 'bg-gray-50/80 text-gray-700 border border-gray-200 font-semibold text-sm',
+    'social_activity': 'bg-gray-50/80 text-gray-700 border border-gray-200 font-semibold text-sm',
+    'social_intelligence': 'bg-gray-50/80 text-gray-700 border border-gray-200 font-semibold text-sm',
+
+    // AI Analysis sub-sections
+    'account_overview': 'bg-cyan-50/80 text-cyan-700 border border-cyan-200 font-semibold text-sm',
+    'contact_insights': 'bg-emerald-50/80 text-emerald-700 border border-emerald-200 font-semibold text-sm',
+    'why_reach_out': 'bg-amber-50/80 text-amber-700 border border-amber-200 font-semibold text-sm',
+    'final_assessment': 'bg-rose-50/80 text-rose-700 border border-rose-200 font-semibold text-sm',
+    'strategic_recommendations': 'bg-violet-50/80 text-violet-700 border border-violet-200 font-semibold text-sm',
+  };
+
+  const normalizedKey = sectionName.toLowerCase().replace(/\s+/g, '_');
+  return headingColorMap[normalizedKey] || 'bg-slate-50/80 text-slate-700 border border-slate-200 font-semibold text-sm';
+};

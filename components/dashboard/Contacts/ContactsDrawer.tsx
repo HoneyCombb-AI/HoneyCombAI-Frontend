@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { NudgesSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
 import { SignalState } from "../Signal-state"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
-import { optimizeImageUrl } from "@/lib/ContactUtils"
+import { optimizeImageUrl, getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
 
 
 interface DrawerDemoProps {
@@ -147,29 +147,31 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                 </div>
 
                 {/* Company Redirect */}
-                <div className="cursor-pointer" onClick={() => window.open(`/dashboard/companies/${selectedContact.company_id}`, '_blank')} >
-                  <div className="w-8 h-8 rounded relative overflow-hidden flex-shrink-0">
-                    {selectedContact.company?.logo_url ? (
-                      <Image
-                        src={selectedContact.company.logo_url}
-                        alt="Company logo"
-                        fill
-                        sizes="120px"
-                        quality={100}
-                        className="object-cover rounded-full"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded bg-white border border-gray-200 flex items-center justify-center font-semibold">
-                        {selectedContact.company?.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                {selectedContact.company && (
+                  <div className="cursor-pointer" onClick={() => window.open(`/dashboard/companies/${selectedContact.company_id}`, '_blank')} >
+                    <div className="w-8 h-8 rounded relative overflow-hidden flex-shrink-0">
+                      {selectedContact.company?.logo_url ? (
+                        <Image
+                          src={selectedContact.company.logo_url}
+                          alt="Company logo"
+                          fill
+                          sizes="120px"
+                          quality={100}
+                          className="object-cover rounded-full"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-white border border-gray-200 flex items-center justify-center font-semibold">
+                          {selectedContact.company?.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </DrawerHeader>
@@ -182,7 +184,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                 <>
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-gray-600">Social Intents</span>
+                      <Badge className={getSectionHeadingBadgeColor('social_intents')}>
+                        Social Intents
+                      </Badge>
                     </div>
                     <SignalState
                       signals={drawerContact.signals}
@@ -198,7 +202,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
               <div className="flex gap-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-600">Personal Information</h3>
+                    <Badge className={getSectionHeadingBadgeColor('personal_information')}>
+                      Personal Information
+                    </Badge>
                   </div>
 
                   {/* Two-column layout for personal information */}

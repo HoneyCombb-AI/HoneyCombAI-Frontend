@@ -39,6 +39,7 @@ import type {
 } from "@/app/api/contacts/route";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
+import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
 import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
@@ -111,6 +112,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   );
   const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
+  const [outreachDrawerOpen, setOutreachDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
@@ -318,6 +320,14 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     return "Complete Contact Enrichment";
   };
 
+  const getOutreachButtonText = () => {
+    if (contactStates.totalSelected === 0) return "Generate Outreach";
+    if (!contactStates.hasEligibleForTracking) {
+      return `Generate Outreach (${contactStates.ineligibleForTrackingCount} ineligible)`;
+    }
+    return `Generate Outreach (${contactStates.eligibleForTrackingCount})`;
+  };
+
   // Contact selection handlers
   const handleContactSelect = (contactId: string, contactData: ContactValidationData) => {
     setSelectedContacts((prev) => {
@@ -349,22 +359,41 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   };
 
   const handleEnrichmentAction = async (
-    type: "complete_contact_workflow"
+    type: "complete_contact_workflow" | "outreach_enrichment"
   ) => {
     if (selectedContacts.size === 0) {
       toast.error("No contacts selected for enrichment");
       return;
     }
 
-    // Get only eligible contact IDs (no validation needed since button is smart)
+    // Get eligible contact IDs based on action type
     const selectedContactsArray = Array.from(selectedContacts.entries());
-    const eligibleContactIds = selectedContactsArray
-      .filter(([, data]) => !data.primaryAnalysisCompleted && !data.primaryAnalysisRequested)
-      .map(([id]) => id);
+    let eligibleContactIds: string[];
 
-    if (eligibleContactIds.length === 0) {
-      toast.error("No eligible contacts selected for enrichment");
+    if (type === "outreach_enrichment") {
+      // For outreach generation, only contacts with completed primary analysis
+      eligibleContactIds = selectedContactsArray
+        .filter(([, data]) => data.primaryAnalysisCompleted)
+        .map(([id]) => id);
+
+      if (eligibleContactIds.length === 0) {
+        toast.error("No eligible contacts selected for outreach generation");
+        return;
+      }
+
+      // Open the outreach drawer instead of directly calling the API
+      setOutreachDrawerOpen(true);
       return;
+    } else {
+      // For complete contact workflow, contacts without completed/requested primary analysis
+      eligibleContactIds = selectedContactsArray
+        .filter(([, data]) => !data.primaryAnalysisCompleted && !data.primaryAnalysisRequested)
+        .map(([id]) => id);
+
+      if (eligibleContactIds.length === 0) {
+        toast.error("No eligible contacts selected for enrichment");
+        return;
+      }
     }
 
     try {
@@ -377,7 +406,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       });
 
       if (response.data.success) {
-        toast.success(`${response.data.message}${response.data.tokens_used ? ` will consume ${response.data.tokens_used} tokens upon completion.` : ""}`);
+        toast.success(`${response.data.message}${response.data.tokens_used ? `. This will consume ${response.data.tokens_used} tokens upon completion` : ""}`);
         setSelectedContacts(new Map());
 
         if (response.data.request_id) {
@@ -738,6 +767,14 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             onSubmit={() => fetchDashboardData()}
           />
 
+          {/* Outreach Drawer */}
+          <OutreachDrawer
+            open={outreachDrawerOpen}
+            onOpenChange={setOutreachDrawerOpen}
+            selectedContacts={selectedContacts}
+            onSubmit={() => fetchDashboardData()}
+          />
+
           {/* Add Enrichment Button */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
@@ -767,16 +804,28 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </DropdownMenuItem>
               )}
               {contactStates.hasEligibleForTracking && (
-                <DropdownMenuItem
-                  onSelect={() => handleTrackingToggle()}
-                >
-                  {getTrackingButtonText()}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem
+                    onSelect={() => handleEnrichmentAction("outreach_enrichment")}
+                  >
+                    {getOutreachButtonText()}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => handleTrackingToggle()}
+                  >
+                    {getTrackingButtonText()}
+                  </DropdownMenuItem>
+                </>
               )}
               {!contactStates.hasEligibleForTracking && selectedContacts.size > 0 && (
-                <DropdownMenuItem disabled>
-                  {getTrackingButtonText()}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem disabled>
+                    {getOutreachButtonText()}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled>
+                    {getTrackingButtonText()}
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

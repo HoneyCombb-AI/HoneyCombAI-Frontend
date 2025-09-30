@@ -33,9 +33,10 @@ export interface DrawerContactNudge {
 
 export interface DrawerAIAnalysis {
   id: string;
-  primary_data_analysis: string[] | null;
-  detective_reasoning: string[] | null;
-  investigation_decision: string[] | null;
+  account_overview: string | null;
+  contact_insights: string[] | null;
+  why_reach_out: Record<string, string> | null;
+  final_assessment: string | null;
   strategic_recommendations: string[] | null;
   confidence_score: number | null;
   confidence_reasoning: string | null;
@@ -78,6 +79,10 @@ export interface DrawerContact {
   instagram_handle: string | null;
   languages: string[] | null;
   updated_at: string;
+  istracked: boolean;
+  primary_analysis_completed: boolean;
+  primary_analysis_requested: boolean;
+  temperature: 'hot' | 'warm' | 'cold' | null;
   signals: DrawerContactSignal[];
   nudges: DrawerContactNudge[];
   topics: string[];

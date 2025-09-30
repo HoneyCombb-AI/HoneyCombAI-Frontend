@@ -11,6 +11,7 @@ import {
   Users,
   Building2,
   Network,
+  SendHorizontal,
 } from "lucide-react";
 
 import {
@@ -56,6 +57,12 @@ const items = [
     title: "Companies",
     icon: Building2,
     url: "/companies",
+    hasChevron: false,
+  },
+  {
+    title: "Messages",
+    icon: SendHorizontal,
+    url: "/messages",
     hasChevron: false,
   },
   {
