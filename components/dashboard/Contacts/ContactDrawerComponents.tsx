@@ -237,8 +237,26 @@ const StrategicRecommendationsContent = React.memo(({
   isLoading,
   isLoaded
 }: StrategicRecommendationsContentProps) => {
-  const parsedRecommendations = React.useMemo(
-    () => (recommendations || []).map(item => parseInsightItem(item)),
+  const cleanedRecommendations = React.useMemo(
+    () => (recommendations || []).map(item => {
+      let cleaned = item
+        .replace(/^\{"/g, '') 
+        .replace(/"\}$/g, '') 
+        .replace(/^{/g, '') 
+        .replace(/}$/g, '') 
+        .replace(/^"/g, '') 
+        .replace(/"$/g, '') 
+        .replace(/\\"/g, '"') 
+        .replace(/":\s*"/g, ': ') 
+
+      cleaned = cleaned.trim()
+      const colonIndex = cleaned.indexOf(':')
+      return {
+        text: cleaned,
+        colonIndex,
+        hasColon: colonIndex !== -1
+      }
+    }),
     [recommendations]
   )
 
@@ -272,18 +290,27 @@ const StrategicRecommendationsContent = React.memo(({
 
   return (
     <ul className="space-y-3 pt-2 transition-opacity duration-500 opacity-100">
-      {parsedRecommendations.map((item, i) => (
+      {cleanedRecommendations.map((item, i) => (
         <li
           key={i}
-          className={`flex flex-col gap-1 transform transition-all duration-300 ${fontSizeClass} ${
+          className={`flex items-start gap-2 transform transition-all duration-300 ${fontSizeClass} ${
             isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-100'
           }`}
           style={{
             transitionDelay: isLoaded ? `${i * 100}ms` : '0ms'
           }}
         >
-          <span className="text-sm font-semibold text-gray-800">{item.label}</span>
-          <span className="text-black leading-relaxed pl-1">{item.value}</span>
+          <span className="text-blue-600 text-xs mt-1">•</span>
+          <span className="text-black leading-relaxed flex-1">
+            {item.hasColon ? (
+              <>
+                <span className="font-semibold">{item.text.slice(0, item.colonIndex + 1)}</span>
+                {item.text.slice(item.colonIndex + 1)}
+              </>
+            ) : (
+              item.text
+            )}
+          </span>
         </li>
       ))}
     </ul>
