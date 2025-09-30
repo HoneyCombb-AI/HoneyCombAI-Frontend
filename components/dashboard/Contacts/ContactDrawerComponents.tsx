@@ -294,7 +294,7 @@ const StrategicRecommendationsContent = React.memo(({
             transitionDelay: isLoaded ? `${i * 100}ms` : '0ms'
           }}
         >
-          <span className="text-sm font-bold text-gray-800">{item.label}</span>
+          <span className="text-sm font-semibold text-gray-800">{item.label}</span>
           <span className="text-black leading-relaxed pl-1">{item.value}</span>
         </li>
       ))}
