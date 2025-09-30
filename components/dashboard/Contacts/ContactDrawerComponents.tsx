@@ -20,66 +20,45 @@ import { useFontSize } from "@/lib/font-size-context"
 // UTILITY FUNCTIONS
 // ============================================================================
 
-const cleanInsightString = (item: string) => {
-  return item
-    .replace(/^\{"|"\}$/g, '')
-    .replace(/":\s*"/g, ': ')
-    .replace(/",\s*"/g, ', ')
-}
-
-const parseInsightItem = (item: string) => {
-  const cleaned = cleanInsightString(item)
-  const colonIndex = cleaned.indexOf(': ')
+// Parse items with colon-separated label and value (for key_details and detailed_insights)
+const parseColonItem = (item: string) => {
+  const colonIndex = item.indexOf(':')
   if (colonIndex === -1) {
-    return { label: cleaned, value: '' }
+    return { label: '', value: item }
   }
   return {
-    label: cleaned.slice(0, colonIndex),
-    value: cleaned.slice(colonIndex + 2)
+    label: item.slice(0, colonIndex).trim(),
+    value: item.slice(colonIndex + 1).trim()
   }
 }
 
-const flattenWhyReachOut = (whyReachOut: Record<string, string> | null): string => {
+// Flatten why_reach_out for copy functionality
+const flattenWhyReachOut = (whyReachOut: Record<string, string | string[]> | null): string => {
   if (!whyReachOut || typeof whyReachOut !== 'object') return ''
 
   const lines: string[] = []
   Object.entries(whyReachOut).forEach(([key, value]) => {
-    lines.push(`${sentenceCase(key)}: ${value}`)
+    if (Array.isArray(value)) {
+      lines.push(`${sentenceCase(key)}:\n${value.map(item => `- ${item}`).join('\n')}`)
+    } else {
+      lines.push(`${sentenceCase(key)}:\n${value}`)
+    }
   })
   return lines.join('\n\n')
 }
 
-const parseAccountOverviewLines = (text: string) => {
-  return text.split('\n').reduce<Array<{ type: 'main' | 'sub' | 'text', content: string }>>((acc, line) => {
-    const trimmed = line.trim()
-    if (!trimmed) return acc
-
-    if (trimmed.startsWith('- ')) {
-      acc.push({ type: 'main', content: trimmed.substring(2) })
-    } else if (trimmed.startsWith('•')) {
-      acc.push({ type: 'sub', content: trimmed.substring(1).trim() })
-    } else {
-      acc.push({ type: 'text', content: trimmed })
-    }
-    return acc
-  }, [])
-}
-
-const parseWhyReachOutEntries = (whyReachOut: Record<string, string> | null) => {
+// Parse why_reach_out entries
+const parseWhyReachOutEntries = (whyReachOut: Record<string, string | string[]> | null) => {
   if (!whyReachOut || typeof whyReachOut !== 'object') return []
 
-  const entries: Array<{ key: string, value: string }> = []
+  const entries: Array<{ key: string, values: string[] }> = []
   Object.entries(whyReachOut).forEach(([key, value]) => {
     entries.push({
       key: sentenceCase(key),
-      value: value
+      values: Array.isArray(value) ? value : [value]
     })
   })
   return entries
-}
-
-const parseFinalAssessmentParagraphs = (text: string) => {
-  return text.split('\n\n')
 }
 
 // ============================================================================
@@ -126,65 +105,71 @@ const AccordionHeader = React.memo(({ title, sectionKey, onCopy }: AccordionHead
 AccordionHeader.displayName = 'AccordionHeader'
 
 interface AccountOverviewContentProps {
-  text: string
+  overview: { summary: string; key_details: string[] } | null
   fontSizeClass: string
 }
 
-const AccountOverviewContent = React.memo(({ text, fontSizeClass }: AccountOverviewContentProps) => {
-  const lines = React.useMemo(() => parseAccountOverviewLines(text), [text])
+const AccountOverviewContent = React.memo(({ overview, fontSizeClass }: AccountOverviewContentProps) => {
+  const parsedDetails = React.useMemo(
+    () => (overview?.key_details || []).map(item => parseColonItem(item)),
+    [overview?.key_details]
+  )
+
+  if (!overview) return null
 
   return (
-    <div className={`pt-2 space-y-2 text-black leading-relaxed ${fontSizeClass}`}>
-      {lines.map((line, idx) => {
-        if (line.type === 'main') {
-          return (
-            <div key={idx} className="flex items-start gap-2 mt-3 first:mt-0">
-              <span className="text-blue-600 text-xs mt-1">•</span>
-              <span className="flex-1">{line.content}</span>
-            </div>
-          )
-        }
-        if (line.type === 'sub') {
-          return (
-            <div key={idx} className="flex items-start gap-2 ml-6">
-              <span className="text-blue-400 text-xs mt-1">◦</span>
-              <span className="flex-1">{line.content}</span>
-            </div>
-          )
-        }
-        return <p key={idx}>{line.content}</p>
-      })}
+    <div className={`pt-2 space-y-3 text-black leading-relaxed ${fontSizeClass}`}>
+      {overview.summary && <p>{overview.summary}</p>}
+
+      {parsedDetails.length > 0 && (
+        <ul className="space-y-2">
+          {parsedDetails.map((item, idx) => (
+            <li key={idx} className="leading-relaxed">
+              {item.label && <span className="font-semibold text-gray-800">{item.label}: </span>}
+              <span>{item.value}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 })
 AccountOverviewContent.displayName = 'AccountOverviewContent'
 
 interface ContactInsightsContentProps {
-  insights: string[] | null
+  insights: { summary: string; detailed_insights: string[] } | null
   fontSizeClass: string
 }
 
 const ContactInsightsContent = React.memo(({ insights, fontSizeClass }: ContactInsightsContentProps) => {
-  const parsedInsights = React.useMemo(() =>
-    (insights || []).map(item => parseInsightItem(item)),
-    [insights]
+  const parsedInsights = React.useMemo(
+    () => (insights?.detailed_insights || []).map(item => parseColonItem(item)),
+    [insights?.detailed_insights]
   )
 
+  if (!insights) return null
+
   return (
-    <ul className="space-y-3 pt-2">
-      {parsedInsights.map((item, i) => (
-        <li key={i} className={`flex flex-col gap-1 ${fontSizeClass}`}>
-          <span className="text-sm font-bold text-gray-800">{item.label}</span>
-          <span className="text-black leading-relaxed pl-1">{item.value}</span>
-        </li>
-      ))}
-    </ul>
+    <div className={`pt-2 space-y-3 ${fontSizeClass}`}>
+      {insights.summary && <p className="text-black leading-relaxed">{insights.summary}</p>}
+
+      {parsedInsights.length > 0 && (
+        <ul className="space-y-2">
+          {parsedInsights.map((item, i) => (
+            <li key={i} className="text-black leading-relaxed">
+              {item.label && <span className="font-semibold text-gray-800">{item.label}: </span>}
+              <span>{item.value}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 })
 ContactInsightsContent.displayName = 'ContactInsightsContent'
 
 interface WhyReachOutContentProps {
-  whyReachOut: Record<string, string> | null
+  whyReachOut: Record<string, string | string[]> | null
   fontSizeClass: string
 }
 
@@ -195,8 +180,15 @@ const WhyReachOutContent = React.memo(({ whyReachOut, fontSizeClass }: WhyReachO
     <div className={`pt-2 space-y-4 ${fontSizeClass}`}>
       {entries.map((entry, i) => (
         <div key={i} className="flex flex-col gap-2">
-          <span className="text-sm font-bold text-gray-800">{entry.key}</span>
-          <span className="text-black leading-relaxed pl-1">{entry.value}</span>
+          <span className="text-sm font-semibold text-gray-800">{entry.key}</span>
+          <ul className="space-y-1 pl-1">
+            {entry.values.map((value, j) => (
+              <li key={j} className="text-black leading-relaxed flex items-start gap-2">
+                {entry.values.length > 1 && <span className="text-blue-600 text-xs mt-1">•</span>}
+                <span className={entry.values.length === 1 ? '' : 'flex-1'}>{value}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </div>
@@ -210,15 +202,9 @@ interface FinalAssessmentContentProps {
 }
 
 const FinalAssessmentContent = React.memo(({ text, fontSizeClass }: FinalAssessmentContentProps) => {
-  const paragraphs = React.useMemo(() => parseFinalAssessmentParagraphs(text), [text])
-
   return (
-    <div className={`pt-2 space-y-3 ${fontSizeClass}`}>
-      {paragraphs.map((paragraph, idx) => (
-        <p key={idx} className="text-black leading-relaxed">
-          {paragraph}
-        </p>
-      ))}
+    <div className={`pt-2 ${fontSizeClass}`}>
+      <p className="text-black leading-relaxed">{text}</p>
     </div>
   )
 })
@@ -237,22 +223,11 @@ const StrategicRecommendationsContent = React.memo(({
   isLoading,
   isLoaded
 }: StrategicRecommendationsContentProps) => {
-  const cleanedRecommendations = React.useMemo(
+  const processedRecommendations = React.useMemo(
     () => (recommendations || []).map(item => {
-      let cleaned = item
-        .replace(/^\{"/g, '') 
-        .replace(/"\}$/g, '') 
-        .replace(/^{/g, '') 
-        .replace(/}$/g, '') 
-        .replace(/^"/g, '') 
-        .replace(/"$/g, '') 
-        .replace(/\\"/g, '"') 
-        .replace(/":\s*"/g, ': ') 
-
-      cleaned = cleaned.trim()
-      const colonIndex = cleaned.indexOf(':')
+      const colonIndex = item.indexOf(':')
       return {
-        text: cleaned,
+        text: item,
         colonIndex,
         hasColon: colonIndex !== -1
       }
@@ -290,7 +265,7 @@ const StrategicRecommendationsContent = React.memo(({
 
   return (
     <ul className="space-y-3 pt-2 transition-opacity duration-500 opacity-100">
-      {cleanedRecommendations.map((item, i) => (
+      {processedRecommendations.map((item, i) => (
         <li
           key={i}
           className={`flex items-start gap-2 transform transition-all duration-300 ${fontSizeClass} ${
@@ -460,18 +435,21 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                     sectionKey="account_overview"
                     onCopy={(e) => {
                       e.stopPropagation()
-                      copyToClipboard(analysis.account_overview ?? '', 'Account Overview')
+                      const overview = analysis.account_overview
+                      if (!overview) return
+                      const text = `${overview.summary}\n\n${overview.key_details.join('\n')}`
+                      copyToClipboard(text, 'Account Overview')
                     }}
                   />
                 </AccordionTrigger>
                 <AccordionContent>
-                  <AccountOverviewContent text={analysis.account_overview} fontSizeClass={fontSizeClass} />
+                  <AccountOverviewContent overview={analysis.account_overview} fontSizeClass={fontSizeClass} />
                 </AccordionContent>
               </AccordionItem>
             )}
 
             {/* Contact Insights */}
-            {analysis.contact_insights && analysis.contact_insights.length > 0 && (
+            {analysis.contact_insights && (
               <AccordionItem value={`insights-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <AccordionHeader
@@ -479,7 +457,10 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                     sectionKey="contact_insights"
                     onCopy={(e) => {
                       e.stopPropagation()
-                      handleCopy(analysis.contact_insights ?? [], 'Contact Insights')
+                      const insights = analysis.contact_insights
+                      if (!insights) return
+                      const text = `${insights.summary}\n\n${insights.detailed_insights.join('\n')}`
+                      copyToClipboard(text, 'Contact Insights')
                     }}
                   />
                 </AccordionTrigger>

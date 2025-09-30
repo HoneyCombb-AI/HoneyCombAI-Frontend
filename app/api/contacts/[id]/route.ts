@@ -33,9 +33,9 @@ export interface DrawerContactNudge {
 
 export interface DrawerAIAnalysis {
   id: string;
-  account_overview: string | null;
-  contact_insights: string[] | null;
-  why_reach_out: Record<string, string> | null;
+  account_overview: { summary: string; key_details: string[] } | null;
+  contact_insights: { summary: string; detailed_insights: string[] } | null;
+  why_reach_out: Record<string, string | string[]> | null;
   final_assessment: string | null;
   strategic_recommendations: string[] | null;
   confidence_score: number | null;
@@ -151,7 +151,7 @@ export async function GET(
       );
     }
 
-    // Data is already properly formatted from the SQL query
+    // Data is already properly formatted as JSONB from the database
     const formattedContact: DrawerContact = {
       ...contact,
       signals: contact.signals || [],
