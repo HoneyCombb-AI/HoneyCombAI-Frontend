@@ -7,7 +7,7 @@ import { DrawerAIAnalysis, DrawerContactNudge, DrawerSocialActivity } from "@/ap
 import { sentenceCase } from "sentence-case"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { formatTimeSpent, getActivityLevelBadgeColor } from "@/lib/ContactUtils"
+import { formatTimeSpent, getActivityLevelBadgeColor, getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
 import { parseISO, format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Instagram, LinkedinIcon, Twitter } from "lucide-react"
@@ -126,12 +126,15 @@ CopyButton.displayName = 'CopyButton'
 
 interface AccordionHeaderProps {
   title: string
+  sectionKey: string
   onCopy: (e: React.MouseEvent) => void
 }
 
-const AccordionHeader = React.memo(({ title, onCopy }: AccordionHeaderProps) => (
+const AccordionHeader = React.memo(({ title, sectionKey, onCopy }: AccordionHeaderProps) => (
   <div className="flex items-center justify-between w-full">
-    <span>{title}</span>
+    <Badge className={getSectionHeadingBadgeColor(sectionKey)}>
+      {title}
+    </Badge>
     <CopyButton onClick={onCopy} />
   </div>
 ))
@@ -417,9 +420,9 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
           <div className="flex items-center justify-between">
             <Tooltip>
               <TooltipTrigger asChild>
-                <h3 className="text-sm font-semibold text-gray-600 cursor-help">
+                <Badge className={`${getSectionHeadingBadgeColor('social_intelligence')} cursor-help`}>
                   Social Intelligence
-                </h3>
+                </Badge>
               </TooltipTrigger>
               {analysis.confidence_reasoning && (
                 <TooltipContent className="max-w-md">
@@ -442,6 +445,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <AccordionHeader
                     title="Account Overview"
+                    sectionKey="account_overview"
                     onCopy={(e) => {
                       e.stopPropagation()
                       copyToClipboard(analysis.account_overview ?? '', 'Account Overview')
@@ -460,6 +464,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <AccordionHeader
                     title="Contact Insights"
+                    sectionKey="contact_insights"
                     onCopy={(e) => {
                       e.stopPropagation()
                       handleCopy(analysis.contact_insights ?? [], 'Contact Insights')
@@ -478,6 +483,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <AccordionHeader
                     title="Why Reach Out"
+                    sectionKey="why_reach_out"
                     onCopy={(e) => {
                       e.stopPropagation()
                       copyToClipboard(flattenedWhyReachOutData[index], 'Why Reach Out')
@@ -496,6 +502,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <AccordionHeader
                     title="Final Assessment"
+                    sectionKey="final_assessment"
                     onCopy={(e) => {
                       e.stopPropagation()
                       copyToClipboard(analysis.final_assessment ?? '', 'Final Assessment')
@@ -517,6 +524,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <AccordionHeader
                     title="Strategic Recommendations"
+                    sectionKey="strategic_recommendations"
                     onCopy={(e) => {
                       e.stopPropagation()
                       handleCopy(analysis.strategic_recommendations ?? [], 'Strategic Recommendations')
@@ -569,7 +577,9 @@ export function NudgesSection({ NudgesData }: NudgesSectionProps) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-600">Social Nudges</h3>
+          <Badge className={getSectionHeadingBadgeColor('social_nudges')}>
+            Social Nudges
+          </Badge>
         </div>
         <Button
           variant="ghost"
@@ -720,7 +730,9 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
       <Separator className="my-5" />
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-600">Social Activity</h3>
+          <Badge className={getSectionHeadingBadgeColor('social_activity')}>
+            Social Activity
+          </Badge>
           <Badge
             variant="default"
             className={cn("text-xs px-2 py-1 border", badgeColor)}

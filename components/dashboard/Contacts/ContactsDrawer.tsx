@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { NudgesSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
 import { SignalState } from "../Signal-state"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
-import { optimizeImageUrl } from "@/lib/ContactUtils"
+import { optimizeImageUrl, getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
 
 
 interface DrawerDemoProps {
@@ -182,7 +182,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                 <>
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-gray-600">Social Intents</span>
+                      <Badge className={getSectionHeadingBadgeColor('social_intents')}>
+                        Social Intents
+                      </Badge>
                     </div>
                     <SignalState
                       signals={drawerContact.signals}
@@ -198,7 +200,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
               <div className="flex gap-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-600">Personal Information</h3>
+                    <Badge className={getSectionHeadingBadgeColor('personal_information')}>
+                      Personal Information
+                    </Badge>
                   </div>
 
                   {/* Two-column layout for personal information */}
