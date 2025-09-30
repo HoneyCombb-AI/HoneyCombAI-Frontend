@@ -147,29 +147,31 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                 </div>
 
                 {/* Company Redirect */}
-                <div className="cursor-pointer" onClick={() => window.open(`/dashboard/companies/${selectedContact.company_id}`, '_blank')} >
-                  <div className="w-8 h-8 rounded relative overflow-hidden flex-shrink-0">
-                    {selectedContact.company?.logo_url ? (
-                      <Image
-                        src={selectedContact.company.logo_url}
-                        alt="Company logo"
-                        fill
-                        sizes="120px"
-                        quality={100}
-                        className="object-cover rounded-full"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded bg-white border border-gray-200 flex items-center justify-center font-semibold">
-                        {selectedContact.company?.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                {selectedContact.company && (
+                  <div className="cursor-pointer" onClick={() => window.open(`/dashboard/companies/${selectedContact.company_id}`, '_blank')} >
+                    <div className="w-8 h-8 rounded relative overflow-hidden flex-shrink-0">
+                      {selectedContact.company?.logo_url ? (
+                        <Image
+                          src={selectedContact.company.logo_url}
+                          alt="Company logo"
+                          fill
+                          sizes="120px"
+                          quality={100}
+                          className="object-cover rounded-full"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-white border border-gray-200 flex items-center justify-center font-semibold">
+                          {selectedContact.company?.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </DrawerHeader>
