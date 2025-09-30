@@ -39,8 +39,8 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
     if (aiAnalysis && aiAnalysis.length > 0) {
       const initialOpen: string[] = []
       aiAnalysis.forEach((_, index) => {
-        initialOpen.push(`primary-${index}`)
-        initialOpen.push(`detective-${index}`)
+        initialOpen.push(`overview-${index}`)
+        initialOpen.push(`insights-${index}`)
       })
       setOpenAccordions(initialOpen)
     }
@@ -116,17 +116,43 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
             value={openAccordions}
             onValueChange={handleAccordionChange}
           >
-            {/* Primary Data Analysis */}
-            {analysis.primary_data_analysis && analysis.primary_data_analysis.length > 0 && (
-              <AccordionItem value={`primary-${index}`}>
+            {/* Account Overview */}
+            {analysis.account_overview && (
+              <AccordionItem value={`overview-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <div className="flex items-center justify-between w-full">
-                    <span>Primary Data Analysis</span>
+                    <span>Account Overview</span>
                     <div
                       className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleCopy(analysis.primary_data_analysis ?? [], 'Primary Data Analysis')
+                        navigator.clipboard.writeText(analysis.account_overview ?? '')
+                        toast.success('Account Overview copied to clipboard')
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className={`pt-2 text-black leading-relaxed ${getFontSizeClass()}`}>
+                    {analysis.account_overview}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* Contact Insights */}
+            {analysis.contact_insights && analysis.contact_insights.length > 0 && (
+              <AccordionItem value={`insights-${index}`}>
+                <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
+                  <div className="flex items-center justify-between w-full">
+                    <span>Contact Insights</span>
+                    <div
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCopy(analysis.contact_insights ?? [], 'Contact Insights')
                       }}
                     >
                       <Copy className="h-4 w-4" />
@@ -135,10 +161,10 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                 </AccordionTrigger>
                 <AccordionContent>
                   <ul className="space-y-2 pt-2">
-                    {analysis.primary_data_analysis.map((item: string, i: number) => (
+                    {analysis.contact_insights.map((item: string, i: number) => (
                       <li key={i} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
                         <span className="text-blue-600 mt-2 text-xs">•</span>
-                        <span>{item}.</span>
+                        <span>{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -146,17 +172,26 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
               </AccordionItem>
             )}
 
-            {/* Detective Reasoning */}
-            {analysis.detective_reasoning && analysis.detective_reasoning.length > 0 && (
-              <AccordionItem value={`detective-${index}`}>
+            {/* Why Reach Out */}
+            {analysis.why_reach_out && (
+              <AccordionItem value={`why-reach-out-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <div className="flex items-center justify-between w-full">
-                    <span>Detective Reasoning</span>
+                    <span>Why Reach Out</span>
                     <div
                       className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleCopy(analysis.detective_reasoning ?? [], 'Detective Reasoning')
+                        const flattenedData = typeof analysis.why_reach_out === 'object' && analysis.why_reach_out !== null
+                          ? Object.entries(analysis.why_reach_out).flatMap(([key, value]) => {
+                              if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                                return Object.entries(value).map(([k, v]) => `${sentenceCase(k)}: ${v}`)
+                              }
+                              return [`${sentenceCase(key)}: ${value}`]
+                            })
+                          : []
+                        navigator.clipboard.writeText(flattenedData.join('\n\n'))
+                        toast.success('Why Reach Out copied to clipboard')
                       }}
                     >
                       <Copy className="h-4 w-4" />
@@ -164,36 +199,63 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ul className="space-y-2 pt-2">
-                    {analysis.detective_reasoning.map((item: string, i: number) => (
-                      <li key={i} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
-                        <span className="text-blue-600 mt-2 text-xs">•</span>
-                        <span>{item}.</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className={`pt-2 space-y-4 ${getFontSizeClass()}`}>
+                    {analysis.why_reach_out && Object.entries(analysis.why_reach_out).map(([key, value], i) => {
+                      // Handle nested objects (like your data structure)
+                      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        return Object.entries(value).map(([nestedKey, nestedValue], j) => (
+                          <div key={`${i}-${j}`} className="flex flex-col gap-2">
+                            <span className="text-sm font-bold text-gray-800">
+                              {sentenceCase(nestedKey)}
+                            </span>
+                            <span className="text-black leading-relaxed pl-1">
+                              {String(nestedValue)}
+                            </span>
+                          </div>
+                        ))
+                      }
+                      // Handle direct key-value pairs
+                      return (
+                        <div key={i} className="flex flex-col gap-2">
+                          <span className="text-sm font-bold text-gray-800">
+                            {sentenceCase(key)}
+                          </span>
+                          <span className="text-black leading-relaxed pl-1">
+                            {typeof value === 'string' ? value : JSON.stringify(value)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             )}
 
-            {/* Investigative Decision */}
-            {/* {analysis.investigation_decision && analysis.investigation_decision.length > 0 && (
-              <AccordionItem value={`investigation-${index}`}>
+            {/* Final Assessment */}
+            {analysis.final_assessment && (
+              <AccordionItem value={`final-assessment-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  Investigative Decision
+                  <div className="flex items-center justify-between w-full">
+                    <span>Final Assessment</span>
+                    <div
+                      className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigator.clipboard.writeText(analysis.final_assessment ?? '')
+                        toast.success('Final Assessment copied to clipboard')
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </div>
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ul className="space-y-2 pt-2">
-                    {analysis.investigation_decision.map((item: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700 leading-relaxed">
-                        <span className="text-blue-600 mt-2 text-xs">•</span>
-                        <span>{item}.</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className={`pt-2 text-black leading-relaxed ${getFontSizeClass()}`}>
+                    {analysis.final_assessment}
+                  </div>
                 </AccordionContent>
               </AccordionItem>
-            )} */}
+            )}
 
             {/* Strategic Recommendations */}
             {analysis.strategic_recommendations && analysis.strategic_recommendations.length > 0 && (
