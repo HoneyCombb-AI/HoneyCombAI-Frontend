@@ -24,7 +24,7 @@ import { MessageSquare, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const outreachSchema = z.object({
-    tonality: z.enum(["casual", "professional", "formal", "friendly", "concise", "enthusiastic"]),
+    tonality: z.enum(["AI Decided","casual", "professional", "formal", "friendly", "concise", "enthusiastic"]),
     personalization: z.string().trim().max(1000, "Personalization text must be less than 1000 characters").optional(),
 });
 
@@ -69,7 +69,7 @@ export function OutreachDrawer({
     } = useForm<OutreachFormData>({
         resolver: zodResolver(outreachSchema),
         defaultValues: {
-            tonality: "casual",
+            tonality: "AI Decided",
             personalization: "",
         },
     });
@@ -139,6 +139,7 @@ export function OutreachDrawer({
                                                     <SelectValue placeholder="Select message tone" />
                                                 </SelectTrigger>
                                                 <SelectContent>
+                                                    <SelectItem value="AI Decided">AI Decided</SelectItem>
                                                     <SelectItem value="casual">Casual</SelectItem>
                                                     <SelectItem value="friendly">Friendly</SelectItem>
                                                     <SelectItem value="professional">Professional</SelectItem>
