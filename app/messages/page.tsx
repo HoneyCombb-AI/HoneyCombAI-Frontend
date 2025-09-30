@@ -130,25 +130,25 @@ export default function MessagesPage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
       {/* Top Navigation Bar */}
-      <div className="border-b bg-white">
-        <header className="hidden md:flex h-16 items-center gap-2 px-6">
-          <SidebarTrigger className="-ml-1" />
-          <div className="flex flex-1 items-center justify-between">
-            {/* Logo/Brand */}
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-semibold text-gray-900">
-                Messages
-              </h1>
-        {data && (
-          <Badge variant="secondary" className="ml-2">
-            {data.total_count}
-          </Badge>
-        )}
-            </div>
+      <header className="hidden md:flex h-16 items-center gap-2 px-6 border-b bg-white">
+        <SidebarTrigger className="-ml-1" />
+        <div className="flex flex-1 items-center justify-between">
+          {/* Logo/Brand */}
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold text-gray-900">
+              Messages
+            </h1>
+      {data && (
+        <Badge variant="secondary" className="ml-2">
+          {data.total_count}
+        </Badge>
+      )}
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Filter Bar */}
+      {/* Filter Bar - Sticky */}
+      <div className="sticky top-0 z-40 border-b bg-white shadow-sm">
         <MessageFilters
           search={search}
           onSearchChange={setSearch}
