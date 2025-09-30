@@ -22,8 +22,8 @@ export function AnimatedLogo({
       pathLength: 1,
       opacity: 1,
       transition: {
-        pathLength: { duration: 1.5, ease: "easeInOut" },
-        opacity: { duration: 0.5 }
+        pathLength: { duration: 1, ease: "easeInOut" },
+        opacity: { duration: 0.3 }
       }
     }
   };
@@ -35,8 +35,8 @@ export function AnimatedLogo({
     visible: {
       opacity: 1,
       transition: {
-        delay: 1.2,
-        duration: 0.8,
+        delay: 0.8,
+        duration: 0.5,
         ease: "easeInOut"
       }
     }
@@ -85,8 +85,8 @@ export function AnimatedLogo({
             visible: {
               ...pathVariants.visible,
               transition: {
-                pathLength: { duration: 1.5, ease: [0.4, 0, 0.2, 1], delay: 0.3 },
-                opacity: { duration: 0.5, delay: 0.3 }
+                pathLength: { duration: 1, ease: [0.4, 0, 0.2, 1], delay: 0.2 },
+                opacity: { duration: 0.3, delay: 0.2 }
               }
             }
           }}
@@ -100,8 +100,8 @@ export function AnimatedLogo({
             visible: {
               ...fillVariants.visible,
               transition: {
-                delay: 1.5,
-                duration: 0.8,
+                delay: 1,
+                duration: 0.5,
                 ease: [0.4, 0, 0.2, 1]
               }
             }
@@ -117,8 +117,8 @@ export function AnimatedLogo({
             visible: {
               ...fillVariants.visible,
               transition: {
-                delay: 1.5,
-                duration: 0.8,
+                delay: 1,
+                duration: 0.5,
                 ease: [0.4, 0, 0.2, 1]
               }
             }
@@ -140,8 +140,8 @@ export function AnimatedLogo({
             visible: {
               ...pathVariants.visible,
               transition: {
-                pathLength: { duration: 1.5, ease: [0.4, 0, 0.2, 1], delay: 0.6 },
-                opacity: { duration: 0.5, delay: 0.6 }
+                pathLength: { duration: 1, ease: [0.4, 0, 0.2, 1], delay: 0.4 },
+                opacity: { duration: 0.3, delay: 0.4 }
               }
             }
           }}
@@ -155,8 +155,8 @@ export function AnimatedLogo({
             visible: {
               ...fillVariants.visible,
               transition: {
-                delay: 1.8,
-                duration: 0.8,
+                delay: 1.2,
+                duration: 0.5,
                 ease: [0.4, 0, 0.2, 1]
               }
             }
@@ -172,8 +172,8 @@ export function AnimatedLogo({
             visible: {
               ...fillVariants.visible,
               transition: {
-                delay: 1.8,
-                duration: 0.8,
+                delay: 1.2,
+                duration: 0.5,
                 ease: [0.4, 0, 0.2, 1]
               }
             }
@@ -197,9 +197,9 @@ export function AnimatedLogo({
               pathLength: 1,
               opacity: 1,
               transition: {
-                delay: 2.1,
-                pathLength: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
-                opacity: { duration: 0.3, delay: 2.1 }
+                delay: 1.4,
+                pathLength: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+                opacity: { duration: 0.2, delay: 1.4 }
               }
             }
           }}
@@ -221,9 +221,9 @@ export function AnimatedLogo({
               pathLength: 1,
               opacity: 1,
               transition: {
-                delay: 2.4,
-                pathLength: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
-                opacity: { duration: 0.3, delay: 2.4 }
+                delay: 1.6,
+                pathLength: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+                opacity: { duration: 0.2, delay: 1.6 }
               }
             }
           }}

@@ -4,12 +4,23 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import React, { JSX } from "react";
 import Link from "next/link";
-import { HoneyCombIcon } from "./Landing/Desktop/header";
 
 interface SimpleHeaderProps {
   currentPage: 'login' | 'support';
 }
 
+const HoneyCombIcon = ({ className }: { className?: string }) => (
+  <div className={`relative ${className}`}>
+    <div className="h-12 w-12 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
+    </div>
+    <div className="absolute -inset-2 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
+    <div className="absolute inset-0 flex items-end justify-end p-1 pointer-events-none">
+      <svg className="w-6 h-6 mt-1 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z" />
+      </svg>
+    </div>
+  </div>
+);
 
 
 export function SimpleHeader({ currentPage }: SimpleHeaderProps): JSX.Element {
@@ -58,13 +69,15 @@ export function SimpleHeader({ currentPage }: SimpleHeaderProps): JSX.Element {
   </Link>
 
   <div className="flex items-center gap-2">
-    <Button
-      variant="link"
-      onClick={handleHomeClick}
-      className="cursor-pointer text-black px-2 sm:px-4 py-2 hover:bg-amber-200 rounded-md text-sm sm:text-base"
-    >
-      Home
-    </Button>
+    {currentPage === "support" && (
+      <Button
+        variant="link"
+        onClick={handleHomeClick}
+        className="cursor-pointer text-black px-2 sm:px-4 py-2 hover:bg-amber-200 rounded-md text-sm sm:text-base"
+      >
+        Home
+      </Button>
+    )}
     {currentPage === "login" && (
       <Button
         variant="link"
