@@ -39,6 +39,7 @@ import type {
 } from "@/app/api/contacts/route";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
+import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
 import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
@@ -111,6 +112,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   );
   const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
+  const [outreachDrawerOpen, setOutreachDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
@@ -378,6 +380,10 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         toast.error("No eligible contacts selected for outreach generation");
         return;
       }
+
+      // Open the outreach drawer instead of directly calling the API
+      setOutreachDrawerOpen(true);
+      return;
     } else {
       // For complete contact workflow, contacts without completed/requested primary analysis
       eligibleContactIds = selectedContactsArray
@@ -758,6 +764,14 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           <ImportContactsDrawer
             open={importContactsDrawerOpen}
             onOpenChange={setImportContactsDrawerOpen}
+            onSubmit={() => fetchDashboardData()}
+          />
+
+          {/* Outreach Drawer */}
+          <OutreachDrawer
+            open={outreachDrawerOpen}
+            onOpenChange={setOutreachDrawerOpen}
+            selectedContacts={selectedContacts}
             onSubmit={() => fetchDashboardData()}
           />
 

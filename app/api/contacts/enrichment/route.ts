@@ -8,6 +8,10 @@ interface EnrichmentRequest {
   entity_ids: string[];
   entity_type: 'contact_id';
   task_type: TaskType;
+  payload?: {
+    personalization?: string;
+    tonality?: string;
+  };
 }
 
 interface EnrichmentResponse {
