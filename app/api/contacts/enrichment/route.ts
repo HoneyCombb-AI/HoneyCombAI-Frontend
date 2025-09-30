@@ -155,17 +155,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check for business rule validation (primary_analysis_completed)
-    const ineligibleContacts = foundContacts.filter(c => c.primary_analysis_completed);
-    if (ineligibleContacts.length > 0) {
-      const ineligibleIds = ineligibleContacts.map(c => c.id);
-      return NextResponse.json({
-        success: false,
-        message: `Cannot enrich contacts - primary analysis already completed for: ${ineligibleIds.join(', ')}`,
-        errors: [{
-          message: `Contacts with completed primary analysis cannot be enriched again`
-        }]
-      } as EnrichmentResponse, { status: 400 });
+    // Check for business rule validation based on task type
+    if (body.task_type === 'outreach_generation') {
+      // For outreach generation, contacts MUST have completed primary analysis
+      const ineligibleContacts = foundContacts.filter(c => !c.primary_analysis_completed);
+      if (ineligibleContacts.length > 0) {
+        const ineligibleIds = ineligibleContacts.map(c => c.id);
+        return NextResponse.json({
+          success: false,
+          message: `Cannot generate outreach - primary analysis not completed for: ${ineligibleIds.join(', ')}`,
+          errors: [{
+            message: `Contacts must have completed primary analysis before outreach generation`
+          }]
+        } as EnrichmentResponse, { status: 400 });
+      }
+    } else {
+      // For other enrichment types, contacts must NOT have completed primary analysis
+      const ineligibleContacts = foundContacts.filter(c => c.primary_analysis_completed);
+      if (ineligibleContacts.length > 0) {
+        const ineligibleIds = ineligibleContacts.map(c => c.id);
+        return NextResponse.json({
+          success: false,
+          message: `Cannot enrich contacts - primary analysis already completed for: ${ineligibleIds.join(', ')}`,
+          errors: [{
+            message: `Contacts with completed primary analysis cannot be enriched again`
+          }]
+        } as EnrichmentResponse, { status: 400 });
+      }
     }
     
     // Forward request to external backend
@@ -193,17 +209,29 @@ export async function POST(req: NextRequest) {
 
       // Handle different backend response formats
       if (backendResult.status === 'success') {
-        const { error: updateError } = await supabase
-          .from('contacts')
-          .update({ primary_analysis_requested: true })
-          .in('id', body.entity_ids);
-        if (updateError) {
-          console.error('Error updating primary_analysis_requested:', updateError);
+        // Only update primary_analysis_requested for complete_contact_workflow
+        if (body.task_type === 'complete_contact_workflow') {
+          const { error: updateError } = await supabase
+            .from('contacts')
+            .update({ primary_analysis_requested: true })
+            .in('id', body.entity_ids);
+          if (updateError) {
+            console.error('Error updating primary_analysis_requested:', updateError);
+          }
         }
+
+        // Generate task-specific success messages
+        const taskMessages: Record<string, string> = {
+          'complete_contact_workflow': `Contact enrichment initiated for ${body.entity_ids.length} contact${body.entity_ids.length > 1 ? 's' : ''}`,
+          'outreach_generation': `Personalized outreach generation started for ${body.entity_ids.length} contact${body.entity_ids.length > 1 ? 's' : ''}`,
+          'signals_agent': `Signal tracking enabled for ${body.entity_ids.length} contact${body.entity_ids.length > 1 ? 's' : ''}`
+        };
+
+        const customMessage = taskMessages[body.task_type] || backendResult.message || 'Request submitted successfully';
 
         return NextResponse.json({
           success: true,
-          message: backendResult.message || 'Enrichment request submitted successfully',
+          message: customMessage,
           tokens_used: totalTokens,
           request_id: backendResult.workflow?.workflow_id || backendResult.request_id
         } as EnrichmentResponse);

@@ -318,6 +318,14 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     return "Complete Contact Enrichment";
   };
 
+  const getOutreachButtonText = () => {
+    if (contactStates.totalSelected === 0) return "Generate Outreach";
+    if (!contactStates.hasEligibleForTracking) {
+      return `Generate Outreach (${contactStates.ineligibleForTrackingCount} ineligible)`;
+    }
+    return `Generate Outreach (${contactStates.eligibleForTrackingCount})`;
+  };
+
   // Contact selection handlers
   const handleContactSelect = (contactId: string, contactData: ContactValidationData) => {
     setSelectedContacts((prev) => {
@@ -349,22 +357,37 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   };
 
   const handleEnrichmentAction = async (
-    type: "complete_contact_workflow"
+    type: "complete_contact_workflow" | "outreach_generation"
   ) => {
     if (selectedContacts.size === 0) {
       toast.error("No contacts selected for enrichment");
       return;
     }
 
-    // Get only eligible contact IDs (no validation needed since button is smart)
+    // Get eligible contact IDs based on action type
     const selectedContactsArray = Array.from(selectedContacts.entries());
-    const eligibleContactIds = selectedContactsArray
-      .filter(([, data]) => !data.primaryAnalysisCompleted && !data.primaryAnalysisRequested)
-      .map(([id]) => id);
+    let eligibleContactIds: string[];
 
-    if (eligibleContactIds.length === 0) {
-      toast.error("No eligible contacts selected for enrichment");
-      return;
+    if (type === "outreach_generation") {
+      // For outreach generation, only contacts with completed primary analysis
+      eligibleContactIds = selectedContactsArray
+        .filter(([, data]) => data.primaryAnalysisCompleted)
+        .map(([id]) => id);
+
+      if (eligibleContactIds.length === 0) {
+        toast.error("No eligible contacts selected for outreach generation");
+        return;
+      }
+    } else {
+      // For complete contact workflow, contacts without completed/requested primary analysis
+      eligibleContactIds = selectedContactsArray
+        .filter(([, data]) => !data.primaryAnalysisCompleted && !data.primaryAnalysisRequested)
+        .map(([id]) => id);
+
+      if (eligibleContactIds.length === 0) {
+        toast.error("No eligible contacts selected for enrichment");
+        return;
+      }
     }
 
     try {
@@ -377,7 +400,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       });
 
       if (response.data.success) {
-        toast.success(`${response.data.message}${response.data.tokens_used ? ` will consume ${response.data.tokens_used} tokens upon completion.` : ""}`);
+        toast.success(`${response.data.message}${response.data.tokens_used ? `. This will consume ${response.data.tokens_used} tokens upon completion` : ""}`);
         setSelectedContacts(new Map());
 
         if (response.data.request_id) {
@@ -767,16 +790,28 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </DropdownMenuItem>
               )}
               {contactStates.hasEligibleForTracking && (
-                <DropdownMenuItem
-                  onSelect={() => handleTrackingToggle()}
-                >
-                  {getTrackingButtonText()}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem
+                    onSelect={() => handleEnrichmentAction("outreach_generation")}
+                  >
+                    {getOutreachButtonText()}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => handleTrackingToggle()}
+                  >
+                    {getTrackingButtonText()}
+                  </DropdownMenuItem>
+                </>
               )}
               {!contactStates.hasEligibleForTracking && selectedContacts.size > 0 && (
-                <DropdownMenuItem disabled>
-                  {getTrackingButtonText()}
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuItem disabled>
+                    {getOutreachButtonText()}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled>
+                    {getTrackingButtonText()}
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

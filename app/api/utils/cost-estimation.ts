@@ -3,7 +3,8 @@ export enum TaskType {
   NEWS_ENRICHMENT = "news_enrichment",
   EMPLOYEE_DISCOVERY = "employee_discovery",
   COMPLETE_CONTACT_ENRICHMENT = "complete_contact_workflow",
-  SIGNALS_AGENT = "signals_agent"
+  SIGNALS_AGENT = "signals_agent",
+  OUTREACH_GENERATION = "outreach_generation"
 }
 
 export const SERVICE_TOKEN_COSTS = {
@@ -47,6 +48,12 @@ export const WORKFLOW_TOKEN_COSTS = {
     services: ["linkedin", "twitter", "instagram", "ai_analysis"],
     tokens_per_entity: 6,
     description: "Contact scraping + AI signals analysis"
+  },
+
+  [TaskType.OUTREACH_GENERATION]: {
+    services: ["ai_analysis"],
+    tokens_per_entity: 2,
+    description: "AI-powered personalized outreach generation"
   }
 } as const;
 
