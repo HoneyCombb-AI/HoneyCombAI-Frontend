@@ -5,7 +5,7 @@ export interface OutreachMessage {
   id: string;
   full_name: string;
   profile_picture: string | null;
-  outreach_message: string;
+  outreach_message: string | null;
   outreach_requested: boolean;
   outreach_completed: boolean;
   updated_at: string;

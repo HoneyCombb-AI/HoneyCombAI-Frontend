@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -16,7 +16,7 @@ export interface OutreachMessage {
   id: string;
   full_name: string;
   profile_picture: string | null;
-  outreach_message: string;
+  outreach_message: string | null;
   outreach_requested: boolean;
   outreach_completed: boolean;
   updated_at: string;
@@ -43,11 +43,16 @@ const getIconForSection = (iconType: string) => {
 
 export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
   const { getFontSizeClass } = useFontSize();
+  const [imageError, setImageError] = useState(false);
 
   const optimizedPicture = useMemo(
     () => message?.profile_picture ? optimizeImageUrl(message.profile_picture) : null,
     [message?.profile_picture]
   );
+
+  const getInitials = useCallback((name: string) => {
+    return name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase();
+  }, []);
 
   const formattedDate = useMemo(
     () => message ? new Date(message.updated_at).toLocaleDateString('en-US', {
@@ -59,7 +64,7 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
   );
 
   const parsedSections = useMemo(
-    () => message ? parseBracketedText(message.outreach_message) : [],
+    () => message && message.outreach_message ? parseBracketedText(message.outreach_message) : [],
     [message?.outreach_message]
   );
 
@@ -107,21 +112,21 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
     <Card className="bg-white border-gray-200">
       <div className="px-6">
         <div className="flex items-start gap-4 mb-4">
-          {optimizedPicture ? (
-            <div className="relative w-16 h-16 rounded-full overflow-hidden">
+          {optimizedPicture && !imageError ? (
+            <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
               <Image
                 src={optimizedPicture}
                 alt={message.full_name}
                 fill
                 className="object-cover"
-                sizes="48px"
+                sizes="64px"
                 quality={100}
+                onError={() => setImageError(true)}
               />
             </div>
-
           ) : (
-            <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
-              <User className="h-8 w-8 text-gray-500" />
+            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xl font-medium">{getInitials(message.full_name)}</span>
             </div>
           )}
 
@@ -140,41 +145,49 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
         <Separator className="my-4" />
 
         <div className="space-y-6">
-          {parsedSections.length > 0 ? (
-            parsedSections.map((section, index) => (
-              <div key={index} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {getIconForSection(section.icon)}
-                    <h3 className="text-lg font-semibold text-gray-900">{section.type}</h3>
+          {message.outreach_message ? (
+            parsedSections.length > 0 ? (
+              parsedSections.map((section, index) => (
+                <div key={index} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {getIconForSection(section.icon)}
+                      <h3 className="text-lg font-semibold text-gray-900">{section.type}</h3>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopySection(section.content, section.type)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopySection(section.content, section.type)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <div className="pl-7">
+                    <p className={`${getFontSizeClass()} text-black whitespace-pre-wrap leading-relaxed`}>{section.content}</p>
+                  </div>
                 </div>
-                <div className="pl-7">
-                  <p className={`${getFontSizeClass()} text-black whitespace-pre-wrap leading-relaxed`}>{section.content}</p>
-                </div>
+              ))
+            ) : (
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCopySection(message.outreach_message!, "Message")}
+                  className="absolute top-0 right-0 h-8 w-8 p-0"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <pre className={`whitespace-pre-wrap ${getFontSizeClass()} leading-relaxed text-black font-sans pr-10`}>
+                  {message.outreach_message}
+                </pre>
               </div>
-            ))
+            )
           ) : (
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleCopySection(message.outreach_message, "Message")}
-                className="absolute top-0 right-0 h-8 w-8 p-0"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-              <pre className={`whitespace-pre-wrap ${getFontSizeClass()} leading-relaxed text-black font-sans pr-10`}>
-                {message.outreach_message}
-              </pre>
+            <div className="flex flex-col items-center justify-center text-center p-8 text-gray-500">
+              <Clock className="h-12 w-12 mb-3 text-orange-400 animate-pulse" />
+              <p className="text-base font-medium">Generating outreach message...</p>
+              <p className="text-sm mt-2">This contact's personalized message is being created.</p>
             </div>
           )}
         </div>

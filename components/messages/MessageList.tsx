@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, User } from "lucide-react";
 import { optimizeImageUrl } from "@/lib/ContactUtils";
@@ -10,7 +10,7 @@ export interface OutreachMessage {
   id: string;
   full_name: string;
   profile_picture: string | null;
-  outreach_message: string;
+  outreach_message: string | null;
   outreach_requested: boolean;
   outreach_completed: boolean;
   updated_at: string;
@@ -31,11 +31,18 @@ const MessageListItem = React.memo(({
   isActive: boolean;
   onClick: () => void;
 }) => {
+  const [imageError, setImageError] = useState(false);
   const date = new Date(message.updated_at);
-  const snippet = message.outreach_message.replace(/\n/g, " ").slice(20, 50);
+  const snippet = message.outreach_message
+    ? message.outreach_message.replace(/\n/g, " ").slice(0, 50)
+    : "Generating message...";
   const optimizedPicture = message.profile_picture
     ? optimizeImageUrl(message.profile_picture)
     : null;
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase();
+  };
 
   const getStatusBadge = () => {
     if (message.outreach_completed) {
@@ -64,22 +71,21 @@ const MessageListItem = React.memo(({
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
-        {optimizedPicture ? (
-
-          <div className="relative w-8 h-8 rounded-full overflow-hidden">
+        {optimizedPicture && !imageError ? (
+          <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
             <Image
               src={optimizedPicture}
               alt={message.full_name}
               fill
               className="object-cover"
-              sizes="48px"
+              sizes="40px"
               quality={100}
+              onError={() => setImageError(true)}
             />
           </div>
-
         ) : (
-          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-            <User className="h-5 w-5 text-gray-500" />
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-xs font-medium">{getInitials(message.full_name)}</span>
           </div>
         )}
 
@@ -92,7 +98,7 @@ const MessageListItem = React.memo(({
           </div>
 
           <p className="text-sm text-gray-600 line-clamp-2 mb-1">
-            {snippet}...
+            {snippet}{message.outreach_message ? "..." : ""}
           </p>
 
           <div className="flex justify-end">
