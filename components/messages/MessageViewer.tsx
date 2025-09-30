@@ -187,7 +187,7 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
             <div className="flex flex-col items-center justify-center text-center p-8 text-gray-500">
               <Clock className="h-12 w-12 mb-3 text-orange-400 animate-pulse" />
               <p className="text-base font-medium">Generating outreach message...</p>
-              <p className="text-sm mt-2">This contact's personalized message is being created.</p>
+              <p className="text-sm mt-2">This contact&apos;s personalized message is being created.</p>
             </div>
           )}
         </div>
