@@ -575,6 +575,18 @@ export function NudgesSection({ NudgesData }: NudgesSectionProps) {
   const nudges = NudgesData?.nudges
   const hasNudges = nudges && nudges.length > 0
 
+  const processedNudges = React.useMemo(
+    () => (nudges || []).map(nudge => {
+      const colonIndex = nudge.indexOf(':')
+      return {
+        text: nudge,
+        colonIndex,
+        hasColon: colonIndex !== -1
+      }
+    }),
+    [nudges]
+  )
+
   const handleCopy = React.useCallback(() => {
     if (nudges) {
       copyToClipboard(nudges.join('\n'), 'Nudges')
@@ -603,10 +615,19 @@ export function NudgesSection({ NudgesData }: NudgesSectionProps) {
         </Button>
       </div>
       <ul className="space-y-2">
-        {nudges.map((nudge, index) => (
+        {processedNudges.map((nudge, index) => (
           <li key={index} className={`flex items-start gap-2 text-black leading-relaxed ${fontSizeClass}`}>
             <span className="text-blue-600 mt-2 text-xs">•</span>
-            <span>{nudge}</span>
+            <span>
+              {nudge.hasColon ? (
+                <>
+                  <span className="font-semibold">{nudge.text.slice(0, nudge.colonIndex + 1)}</span>
+                  {nudge.text.slice(nudge.colonIndex + 1)}
+                </>
+              ) : (
+                nudge.text
+              )}
+            </span>
           </li>
         ))}
       </ul>
