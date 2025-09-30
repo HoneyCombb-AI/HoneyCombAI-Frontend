@@ -28,7 +28,7 @@ interface ProcessedSignal {
   colorClass: string;
   urls: string[];
   parsedDate: Date | null;
-  timeCategory: 'veryRecent' | 'recent' | 'older';
+  timeCategory: 'veryRecent' | 'recent' | 'other';
 }
 
 export const SignalState: React.FC<SignalStateProps> = ({
@@ -85,7 +85,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
 
     if (showTooltips && detailed) {
       return (
-        <Tooltip key={signalKey}>
+        <Tooltip key={signalKey} delayDuration={300}>
           <TooltipTrigger asChild>
             <Badge
               className={cn(
@@ -118,9 +118,6 @@ export const SignalState: React.FC<SignalStateProps> = ({
                 </>
               )}
               <SourceDisplay signal={signal} />
-              {/* {signal.source_date && (
-                <p className="text-xs">Source Date: {signal.source_date}</p>
-              )} */}
             </div>
           </TooltipContent>
         </Tooltip>
@@ -195,7 +192,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
       const urls = signal.source ? Array.from(getUrls(signal.source)) : [];
       const parsedDate = signal.source_date ? chrono.parseDate(signal.source_date) : null;
 
-      let timeCategory: 'veryRecent' | 'recent' | 'older' = 'older';
+      let timeCategory: 'veryRecent' | 'recent' | 'other' = 'other';
       if (parsedDate) {
         if (parsedDate >= timeBoundaries.threeMonthsAgo) {
           timeCategory = 'veryRecent';
@@ -222,9 +219,9 @@ export const SignalState: React.FC<SignalStateProps> = ({
 
     const veryRecent = processedSignals.filter(s => s.timeCategory === 'veryRecent');
     const recent = processedSignals.filter(s => s.timeCategory === 'recent');
-    const older = processedSignals.filter(s => s.timeCategory === 'older');
+    const other = processedSignals.filter(s => s.timeCategory === 'other');
 
-    return { veryRecent, recent, older };
+    return { veryRecent, recent, other };
   }, [processedSignals, showTooltips, detailed]);
 
   // Early return if no signals
@@ -243,8 +240,8 @@ export const SignalState: React.FC<SignalStateProps> = ({
             renderSignalGroup(groupedSignals.veryRecent, "Very Recent", "less than 3 months")}
           {groupedSignals.recent && groupedSignals.recent.length > 0 &&
             renderSignalGroup(groupedSignals.recent, "Recent", "3 to 12 months")}
-          {groupedSignals.older && groupedSignals.older.length > 0 &&
-            renderSignalGroup(groupedSignals.older, "Older", "beyond 1 year or no date")}
+          {groupedSignals.other && groupedSignals.other.length > 0 &&
+            renderSignalGroup(groupedSignals.other, "Other")}
         </div>
       ) : (
         groupedSignals.ungrouped?.map((signal, idx) => (
