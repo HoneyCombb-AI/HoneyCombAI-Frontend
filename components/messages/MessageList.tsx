@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock, User } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react";
 import { optimizeImageUrl } from "@/lib/ContactUtils";
 import Image from 'next/image';
 

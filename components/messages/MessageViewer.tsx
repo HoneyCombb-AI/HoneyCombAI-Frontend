@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { Calendar, Mail, User, CheckCircle2, Clock, Linkedin, Twitter, Facebook, Instagram, Send, Copy } from "lucide-react";
+import { Calendar, Mail, CheckCircle2, Clock, Linkedin, Twitter, Facebook, Instagram, Send, Copy } from "lucide-react";
 import { optimizeImageUrl } from "@/lib/ContactUtils";
 import Image from 'next/image';
 import { parseBracketedText } from "./MessageUtil";

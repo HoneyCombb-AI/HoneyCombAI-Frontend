@@ -39,18 +39,12 @@ const parseInsightItem = (item: string) => {
   }
 }
 
-const flattenWhyReachOut = (whyReachOut: any): string => {
+const flattenWhyReachOut = (whyReachOut: Record<string, string> | null): string => {
   if (!whyReachOut || typeof whyReachOut !== 'object') return ''
 
   const lines: string[] = []
   Object.entries(whyReachOut).forEach(([key, value]) => {
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      Object.entries(value).forEach(([k, v]) => {
-        lines.push(`${sentenceCase(k)}: ${v}`)
-      })
-    } else {
-      lines.push(`${sentenceCase(key)}: ${value}`)
-    }
+    lines.push(`${sentenceCase(key)}: ${value}`)
   })
   return lines.join('\n\n')
 }
@@ -71,24 +65,15 @@ const parseAccountOverviewLines = (text: string) => {
   }, [])
 }
 
-const parseWhyReachOutEntries = (whyReachOut: any) => {
+const parseWhyReachOutEntries = (whyReachOut: Record<string, string> | null) => {
   if (!whyReachOut || typeof whyReachOut !== 'object') return []
 
   const entries: Array<{ key: string, value: string }> = []
   Object.entries(whyReachOut).forEach(([key, value]) => {
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-        entries.push({
-          key: sentenceCase(nestedKey),
-          value: String(nestedValue)
-        })
-      })
-    } else {
-      entries.push({
-        key: sentenceCase(key),
-        value: typeof value === 'string' ? value : JSON.stringify(value)
-      })
-    }
+    entries.push({
+      key: sentenceCase(key),
+      value: value
+    })
   })
   return entries
 }
@@ -199,7 +184,7 @@ const ContactInsightsContent = React.memo(({ insights, fontSizeClass }: ContactI
 ContactInsightsContent.displayName = 'ContactInsightsContent'
 
 interface WhyReachOutContentProps {
-  whyReachOut: any
+  whyReachOut: Record<string, string> | null
   fontSizeClass: string
 }
 
@@ -617,11 +602,6 @@ interface PlatformData {
   icon: React.ComponentType<{ className?: string }>
 }
 
-interface ApproachTimeData {
-  platform: string
-  time: string | null
-  icon: React.ComponentType<{ className?: string }>
-}
 
 const PlatformRow = React.memo(({
   icon: IconComponent,
