@@ -35,7 +35,7 @@ export interface DrawerAIAnalysis {
   id: string;
   account_overview: string | null;
   contact_insights: string[] | null;
-  why_reach_out: Record<string, any> | null;
+  why_reach_out: Record<string, string> | null;
   final_assessment: string | null;
   strategic_recommendations: string[] | null;
   confidence_score: number | null;

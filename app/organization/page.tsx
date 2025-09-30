@@ -2,7 +2,6 @@
 import axios from 'axios';
 import { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
 import { toast } from "sonner";
 import {
