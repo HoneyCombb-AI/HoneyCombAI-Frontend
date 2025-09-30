@@ -39,8 +39,8 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
     if (aiAnalysis && aiAnalysis.length > 0) {
       const initialOpen: string[] = []
       aiAnalysis.forEach((_, index) => {
-        initialOpen.push(`overview-${index}`)
         initialOpen.push(`insights-${index}`)
+        initialOpen.push(`why-reach-out-${index}`)
       })
       setOpenAccordions(initialOpen)
     }
