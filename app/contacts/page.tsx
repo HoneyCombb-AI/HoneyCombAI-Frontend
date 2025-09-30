@@ -359,7 +359,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   };
 
   const handleEnrichmentAction = async (
-    type: "complete_contact_workflow" | "outreach_generation"
+    type: "complete_contact_workflow" | "outreach_enrichment"
   ) => {
     if (selectedContacts.size === 0) {
       toast.error("No contacts selected for enrichment");
@@ -370,7 +370,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     const selectedContactsArray = Array.from(selectedContacts.entries());
     let eligibleContactIds: string[];
 
-    if (type === "outreach_generation") {
+    if (type === "outreach_enrichment") {
       // For outreach generation, only contacts with completed primary analysis
       eligibleContactIds = selectedContactsArray
         .filter(([, data]) => data.primaryAnalysisCompleted)
@@ -806,7 +806,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
               {contactStates.hasEligibleForTracking && (
                 <>
                   <DropdownMenuItem
-                    onSelect={() => handleEnrichmentAction("outreach_generation")}
+                    onSelect={() => handleEnrichmentAction("outreach_enrichment")}
                   >
                     {getOutreachButtonText()}
                   </DropdownMenuItem>

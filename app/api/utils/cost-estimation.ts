@@ -4,7 +4,7 @@ export enum TaskType {
   EMPLOYEE_DISCOVERY = "employee_discovery",
   COMPLETE_CONTACT_ENRICHMENT = "complete_contact_workflow",
   SIGNALS_AGENT = "signals_agent",
-  OUTREACH_GENERATION = "outreach_generation"
+  OUTREACH_GENERATION = "outreach_enrichment"
 }
 
 export const SERVICE_TOKEN_COSTS = {

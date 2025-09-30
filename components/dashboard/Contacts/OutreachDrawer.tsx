@@ -79,7 +79,7 @@ export function OutreachDrawer({
             const response = await axios.post("/api/contacts/outreach", {
                 entity_ids: eligibleContactIds,
                 entity_type: "contact_id",
-                task_type: "outreach_generation",
+                task_type: "outreach_enrichment",
                 payload: {
                     personalization: data.personalization || undefined,
                     tonality: data.tonality,
