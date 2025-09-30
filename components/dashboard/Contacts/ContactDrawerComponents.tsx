@@ -135,8 +135,34 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className={`pt-2 text-black leading-relaxed ${getFontSizeClass()}`}>
-                    {analysis.account_overview}
+                  <div className={`pt-2 space-y-2 text-black leading-relaxed ${getFontSizeClass()}`}>
+                    {analysis.account_overview.split('\n').map((line: string, idx: number) => {
+                      const trimmed = line.trim()
+                      if (!trimmed) return null
+
+                      // Main bullet point (starts with -)
+                      if (trimmed.startsWith('- ')) {
+                        return (
+                          <div key={idx} className="flex items-start gap-2 mt-3 first:mt-0">
+                            <span className="text-blue-600 text-xs mt-1">•</span>
+                            <span className="flex-1">{trimmed.substring(2)}</span>
+                          </div>
+                        )
+                      }
+
+                      // Sub-bullet point (starts with •)
+                      if (trimmed.startsWith('•')) {
+                        return (
+                          <div key={idx} className="flex items-start gap-2 ml-6">
+                            <span className="text-blue-400 text-xs mt-1">◦</span>
+                            <span className="flex-1">{trimmed.substring(1).trim()}</span>
+                          </div>
+                        )
+                      }
+
+                      // Regular text
+                      return <p key={idx}>{trimmed}</p>
+                    })}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -160,13 +186,19 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ul className="space-y-2 pt-2">
-                    {analysis.contact_insights.map((item: string, i: number) => (
-                      <li key={i} className={`flex items-start gap-2 text-black leading-relaxed ${getFontSizeClass()}`}>
-                        <span className="text-blue-600 mt-2 text-xs">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
+                  <ul className="space-y-3 pt-2">
+                    {analysis.contact_insights.map((item: string, i: number) => {
+                      const cleaned = item.replace(/^\{"|"\}$/g, '').replace(/":\s*"/g, ': ').replace(/",\s*"/g, ', ')
+                      const [label, ...valueParts] = cleaned.split(': ')
+                      const value = valueParts.join(': ')
+
+                      return (
+                        <li key={i} className={`flex flex-col gap-1 ${getFontSizeClass()}`}>
+                          <span className="text-sm font-bold text-gray-800">{label}</span>
+                          <span className="text-black leading-relaxed pl-1">{value}</span>
+                        </li>
+                      )
+                    })}
                   </ul>
                 </AccordionContent>
               </AccordionItem>
@@ -250,8 +282,12 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className={`pt-2 text-black leading-relaxed ${getFontSizeClass()}`}>
-                    {analysis.final_assessment}
+                  <div className={`pt-2 space-y-3 ${getFontSizeClass()}`}>
+                    {analysis.final_assessment.split('\n\n').map((paragraph: string, idx: number) => (
+                      <p key={idx} className="text-black leading-relaxed">
+                        {paragraph}
+                      </p>
+                    ))}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -306,23 +342,29 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
                       ))}
                     </div>
                   ) : (
-                    <ul className={`space-y-2 pt-2 transition-opacity duration-500 ${loadedStates[`recommendations-${index}`] ? 'opacity-100' : 'opacity-100'
+                    <ul className={`space-y-3 pt-2 transition-opacity duration-500 ${loadedStates[`recommendations-${index}`] ? 'opacity-100' : 'opacity-100'
                       }`}>
-                      {analysis.strategic_recommendations.map((item: string, i: number) => (
-                        <li
-                          key={i}
-                          className={`flex items-start gap-2 text-black leading-relaxed transform transition-all duration-300 ${getFontSizeClass()} ${loadedStates[`recommendations-${index}`]
-                            ? 'translate-y-0 opacity-100'
-                            : 'translate-y-2 opacity-100'
-                            }`}
-                          style={{
-                            transitionDelay: loadedStates[`recommendations-${index}`] ? `${i * 100}ms` : '0ms'
-                          }}
-                        >
-                          <span className="text-blue-600 mt-2 text-xs">•</span>
-                          <span>{item}.</span>
-                        </li>
-                      ))}
+                      {analysis.strategic_recommendations.map((item: string, i: number) => {
+                        const cleaned = item.replace(/^\{"|"\}$/g, '').replace(/":\s*"/g, ': ').replace(/",\s*"/g, ', ')
+                        const [label, ...valueParts] = cleaned.split(': ')
+                        const value = valueParts.join(': ')
+
+                        return (
+                          <li
+                            key={i}
+                            className={`flex flex-col gap-1 transform transition-all duration-300 ${getFontSizeClass()} ${loadedStates[`recommendations-${index}`]
+                              ? 'translate-y-0 opacity-100'
+                              : 'translate-y-2 opacity-100'
+                              }`}
+                            style={{
+                              transitionDelay: loadedStates[`recommendations-${index}`] ? `${i * 100}ms` : '0ms'
+                            }}
+                          >
+                            <span className="text-sm font-bold text-gray-800">{label}</span>
+                            <span className="text-black leading-relaxed pl-1">{value}</span>
+                          </li>
+                        )
+                      })}
                     </ul>
                   )}
                 </AccordionContent>
