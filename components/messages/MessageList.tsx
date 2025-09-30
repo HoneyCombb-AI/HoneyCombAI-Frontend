@@ -121,7 +121,7 @@ export const MessageList = React.memo(({
 }: MessageListProps) => {
   if (messages.length === 0) {
     return (
-      <div className="p-6 text-center">
+      <div className="flex items-center justify-center h-full min-h-[400px]">
         <p className="text-sm text-muted-foreground">No messages found.</p>
       </div>
     );
