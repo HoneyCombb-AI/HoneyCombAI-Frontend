@@ -4,9 +4,11 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Mail, User, CheckCircle2, Clock } from "lucide-react";
+import { Calendar, Mail, User, CheckCircle2, Clock, Linkedin, Twitter, Facebook, Instagram, Send } from "lucide-react";
 import { optimizeImageUrl } from "@/lib/ContactUtils";
 import Image from 'next/image';
+import { parseBracketedText } from "./MessageUtil";
+import { useFontSize } from "@/lib/font-size-context";
 
 export interface OutreachMessage {
   id: string;
@@ -23,6 +25,8 @@ interface MessageViewerProps {
 }
 
 export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
+  const { getFontSizeClass } = useFontSize();
+
   if (!message) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-8">
@@ -59,6 +63,28 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
     }
     return null;
   };
+
+  const getIconForSection = (iconType: string) => {
+    const iconClass = "h-5 w-5";
+    switch (iconType.toLowerCase()) {
+      case 'linkedin':
+        return <Linkedin className={iconClass} />;
+      case 'email':
+        return <Mail className={iconClass} />;
+      case 'twitter':
+        return <Twitter className={iconClass} />;
+      case 'facebook':
+        return <Facebook className={iconClass} />;
+      case 'instagram':
+        return <Instagram className={iconClass} />;
+      case 'outreach':
+        return <Send className={iconClass} />;
+      default:
+        return <Mail className={iconClass} />;
+    }
+  };
+
+  const parsedSections = parseBracketedText(message.outreach_message);
 
   return (
     <Card className="bg-white border-gray-200">
@@ -98,10 +124,24 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
 
         <Separator className="my-4" />
 
-        <div className="prose max-w-none">
-          <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800 font-sans">
-            {message.outreach_message}
-          </pre>
+        <div className="space-y-6">
+          {parsedSections.length > 0 ? (
+            parsedSections.map((section, index) => (
+              <div key={index} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  {getIconForSection(section.icon)}
+                  <h3 className="text-lg font-semibold text-gray-900">{section.type}</h3>
+                </div>
+                <div className="pl-7">
+                  <p className={`${getFontSizeClass()} text-black whitespace-pre-wrap leading-relaxed`}>{section.content}</p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <pre className={`whitespace-pre-wrap ${getFontSizeClass()} leading-relaxed text-black font-sans`}>
+              {message.outreach_message}
+            </pre>
+          )}
         </div>
       </div>
     </Card>
