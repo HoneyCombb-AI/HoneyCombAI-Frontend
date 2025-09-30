@@ -88,7 +88,7 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
 
   return (
     <Card className="bg-white border-gray-200">
-      <div className="p-6">
+      <div className="px-6">
         <div className="flex items-start gap-4 mb-4">
           {optimizedPicture ? (
             <div className="relative w-16 h-16 rounded-full overflow-hidden">
