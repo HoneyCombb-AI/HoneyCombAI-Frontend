@@ -137,6 +137,9 @@ export default function MessagesPage() {
             <h1 className="text-xl font-semibold text-gray-900">
               Messages
             </h1>
+            <Badge variant="outline" className="text-xs font-normal text-blue-600 border-blue-200">
+              Beta
+            </Badge>
       {data && (
         <Badge variant="secondary" className="ml-2">
           {data.total_count}
