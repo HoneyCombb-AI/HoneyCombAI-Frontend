@@ -244,7 +244,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
           {groupedSignals.recent && groupedSignals.recent.length > 0 &&
             renderSignalGroup(groupedSignals.recent, "Recent", "3 to 12 months")}
           {groupedSignals.older && groupedSignals.older.length > 0 &&
-            renderSignalGroup(groupedSignals.older, "Older", "beyond 1 year or no date")}
+            renderSignalGroup(groupedSignals.older, "Other")}
         </div>
       ) : (
         groupedSignals.ungrouped?.map((signal, idx) => (
