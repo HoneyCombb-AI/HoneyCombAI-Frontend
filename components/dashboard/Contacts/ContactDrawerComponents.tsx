@@ -61,6 +61,11 @@ const parseWhyReachOutEntries = (whyReachOut: Record<string, string | string[]> 
   return entries
 }
 
+const parseFinalAssessmentParagraphs = (text: string) => {
+  if (!text || typeof text !== 'string') return []
+
+  return text.split('\n\n')
+}
 // ============================================================================
 // COPY HANDLERS
 // ============================================================================
