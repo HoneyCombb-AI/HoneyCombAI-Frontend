@@ -43,6 +43,7 @@ export interface DashboardContact {
   isTracked : boolean;
   primaryAnalysisCompleted : boolean;
   primaryAnalysisRequested : boolean;
+  temperature: 'hot' | 'warm' | 'cold' | null;
   country: string | null;
   profile_picture: string | null;
   company: MinimalCompany | null;

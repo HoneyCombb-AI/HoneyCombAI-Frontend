@@ -102,30 +102,86 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
         <div className="mx-auto w-full h-screen overflow-y-auto">
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b">
             <DrawerTitle>
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
-                  {shouldShowImage ? (
-                    <Image
-                      src={optimizedProfilePicture!}
-                      alt={selectedContact.full_name}
-                      fill
-                      sizes="120px"
-                      quality={100}
-                      className="object-cover rounded-full"
-                      onError={handleImageError}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600
-                    flex items-center justify-center text-white text-sm font-medium">
-                      {getInitials(selectedContact.full_name)}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
+                    {shouldShowImage ? (
+                      <Image
+                        src={optimizedProfilePicture!}
+                        alt={selectedContact.full_name}
+                        fill
+                        sizes="120px"
+                        quality={100}
+                        className="object-cover rounded-full"
+                        onError={handleImageError}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600
+                      flex items-center justify-center text-white text-sm font-medium">
+                        {getInitials(selectedContact.full_name)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-lg font-medium text-gray-900 truncate">
+                      <p>{selectedContact.full_name || "Unknown"}</p>
                     </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-lg font-medium text-gray-900 truncate">
-                    <p>{selectedContact.full_name || "Unknown"}</p>
                   </div>
                 </div>
+
+                {/* Status Indicators */}
+                {drawerContact && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Temperature Badge */}
+                    {drawerContact.temperature && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-gray-200 bg-gray-50/50">
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            drawerContact.temperature === 'hot'
+                              ? 'bg-red-500'
+                              : drawerContact.temperature === 'warm'
+                              ? 'bg-orange-400'
+                              : 'bg-blue-400'
+                          }`}
+                        />
+                        <span className="text-xs text-gray-600 font-medium">
+                          {drawerContact.temperature.charAt(0).toUpperCase() + drawerContact.temperature.slice(1)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Primary Analysis Status */}
+                    {drawerContact.primary_analysis_requested && !drawerContact.primary_analysis_completed && (
+                      <div className="flex items-center gap-2 px-2.5 py-1 rounded-md border border-blue-200 bg-blue-50/50">
+                        <div className="w-3 h-3 relative">
+                          <div className="absolute inset-0 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                        </div>
+                        <span className="text-xs text-blue-700 font-medium">
+                          Analyzing Contact
+                        </span>
+                      </div>
+                    )}
+
+                    {drawerContact.primary_analysis_completed && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-green-200 bg-green-50/50">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        <span className="text-xs text-green-700 font-medium">
+                          Analyzed
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Tracking Status */}
+                    {drawerContact.istracked && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-purple-200 bg-purple-50/50">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                        <span className="text-xs text-purple-700 font-medium">
+                          Tracked
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </DrawerTitle>
             <div className="text-muted-foreground text-sm">
