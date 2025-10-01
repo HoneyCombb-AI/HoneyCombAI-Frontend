@@ -33,9 +33,8 @@ const generateSignalColor = (signalText: string): string => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-export const getSignalBadgeColor = (scoreOrText: number | string, signalText?: string) => {
-  const textToCheck = signalText || (typeof scoreOrText === 'string' ? scoreOrText : '');
-  if (textToCheck.toLowerCase().startsWith('custom:')) {
+export const getSignalBadgeColor = (scoreOrText: number | string, signalText?: string, isCustom?: boolean) => {
+  if (isCustom) {
     return "bg-yellow-100 text-yellow-900 border-yellow-400 border-2 shadow-sm";
   }
   if (signalText) {
@@ -86,13 +85,14 @@ export const processSignals = (signals: ContactSignal[] = [], showAll: boolean =
         description?: string;
         source?: string;
         source_date?: string;
+        is_custom?: boolean;
       } = {
         key: signalTypeMap[signal.signal_type] || normalizeSignalText(signal.signal_type),
         score: signal.confidence_score,
         type: signal.signal_type
       };
 
-      // Only include description, source, and source_date if they exist (backward compatibility)
+      // Only include description, source, source_date, and is_custom if they exist (backward compatibility)
       if ('description' in signal && signal.description) {
         processedSignal.description = typeof signal.description === 'string' ? signal.description : undefined;
       }
@@ -101,6 +101,9 @@ export const processSignals = (signals: ContactSignal[] = [], showAll: boolean =
       }
       if ('source_date' in signal && signal.source_date) {
         processedSignal.source_date = typeof signal.source_date === 'string' ? signal.source_date : undefined;
+      }
+      if ('is_custom' in signal) {
+        processedSignal.is_custom = signal.is_custom;
       }
 
       return processedSignal;

@@ -23,6 +23,7 @@ export interface DrawerContactSignal {
   source: string | null;
   source_date: string | null;
   created_at: string;
+  is_custom: boolean;
 }
 
 export interface DrawerContactNudge {

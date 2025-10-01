@@ -30,6 +30,7 @@ export interface ContactSignal {
   id: string;
   signal_type: string;
   confidence_score: number;
+  is_custom: boolean;
 }
 
 export interface DashboardContact {

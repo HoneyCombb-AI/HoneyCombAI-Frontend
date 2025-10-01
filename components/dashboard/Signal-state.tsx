@@ -29,6 +29,7 @@ interface ProcessedSignal {
   urls: string[];
   parsedDate: Date | null;
   timeCategory: 'veryRecent' | 'recent' | 'other';
+  is_custom?: boolean;
 }
 
 export const SignalState: React.FC<SignalStateProps> = ({
@@ -203,7 +204,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
 
       return {
         ...signal,
-        colorClass: getSignalBadgeColor(signal.key),
+        colorClass: getSignalBadgeColor(signal.score, signal.key, signal.is_custom),
         urls,
         parsedDate,
         timeCategory
