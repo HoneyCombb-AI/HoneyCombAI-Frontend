@@ -5,19 +5,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertCircle } from "lucide-react";
 import { Loading } from "@/components/loading";
 import { SimpleHeader } from "@/components/SimpleHeader";
 import { useAuth } from "@/lib/auth-context";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(true);
   const supabase = createClient();
   const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        router.push('/contacts');
+      } else {
+        setIsRedirecting(false);
+      }
+    }
+  }, [user, loading, router]);
 
   const handleGoogleLogin = async () => {
     try {
@@ -39,7 +51,7 @@ export default function LoginPage() {
     }
   };
 
-  if (loading) {
+  if (loading || isRedirecting) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
         <div className="text-center">
@@ -51,10 +63,6 @@ export default function LoginPage() {
         </div>
       </div>
     )
-  }
-
-  if (user) {
-    redirect('/contacts');
   }
 
   return (
