@@ -50,6 +50,8 @@ const flattenWhyReachOut = (whyReachOut: Record<string, string> | null): string 
 }
 
 const parseAccountOverviewLines = (text: string) => {
+  if (!text || typeof text !== 'string') return []
+
   return text.split('\n').reduce<Array<{ type: 'main' | 'sub' | 'text', content: string }>>((acc, line) => {
     const trimmed = line.trim()
     if (!trimmed) return acc
@@ -79,6 +81,8 @@ const parseWhyReachOutEntries = (whyReachOut: Record<string, string> | null) => 
 }
 
 const parseFinalAssessmentParagraphs = (text: string) => {
+  if (!text || typeof text !== 'string') return []
+
   return text.split('\n\n')
 }
 
