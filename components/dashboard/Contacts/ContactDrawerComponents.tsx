@@ -209,6 +209,46 @@ const FinalAssessmentContent = React.memo(({ text, fontSizeClass }: FinalAssessm
 })
 FinalAssessmentContent.displayName = 'FinalAssessmentContent'
 
+interface NudgesContentProps {
+  nudges: string[]
+  fontSizeClass: string
+}
+
+const NudgesContent = React.memo(({ nudges, fontSizeClass }: NudgesContentProps) => {
+  const processedNudges = React.useMemo(
+    () => nudges.map(nudge => {
+      const colonIndex = nudge.indexOf(':')
+      return {
+        text: nudge,
+        colonIndex,
+        hasColon: colonIndex !== -1
+      }
+    }),
+    [nudges]
+  )
+
+  return (
+    <ul className="space-y-2 pt-2">
+      {processedNudges.map((nudge, index) => (
+        <li key={index} className={`flex items-start gap-2 text-black leading-relaxed ${fontSizeClass}`}>
+          <span className="text-blue-600 mt-2 text-xs">•</span>
+          <span>
+            {nudge.hasColon ? (
+              <>
+                <span className="font-semibold">{nudge.text.slice(0, nudge.colonIndex + 1)}</span>
+                {nudge.text.slice(nudge.colonIndex + 1)}
+              </>
+            ) : (
+              nudge.text
+            )}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+})
+NudgesContent.displayName = 'NudgesContent'
+
 interface StrategicRecommendationsContentProps {
   recommendations: string[] | null
   fontSizeClass: string
@@ -298,9 +338,10 @@ StrategicRecommendationsContent.displayName = 'StrategicRecommendationsContent'
 
 interface SocialIntelligenceSectionProps {
   aiAnalysis: DrawerAIAnalysis[]
+  nudgesData?: DrawerContactNudge
 }
 
-export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSectionProps) {
+export function SocialIntelligenceSection({ aiAnalysis, nudgesData }: SocialIntelligenceSectionProps) {
   const { getFontSizeClass } = useFontSize()
   const [loadingStates, setLoadingStates] = React.useState<{ [key: string]: boolean }>({})
   const [loadedStates, setLoadedStates] = React.useState<{ [key: string]: boolean }>({})
@@ -309,17 +350,12 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
 
   const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass])
 
-  // Pre-compute flattened "Why Reach Out" data for copy functionality
-  const flattenedWhyReachOutData = React.useMemo(() => {
-    return aiAnalysis.map(analysis => flattenWhyReachOut(analysis.why_reach_out))
-  }, [aiAnalysis])
-
   // Initialize open accordions on mount
   React.useEffect(() => {
     if (aiAnalysis?.length > 0) {
       const initialOpen = aiAnalysis.flatMap((_, index) => [
         `insights-${index}`,
-        `why-reach-out-${index}`
+        `social-nudges-${index}`
       ])
       setOpenAccordions(initialOpen)
     }
@@ -469,21 +505,23 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
               </AccordionItem>
             )}
 
-            {/* Why Reach Out */}
-            {analysis.why_reach_out && (
-              <AccordionItem value={`why-reach-out-${index}`}>
+            {/* Social Nudges */}
+            {nudgesData?.nudges && nudgesData.nudges.length > 0 && (
+              <AccordionItem value={`social-nudges-${index}`}>
                 <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
                   <AccordionHeader
-                    title="Why Reach Out"
-                    sectionKey="why_reach_out"
+                    title="Social Nudges"
+                    sectionKey="social_nudges"
                     onCopy={(e) => {
                       e.stopPropagation()
-                      copyToClipboard(flattenedWhyReachOutData[index], 'Why Reach Out')
+                      if (nudgesData?.nudges) {
+                        copyToClipboard(nudgesData.nudges.join('\n'), 'Social Nudges')
+                      }
                     }}
                   />
                 </AccordionTrigger>
                 <AccordionContent>
-                  <WhyReachOutContent whyReachOut={analysis.why_reach_out} fontSizeClass={fontSizeClass} />
+                  {nudgesData.nudges && <NudgesContent nudges={nudgesData.nudges} fontSizeClass={fontSizeClass} />}
                 </AccordionContent>
               </AccordionItem>
             )}
@@ -541,50 +579,34 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
 }
 
 // ============================================================================
-// NUDGES SECTION
+// WHY REACH OUT SECTION (STANDALONE)
 // ============================================================================
 
-interface NudgesSectionProps {
-  NudgesData: DrawerContactNudge | undefined
+interface WhyReachOutSectionProps {
+  whyReachOutData: Record<string, string | string[]>
 }
 
-export function NudgesSection({ NudgesData }: NudgesSectionProps) {
+export function WhyReachOutSection({ whyReachOutData }: WhyReachOutSectionProps) {
   const { getFontSizeClass } = useFontSize()
   const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass])
 
-  const nudges = NudgesData?.nudges
-  const hasNudges = nudges && nudges.length > 0
-
-  const processedNudges = React.useMemo(
-    () => (nudges || []).map(nudge => {
-      const colonIndex = nudge.indexOf(':')
-      return {
-        text: nudge,
-        colonIndex,
-        hasColon: colonIndex !== -1
-      }
-    }),
-    [nudges]
-  )
+  const entries = React.useMemo(() => parseWhyReachOutEntries(whyReachOutData), [whyReachOutData])
+  const flattenedData = React.useMemo(() => flattenWhyReachOut(whyReachOutData), [whyReachOutData])
 
   const handleCopy = React.useCallback(() => {
-    if (nudges) {
-      copyToClipboard(nudges.join('\n'), 'Nudges')
-    }
-  }, [nudges])
+    copyToClipboard(flattenedData, 'Why Reach Out')
+  }, [flattenedData])
 
-  if (!hasNudges) {
+  if (!whyReachOutData) {
     return null
   }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="flex items-center justify-between mb-4">
-          <Badge className={getSectionHeadingBadgeColor('social_nudges')}>
-            Social Nudges
-          </Badge>
-        </div>
+        <Badge className={getSectionHeadingBadgeColor('why_reach_out')}>
+          Why Reach Out
+        </Badge>
         <Button
           variant="ghost"
           size="sm"
@@ -594,23 +616,21 @@ export function NudgesSection({ NudgesData }: NudgesSectionProps) {
           <Copy className="h-4 w-4" />
         </Button>
       </div>
-      <ul className="space-y-2">
-        {processedNudges.map((nudge, index) => (
-          <li key={index} className={`flex items-start gap-2 text-black leading-relaxed ${fontSizeClass}`}>
-            <span className="text-blue-600 mt-2 text-xs">•</span>
-            <span>
-              {nudge.hasColon ? (
-                <>
-                  <span className="font-semibold">{nudge.text.slice(0, nudge.colonIndex + 1)}</span>
-                  {nudge.text.slice(nudge.colonIndex + 1)}
-                </>
-              ) : (
-                nudge.text
-              )}
-            </span>
-          </li>
+      <div className={`space-y-4 ${fontSizeClass}`}>
+        {entries.map((entry, i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-gray-800">{entry.key}</span>
+            <ul className="space-y-1 pl-1">
+              {entry.values.map((value, j) => (
+                <li key={j} className="text-black leading-relaxed flex items-start gap-2">
+                  {entry.values.length > 1 && <span className="text-blue-600 text-xs mt-1">•</span>}
+                  <span className={entry.values.length === 1 ? '' : 'flex-1'}>{value}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }

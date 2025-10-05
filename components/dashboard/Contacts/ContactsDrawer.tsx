@@ -18,7 +18,7 @@ import {
 import { DashboardContact } from "@/app/api/contacts/route"
 import { DrawerContact } from "@/app/api/contacts/[id]/route"
 import { Badge } from "@/components/ui/badge"
-import { NudgesSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
+import { WhyReachOutSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
 import { SignalState } from "../Signal-state"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
 import { optimizeImageUrl, getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
@@ -398,10 +398,11 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                   )}
                 </div>
               </div>
-              {drawerContact?.nudges?.[0] && (
+              {/* Why Reach Out Section - Standalone */}
+              {drawerContact?.ai_analysis?.[0]?.why_reach_out && (
                 <>
                   <Separator className="my-5" />
-                  <NudgesSection NudgesData={drawerContact?.nudges?.[0]} />
+                  <WhyReachOutSection whyReachOutData={drawerContact.ai_analysis[0].why_reach_out} />
                 </>
               )}
 
@@ -414,7 +415,10 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
               {drawerContact?.ai_analysis && drawerContact.ai_analysis.length > 0 && (
                 <>
                   <Separator className="my-5" />
-                  <SocialIntelligenceSection aiAnalysis={drawerContact.ai_analysis} />
+                  <SocialIntelligenceSection
+                    aiAnalysis={drawerContact.ai_analysis}
+                    nudgesData={drawerContact?.nudges?.[0]}
+                  />
                 </>
               )}
             </div>
