@@ -656,7 +656,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
               <SortDesc className="h-4 w-4" />
             )}
             <span className="hidden sm:inline">Sort:</span>
-            <span>Name ({sortOrder === "asc" ? "A-Z" : "Z-A"})</span>
+            <span>Name</span>
           </Button>
 
           {/* Search Input with Button */}
