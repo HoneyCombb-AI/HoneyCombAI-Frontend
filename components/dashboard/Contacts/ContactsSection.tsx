@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,114 @@ const truncateTitle = (title: string) => {
   const words = title.split(' ');
   return words.length > 3 ? words.slice(0, 3).join(' ') + '...' : title;
 };
+
+// Memoized Contact Row Component
+const ContactRow = memo<{
+  contact: DashboardContact;
+  isSelected: boolean;
+  onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
+  onContactClick: (contact: DashboardContact) => void;
+}>(({ contact, isSelected, onContactSelect, onContactClick }) => {
+  const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
+  const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
+  const isTracked = contact.isTracked;
+
+  return (
+    <tr
+      className={`hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''}`}
+    >
+      {/* Checkbox */}
+      <td className="px-4 py-3 w-12">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onContactSelect(contact.id, {
+            isTracked: contact.isTracked,
+            primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+            primaryAnalysisRequested: contact.primaryAnalysisRequested,
+            full_name: contact.full_name
+          })}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </td>
+
+      {/* Name */}
+      <td
+        className="px-4 py-3 w-1/4 cursor-pointer"
+        onClick={() => onContactClick(contact)}
+        data-testid="sample-contact"
+      >
+        <div className="flex items-center gap-3">
+          <RingState
+            green={hasAnalysisCompleted}
+            golden={isTracked}
+            requested={hasAnalysisRequested}
+            profilePicture={contact.profile_picture}
+            fullName={contact.full_name}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium text-gray-900 truncate">
+              {contact.full_name || "Unknown"}
+            </div>
+          </div>
+        </div>
+      </td>
+
+      {/* Title */}
+      <td
+        className="px-2 py-3 w-1/4 cursor-pointer"
+        onClick={() => onContactClick(contact)}
+      >
+        <div className="text-sm text-gray-600 truncate" title={contact.title || "No title"}>
+          {truncateTitle(contact.title || "")}
+        </div>
+      </td>
+
+      {/* Location */}
+      <td
+        className="px-2 py-3 w-1/6 cursor-pointer"
+        onClick={() => onContactClick(contact)}
+      >
+        <div className="text-sm text-gray-600 truncate">
+          {contact.city || "—"}
+        </div>
+      </td>
+
+      {/* Temperature */}
+      <td
+        className="px-2 py-3 w-16 cursor-pointer"
+        onClick={() => onContactClick(contact)}
+      >
+        {contact.temperature && (
+          <div className="flex justify-center">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                contact.temperature === 'hot'
+                  ? 'bg-red-500'
+                  : contact.temperature === 'warm'
+                  ? 'bg-orange-400'
+                  : 'bg-blue-400'
+              }`}
+              title={contact.temperature.charAt(0).toUpperCase() + contact.temperature.slice(1)}
+            />
+          </div>
+        )}
+      </td>
+
+      {/* Signals */}
+      <td
+        className="px-2 py-3 w-1/3 cursor-pointer"
+        onClick={() => onContactClick(contact)}
+      >
+        <SignalState
+          signals={contact.signals}
+          contactId={contact.id}
+        />
+      </td>
+    </tr>
+  );
+});
+
+ContactRow.displayName = 'ContactRow';
 
 
 
@@ -132,114 +240,6 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
     setSelectedContact(contact)
     setDrawerOpen(true)
   }, []);
-
-  // Memoized render contacts function with reduced padding
-  const renderContacts = useMemo(() =>
-    (contacts: DashboardContact[]) =>
-      contacts.map((contact) => {
-        const isSelected = selectedContacts.has(contact.id);
-        // Determine ring state once
-        const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
-        const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
-        const isTracked = contact.isTracked;
-
-        return (
-          <tr
-            key={contact.id}
-            className={`hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''}`}
-          >
-            {/* Checkbox */}
-            <td className="px-4 py-3 w-12">
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={() => onContactSelect(contact.id, {
-                  isTracked: contact.isTracked,
-                  primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
-                  primaryAnalysisRequested: contact.primaryAnalysisRequested,
-                  full_name: contact.full_name
-                })}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </td>
-
-            {/* Name */}
-            <td
-              className="px-4 py-3 w-1/4 cursor-pointer"
-              onClick={() => handleContactClick(contact)}
-              data-testid="sample-contact"
-            >
-              <div className="flex items-center gap-3">
-                <RingState
-                  green={hasAnalysisCompleted}
-                  golden={isTracked}
-                  requested={hasAnalysisRequested}
-                  profilePicture={contact.profile_picture}
-                  fullName={contact.full_name}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {contact.full_name || "Unknown"}
-                  </div>
-                </div>
-              </div>
-            </td>
-
-            {/* Title */}
-            <td
-              className="px-2 py-3 w-1/4 cursor-pointer"
-              onClick={() => handleContactClick(contact)}
-            >
-              <div className="text-sm text-gray-600 truncate" title={contact.title || "No title"}>
-                {truncateTitle(contact.title || "")}
-              </div>
-            </td>
-
-            {/* Location */}
-            <td
-              className="px-2 py-3 w-1/6 cursor-pointer"
-              onClick={() => handleContactClick(contact)}
-            >
-              <div className="text-sm text-gray-600 truncate">
-                {contact.city || "—"}
-              </div>
-            </td>
-
-            {/* Temperature */}
-            <td
-              className="px-2 py-3 w-16 cursor-pointer"
-              onClick={() => handleContactClick(contact)}
-            >
-              {contact.temperature && (
-                <div className="flex justify-center">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      contact.temperature === 'hot'
-                        ? 'bg-red-500'
-                        : contact.temperature === 'warm'
-                        ? 'bg-orange-400'
-                        : 'bg-blue-400'
-                    }`}
-                    title={contact.temperature.charAt(0).toUpperCase() + contact.temperature.slice(1)}
-                  />
-                </div>
-              )}
-            </td>
-
-            {/* Signals */}
-            <td
-              className="px-2 py-3 w-1/3 cursor-pointer"
-              onClick={() => handleContactClick(contact)}
-            >
-              <SignalState
-                signals={contact.signals}
-                contactId={contact.id}
-              />
-            </td>
-
-          </tr>
-        );
-      })
-    , [handleContactClick, selectedContacts, onContactSelect]);
 
   // Toggle individual group collapse
   const toggleGroupCollapse = useCallback((groupId: string) => {
@@ -353,44 +353,53 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                 </div>
               </div>
 
-              {/* Contact List - Only show if not collapsed */}
-              {!isCollapsed && (
-                <div className="overflow-hidden">
-                  <table className="w-full table-fixed">
-                    <thead>
-                      <tr className="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
-                        <th className="px-4 py-2 text-left font-medium w-12">
-                          <Checkbox
-                            checked={
-                              (group.contacts?.length || 0) > 0 &&
-                              group.contacts?.every(contact => selectedContacts.has(contact.id))
-                            }
-                            onCheckedChange={() => onSelectAll(
-                              group.contacts?.map(contact => ({
-                                id: contact.id,
-                                data: {
-                                  isTracked: contact.isTracked,
-                                  primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
-                                  primaryAnalysisRequested: contact.primaryAnalysisRequested,
-                                  full_name: contact.full_name
-                                }
-                              })) || []
-                            )}
-                          />
-                        </th>
-                        <th className="px-4 py-2 text-left font-medium w-1/4">Name</th>
-                        <th className="px-2 py-2 text-left font-medium w-1/4">Title</th>
-                        <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
-                        <th className="px-2 py-2 text-center font-medium w-16"></th>
-                        <th className="px-2 py-2 text-left font-medium w-1/3">Signals</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {renderContacts(group.contacts || [])}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              {/* Contact List - Always rendered, visibility controlled by CSS */}
+              <div
+                className="overflow-hidden"
+                style={{ display: isCollapsed ? 'none' : 'block' }}
+              >
+                <table className="w-full table-fixed">
+                  <thead>
+                    <tr className="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
+                      <th className="px-4 py-2 text-left font-medium w-12">
+                        <Checkbox
+                          checked={
+                            (group.contacts?.length || 0) > 0 &&
+                            group.contacts?.every(contact => selectedContacts.has(contact.id))
+                          }
+                          onCheckedChange={() => onSelectAll(
+                            group.contacts?.map(contact => ({
+                              id: contact.id,
+                              data: {
+                                isTracked: contact.isTracked,
+                                primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+                                primaryAnalysisRequested: contact.primaryAnalysisRequested,
+                                full_name: contact.full_name
+                              }
+                            })) || []
+                          )}
+                        />
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium w-1/4">Name</th>
+                      <th className="px-2 py-2 text-left font-medium w-1/4">Title</th>
+                      <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
+                      <th className="px-2 py-2 text-center font-medium w-16"></th>
+                      <th className="px-2 py-2 text-left font-medium w-1/3">Signals</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(group.contacts || []).map((contact) => (
+                      <ContactRow
+                        key={contact.id}
+                        contact={contact}
+                        isSelected={selectedContacts.has(contact.id)}
+                        onContactSelect={onContactSelect}
+                        onContactClick={handleContactClick}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           );
         })}

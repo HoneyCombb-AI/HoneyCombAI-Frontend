@@ -28,6 +28,7 @@ import {
   Rows2,
   FileUp,
   Download,
+  Trash2,
 } from "lucide-react";
 import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
@@ -549,6 +550,81 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     }
   };
 
+  const handleDeleteContacts = async () => {
+    if (selectedContacts.size === 0) {
+      toast.error("No contacts selected for deletion");
+      return;
+    }
+
+    const selectedContactsArray = Array.from(selectedContacts.entries());
+    const selectedContactIds = selectedContactsArray.map(([id]) => id);
+
+    // Check for in-progress contacts
+    const inProgressContacts = selectedContactsArray.filter(
+      ([, data]) => data.primaryAnalysisRequested && !data.primaryAnalysisCompleted
+    );
+    const deletableContacts = selectedContactsArray.filter(
+      ([, data]) => !data.primaryAnalysisRequested || data.primaryAnalysisCompleted
+    );
+
+    // Build confirmation message
+    let confirmMessage = '';
+    if (inProgressContacts.length > 0 && deletableContacts.length > 0) {
+      confirmMessage = `You have selected ${selectedContactIds.length} contact(s).\n\n` +
+        `${deletableContacts.length} contact(s) will be deleted.\n` +
+        `${inProgressContacts.length} contact(s) are in-progress and cannot be deleted.\n\n` +
+        `Do you want to proceed with deleting ${deletableContacts.length} contact(s)? This action cannot be undone.`;
+    } else if (inProgressContacts.length > 0 && deletableContacts.length === 0) {
+      toast.error(`All selected contacts are in-progress and cannot be deleted.`);
+      return;
+    } else {
+      confirmMessage = `Are you sure you want to delete ${deletableContacts.length} contact(s)? This action cannot be undone.`;
+    }
+
+    // Confirm deletion
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      setEnrichmentLoading(true);
+
+      const response = await axios.post('/api/contacts/delete', {
+        contact_ids: selectedContactIds
+      });
+
+      if (response.data.success) {
+        const { deleted_count, skipped_count } = response.data;
+
+        if (deleted_count > 0 && skipped_count > 0) {
+          toast.success(
+            `Deleted ${deleted_count} contact(s). ${skipped_count} contact(s) are in-progress and were skipped.`
+          );
+        } else if (deleted_count > 0) {
+          toast.success(`Successfully deleted ${deleted_count} contact(s)`);
+        } else if (skipped_count > 0) {
+          toast.error(`${skipped_count} contact(s) are in-progress and cannot be deleted.`);
+        }
+
+        setSelectedContacts(new Map());
+        fetchDashboardData();
+      } else {
+        toast.error(response.data.message || "Failed to delete contacts");
+      }
+    } catch (error) {
+      console.error('Delete failed:', error);
+
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const errorData = error.response.data;
+        toast.error(errorData.message || "Failed to delete contacts");
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setEnrichmentLoading(false);
+    }
+  };
+
   // Check if any filters are applied
   const hasFiltersApplied = () => {
     return (
@@ -574,184 +650,280 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
       {/* Enhanced Actions Bar */}
       <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Group Controls */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild data-testid="group-dropdown">
-              <Button variant="outline" size="sm" className="gap-2 text-sm">
-                <Building2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Group:</span>
-                <span>
-                  {groupBy === "none" ? "None" : groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
-                </span>
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => handleGroupByChange("none")}>
-                <Building2 className="h-4 w-4 mr-2" />
-                None
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleGroupByChange("company")}>
-                <Building2 className="h-4 w-4 mr-2" />
-                Company
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleGroupByChange("location")}
+        <div className="flex flex-wrap items-center gap-2 transition-all duration-300">
+          {/* Browse Mode Controls - Hidden when contacts are selected */}
+          {selectedContacts.size === 0 && (
+            <>
+              {/* Group Controls */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild data-testid="group-dropdown">
+                  <Button variant="outline" size="sm" className="gap-2 text-sm">
+                    <Building2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Group:</span>
+                    <span>
+                      {groupBy === "none" ? "None" : groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
+                    </span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => handleGroupByChange("none")}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    None
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleGroupByChange("company")}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Company
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => handleGroupByChange("location")}
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Location
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleGroupByChange("signals")}>
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Signals
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Location Type Filter - only show when groupBy is location */}
+              {groupBy === "location" && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 text-sm">
+                      <MapPin className="h-4 w-4" />
+                      <span className="hidden sm:inline">Location:</span>
+                      <span>
+                        {locationType.charAt(0).toUpperCase() +
+                          locationType.slice(1)}
+                      </span>
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onSelect={() => handleLocationTypeChange("country")}
+                    >
+                      Country
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => handleLocationTypeChange("state")}
+                    >
+                      State
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => handleLocationTypeChange("city")}
+                    >
+                      City
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {/* Sort Controls - Fixed to Name only with sort order toggle */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 text-sm"
+                onClick={handleSortOrderToggle}
               >
-                <MapPin className="h-4 w-4 mr-2" />
-                Location
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleGroupByChange("signals")}>
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Signals
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {sortOrder === "asc" ? (
+                  <SortAsc className="h-4 w-4" />
+                ) : (
+                  <SortDesc className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Sort:</span>
+                <span>Name</span>
+              </Button>
 
-          {/* Location Type Filter - only show when groupBy is location */}
-          {groupBy === "location" && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2 text-sm">
-                  <MapPin className="h-4 w-4" />
-                  <span className="hidden sm:inline">Location:</span>
-                  <span>
-                    {locationType.charAt(0).toUpperCase() +
-                      locationType.slice(1)}
-                  </span>
-                  <ChevronDown className="h-3 w-3" />
+              {/* Search Input with Button */}
+              <div className="relative">
+                <Search
+                  onClick={handleSearchSubmit}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black"
+                />
+                <Input
+                  placeholder="Search contacts..."
+                  value={searchInput}
+                  onChange={handleSearchInputChange}
+                  className="pl-10 w-64"
+                  data-testid="search-input"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearchSubmit();
+                    }
+                  }}
+                />
+              </div>
+              {/* Clear All Filters - only show when filters are applied */}
+              {hasFiltersApplied() && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="gap-2 text-gray-500"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="hidden sm:inline">Clear All</span>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => handleLocationTypeChange("country")}
-                >
-                  Country
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => handleLocationTypeChange("state")}
-                >
-                  State
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => handleLocationTypeChange("city")}
-                >
-                  City
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Sort Controls - Fixed to Name only with sort order toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-sm"
-            onClick={handleSortOrderToggle}
-          >
-            {sortOrder === "asc" ? (
-              <SortAsc className="h-4 w-4" />
-            ) : (
-              <SortDesc className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">Sort:</span>
-            <span>Name ({sortOrder === "asc" ? "A-Z" : "Z-A"})</span>
-          </Button>
-
-          {/* Search Input with Button */}
-          <div className="relative">
-            <Search
-              onClick={handleSearchSubmit}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black"
-            />
-            <Input
-              placeholder="Search contacts..."
-              value={searchInput}
-              onChange={handleSearchInputChange}
-              className="pl-10 w-64"
-              data-testid="search-input"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSearchSubmit();
-                }
-              }}
-            />
-          </div>
-          {/* Clear All Filters - only show when filters are applied */}
-          {hasFiltersApplied() && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAllFilters}
-              className="gap-2 text-gray-500"
-            >
-              <X className="h-4 w-4" />
-              <span className="hidden sm:inline">Clear All</span>
-            </Button>
+              )}
+            </>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Page Size Control */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 text-sm">
-                <span>Show {pageLimit}</span>
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => handleLimitChange(10)}>
-                10 per page
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleLimitChange(20)}>
-                20 per page
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleLimitChange(50)}>
-                50 per page
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleLimitChange(100)}>
-                100 per page
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild data-testid="insert-dropdown">
-              <Button size="sm" className="gap-2 text-sm">
-                <ChevronDown className="h-3 w-3" />
-                <span className="hidden sm:inline">Insert</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setAddContactDrawerOpen(true)}>
-                <Rows2 className="h-4 w-4" />
-                <span>Add Contact</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setImportContactsDrawerOpen(true)}>
-                <FileUp className="h-4 w-4 mr-2" />
-                <span>Import data from CSV</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Browse Mode Controls - Hidden when contacts are selected */}
+          {selectedContacts.size === 0 && (
+            <>
+              {/* Page Size Control */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2 text-sm h-9">
+                    <span>Show {pageLimit}</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => handleLimitChange(10)}>
+                    10 per page
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleLimitChange(20)}>
+                    20 per page
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleLimitChange(50)}>
+                    50 per page
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleLimitChange(100)}>
+                    100 per page
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild data-testid="insert-dropdown">
+                  <Button size="sm" className="gap-2 text-sm h-9">
+                    <ChevronDown className="h-3 w-3" />
+                    <span className="hidden sm:inline">Insert</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setAddContactDrawerOpen(true)}>
+                    <Rows2 className="h-4 w-4" />
+                    <span>Add Contact</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setImportContactsDrawerOpen(true)}>
+                    <FileUp className="h-4 w-4 mr-2" />
+                    <span>Import data from CSV</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
 
-          {/* Export to CSV Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2 text-sm"
-            disabled={selectedContacts.size === 0 || exportLoading}
-            onClick={handleExportToCSV}
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {exportLoading ? "Exporting..." : "Export to CSV"}
-            </span>
-            <span className="sm:hidden">
-              {exportLoading ? "Exporting..." : "Export"}
-            </span>
-            {/* {!exportLoading && selectedContacts.size > 0 && ` (${selectedContacts.size})`} */}
-          </Button>
+          {/* Action Mode Controls - Shown only when contacts are selected */}
+          {selectedContacts.size > 0 && (
+            <>
+              {/* Export to CSV Button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 text-sm h-9"
+                disabled={exportLoading}
+                onClick={handleExportToCSV}
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {exportLoading ? "Exporting..." : "Export to CSV"}
+                </span>
+                <span className="sm:hidden">
+                  {exportLoading ? "Exporting..." : "Export"}
+                </span>
+              </Button>
+
+              {/* Add Enrichment Button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium h-9"
+                    disabled={enrichmentLoading}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">
+                      {enrichmentLoading ? "Processing..." : "Add enrichment"}
+                    </span>
+                    <span className="sm:hidden">
+                      {enrichmentLoading ? "Processing..." : "Enrich"}
+                    </span>
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {contactStates.hasEligible && (
+                    <DropdownMenuItem
+                      onSelect={() => handleEnrichmentAction("complete_contact_workflow")}
+                    >
+                      {getEnrichmentButtonText()}
+                    </DropdownMenuItem>
+                  )}
+                  {contactStates.hasEligibleForTracking && (
+                    <>
+                      <DropdownMenuItem
+                        onSelect={() => handleEnrichmentAction("outreach_enrichment")}
+                      >
+                        {getOutreachButtonText()}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => handleTrackingToggle()}
+                      >
+                        {getTrackingButtonText()}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {!contactStates.hasEligibleForTracking && selectedContacts.size > 0 && (
+                    <>
+                      <DropdownMenuItem disabled>
+                        {getOutreachButtonText()}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled>
+                        {getTrackingButtonText()}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Delete Button */}
+              <Button
+                size="sm"
+                variant="destructive"
+                className="gap-2 text-sm h-9"
+                disabled={enrichmentLoading}
+                onClick={handleDeleteContacts}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  Delete ({selectedContacts.size})
+                </span>
+                <span className="sm:hidden">
+                  Delete
+                </span>
+              </Button>
+
+              {/* Clear Selection Button */}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="gap-2 text-sm h-9"
+                onClick={() => setSelectedContacts(new Map())}
+              >
+                <X className="h-4 w-4" />
+                <span className="hidden sm:inline">Clear Selection</span>
+                <span className="sm:hidden">Clear</span>
+              </Button>
+            </>
+          )}
 
           {/* Add Contact Drawer */}
           <AddContactDrawer
@@ -774,61 +946,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             selectedContacts={selectedContacts}
             onSubmit={() => fetchDashboardData()}
           />
-
-          {/* Add Enrichment Button */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
-              <Button
-                size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium"
-                disabled={selectedContacts.size === 0 || enrichmentLoading}
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {enrichmentLoading ? "Processing..." : "Add enrichment"}{" "}
-                  {/* {!enrichmentLoading && selectedContacts.size > 0 && `(${selectedContacts.size})`} */}
-                </span>
-                <span className="sm:hidden">
-                  {enrichmentLoading ? "Processing..." : "Enrich"}{" "}
-                  {!enrichmentLoading && selectedContacts.size > 0 && `(${selectedContacts.size})`}
-                </span>
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {contactStates.hasEligible && (
-                <DropdownMenuItem
-                  onSelect={() => handleEnrichmentAction("complete_contact_workflow")}
-                >
-                  {getEnrichmentButtonText()}
-                </DropdownMenuItem>
-              )}
-              {contactStates.hasEligibleForTracking && (
-                <>
-                  <DropdownMenuItem
-                    onSelect={() => handleEnrichmentAction("outreach_enrichment")}
-                  >
-                    {getOutreachButtonText()}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => handleTrackingToggle()}
-                  >
-                    {getTrackingButtonText()}
-                  </DropdownMenuItem>
-                </>
-              )}
-              {!contactStates.hasEligibleForTracking && selectedContacts.size > 0 && (
-                <>
-                  <DropdownMenuItem disabled>
-                    {getOutreachButtonText()}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    {getTrackingButtonText()}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 

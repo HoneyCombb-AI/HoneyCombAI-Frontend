@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, MoreHorizontal, MapPin } from 'lucide-react';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -44,6 +44,113 @@ interface ProcessedGroup {
     avgEmployees?: number;
   };
 }
+
+// Memoized Company Row Component
+const CompanyRow = memo<{
+  company: DashboardCompany;
+  isSelected: boolean;
+  onCompanySelect: (companyId: string, companyData: CompanyValidationData) => void;
+  onCompanyClick: (company: DashboardCompany) => void;
+}>(({ company, isSelected, onCompanySelect, onCompanyClick }) => {
+  const topNudges = company.nudges?.slice(0, 3) || [];
+  const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
+  const hasAnalysisCompleted = company.company_analysis_completed;
+  const hasNewsRequested = company.news_requested;
+
+  return (
+    <tr
+      className={`hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''}`}
+    >
+      {/* Checkbox */}
+      <td className="px-4 py-3 w-12">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onCompanySelect(company.id, {
+            company_analysis_completed: company.company_analysis_completed,
+            company_analysis_requested: company.company_analysis_requested,
+            news_requested: company.news_requested,
+            name: company.name
+          })}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </td>
+
+      {/* Company Name */}
+      <td
+        className="px-4 py-3 w-1/3 cursor-pointer"
+        onClick={() => onCompanyClick(company)}
+        data-testid="sample-company"
+      >
+        <div className="flex items-center gap-3">
+          <RingState
+            green={hasAnalysisCompleted}
+            golden={hasNewsRequested}
+            requested={hasAnalysisRequested}
+            profilePicture={company.logo_url}
+            fullName={company.name}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium text-gray-900 truncate">
+              {company.name || "Unknown"}
+            </div>
+          </div>
+        </div>
+      </td>
+
+      <td
+        className="px-2 py-3 w-1/4 cursor-pointer"
+        onClick={() => onCompanyClick(company)}
+      >
+        <div className="text-sm text-gray-600 truncate" title={company.industry || "No industry"}>
+          {company.industry || "—"}
+        </div>
+      </td>
+
+      <td
+        className="px-2 py-3 w-1/6 cursor-pointer"
+        onClick={() => onCompanyClick(company)}
+      >
+        <div className="text-sm text-gray-600 flex items-center gap-1">
+          <MapPin className="h-3 w-3" />
+          {company.city || company.country || "—"}
+        </div>
+      </td>
+
+      <td
+        className="px-2 py-3 w-1/12 cursor-pointer"
+        onClick={() => onCompanyClick(company)}
+      >
+        <div className="text-sm text-gray-600 text-center">
+          {company.contact_count}
+        </div>
+      </td>
+
+      <td
+        className="px-2 py-3 w-1/4 cursor-pointer"
+        onClick={() => onCompanyClick(company)}
+      >
+        <div className="flex flex-wrap gap-1">
+          {topNudges.length > 0 ? (
+            topNudges.map((nudge, idx) => (
+              <Badge
+                key={idx}
+                variant="outline"
+                className="text-xs px-2 py-1 bg-green-50 text-green-700 border-green-200"
+                title={nudge.description}
+              >
+                {nudge.intent}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-sm text-gray-400">—</span>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+});
+
+CompanyRow.displayName = 'CompanyRow';
 
 
 const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, selectedCompanies, onCompanySelect, onSelectAll }) => {
@@ -127,112 +234,6 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
     setSelectedCompany(company);
     setDrawerOpen(true);
   }, []);
-
-  const renderCompanies = useMemo(() =>
-    (companies: DashboardCompany[]) =>
-      companies.map((company) => {
-        const topNudges = company.nudges?.slice(0, 3) || [];
-        const isSelected = selectedCompanies.has(company.id);
-        
-        // Determine ring state for company
-        const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
-        const hasAnalysisCompleted = company.company_analysis_completed;
-        const hasNewsRequested = company.news_requested;
-
-        return (
-          <tr
-            key={company.id}
-            className={`hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''}`}
-          >
-            {/* Checkbox */}
-            <td className="px-4 py-3 w-12">
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={() => onCompanySelect(company.id, {
-                  company_analysis_completed: company.company_analysis_completed,
-                  company_analysis_requested: company.company_analysis_requested,
-                  news_requested: company.news_requested,
-                  name: company.name
-                })}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </td>
-            
-            {/* Company Name */}
-            <td 
-              className="px-4 py-3 w-1/3 cursor-pointer"
-              onClick={() => handleCompanyClick(company)}
-              data-testid="sample-company"
-            >
-              <div className="flex items-center gap-3">
-                <RingState
-                  green={hasAnalysisCompleted}
-                  golden={hasNewsRequested}
-                  requested={hasAnalysisRequested}
-                  profilePicture={company.logo_url}
-                  fullName={company.name}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {company.name || "Unknown"}
-                  </div>
-                </div>
-              </div>
-            </td>
-
-            <td 
-              className="px-2 py-3 w-1/4 cursor-pointer"
-              onClick={() => handleCompanyClick(company)}
-            >
-              <div className="text-sm text-gray-600 truncate" title={company.industry || "No industry"}>
-                {company.industry || "—"}
-              </div>
-            </td>
-
-            <td 
-              className="px-2 py-3 w-1/6 cursor-pointer"
-              onClick={() => handleCompanyClick(company)}
-            >
-              <div className="text-sm text-gray-600 flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                {company.city || company.country || "—"}
-              </div>
-            </td>
-
-            <td 
-              className="px-2 py-3 w-1/12 cursor-pointer"
-              onClick={() => handleCompanyClick(company)}
-            >
-              <div className="text-sm text-gray-600 text-center">
-                {company.contact_count}
-              </div>
-            </td>
-
-            <td 
-              className="px-2 py-3 w-1/4 cursor-pointer"
-              onClick={() => handleCompanyClick(company)}
-            >
-              <div className="flex flex-wrap gap-1">
-                {topNudges.length > 0 ? (
-                  topNudges.map((nudge, idx) => (
-                    <Badge
-                      key={idx}
-                      variant="outline"
-                      className="text-xs px-2 py-1 bg-green-50 text-green-700 border-green-200"
-                      title={nudge.description}
-                    >
-                      {nudge.intent}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-sm text-gray-400">—</span>
-                )}
-              </div>
-            </td>
-          </tr>
-        );
-      })
-    , [handleCompanyClick, selectedCompanies, onCompanySelect]);
 
   const toggleGroupCollapse = useCallback((groupId: string) => {
     setCollapsedGroups(prev => {
@@ -328,43 +329,53 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                 </div>
               </div>
 
-              {!isCollapsed && (
-                <div className="overflow-hidden">
-                  <table className="w-full table-fixed">
-                    <thead>
-                      <tr className="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
-                        <th className="px-4 py-2 text-left font-medium w-12">
-                          <Checkbox
-                            checked={
-                              group.companies.length > 0 && 
-                              group.companies.every(company => selectedCompanies.has(company.id))
-                            }
-                            onCheckedChange={() => onSelectAll(
-                              group.companies.map(company => ({
-                                id: company.id,
-                                data: {
-                                  company_analysis_completed: company.company_analysis_completed,
-                                  company_analysis_requested: company.company_analysis_requested,
-                                  news_requested: company.news_requested,
-                                  name: company.name
-                                }
-                              }))
-                            )}
-                          />
-                        </th>
-                        <th className="px-4 py-2 text-left font-medium w-1/3">Company</th>
-                        <th className="px-2 py-2 text-left font-medium w-1/4">Industry</th>
-                        <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
-                        <th className="px-2 py-2 text-left font-medium w-1/12">Contacts</th>
-                        <th className="px-2 py-2 text-left font-medium w-1/4">Signals</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {renderCompanies(group.companies)}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              {/* Company List - Always rendered, visibility controlled by CSS */}
+              <div
+                className="overflow-hidden"
+                style={{ display: isCollapsed ? 'none' : 'block' }}
+              >
+                <table className="w-full table-fixed">
+                  <thead>
+                    <tr className="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
+                      <th className="px-4 py-2 text-left font-medium w-12">
+                        <Checkbox
+                          checked={
+                            group.companies.length > 0 &&
+                            group.companies.every(company => selectedCompanies.has(company.id))
+                          }
+                          onCheckedChange={() => onSelectAll(
+                            group.companies.map(company => ({
+                              id: company.id,
+                              data: {
+                                company_analysis_completed: company.company_analysis_completed,
+                                company_analysis_requested: company.company_analysis_requested,
+                                news_requested: company.news_requested,
+                                name: company.name
+                              }
+                            }))
+                          )}
+                        />
+                      </th>
+                      <th className="px-4 py-2 text-left font-medium w-1/3">Company</th>
+                      <th className="px-2 py-2 text-left font-medium w-1/4">Industry</th>
+                      <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
+                      <th className="px-2 py-2 text-left font-medium w-1/12">Contacts</th>
+                      <th className="px-2 py-2 text-left font-medium w-1/4">Signals</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.companies.map((company) => (
+                      <CompanyRow
+                        key={company.id}
+                        company={company}
+                        isSelected={selectedCompanies.has(company.id)}
+                        onCompanySelect={onCompanySelect}
+                        onCompanyClick={handleCompanyClick}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           );
         })}
