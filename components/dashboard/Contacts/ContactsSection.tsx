@@ -158,15 +158,6 @@ const ContactRow = memo<{
       </td>
     </tr>
   );
-}, (prevProps, nextProps) => {
-  // Custom comparison: only re-render if these specific props changed
-  return (
-    prevProps.contact.id === nextProps.contact.id &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.contact.primaryAnalysisCompleted === nextProps.contact.primaryAnalysisCompleted &&
-    prevProps.contact.primaryAnalysisRequested === nextProps.contact.primaryAnalysisRequested &&
-    prevProps.contact.isTracked === nextProps.contact.isTracked
-  );
 });
 
 ContactRow.displayName = 'ContactRow';

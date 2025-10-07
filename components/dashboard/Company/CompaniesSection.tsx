@@ -148,15 +148,6 @@ const CompanyRow = memo<{
       </td>
     </tr>
   );
-}, (prevProps, nextProps) => {
-  // Custom comparison: only re-render if these specific props changed
-  return (
-    prevProps.company.id === nextProps.company.id &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.company.company_analysis_completed === nextProps.company.company_analysis_completed &&
-    prevProps.company.company_analysis_requested === nextProps.company.company_analysis_requested &&
-    prevProps.company.news_requested === nextProps.company.news_requested
-  );
 });
 
 CompanyRow.displayName = 'CompanyRow';
