@@ -152,12 +152,20 @@ export const rateLimiters = {
       keyPrefix: 'onboarding_user'
     }),
 
-  // Support message operations  
+  // Support message operations
   supportPerIP: (ip: string) =>
     RateLimiter.checkLimit(ip, {
       limit: 2,
       windowSeconds: 3600, // 1 hour
       keyPrefix: 'support_ip'
+    }),
+
+  // Delete operations
+  deletePerUser: (userId: string) =>
+    RateLimiter.checkLimit(userId, {
+      limit: 15,
+      windowSeconds: 3600, // 1 hour
+      keyPrefix: 'delete_user'
     })
 };
 
