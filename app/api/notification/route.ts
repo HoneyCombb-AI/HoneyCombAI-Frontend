@@ -45,41 +45,73 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Group notifications by type and get the most recent from each group
-    const groupedNotifications = new Map()
-    const groupCounts = new Map()
+    // Separate notifications by read status
+    const unreadNotifications = allNotifications?.filter(n => !n.is_read) || []
+    const readNotifications = allNotifications?.filter(n => n.is_read) || []
 
-    allNotifications?.forEach(notification => {
+    // Group unread notifications by type
+    const unreadGroups = new Map()
+    const unreadCounts = new Map()
+
+    unreadNotifications.forEach(notification => {
       const type = notification.type || 'default'
+      unreadCounts.set(type, (unreadCounts.get(type) || 0) + 1)
 
-      // Count total notifications in this group
-      groupCounts.set(type, (groupCounts.get(type) || 0) + 1)
-
-      // Keep only the most recent notification for each type (already sorted by created_at desc)
-      if (!groupedNotifications.has(type)) {
-        groupedNotifications.set(type, {
+      if (!unreadGroups.has(type)) {
+        unreadGroups.set(type, {
           id: notification.id,
           message: notification.text,
           type: notification.type,
           batch_id: notification.batch_id,
-          is_read: notification.is_read,
+          is_read: false,
           created_at: notification.created_at,
-          group_count: 0 // Will be set below
+          group_count: 0
         })
       }
     })
 
-    // Set group counts
-    groupedNotifications.forEach((notification, type) => {
-      notification.group_count = groupCounts.get(type) || 1
+    // Set group counts for unread
+    unreadGroups.forEach((notification, type) => {
+      notification.group_count = unreadCounts.get(type) || 1
     })
 
-    // Convert to array and apply pagination
-    const transformedNotifications = Array.from(groupedNotifications.values())
-      .slice(offset, offset + limit)
+    // Group read notifications by type
+    const readGroups = new Map()
+    const readCounts = new Map()
+
+    readNotifications.forEach(notification => {
+      const type = notification.type || 'default'
+      readCounts.set(type, (readCounts.get(type) || 0) + 1)
+
+      if (!readGroups.has(type)) {
+        readGroups.set(type, {
+          id: notification.id,
+          message: notification.text,
+          type: notification.type,
+          batch_id: notification.batch_id,
+          is_read: true,
+          created_at: notification.created_at,
+          group_count: 0
+        })
+      }
+    })
+
+    // Set group counts for read
+    readGroups.forEach((notification, type) => {
+      notification.group_count = readCounts.get(type) || 1
+    })
+
+    // Combine unread first (priority), then read notifications
+    const combinedGroups = [
+      ...Array.from(unreadGroups.values()),
+      ...Array.from(readGroups.values())
+    ]
+
+    // Apply pagination
+    const transformedNotifications = combinedGroups.slice(offset, offset + limit)
 
     // Get total count of groups (past 3 days only)
-    const totalGroups = groupedNotifications.size
+    const totalGroups = combinedGroups.length
 
     return NextResponse.json({
       success: true,
