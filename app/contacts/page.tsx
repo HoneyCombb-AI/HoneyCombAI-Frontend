@@ -556,25 +556,56 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       return;
     }
 
-    const selectedContactIds = Array.from(selectedContacts.keys());
-    const contactNames = Array.from(selectedContacts.values()).map(data => data.full_name).join(', ');
+    const selectedContactsArray = Array.from(selectedContacts.entries());
+    const selectedContactIds = selectedContactsArray.map(([id]) => id);
+
+    // Check for in-progress contacts
+    const inProgressContacts = selectedContactsArray.filter(
+      ([, data]) => data.primaryAnalysisRequested && !data.primaryAnalysisCompleted
+    );
+    const deletableContacts = selectedContactsArray.filter(
+      ([, data]) => !data.primaryAnalysisRequested || data.primaryAnalysisCompleted
+    );
+
+    // Build confirmation message
+    let confirmMessage = '';
+    if (inProgressContacts.length > 0 && deletableContacts.length > 0) {
+      confirmMessage = `You have selected ${selectedContactIds.length} contact(s).\n\n` +
+        `${deletableContacts.length} contact(s) will be deleted.\n` +
+        `${inProgressContacts.length} contact(s) are in-progress and cannot be deleted.\n\n` +
+        `Do you want to proceed with deleting ${deletableContacts.length} contact(s)? This action cannot be undone.`;
+    } else if (inProgressContacts.length > 0 && deletableContacts.length === 0) {
+      toast.error(`All selected contacts are in-progress and cannot be deleted.`);
+      return;
+    } else {
+      confirmMessage = `Are you sure you want to delete ${deletableContacts.length} contact(s)? This action cannot be undone.`;
+    }
 
     // Confirm deletion
-    if (!confirm(`Are you sure you want to delete ${selectedContactIds.length} contact(s)? This action cannot be undone.`)) {
+    if (!confirm(confirmMessage)) {
       return;
     }
 
     try {
       setEnrichmentLoading(true);
 
-      const response = await axios.delete('/api/contacts', {
-        data: {
-          contact_ids: selectedContactIds
-        }
+      const response = await axios.post('/api/contacts/delete', {
+        contact_ids: selectedContactIds
       });
 
       if (response.data.success) {
-        toast.success(`Successfully deleted ${selectedContactIds.length} contact(s)`);
+        const { deleted_count, skipped_count } = response.data;
+
+        if (deleted_count > 0 && skipped_count > 0) {
+          toast.success(
+            `Deleted ${deleted_count} contact(s). ${skipped_count} contact(s) are in-progress and were skipped.`
+          );
+        } else if (deleted_count > 0) {
+          toast.success(`Successfully deleted ${deleted_count} contact(s)`);
+        } else if (skipped_count > 0) {
+          toast.error(`${skipped_count} contact(s) are in-progress and cannot be deleted.`);
+        }
+
         setSelectedContacts(new Map());
         fetchDashboardData();
       } else {
