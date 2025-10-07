@@ -159,6 +159,8 @@ const CompanyRow = memo<{
   );
 });
 
+CompanyRow.displayName = 'CompanyRow';
+
 
 const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, selectedCompanies, onCompanySelect, onSelectAll }) => {
   const groups = useMemo<ProcessedGroup[]>(() => {

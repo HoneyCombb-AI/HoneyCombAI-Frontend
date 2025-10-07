@@ -169,6 +169,8 @@ const ContactRow = memo<{
   );
 });
 
+ContactRow.displayName = 'ContactRow';
+
 
 
 const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, selectedContacts, onContactSelect, onSelectAll }) => {
