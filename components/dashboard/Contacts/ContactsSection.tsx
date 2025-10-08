@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal, Edit3, Tag } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import React, { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
@@ -48,11 +48,6 @@ interface ProcessedGroup {
   };
 }
 
-const truncateTitle = (title: string) => {
-  if (!title) return "No title";
-  const words = title.split(' ');
-  return words.length > 3 ? words.slice(0, 3).join(' ') + '...' : title;
-};
 
 // Memoized Contact Row Component
 const ContactRow = memo<{
@@ -83,9 +78,9 @@ const ContactRow = memo<{
         />
       </td>
 
-      {/* Name */}
+      {/* Name with Title */}
       <td
-        className="px-4 py-3 w-1/4 cursor-pointer"
+        className="px-4 py-3 w-1/5 cursor-pointer"
         onClick={() => onContactClick(contact)}
         data-testid="sample-contact"
       >
@@ -101,23 +96,28 @@ const ContactRow = memo<{
             <div className="text-sm font-medium text-gray-900 truncate">
               {contact.full_name || "Unknown"}
             </div>
+            {contact.title && (
+              <div className="text-xs text-gray-500 mt-0.5" title={contact.title}>
+                {contact.title}
+              </div>
+            )}
           </div>
         </div>
       </td>
 
-      {/* Title */}
+      {/* Company */}
       <td
-        className="px-2 py-3 w-1/4 cursor-pointer"
+        className="px-2 py-3 w-[15%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
-        <div className="text-sm text-gray-600 truncate" title={contact.title || "No title"}>
-          {truncateTitle(contact.title || "")}
+        <div className="text-sm text-gray-600" title={contact.company?.name || "No company"}>
+          {contact.company?.name || "—"}
         </div>
       </td>
 
       {/* Location */}
       <td
-        className="px-2 py-3 w-1/6 cursor-pointer"
+        className="px-2 py-3 w-[12%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
         <div className="text-sm text-gray-600 truncate">
@@ -125,9 +125,39 @@ const ContactRow = memo<{
         </div>
       </td>
 
+      {/* Actions */}
+      <td className="px-2 py-3 w-[10%]">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              // TODO: Handle edit notes
+            }}
+            title="Edit notes"
+          >
+            <Edit3 className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              // TODO: Handle add tag
+            }}
+            title="Add tag"
+          >
+            <Tag className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </td>
+
       {/* Temperature */}
       <td
-        className="px-2 py-3 w-16 cursor-pointer"
+        className="px-2 py-3 w-[8%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
         {contact.temperature && (
@@ -146,9 +176,22 @@ const ContactRow = memo<{
         )}
       </td>
 
+      {/* Tags */}
+      <td
+        className="px-2 py-3 w-[15%] cursor-pointer"
+        onClick={() => onContactClick(contact)}
+      >
+        <div className="flex flex-wrap gap-1">
+          {/* TODO: Replace with actual tags from contact data */}
+          {/* Placeholder for now - using outlined style different from temperature */}
+          {/* Example: */}
+          {/* <span className="text-xs px-2 py-0.5 border border-gray-300 rounded-md text-gray-700">Tag1</span> */}
+        </div>
+      </td>
+
       {/* Signals */}
       <td
-        className="px-2 py-3 w-1/3 cursor-pointer"
+        className="px-2 py-3 w-1/4 cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
         <SignalState
@@ -380,11 +423,13 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                           )}
                         />
                       </th>
-                      <th className="px-4 py-2 text-left font-medium w-1/4">Name</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/4">Title</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
-                      <th className="px-2 py-2 text-center font-medium w-16"></th>
-                      <th className="px-2 py-2 text-left font-medium w-1/3">Signals</th>
+                      <th className="px-4 py-2 text-left font-medium w-1/5">Name</th>
+                      <th className="px-2 py-2 text-left font-medium w-[15%]">Company</th>
+                      <th className="px-2 py-2 text-left font-medium w-[12%]">Location</th>
+                      <th className="px-2 py-2 text-left font-medium w-[10%]">Actions</th>
+                      <th className="px-2 py-2 text-center font-medium w-[8%]"></th>
+                      <th className="px-2 py-2 text-left font-medium w-[15%]">Tags</th>
+                      <th className="px-2 py-2 text-left font-medium w-1/4">Signals</th>
                     </tr>
                   </thead>
                   <tbody>
