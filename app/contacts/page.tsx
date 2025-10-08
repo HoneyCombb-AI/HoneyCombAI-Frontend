@@ -29,6 +29,7 @@ import {
   FileUp,
   Download,
   Trash2,
+  Tag,
 } from "lucide-react";
 import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
@@ -41,6 +42,7 @@ import type {
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
+import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
 import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
@@ -114,6 +116,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
   const [outreachDrawerOpen, setOutreachDrawerOpen] = useState(false);
+  const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
@@ -824,6 +827,18 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           {/* Action Mode Controls - Shown only when contacts are selected */}
           {selectedContacts.size > 0 && (
             <>
+              {/* Manage Tags Button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 text-sm h-9"
+                onClick={() => setTagsDrawerOpen(true)}
+              >
+                <Tag className="h-4 w-4" />
+                <span className="hidden sm:inline">Manage Tags</span>
+                <span className="sm:hidden">Tags</span>
+              </Button>
+
               {/* Export to CSV Button */}
               <Button
                 size="sm"
@@ -945,6 +960,15 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             onOpenChange={setOutreachDrawerOpen}
             selectedContacts={selectedContacts}
             onSubmit={() => fetchDashboardData()}
+          />
+
+          {/* Tags Drawer */}
+          <TagsDrawer
+            open={tagsDrawerOpen}
+            onOpenChange={setTagsDrawerOpen}
+            selectedItems={Array.from(selectedContacts.keys())}
+            taggableType="contact"
+            onTagsUpdated={() => fetchDashboardData()}
           />
         </div>
       </div>

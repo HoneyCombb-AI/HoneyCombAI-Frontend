@@ -1,0 +1,231 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { rateLimiters } from '@/app/api/utils/rate-limiter';
+
+interface TagUpdate {
+  id: string;
+  name?: string;
+  color?: string;
+}
+
+interface UpdateTagsRequest {
+  updates: TagUpdate[];
+}
+
+interface UpdateTagsResponse {
+  success: boolean;
+  tags?: Array<{
+    id: string;
+    taggable_type: string;
+    taggable_id: string;
+    name: string;
+    color: string;
+    created_at: string;
+  }>;
+  error?: string;
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Apply rate limiting
+    const rateLimit = await rateLimiters.createPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Update rate limit exceeded. Please wait before updating more tags.'
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '50',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
+      );
+    }
+
+    // Parse request body
+    const body: UpdateTagsRequest = await req.json();
+
+    // Validate request structure
+    if (!body.updates || !Array.isArray(body.updates) || body.updates.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Updates array is required and must not be empty' },
+        { status: 400 }
+      );
+    }
+
+    // Validate each update
+    for (const update of body.updates) {
+      if (!update.id || typeof update.id !== 'string') {
+        return NextResponse.json(
+          { success: false, error: 'Each update must have a valid tag id' },
+          { status: 400 }
+        );
+      }
+
+      if (!update.name && !update.color) {
+        return NextResponse.json(
+          { success: false, error: 'Each update must include at least name or color' },
+          { status: 400 }
+        );
+      }
+
+      // Validate color if provided
+      if (update.color && !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(update.color)) {
+        return NextResponse.json(
+          { success: false, error: 'Color must be a valid hex code (e.g., #FF5733)' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Get all tag IDs to verify ownership
+    const tagIds = body.updates.map(u => u.id);
+
+    // Verify ownership through contacts/companies
+    const { data: existingTags, error: fetchError } = await supabase
+      .from('tags')
+      .select('id, taggable_type, taggable_id')
+      .in('id', tagIds);
+
+    if (fetchError || !existingTags || existingTags.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'No tags found with the provided IDs' },
+        { status: 404 }
+      );
+    }
+
+    // Verify that all requested tags exist
+    if (existingTags.length !== tagIds.length) {
+      return NextResponse.json(
+        { success: false, error: 'Some tag IDs were not found' },
+        { status: 404 }
+      );
+    }
+
+    // Verify ownership for each tag
+    for (const tag of existingTags) {
+      if (tag.taggable_type === 'contact') {
+        const { data: contact, error: contactError } = await supabase
+          .from('contacts')
+          .select('id, user_id')
+          .eq('id', tag.taggable_id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (contactError || !contact) {
+          return NextResponse.json(
+            { success: false, error: `Unauthorized to update tag for contact ${tag.taggable_id}` },
+            { status: 403 }
+          );
+        }
+      } else if (tag.taggable_type === 'company') {
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .select('id, user_id')
+          .eq('id', tag.taggable_id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (companyError || !company) {
+          return NextResponse.json(
+            { success: false, error: `Unauthorized to update tag for company ${tag.taggable_id}` },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
+    // Perform batch updates
+    const updatePromises = body.updates.map(update => {
+      const updateData: { name?: string; color?: string } = {};
+
+      if (update.name) {
+        updateData.name = update.name.trim();
+      }
+
+      if (update.color) {
+        updateData.color = update.color.trim().toUpperCase();
+      }
+
+      return supabase
+        .from('tags')
+        .update(updateData)
+        .eq('id', update.id)
+        .select('*')
+        .single();
+    });
+
+    const results = await Promise.all(updatePromises);
+
+    // Check for errors
+    const errors = results.filter(r => r.error);
+    if (errors.length > 0) {
+      console.error('Error updating tags:', errors);
+
+      // Handle unique constraint violations
+      const uniqueError = errors.find(e => e.error?.code === '23505');
+      if (uniqueError) {
+        const errorMessage = uniqueError.error?.message || '';
+        if (errorMessage.includes('unique_taggable_tag_name')) {
+          return NextResponse.json(
+            { success: false, error: 'Tag name already exists for this contact/company' },
+            { status: 409 }
+          );
+        }
+        if (errorMessage.includes('unique_taggable_tag_color')) {
+          return NextResponse.json(
+            { success: false, error: 'Tag color is already in use for this contact/company' },
+            { status: 409 }
+          );
+        }
+      }
+
+      return NextResponse.json(
+        { success: false, error: 'Failed to update some tags' },
+        { status: 500 }
+      );
+    }
+
+    const updatedTags = results
+      .filter(r => r.data)
+      .map(r => r.data!);
+
+    const response: UpdateTagsResponse = {
+      success: true,
+      tags: updatedTags.map(tag => ({
+        id: tag.id,
+        taggable_type: tag.taggable_type,
+        taggable_id: tag.taggable_id,
+        name: tag.name,
+        color: tag.color,
+        created_at: tag.created_at,
+      }))
+    };
+
+    return NextResponse.json(response);
+
+  } catch (error: unknown) {
+    console.error('API /api/tags/update error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json(
+      { success: false, error: errorMessage },
+      { status: 500 }
+    );
+  }
+}
