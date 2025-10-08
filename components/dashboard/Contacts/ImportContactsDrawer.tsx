@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState } from "react"
 import { useDropzone } from "react-dropzone"
-import { FileUp, Upload, X } from "lucide-react"
+import { FileUp, Upload, X, AlertCircle, Download } from "lucide-react"
 import { toast } from "sonner"
 import axios from "axios"
 
@@ -15,6 +15,8 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 
 interface ImportContactsDrawerProps {
   onSubmit?: (file: File) => void
@@ -28,13 +30,61 @@ const customDrawerStyles = {
   maxWidth: '45vw'
 };
 
+// CSV Template data
+const CSV_HEADERS = [
+  'full_name',
+  'title',
+  'email',
+  'phone',
+  'city',
+  'state',
+  'country',
+  'linkedin_url',
+  'twitter_profile',
+  'instagram_profile',
+  'company_name',
+  'company_url'
+];
+
+const SAMPLE_ROWS = [
+  {
+    full_name: 'John Doe',
+    title: 'CEO',
+    email: 'john@example.com',
+    phone: '+1234567890',
+    city: 'San Francisco',
+    state: 'CA',
+    country: 'USA',
+    linkedin_url: 'https://linkedin.com/in/johndoe',
+    twitter_profile: 'https://twitter.com/johndoe',
+    instagram_profile: 'https://instagram.com/johndoe',
+    company_name: 'Example Corp',
+    company_url: 'https://example.com'
+  },
+  {
+    full_name: 'Jane Smith',
+    title: 'CTO',
+    email: 'jane@techco.com',
+    phone: '+1987654321',
+    city: 'New York',
+    state: 'NY',
+    country: 'USA',
+    linkedin_url: 'https://linkedin.com/in/janesmith',
+    twitter_profile: '',
+    instagram_profile: '',
+    company_name: 'Tech Co',
+    company_url: 'https://techco.com'
+  }
+];
+
 export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen, onOpenChange }: ImportContactsDrawerProps) {
   const [internalOpen, setInternalOpen] = React.useState(false)
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
-  
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [copiedHeader, setCopiedHeader] = useState<string | null>(null)
 
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -126,6 +176,37 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
     setOpen(false)
   }
 
+  const downloadTemplate = () => {
+    const csvContent = [
+      CSV_HEADERS.join(','),
+      ...SAMPLE_ROWS.map(row =>
+        CSV_HEADERS.map(header => {
+          const value = row[header as keyof typeof row] || ''
+          // Escape values that contain commas
+          return value.includes(',') ? `"${value}"` : value
+        }).join(',')
+      )
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'contacts_import_template.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+    toast.success('Template downloaded!')
+  }
+
+  const copyHeader = (header: string) => {
+    navigator.clipboard.writeText(header)
+    setCopiedHeader(header)
+    toast.success(`"${header}" copied to clipboard!`)
+    setTimeout(() => setCopiedHeader(null), 2000)
+  }
+
   return (
     <Drawer direction="right" open={open} onOpenChange={setOpen}>
       {children && (
@@ -195,32 +276,181 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                 </div>
               </div>
 
-              {/* CSV Format Instructions */}
+              {/* Important Alert - CSV Format */}
+              <Alert className="border-amber-200 bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertTitle className="text-amber-900 font-semibold">Important: CSV Format Requirements</AlertTitle>
+                <AlertDescription className="text-amber-800">
+                  <p className="mb-3">Click on any header below to copy it to your clipboard. Headers are case-sensitive and must match exactly.</p>
+
+                  {/* Download Template Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadTemplate}
+                    className="w-full border-amber-300 text-amber-900 hover:bg-amber-100"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download CSV Template with Examples
+                  </Button>
+                </AlertDescription>
+              </Alert>
+
+              {/* Field Requirements */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Expected CSV Format</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-xs text-gray-600 mb-2">Your CSV should include these columns:</p>
-                  <code className="text-xs bg-white px-2 py-1 rounded border block">
-                    full_name, title, email, phone, city, state, country, linkedin_url, twitter_profile, instagram_profile, company_name, company_url
-                  </code>
-                  <div className="mt-3 space-y-1">
-                    <p className="text-xs text-gray-600 font-medium">Required fields:</p>
-                    <p className="text-xs text-gray-500">
-                      • Contact: full_name
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      • Social Media: At least one of linkedin_url, twitter_profile, or instagram_profile
-                    </p>
-                    <p className="text-xs text-gray-600 font-medium mt-2">Optional fields:</p>
-                    <p className="text-xs text-gray-500">
-                      • Contact details: title, email, phone
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      • Location: city, state, country
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      • Company: company_name, company_url (both required if providing company info)
-                    </p>
+                <h3 className="text-sm font-semibold text-foreground">CSV Column Headers</h3>
+
+                <div className="space-y-3">
+                  {/* Required Fields */}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="destructive" className="text-xs">Required</Badge>
+                      <span className="text-sm font-medium text-red-900">Must include these headers:</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <code
+                        onClick={() => copyHeader('full_name')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'full_name'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-red-300 text-red-900 hover:bg-red-100'
+                        }`}
+                      >
+                        full_name
+                      </code>
+                      <div className="text-xs text-red-800 ml-2 mb-2">At least ONE social media profile:</div>
+                      <code
+                        onClick={() => copyHeader('linkedin_url')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'linkedin_url'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-red-300 text-red-900 hover:bg-red-100'
+                        }`}
+                      >
+                        linkedin_url
+                      </code>
+                      <code
+                        onClick={() => copyHeader('twitter_profile')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'twitter_profile'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-red-300 text-red-900 hover:bg-red-100'
+                        }`}
+                      >
+                        twitter_profile
+                      </code>
+                      <code
+                        onClick={() => copyHeader('instagram_profile')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'instagram_profile'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-red-300 text-red-900 hover:bg-red-100'
+                        }`}
+                      >
+                        instagram_profile
+                      </code>
+                    </div>
+                  </div>
+
+                  {/* Optional Fields */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-900 border-blue-300">Optional</Badge>
+                      <span className="text-sm font-medium text-blue-900">Additional headers (optional):</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <code
+                        onClick={() => copyHeader('title')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'title'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
+                        }`}
+                      >
+                        title
+                      </code>
+                      <code
+                        onClick={() => copyHeader('email')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'email'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
+                        }`}
+                      >
+                        email
+                      </code>
+                      <code
+                        onClick={() => copyHeader('phone')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'phone'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
+                        }`}
+                      >
+                        phone
+                      </code>
+                      <code
+                        onClick={() => copyHeader('city')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'city'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
+                        }`}
+                      >
+                        city
+                      </code>
+                      <code
+                        onClick={() => copyHeader('state')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'state'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
+                        }`}
+                      >
+                        state
+                      </code>
+                      <code
+                        onClick={() => copyHeader('country')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'country'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
+                        }`}
+                      >
+                        country
+                      </code>
+                    </div>
+                  </div>
+
+                  {/* Company Info - Required Together */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="outline" className="text-xs bg-amber-100 text-amber-900 border-amber-300">Required Together</Badge>
+                      <span className="text-sm font-medium text-amber-900">Company info (both required if providing company):</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <code
+                        onClick={() => copyHeader('company_name')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'company_name'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-amber-300 text-amber-900 hover:bg-amber-100'
+                        }`}
+                      >
+                        company_name
+                      </code>
+                      <code
+                        onClick={() => copyHeader('company_url')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'company_url'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-amber-300 text-amber-900 hover:bg-amber-100'
+                        }`}
+                      >
+                        company_url
+                      </code>
+                    </div>
                   </div>
                 </div>
               </div>
