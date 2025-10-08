@@ -6,7 +6,7 @@ import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 const EXPECTED_HEADERS = [
   'full_name',
-  'title', 
+  'title',
   'email',
   'phone',
   'city',
@@ -16,7 +16,12 @@ const EXPECTED_HEADERS = [
   'twitter_profile',
   'instagram_profile',
   'company_name',
-  'company_url'
+  'company_url',
+  'company_linkedin_url',
+  'company_industry',
+  'company_city',
+  'company_state',
+  'company_country'
 ];
 
 interface CSVContactData {
@@ -32,6 +37,11 @@ interface CSVContactData {
   instagram_profile: string;
   company_name: string;
   company_url: string;
+  company_linkedin_url: string;
+  company_industry: string;
+  company_city: string;
+  company_state: string;
+  company_country: string;
 }
 
 interface OrganizationStatus {
