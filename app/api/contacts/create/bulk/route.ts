@@ -77,27 +77,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Apply bulk import rate limiting
-    const rateLimit = await rateLimiters.bulkImportPerUser(user.id);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Bulk import rate limit exceeded. Please wait before importing again.',
-          details: `You can import again at ${new Date(rateLimit.resetTime).toISOString()}`
-        } as BulkImportResponse,
-        {
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': '5',
-            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
-            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
-          }
-        }
-      );
-    }
-
     // Parse form data to get CSV file
     const formData = await request.formData();
     const file = formData.get('csv') as File;
@@ -213,11 +192,32 @@ export async function POST(request: NextRequest) {
     // Check if organization has completed onboarding
     if (!orgStatus.is_organization_onboarded) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Your organization hasn\'t completed onboarding yet. Please contact support to complete onboarding before bulk importing contacts.' 
+          error: 'Your organization hasn\'t completed onboarding yet. Please contact support to complete onboarding before bulk importing contacts.'
         } as BulkImportResponse,
         { status: 403 }
+      );
+    }
+
+    // Apply bulk import rate limiting (after all validations pass)
+    const rateLimit = await rateLimiters.bulkImportPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Bulk import rate limit exceeded. Please wait before importing again.',
+          details: `You can import again at ${new Date(rateLimit.resetTime).toISOString()}`
+        } as BulkImportResponse,
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
       );
     }
 
