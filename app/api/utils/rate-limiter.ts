@@ -166,8 +166,16 @@ export const rateLimiters = {
       limit: 15,
       windowSeconds: 3600, // 1 hour
       keyPrefix: 'delete_user'
-    })
+    }),
+
+    TagsPerUser: (userId: string) =>
+      RateLimiter.checkLimit(userId, {
+        limit: 200,
+        windowSeconds: 3600, // 1 hour
+        keyPrefix: 'create_user'
+      }),
 };
+
 
 export function getRealIP(request: Request): string {
   // Try to get real IP from common headers

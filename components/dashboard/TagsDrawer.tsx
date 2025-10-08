@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { X, Plus, Edit2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -68,12 +68,20 @@ export function TagsDrawer({
   const [editTagName, setEditTagName] = useState("")
   const [editTagColor, setEditTagColor] = useState("")
 
-  // Fetch existing tags for selected items
+  // Store all tags (including duplicates) for edit/delete operations
+  const [allTagsData, setAllTagsData] = useState<Tag[]>([])
+
+  // Create a stable key from selected items to prevent unnecessary re-fetches
+  const selectedItemsKey = useMemo(() => {
+    return selectedItems.sort().join(',')
+  }, [selectedItems.join(',')])
+
+  // Fetch existing tags for selected items - only when drawer opens or items change
   useEffect(() => {
     if (open && selectedItems.length > 0) {
       fetchExistingTags()
     }
-  }, [open, selectedItems])
+  }, [open, selectedItemsKey, taggableType])
 
   const fetchExistingTags = async () => {
     setLoading(true)
@@ -85,8 +93,11 @@ export function TagsDrawer({
         }
       })
 
-      // Get unique tags (deduplicate by name for display)
+      // Store all tags (including duplicates) for later use in edit/delete
       const allTags = (response.data.tags || []) as Tag[]
+      setAllTagsData(allTags)
+
+      // Get unique tags (deduplicate by name for display)
       const uniqueTags = Array.from(
         new Map(allTags.map((tag: Tag) => [tag.name, tag])).values()
       ) as Tag[]
@@ -100,6 +111,7 @@ export function TagsDrawer({
         toast.error("Failed to load existing tags")
       }
       setExistingTags([])
+      setAllTagsData([])
     } finally {
       setLoading(false)
     }
@@ -158,16 +170,8 @@ export function TagsDrawer({
 
     setLoading(true)
     try {
-      // Fetch all tag IDs for this tag name across selected items
-      const response = await axios.get('/api/tags/fetch', {
-        params: {
-          taggable_ids: selectedItems.join(','),
-          taggable_type: taggableType
-        }
-      })
-
-      const allTags = (response.data.tags || []) as Tag[]
-      const tagIdsToUpdate = allTags
+      // Use stored tag data instead of refetching
+      const tagIdsToUpdate = allTagsData
         .filter(tag => tag.name === editingTag.name)
         .map(tag => tag.id)
 
@@ -206,16 +210,8 @@ export function TagsDrawer({
   const handleRemoveTag = async (tagName: string) => {
     setLoading(true)
     try {
-      // Fetch all tag IDs for this tag name across selected items
-      const response = await axios.get('/api/tags/fetch', {
-        params: {
-          taggable_ids: selectedItems.join(','),
-          taggable_type: taggableType
-        }
-      })
-
-      const allTags = (response.data.tags || []) as Tag[]
-      const tagIdsToDelete = allTags
+      // Use stored tag data instead of refetching
+      const tagIdsToDelete = allTagsData
         .filter(tag => tag.name === tagName)
         .map(tag => tag.id)
 

@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimit = await rateLimiters.createPerUser(user.id);
+    const rateLimit = await rateLimiters.TagsPerUser(user.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
@@ -69,9 +69,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch tags for the specified items in a single query
+    // Note: Only select needed fields to reduce data transfer
     const { data: tags, error: fetchError } = await supabase
       .from('tags')
-      .select('*')
+      .select('id, taggable_type, taggable_id, name, color, created_at')
       .eq('taggable_type', taggableType)
       .in('taggable_id', taggableIds)
       .order('created_at', { ascending: false });

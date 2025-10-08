@@ -26,7 +26,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimit = await rateLimiters.createPerUser(user.id);
+    const rateLimit = await rateLimiters.TagsPerUser(user.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
