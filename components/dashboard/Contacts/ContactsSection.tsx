@@ -15,6 +15,7 @@ import type {
 import { ContactsDrawer } from './ContactsDrawer';
 import { RingState } from '../Ring-state';
 import { SignalState } from '../Signal-state';
+import { ContactTags } from '../Tags';
 
 type DashboardResponse = CompanyGroupResponse | SignalGroupResponse | LocationGroupResponse | SearchResponse;
 
@@ -173,36 +174,24 @@ const ContactRow = memo<{
 
       {/* Tags */}
       <td
-        className="px-2 py-3 w-[10%] cursor-pointer"
+        className="px-2 py-3 w-[8%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
-        <div className="flex items-center gap-1.5">
-          {/* TODO: Replace with actual tags from contact data */}
-          {/* Each tag gets a consistent color based on tag name hash */}
-          <div className="relative group">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-              VIP
-            </div>
-          </div>
-          <div className="relative group">
-            <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-              Follow-up
-            </div>
-          </div>
-          <div className="relative group">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-              Partner
-            </div>
-          </div>
-        </div>
+        {/* TODO: Replace with actual tags from contact data */}
+        <ContactTags
+          tags={[
+            { id: '1', name: 'VIP', color: '#3B82F6' },
+            { id: '5', name: 'VIP', color: '#3B82F6' },
+            { id: '6', name: 'VIP', color: '#3B82F6' },
+            { id: '2', name: 'Follow-up', color: '#A855F7' },
+            { id: '3', name: 'Partner', color: '#10B981' },
+          ]}
+        />
       </td>
 
       {/* Signals */}
       <td
-        className="px-2 py-3 w-1/4 cursor-pointer"
+        className="px-2 py-3 w-[27%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
         <SignalState
@@ -439,8 +428,8 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                       <th className="px-2 py-2 text-left font-medium w-[12%]">Location</th>
                       <th className="px-2 py-2 text-left font-medium w-[6%]">Actions</th>
                       <th className="px-2 py-2 text-center font-medium w-[10%]">Heat</th>
-                      <th className="px-2 py-2 text-left font-medium w-[10%]">Tags</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/4">Signals</th>
+                      <th className="px-2 py-2 text-left font-medium w-[8%]">Tags</th>
+                      <th className="px-2 py-2 text-left font-medium w-[27%]">Signals</th>
                     </tr>
                   </thead>
                   <tbody>
