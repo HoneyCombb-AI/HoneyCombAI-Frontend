@@ -68,51 +68,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Verify ownership of contacts/companies
-    if (taggableType === 'contact') {
-      const { data: contacts, error: contactError } = await supabase
-        .from('contacts')
-        .select('id')
-        .in('id', taggableIds)
-        .eq('user_id', user.id);
-
-      if (contactError) {
-        console.error('Error verifying contacts:', contactError);
-        return NextResponse.json(
-          { success: false, error: 'Failed to verify contact ownership' },
-          { status: 500 }
-        );
-      }
-
-      if (!contacts || contacts.length === 0) {
-        return NextResponse.json(
-          { success: false, error: 'No contacts found or unauthorized' },
-          { status: 403 }
-        );
-      }
-    } else if (taggableType === 'company') {
-      const { data: companies, error: companyError } = await supabase
-        .from('companies')
-        .select('id')
-        .in('id', taggableIds)
-        .eq('user_id', user.id);
-
-      if (companyError) {
-        console.error('Error verifying companies:', companyError);
-        return NextResponse.json(
-          { success: false, error: 'Failed to verify company ownership' },
-          { status: 500 }
-        );
-      }
-
-      if (!companies || companies.length === 0) {
-        return NextResponse.json(
-          { success: false, error: 'No companies found or unauthorized' },
-          { status: 403 }
-        );
-      }
-    }
-
     // Fetch tags for the specified items in a single query
     const { data: tags, error: fetchError } = await supabase
       .from('tags')

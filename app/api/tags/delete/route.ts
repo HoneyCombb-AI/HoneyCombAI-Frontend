@@ -66,60 +66,6 @@ export async function DELETE(req: NextRequest) {
       }
     }
 
-    // Get all tags to verify ownership
-    const { data: existingTags, error: fetchError } = await supabase
-      .from('tags')
-      .select('id, taggable_type, taggable_id')
-      .in('id', body.tag_ids);
-
-    if (fetchError) {
-      console.error('Error fetching tags:', fetchError);
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch tags' },
-        { status: 500 }
-      );
-    }
-
-    if (!existingTags || existingTags.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No tags found with the provided IDs' },
-        { status: 404 }
-      );
-    }
-
-    // Verify ownership for each tag
-    for (const tag of existingTags) {
-      if (tag.taggable_type === 'contact') {
-        const { data: contact, error: contactError } = await supabase
-          .from('contacts')
-          .select('id, user_id')
-          .eq('id', tag.taggable_id)
-          .eq('user_id', user.id)
-          .single();
-
-        if (contactError || !contact) {
-          return NextResponse.json(
-            { success: false, error: `Unauthorized to delete tag for contact ${tag.taggable_id}` },
-            { status: 403 }
-          );
-        }
-      } else if (tag.taggable_type === 'company') {
-        const { data: company, error: companyError } = await supabase
-          .from('companies')
-          .select('id, user_id')
-          .eq('id', tag.taggable_id)
-          .eq('user_id', user.id)
-          .single();
-
-        if (companyError || !company) {
-          return NextResponse.json(
-            { success: false, error: `Unauthorized to delete tag for company ${tag.taggable_id}` },
-            { status: 403 }
-          );
-        }
-      }
-    }
-
     // Perform batch delete in a single database call
     const { error: deleteError, count } = await supabase
       .from('tags')

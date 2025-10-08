@@ -123,39 +123,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Verify ownership of contacts/companies
-    for (const operation of body.operations) {
-      if (operation.taggable_type === 'contact') {
-        const { data: contact, error: contactError } = await supabase
-          .from('contacts')
-          .select('id, user_id')
-          .eq('id', operation.taggable_id)
-          .eq('user_id', user.id)
-          .single();
-
-        if (contactError || !contact) {
-          return NextResponse.json(
-            { success: false, error: `Contact ${operation.taggable_id} not found or unauthorized` },
-            { status: 404 }
-          );
-        }
-      } else if (operation.taggable_type === 'company') {
-        const { data: company, error: companyError } = await supabase
-          .from('companies')
-          .select('id, user_id')
-          .eq('id', operation.taggable_id)
-          .eq('user_id', user.id)
-          .single();
-
-        if (companyError || !company) {
-          return NextResponse.json(
-            { success: false, error: `Company ${operation.taggable_id} not found or unauthorized` },
-            { status: 404 }
-          );
-        }
-      }
-    }
-
     // Flatten operations into tag records for batch insert
     const tagsToInsert = body.operations.flatMap(operation =>
       operation.tags.map(tag => ({

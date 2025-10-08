@@ -94,63 +94,6 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // Get all tag IDs to verify ownership
-    const tagIds = body.updates.map(u => u.id);
-
-    // Verify ownership through contacts/companies
-    const { data: existingTags, error: fetchError } = await supabase
-      .from('tags')
-      .select('id, taggable_type, taggable_id')
-      .in('id', tagIds);
-
-    if (fetchError || !existingTags || existingTags.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No tags found with the provided IDs' },
-        { status: 404 }
-      );
-    }
-
-    // Verify that all requested tags exist
-    if (existingTags.length !== tagIds.length) {
-      return NextResponse.json(
-        { success: false, error: 'Some tag IDs were not found' },
-        { status: 404 }
-      );
-    }
-
-    // Verify ownership for each tag
-    for (const tag of existingTags) {
-      if (tag.taggable_type === 'contact') {
-        const { data: contact, error: contactError } = await supabase
-          .from('contacts')
-          .select('id, user_id')
-          .eq('id', tag.taggable_id)
-          .eq('user_id', user.id)
-          .single();
-
-        if (contactError || !contact) {
-          return NextResponse.json(
-            { success: false, error: `Unauthorized to update tag for contact ${tag.taggable_id}` },
-            { status: 403 }
-          );
-        }
-      } else if (tag.taggable_type === 'company') {
-        const { data: company, error: companyError } = await supabase
-          .from('companies')
-          .select('id, user_id')
-          .eq('id', tag.taggable_id)
-          .eq('user_id', user.id)
-          .single();
-
-        if (companyError || !company) {
-          return NextResponse.json(
-            { success: false, error: `Unauthorized to update tag for company ${tag.taggable_id}` },
-            { status: 403 }
-          );
-        }
-      }
-    }
-
     // Perform batch updates
     const updatePromises = body.updates.map(update => {
       const updateData: { name?: string; color?: string } = {};
