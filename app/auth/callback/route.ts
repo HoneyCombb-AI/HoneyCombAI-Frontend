@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         const { data: defaultOrg } = await supabase
           .from('organizations')
           .select('id')
-          .eq('invite_code', 'SI9FCogHD_-C')
+          .eq('invite_code', 'yn8DpKxGOB4A')
           .single();
 
         if (defaultOrg) {
