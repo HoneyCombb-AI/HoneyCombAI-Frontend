@@ -12,7 +12,7 @@ interface ContactTagsProps {
 
 export const ContactTags: React.FC<ContactTagsProps> = ({ tags }) => {
   if (!tags || tags.length === 0) {
-    return null;
+    return <span className="text-sm text-gray-400">—</span>;
   }
 
   return (
