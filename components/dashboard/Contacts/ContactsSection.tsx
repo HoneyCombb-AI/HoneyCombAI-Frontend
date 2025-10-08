@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, MoreHorizontal, Edit3, Tag } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal, Edit3 } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import React, { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
@@ -80,7 +80,7 @@ const ContactRow = memo<{
 
       {/* Name with Title */}
       <td
-        className="px-4 py-3 w-1/5 cursor-pointer"
+        className="px-4 py-3 w-[22%] cursor-pointer"
         onClick={() => onContactClick(contact)}
         data-testid="sample-contact"
       >
@@ -107,7 +107,7 @@ const ContactRow = memo<{
 
       {/* Company */}
       <td
-        className="px-2 py-3 w-[15%] cursor-pointer"
+        className="px-2 py-3 w-[18%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
         <div className="text-sm text-gray-600" title={contact.company?.name || "No company"}>
@@ -126,66 +126,77 @@ const ContactRow = memo<{
       </td>
 
       {/* Actions */}
-      <td className="px-2 py-3 w-[10%]">
+      <td className="px-2 py-3 w-[6%]">
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              // TODO: Handle edit notes
-            }}
-            title="Edit notes"
-          >
-            <Edit3 className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              // TODO: Handle add tag
-            }}
-            title="Add tag"
-          >
-            <Tag className="h-3.5 w-3.5" />
-          </Button>
+          <div className="relative group">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: Handle edit notes
+              }}
+            >
+              <Edit3 className="h-3.5 w-3.5" />
+            </Button>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              Edit Notes
+            </div>
+          </div>
         </div>
       </td>
 
-      {/* Temperature */}
+      {/* Heat */}
       <td
-        className="px-2 py-3 w-[8%] cursor-pointer"
+        className="px-2 py-3 w-[10%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
-        {contact.temperature && (
-          <div className="flex justify-center">
-            <div
-              className={`w-2 h-2 rounded-full ${
+        <div className="flex justify-center">
+          {contact.temperature ? (
+            <span
+              className={`text-xs px-2 py-0.5 rounded ${
                 contact.temperature === 'hot'
-                  ? 'bg-red-500'
+                  ? 'bg-red-50 text-red-700'
                   : contact.temperature === 'warm'
-                  ? 'bg-orange-400'
-                  : 'bg-blue-400'
+                  ? 'bg-orange-50 text-orange-700'
+                  : 'bg-blue-50 text-blue-700'
               }`}
-              title={contact.temperature.charAt(0).toUpperCase() + contact.temperature.slice(1)}
-            />
-          </div>
-        )}
+            >
+              {contact.temperature.charAt(0).toUpperCase() + contact.temperature.slice(1)}
+            </span>
+          ) : (
+            <span className="text-sm text-gray-400">—</span>
+          )}
+        </div>
       </td>
 
       {/* Tags */}
       <td
-        className="px-2 py-3 w-[15%] cursor-pointer"
+        className="px-2 py-3 w-[10%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
-        <div className="flex flex-wrap gap-1">
+        <div className="flex items-center gap-1.5">
           {/* TODO: Replace with actual tags from contact data */}
-          {/* Placeholder for now - using outlined style different from temperature */}
-          {/* Example: */}
-          {/* <span className="text-xs px-2 py-0.5 border border-gray-300 rounded-md text-gray-700">Tag1</span> */}
+          {/* Each tag gets a consistent color based on tag name hash */}
+          <div className="relative group">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              VIP
+            </div>
+          </div>
+          <div className="relative group">
+            <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              Follow-up
+            </div>
+          </div>
+          <div className="relative group">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              Partner
+            </div>
+          </div>
         </div>
       </td>
 
@@ -423,12 +434,12 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                           )}
                         />
                       </th>
-                      <th className="px-4 py-2 text-left font-medium w-1/5">Name</th>
-                      <th className="px-2 py-2 text-left font-medium w-[15%]">Company</th>
+                      <th className="px-4 py-2 text-left font-medium w-[22%]">Name</th>
+                      <th className="px-2 py-2 text-left font-medium w-[18%]">Company</th>
                       <th className="px-2 py-2 text-left font-medium w-[12%]">Location</th>
-                      <th className="px-2 py-2 text-left font-medium w-[10%]">Actions</th>
-                      <th className="px-2 py-2 text-center font-medium w-[8%]"></th>
-                      <th className="px-2 py-2 text-left font-medium w-[15%]">Tags</th>
+                      <th className="px-2 py-2 text-left font-medium w-[6%]">Actions</th>
+                      <th className="px-2 py-2 text-center font-medium w-[10%]">Heat</th>
+                      <th className="px-2 py-2 text-left font-medium w-[10%]">Tags</th>
                       <th className="px-2 py-2 text-left font-medium w-1/4">Signals</th>
                     </tr>
                   </thead>
