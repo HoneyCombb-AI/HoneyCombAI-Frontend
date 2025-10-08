@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
       {
         contacts_data: contactsWithRowNumbers,
         p_user_id: user.id,
-        organization_id: orgStatus.organization_id
+        p_organization_id: orgStatus.organization_id
       }
     );
 
