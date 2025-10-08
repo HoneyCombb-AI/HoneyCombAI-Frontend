@@ -43,7 +43,12 @@ const CSV_HEADERS = [
   'twitter_profile',
   'instagram_profile',
   'company_name',
-  'company_url'
+  'company_url',
+  'company_linkedin_url',
+  'company_industry',
+  'company_city',
+  'company_state',
+  'company_country'
 ];
 
 const SAMPLE_ROWS = [
@@ -59,7 +64,12 @@ const SAMPLE_ROWS = [
     twitter_profile: 'https://twitter.com/johndoe',
     instagram_profile: 'https://instagram.com/johndoe',
     company_name: 'Example Corp',
-    company_url: 'https://example.com'
+    company_url: 'https://example.com',
+    company_linkedin_url: 'https://linkedin.com/company/examplecorp',
+    company_industry: 'Technology',
+    company_city: 'San Francisco',
+    company_state: 'CA',
+    company_country: 'USA'
   },
   {
     full_name: 'Jane Smith',
@@ -73,7 +83,12 @@ const SAMPLE_ROWS = [
     twitter_profile: '',
     instagram_profile: '',
     company_name: 'Tech Co',
-    company_url: 'https://techco.com'
+    company_url: 'https://techco.com',
+    company_linkedin_url: 'https://linkedin.com/company/techco',
+    company_industry: 'SaaS',
+    company_city: 'New York',
+    company_state: 'NY',
+    company_country: 'USA'
   }
 ];
 
@@ -357,7 +372,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-900 border-blue-300">Optional</Badge>
-                      <span className="text-sm font-medium text-blue-900">Additional headers (optional):</span>
+                      <span className="text-sm font-medium text-blue-900">Additional headers:</span>
                     </div>
                     <div className="space-y-1.5">
                       <code
@@ -426,8 +441,8 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                   {/* Company Info - Required Together */}
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline" className="text-xs bg-amber-100 text-amber-900 border-amber-300">Required Together</Badge>
-                      <span className="text-sm font-medium text-amber-900">Company info (both required if providing company):</span>
+                      <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-900 border-amber-300">Optional</Badge>
+                      <span className="text-sm font-medium text-amber-900">Company info (if provided, both fields required):</span>
                     </div>
                     <div className="space-y-1.5">
                       <code
@@ -449,6 +464,66 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                         }`}
                       >
                         company_url
+                      </code>
+                    </div>
+                  </div>
+
+                  {/* Additional Company Fields - Optional */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-900 border-purple-300">Optional</Badge>
+                      <span className="text-sm font-medium text-purple-900">Additional company info:</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <code
+                        onClick={() => copyHeader('company_linkedin_url')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'company_linkedin_url'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
+                        }`}
+                      >
+                        company_linkedin_url
+                      </code>
+                      <code
+                        onClick={() => copyHeader('company_industry')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'company_industry'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
+                        }`}
+                      >
+                        company_industry
+                      </code>
+                      <code
+                        onClick={() => copyHeader('company_city')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'company_city'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
+                        }`}
+                      >
+                        company_city
+                      </code>
+                      <code
+                        onClick={() => copyHeader('company_state')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'company_state'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
+                        }`}
+                      >
+                        company_state
+                      </code>
+                      <code
+                        onClick={() => copyHeader('company_country')}
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
+                          copiedHeader === 'company_country'
+                            ? 'bg-green-100 border-green-300 text-green-900'
+                            : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
+                        }`}
+                      >
+                        company_country
                       </code>
                     </div>
                   </div>

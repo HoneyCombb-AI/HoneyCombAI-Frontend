@@ -6,7 +6,7 @@ import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 const EXPECTED_HEADERS = [
   'full_name',
-  'title', 
+  'title',
   'email',
   'phone',
   'city',
@@ -16,7 +16,12 @@ const EXPECTED_HEADERS = [
   'twitter_profile',
   'instagram_profile',
   'company_name',
-  'company_url'
+  'company_url',
+  'company_linkedin_url',
+  'company_industry',
+  'company_city',
+  'company_state',
+  'company_country'
 ];
 
 interface CSVContactData {
@@ -32,6 +37,11 @@ interface CSVContactData {
   instagram_profile: string;
   company_name: string;
   company_url: string;
+  company_linkedin_url: string;
+  company_industry: string;
+  company_city: string;
+  company_state: string;
+  company_country: string;
 }
 
 interface OrganizationStatus {
@@ -64,27 +74,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' } as BulkImportResponse,
         { status: 401 }
-      );
-    }
-
-    // Apply bulk import rate limiting
-    const rateLimit = await rateLimiters.bulkImportPerUser(user.id);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Bulk import rate limit exceeded. Please wait before importing again.',
-          details: `You can import again at ${new Date(rateLimit.resetTime).toISOString()}`
-        } as BulkImportResponse,
-        {
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': '5',
-            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
-            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
-            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
-          }
-        }
       );
     }
 
@@ -203,11 +192,32 @@ export async function POST(request: NextRequest) {
     // Check if organization has completed onboarding
     if (!orgStatus.is_organization_onboarded) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Your organization hasn\'t completed onboarding yet. Please contact support to complete onboarding before bulk importing contacts.' 
+          error: 'Your organization hasn\'t completed onboarding yet. Please contact support to complete onboarding before bulk importing contacts.'
         } as BulkImportResponse,
         { status: 403 }
+      );
+    }
+
+    // Apply bulk import rate limiting (after all validations pass)
+    const rateLimit = await rateLimiters.bulkImportPerUser(user.id);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Bulk import rate limit exceeded. Please wait before importing again.',
+          details: `You can import again at ${new Date(rateLimit.resetTime).toISOString()}`
+        } as BulkImportResponse,
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetTime / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+          }
+        }
       );
     }
 
