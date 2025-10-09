@@ -15,11 +15,12 @@ import {
 } from "@/components/ui/drawer"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
+import axios from "axios"
 
 interface Note {
   id: string
   content: string
-  createdAt: string
+  created_at: string
 }
 
 interface NotesDrawerProps {
@@ -63,32 +64,20 @@ export function NotesDrawer({
   const fetchNotes = useCallback(async () => {
     setLoading(true)
     try {
-      // TODO: Replace with actual API call
-      // const response = await axios.get('/api/notes/fetch', {
-      //   params: {
-      //     notable_id: notableId,
-      //     notable_type: notableType
-      //   }
-      // })
-      // setNotes(response.data.notes || [])
-
-      // Mock data for now
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setNotes([
-        {
-          id: "1",
-          content: "This is a sample note for testing the drawer functionality.",
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: "2",
-          content: "Another note with more details about the contact.",
-          createdAt: new Date(Date.now() - 86400000).toISOString()
+      const response = await axios.get('/api/notes/fetch', {
+        params: {
+          notable_id: notableId,
+          notable_type: notableType
         }
-      ])
+      })
+      setNotes(response.data.notes || [])
     } catch (err) {
       console.error("Error fetching notes:", err)
-      toast.error("Failed to load notes")
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        toast.error(err.response.data.error)
+      } else {
+        toast.error("Failed to load notes")
+      }
       setNotes([])
     } finally {
       setLoading(false)
@@ -109,28 +98,25 @@ export function NotesDrawer({
 
     setIsAdding(true)
     try {
-      // TODO: Replace with actual API call
-      // await axios.post("/api/notes/create", {
-      //   notable_type: notableType,
-      //   notable_id: notableId,
-      //   content: newNoteContent.trim()
-      // })
+      const response = await axios.post("/api/notes/create", {
+        notable_type: notableType,
+        notable_id: notableId,
+        content: newNoteContent.trim()
+      })
 
-      // Mock add for now
-      await new Promise(resolve => setTimeout(resolve, 500))
-      const newNote: Note = {
-        id: Date.now().toString(),
-        content: newNoteContent.trim(),
-        createdAt: new Date().toISOString()
+      if (response.data.success && response.data.note) {
+        setNotes(prev => [response.data.note, ...prev])
+        toast.success("Note added successfully")
+        setNewNoteContent("")
+        onNotesUpdated?.()
       }
-      setNotes(prev => [newNote, ...prev])
-
-      toast.success("Note added successfully")
-      setNewNoteContent("")
-      onNotesUpdated?.()
     } catch (err) {
       console.error("Error adding note:", err)
-      toast.error("Failed to add note")
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        toast.error(err.response.data.error)
+      } else {
+        toast.error("Failed to add note")
+      }
     } finally {
       setIsAdding(false)
     }
@@ -149,27 +135,27 @@ export function NotesDrawer({
 
     setIsUpdating(true)
     try {
-      // TODO: Replace with actual API call
-      // await axios.patch("/api/notes/update", {
-      //   id: editingNote.id,
-      //   content: editNoteContent.trim()
-      // })
+      const response = await axios.patch("/api/notes/update", {
+        id: editingNote.id,
+        content: editNoteContent.trim()
+      })
 
-      // Mock update for now
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setNotes(prev => prev.map(note =>
-        note.id === editingNote.id
-          ? { ...note, content: editNoteContent.trim() }
-          : note
-      ))
-
-      toast.success("Note updated successfully")
-      setEditingNote(null)
-      setEditNoteContent("")
-      onNotesUpdated?.()
+      if (response.data.success && response.data.note) {
+        setNotes(prev => prev.map(note =>
+          note.id === editingNote.id ? response.data.note : note
+        ))
+        toast.success("Note updated successfully")
+        setEditingNote(null)
+        setEditNoteContent("")
+        onNotesUpdated?.()
+      }
     } catch (err) {
       console.error("Error updating note:", err)
-      toast.error("Failed to update note")
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        toast.error(err.response.data.error)
+      } else {
+        toast.error("Failed to update note")
+      }
     } finally {
       setIsUpdating(false)
     }
@@ -178,21 +164,21 @@ export function NotesDrawer({
   const handleDeleteNote = useCallback(async (noteId: string) => {
     setLoading(true)
     try {
-      // TODO: Replace with actual API call
-      // await axios.delete("/api/notes/delete", {
-      //   data: { note_id: noteId }
-      // })
+      await axios.delete("/api/notes/delete", {
+        data: { id: noteId }
+      })
 
-      // Mock delete for now
-      await new Promise(resolve => setTimeout(resolve, 500))
       setNotes(prev => prev.filter(note => note.id !== noteId))
-
       toast.success("Note deleted successfully")
       setDeletingNoteId(null)
       onNotesUpdated?.()
     } catch (err) {
       console.error("Error deleting note:", err)
-      toast.error("Failed to delete note")
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        toast.error(err.response.data.error)
+      } else {
+        toast.error("Failed to delete note")
+      }
       setDeletingNoteId(null)
     } finally {
       setLoading(false)
@@ -210,7 +196,8 @@ export function NotesDrawer({
     const diffInMs = now.getTime() - date.getTime()
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
 
-    if (diffInDays === 0) {
+    // Handle future dates or same-day edge cases (timezone issues)
+    if (diffInDays < 0 || diffInDays === 0) {
       return "Today"
     } else if (diffInDays === 1) {
       return "Yesterday"
@@ -399,7 +386,7 @@ export function NotesDrawer({
                         <div className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <p className="text-xs text-gray-500">
-                              {formatDate(note.createdAt)}
+                              {formatDate(note.created_at)}
                             </p>
                             <div className="flex items-center gap-1">
                               <Button

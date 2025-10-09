@@ -2,25 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
-interface CreateNoteRequest {
-  notable_type: 'contact' | 'company';
-  notable_id: string;
-  content: string;
-}
-
-interface CreateNoteResponse {
+interface FetchNotesResponse {
   success: boolean;
-  note?: {
+  notes?: Array<{
     id: string;
     notable_type: string;
     notable_id: string;
     content: string;
     created_at: string;
-  };
+  }>;
   error?: string;
 }
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
 
@@ -39,7 +33,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Create rate limit exceeded. Please wait before creating more notes.'
+          error: 'Fetch rate limit exceeded. Please wait before fetching more notes.'
         },
         {
           status: 429,
@@ -53,65 +47,57 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse request body
-    const body: CreateNoteRequest = await req.json();
+    // Get query parameters
+    const searchParams = req.nextUrl.searchParams;
+    const notableId = searchParams.get('notable_id');
+    const notableType = searchParams.get('notable_type') as 'contact' | 'company' | null;
 
-    // Validate request structure
-    if (!body.notable_type || !['contact', 'company'].includes(body.notable_type)) {
+    // Validate parameters
+    if (!notableId) {
       return NextResponse.json(
-        { success: false, error: 'notable_type must be either "contact" or "company"' },
+        { success: false, error: 'notable_id query parameter is required' },
         { status: 400 }
       );
     }
 
-    if (!body.notable_id || typeof body.notable_id !== 'string') {
+    if (!notableType || !['contact', 'company'].includes(notableType)) {
       return NextResponse.json(
-        { success: false, error: 'notable_id is required and must be a valid string' },
+        { success: false, error: 'notable_type query parameter must be either "contact" or "company"' },
         { status: 400 }
       );
     }
 
-    if (!body.content?.trim()) {
-      return NextResponse.json(
-        { success: false, error: 'content is required and cannot be empty' },
-        { status: 400 }
-      );
-    }
-
-    // Insert the note
-    const { data: insertedNote, error: insertError } = await supabase
+    // Fetch notes for the specified notable item
+    const { data: notes, error: fetchError } = await supabase
       .from('notes')
-      .insert({
-        notable_type: body.notable_type,
-        notable_id: body.notable_id,
-        content: body.content.trim(),
-      })
-      .select('*')
-      .single();
+      .select('id, notable_type, notable_id, content, created_at')
+      .eq('notable_type', notableType)
+      .eq('notable_id', notableId)
+      .order('created_at', { ascending: false });
 
-    if (insertError) {
-      console.error('Error inserting note:', insertError);
+    if (fetchError) {
+      console.error('Error fetching notes:', fetchError);
       return NextResponse.json(
-        { success: false, error: 'Failed to create note' },
+        { success: false, error: 'Failed to fetch notes' },
         { status: 500 }
       );
     }
 
-    const response: CreateNoteResponse = {
+    const response: FetchNotesResponse = {
       success: true,
-      note: {
-        id: insertedNote.id,
-        notable_type: insertedNote.notable_type,
-        notable_id: insertedNote.notable_id,
-        content: insertedNote.content,
-        created_at: insertedNote.created_at,
-      }
+      notes: notes?.map(note => ({
+        id: note.id,
+        notable_type: note.notable_type,
+        notable_id: note.notable_id,
+        content: note.content,
+        created_at: note.created_at,
+      })) || []
     };
 
     return NextResponse.json(response);
 
   } catch (error: unknown) {
-    console.error('API /api/notes/create error:', error);
+    console.error('API /api/notes/fetch error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
       { success: false, error: errorMessage },
