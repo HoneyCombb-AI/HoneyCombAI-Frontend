@@ -168,7 +168,7 @@ export const rateLimiters = {
       keyPrefix: 'delete_user'
     }),
 
-    TagsPerUser: (userId: string) =>
+    TANPerUser: (userId: string) =>
       RateLimiter.checkLimit(userId, {
         limit: 200,
         windowSeconds: 3600, // 1 hour

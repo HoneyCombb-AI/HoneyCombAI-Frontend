@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Apply rate limiting
-    const rateLimit = await rateLimiters.TagsPerUser(user.id);
+    const rateLimit = await rateLimiters.TANPerUser(user.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
