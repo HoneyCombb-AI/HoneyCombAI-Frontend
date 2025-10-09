@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect, useMemo } from "react"
-import { X, Plus, Edit2, Trash2, Loader2 } from "lucide-react"
+import { X, Plus, Edit2, Trash2, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -297,20 +297,29 @@ export function TagsDrawer({
 
                 <div className="space-y-2">
                   <Label className="text-xs">Color</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-3 p-1">
                     {COLOR_PALETTE.map((color) => (
                       <button
                         key={color.value}
                         onClick={() => setNewTagColor(color.value)}
                         disabled={isAdding}
-                        className={`h-10 rounded-md border-2 transition-all ${
+                        className={`relative h-11 rounded-lg border-2 transition-all duration-200 ${
                           newTagColor === color.value
-                            ? 'border-gray-900 scale-105'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-gray-900 shadow-md scale-105'
+                            : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
                         } ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        style={{ backgroundColor: color.value }}
+                        style={{
+                          backgroundColor: color.value,
+                          boxShadow: newTagColor === color.value ? `0 4px 12px ${color.value}40` : undefined
+                        }}
                         title={color.name}
-                      />
+                      >
+                        {newTagColor === color.value && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Check className="h-5 w-5 text-white drop-shadow-md" strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -377,20 +386,29 @@ export function TagsDrawer({
 
                           <div className="space-y-2">
                             <Label className="text-xs">Color</Label>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-3 gap-2 p-1">
                               {COLOR_PALETTE.map((color) => (
                                 <button
                                   key={color.value}
                                   onClick={() => setEditTagColor(color.value)}
                                   disabled={isUpdating}
-                                  className={`h-8 rounded-md border-2 transition-all ${
+                                  className={`relative h-9 rounded-lg border-2 transition-all duration-200 ${
                                     editTagColor === color.value
-                                      ? 'border-gray-900 scale-105'
-                                      : 'border-gray-200 hover:border-gray-300'
+                                      ? 'border-gray-900 shadow-md scale-105'
+                                      : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
                                   } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                  style={{ backgroundColor: color.value }}
+                                  style={{
+                                    backgroundColor: color.value,
+                                    boxShadow: editTagColor === color.value ? `0 4px 12px ${color.value}40` : undefined
+                                  }}
                                   title={color.name}
-                                />
+                                >
+                                  {editTagColor === color.value && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <Check className="h-4 w-4 text-white drop-shadow-md" strokeWidth={3} />
+                                    </div>
+                                  )}
+                                </button>
                               ))}
                             </div>
                           </div>
