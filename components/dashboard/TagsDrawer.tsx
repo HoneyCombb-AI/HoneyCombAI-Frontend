@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { X, Plus, Edit2, Trash2, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -51,6 +51,53 @@ const COLOR_PALETTE = [
   { name: "Indigo", value: "#6366F1" },
 ]
 
+// Memoized color button component to prevent unnecessary re-renders
+const ColorButton = React.memo(({
+  color,
+  isSelected,
+  isDisabled,
+  usedByTag,
+  onClick,
+  size = "large"
+}: {
+  color: { name: string; value: string }
+  isSelected: boolean
+  isDisabled: boolean
+  usedByTag?: string
+  onClick: () => void
+  size?: "large" | "small"
+}) => {
+  const height = size === "large" ? "h-11" : "h-9"
+  const checkSize = size === "large" ? "h-5 w-5" : "h-4 w-4"
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={isDisabled}
+      className={`relative ${height} rounded-lg border-2 transition-all duration-200 ${
+        isSelected
+          ? 'border-gray-900 shadow-md scale-105'
+          : isDisabled
+          ? 'border-gray-300 opacity-40 cursor-not-allowed'
+          : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
+      }`}
+      style={{
+        backgroundColor: color.value,
+        boxShadow: isSelected ? `0 4px 12px ${color.value}40` : undefined
+      }}
+      title={isDisabled ? `Already used by tag: ${usedByTag}` : color.name}
+    >
+      {isSelected && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Check className={`${checkSize} text-white drop-shadow-md`} strokeWidth={3} />
+        </div>
+      )}
+    </button>
+  )
+})
+
+ColorButton.displayName = 'ColorButton'
+
 export function TagsDrawer({
   open,
   onOpenChange,
@@ -93,17 +140,10 @@ export function TagsDrawer({
 
   // Create a stable key from selected items to prevent unnecessary re-fetches
   const selectedItemsKey = useMemo(() => {
-    return selectedItems.sort().join(',')
-  }, [selectedItems.join(',')])
+    return [...selectedItems].sort().join(',')
+  }, [selectedItems])
 
-  // Fetch existing tags for selected items - only when drawer opens or items change
-  useEffect(() => {
-    if (open && selectedItems.length > 0) {
-      fetchExistingTags()
-    }
-  }, [open, selectedItemsKey, taggableType])
-
-  const fetchExistingTags = async () => {
+  const fetchExistingTags = useCallback(async () => {
     setLoading(true)
     try {
       const response = await axios.get('/api/tags/fetch', {
@@ -135,9 +175,16 @@ export function TagsDrawer({
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedItems, taggableType])
 
-  const handleAddTag = async () => {
+  // Fetch existing tags for selected items - only when drawer opens or items change
+  useEffect(() => {
+    if (open && selectedItems.length > 0) {
+      fetchExistingTags()
+    }
+  }, [open, selectedItemsKey, taggableType, fetchExistingTags])
+
+  const handleAddTag = useCallback(async () => {
     if (!newTagName.trim()) {
       toast.error("Please enter a tag name")
       return
@@ -174,15 +221,15 @@ export function TagsDrawer({
     } finally {
       setIsAdding(false)
     }
-  }
+  }, [newTagName, newTagColor, selectedItems, taggableType, fetchExistingTags, onTagsUpdated])
 
-  const handleEditTag = (tag: Tag) => {
+  const handleEditTag = useCallback((tag: Tag) => {
     setEditingTag(tag)
     setEditTagName(tag.name)
     setEditTagColor(tag.color)
-  }
+  }, [])
 
-  const handleUpdateTag = async () => {
+  const handleUpdateTag = useCallback(async () => {
     if (!editingTag || !editTagName.trim()) {
       toast.error("Please enter a tag name")
       return
@@ -227,9 +274,9 @@ export function TagsDrawer({
     } finally {
       setIsUpdating(false)
     }
-  }
+  }, [editingTag, editTagName, editTagColor, allTagsData, fetchExistingTags, onTagsUpdated])
 
-  const handleRemoveTag = async (tagName: string) => {
+  const handleRemoveTag = useCallback(async (tagName: string) => {
     try {
       // Use stored tag data instead of refetching
       const tagIdsToDelete = allTagsData
@@ -258,13 +305,13 @@ export function TagsDrawer({
       }
       setDeletingTagName(null)
     }
-  }
+  }, [allTagsData, fetchExistingTags, onTagsUpdated])
 
-  const cancelEdit = () => {
+  const cancelEdit = useCallback(() => {
     setEditingTag(null)
     setEditTagName("")
     setEditTagColor("")
-  }
+  }, [])
 
   return (
     <Drawer direction="left" open={open} onOpenChange={onOpenChange}>
@@ -315,29 +362,15 @@ export function TagsDrawer({
                       const usedByTag = usedColors.get(color.value)
 
                       return (
-                        <button
+                        <ColorButton
                           key={color.value}
+                          color={color}
+                          isSelected={newTagColor === color.value}
+                          isDisabled={isAdding || isColorUsed}
+                          usedByTag={usedByTag}
                           onClick={() => !isColorUsed && setNewTagColor(color.value)}
-                          disabled={isAdding || isColorUsed}
-                          className={`relative h-11 rounded-lg border-2 transition-all duration-200 ${
-                            newTagColor === color.value
-                              ? 'border-gray-900 shadow-md scale-105'
-                              : isColorUsed
-                              ? 'border-gray-300 opacity-40 cursor-not-allowed'
-                              : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
-                          } ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          style={{
-                            backgroundColor: color.value,
-                            boxShadow: newTagColor === color.value ? `0 4px 12px ${color.value}40` : undefined
-                          }}
-                          title={isColorUsed ? `Already used by tag: ${usedByTag}` : color.name}
-                        >
-                          {newTagColor === color.value && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <Check className="h-5 w-5 text-white drop-shadow-md" strokeWidth={3} />
-                            </div>
-                          )}
-                        </button>
+                          size="large"
+                        />
                       )
                     })}
                   </div>
@@ -414,29 +447,15 @@ export function TagsDrawer({
                                 const isDisabled = isColorUsed && !isCurrentTagColor
 
                                 return (
-                                  <button
+                                  <ColorButton
                                     key={color.value}
+                                    color={color}
+                                    isSelected={editTagColor === color.value}
+                                    isDisabled={isUpdating || isDisabled}
+                                    usedByTag={usedByTag}
                                     onClick={() => !isDisabled && setEditTagColor(color.value)}
-                                    disabled={isUpdating || isDisabled}
-                                    className={`relative h-9 rounded-lg border-2 transition-all duration-200 ${
-                                      editTagColor === color.value
-                                        ? 'border-gray-900 shadow-md scale-105'
-                                        : isDisabled
-                                        ? 'border-gray-300 opacity-40 cursor-not-allowed'
-                                        : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
-                                    } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    style={{
-                                      backgroundColor: color.value,
-                                      boxShadow: editTagColor === color.value ? `0 4px 12px ${color.value}40` : undefined
-                                    }}
-                                    title={isDisabled ? `Already used by tag: ${usedByTag}` : color.name}
-                                  >
-                                    {editTagColor === color.value && (
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <Check className="h-4 w-4 text-white drop-shadow-md" strokeWidth={3} />
-                                      </div>
-                                    )}
-                                  </button>
+                                    size="small"
+                                  />
                                 )
                               })}
                             </div>
