@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { X, Plus, Edit2, Trash2, Loader2, Check } from "lucide-react"
+import { X, Plus, Edit2, Trash2, Loader2, Check, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -148,7 +148,7 @@ export function TagsDrawer({
     try {
       const response = await axios.get('/api/tags/fetch', {
         params: {
-          taggable_ids: selectedItems.join(','),
+          taggable_ids: selectedItemsKey,
           taggable_type: taggableType
         }
       })
@@ -175,14 +175,14 @@ export function TagsDrawer({
     } finally {
       setLoading(false)
     }
-  }, [selectedItems, taggableType])
+  }, [selectedItemsKey, taggableType])
 
   // Fetch existing tags for selected items - only when drawer opens or items change
   useEffect(() => {
     if (open && selectedItems.length > 0) {
       fetchExistingTags()
     }
-  }, [open, selectedItemsKey, taggableType, fetchExistingTags])
+  }, [open, selectedItemsKey, fetchExistingTags])
 
   const handleAddTag = useCallback(async () => {
     if (!newTagName.trim()) {
@@ -355,7 +355,13 @@ export function TagsDrawer({
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-xs">Color</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Color</Label>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Info className="h-3 w-3" />
+                      <span>One color per tag</span>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-3 gap-3 p-1">
                     {COLOR_PALETTE.map((color) => {
                       const isColorUsed = usedColors.has(color.value)
@@ -437,7 +443,13 @@ export function TagsDrawer({
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-xs">Color</Label>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs">Color</Label>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Info className="h-3 w-3" />
+                                <span>One color per tag</span>
+                              </div>
+                            </div>
                             <div className="grid grid-cols-3 gap-2 p-1">
                               {COLOR_PALETTE.map((color) => {
                                 const isColorUsed = usedColors.has(color.value)
