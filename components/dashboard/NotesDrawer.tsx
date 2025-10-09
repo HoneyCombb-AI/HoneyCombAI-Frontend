@@ -33,8 +33,8 @@ interface NotesDrawerProps {
 }
 
 const customDrawerStyles = {
-  width: '35vw',
-  maxWidth: '500px',
+  width: '40vw',
+  maxWidth: '600px',
   minWidth: '320px'
 }
 
