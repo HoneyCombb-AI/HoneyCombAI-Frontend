@@ -235,9 +235,9 @@ export function NotesDrawer({
                 variant="ghost"
                 size="icon"
                 onClick={() => onOpenChange(false)}
-                className="h-8 w-8"
+                className="h-12 w-12"
               >
-                <X className="h-4 w-4" />
+                <X className="h-12 w-12" />
               </Button>
             </DrawerTitle>
           </DrawerHeader>
