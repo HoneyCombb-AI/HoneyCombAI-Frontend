@@ -63,7 +63,7 @@ const ContactRow = memo<{
 
   return (
     <tr
-      className={`hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''}`}
+      className={`group/row hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''} relative`}
     >
       {/* Checkbox */}
       <td className="px-4 py-3 w-12">
@@ -81,7 +81,7 @@ const ContactRow = memo<{
 
       {/* Name with Title */}
       <td
-        className="px-4 py-3 w-[22%] cursor-pointer"
+        className="px-4 py-3 w-[24%] cursor-pointer"
         onClick={() => onContactClick(contact)}
         data-testid="sample-contact"
       >
@@ -118,7 +118,7 @@ const ContactRow = memo<{
 
       {/* Location */}
       <td
-        className="px-2 py-3 w-[12%] cursor-pointer"
+        className="px-2 py-3 w-[11%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
         <div className="text-sm text-gray-600 truncate">
@@ -126,31 +126,9 @@ const ContactRow = memo<{
         </div>
       </td>
 
-      {/* Actions */}
-      <td className="px-2 py-3 w-[6%]">
-        <div className="flex items-center gap-2">
-          <div className="relative group">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                // TODO: Handle edit notes
-              }}
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-            </Button>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-              Edit Notes
-            </div>
-          </div>
-        </div>
-      </td>
-
       {/* Heat */}
       <td
-        className="px-2 py-3 w-[10%] cursor-pointer"
+        className="px-2 py-3 w-[8%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
         <div className="flex justify-center">
@@ -174,7 +152,7 @@ const ContactRow = memo<{
 
       {/* Tags */}
       <td
-        className="px-2 py-3 w-[8%] cursor-pointer"
+        className="px-2 py-3 w-[7%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
         {/* TODO: Replace with actual tags from contact data */}
@@ -191,13 +169,31 @@ const ContactRow = memo<{
 
       {/* Signals */}
       <td
-        className="px-2 py-3 w-[27%] cursor-pointer"
+        className="px-2 py-3 w-[35%] cursor-pointer relative"
         onClick={() => onContactClick(contact)}
       >
-        <SignalState
-          signals={contact.signals}
-          contactId={contact.id}
-        />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <SignalState
+              signals={contact.signals}
+              contactId={contact.id}
+            />
+          </div>
+          {/* Notes Icon - Shows on hover */}
+          <div className="opacity-0 group-hover/row:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: Handle edit notes
+              }}
+            >
+              <Edit3 className="h-3.5 w-3.5 text-gray-600" />
+            </Button>
+          </div>
+        </div>
       </td>
     </tr>
   );
@@ -423,13 +419,12 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                           )}
                         />
                       </th>
-                      <th className="px-4 py-2 text-left font-medium w-[22%]">Name</th>
+                      <th className="px-4 py-2 text-left font-medium w-[24%]">Name</th>
                       <th className="px-2 py-2 text-left font-medium w-[18%]">Company</th>
-                      <th className="px-2 py-2 text-left font-medium w-[12%]">Location</th>
-                      <th className="px-2 py-2 text-left font-medium w-[6%]">Actions</th>
-                      <th className="px-2 py-2 text-center font-medium w-[10%]">Heat</th>
-                      <th className="px-2 py-2 text-left font-medium w-[8%]">Tags</th>
-                      <th className="px-2 py-2 text-left font-medium w-[27%]">Signals</th>
+                      <th className="px-2 py-2 text-left font-medium w-[11%]">Location</th>
+                      <th className="px-2 py-2 text-center font-medium w-[8%]">Heat</th>
+                      <th className="px-2 py-2 text-left font-medium w-[7%]">Tags</th>
+                      <th className="px-2 py-2 text-left font-medium w-[35%]">Signals</th>
                     </tr>
                   </thead>
                   <tbody>
