@@ -1,11 +1,13 @@
-import { ChevronDown, ChevronRight, MoreHorizontal, MapPin } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal, MapPin, Edit3 } from 'lucide-react';
 import React, { useState, useMemo, useCallback, memo } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { GroupByType } from '@/app/companies/page';
 import { CompaniesDrawer } from './CompaniesDrawer';
+import { NotesDrawer } from '../NotesDrawer';
 import { RingState } from '../Ring-state';
+import { ContactTags } from '../Tags';
 import type {
   DashboardCompany,
   CompanyListResponse,
@@ -51,7 +53,8 @@ const CompanyRow = memo<{
   isSelected: boolean;
   onCompanySelect: (companyId: string, companyData: CompanyValidationData) => void;
   onCompanyClick: (company: DashboardCompany) => void;
-}>(({ company, isSelected, onCompanySelect, onCompanyClick }) => {
+  onNotesClick: (companyId: string, companyName: string) => void;
+}>(({ company, isSelected, onCompanySelect, onCompanyClick, onNotesClick }) => {
   const topNudges = company.nudges?.slice(0, 3) || [];
   const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
   const hasAnalysisCompleted = company.company_analysis_completed;
@@ -59,7 +62,7 @@ const CompanyRow = memo<{
 
   return (
     <tr
-      className={`hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''}`}
+      className={`group/row hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''} relative`}
     >
       {/* Checkbox */}
       <td className="px-4 py-3 w-12">
@@ -77,7 +80,7 @@ const CompanyRow = memo<{
 
       {/* Company Name */}
       <td
-        className="px-4 py-3 w-1/3 cursor-pointer"
+        className="px-4 py-3 w-[22%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
         data-testid="sample-company"
       >
@@ -98,7 +101,7 @@ const CompanyRow = memo<{
       </td>
 
       <td
-        className="px-2 py-3 w-1/4 cursor-pointer"
+        className="px-2 py-3 w-[18%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
       >
         <div className="text-sm text-gray-600 truncate" title={company.industry || "No industry"}>
@@ -107,7 +110,7 @@ const CompanyRow = memo<{
       </td>
 
       <td
-        className="px-2 py-3 w-1/6 cursor-pointer"
+        className="px-2 py-3 w-[12%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
       >
         <div className="text-sm text-gray-600 flex items-center gap-1">
@@ -117,7 +120,7 @@ const CompanyRow = memo<{
       </td>
 
       <td
-        className="px-2 py-3 w-1/12 cursor-pointer"
+        className="px-2 py-3 w-[8%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
       >
         <div className="text-sm text-gray-600 text-center">
@@ -125,25 +128,54 @@ const CompanyRow = memo<{
         </div>
       </td>
 
+      {/* Tags */}
       <td
-        className="px-2 py-3 w-1/4 cursor-pointer"
+        className="px-2 py-3 w-[7%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
       >
-        <div className="flex flex-wrap gap-1">
-          {topNudges.length > 0 ? (
-            topNudges.map((nudge, idx) => (
-              <Badge
-                key={idx}
-                variant="outline"
-                className="text-xs px-2 py-1 bg-green-50 text-green-700 border-green-200"
-                title={nudge.description}
-              >
-                {nudge.intent}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-sm text-gray-400">—</span>
-          )}
+        <ContactTags
+          tags={[]}
+        />
+      </td>
+
+      {/* Signals */}
+      <td
+        className="px-2 py-3 w-[33%] cursor-pointer relative"
+        onClick={() => onCompanyClick(company)}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap gap-1">
+              {topNudges.length > 0 ? (
+                topNudges.map((nudge, idx) => (
+                  <Badge
+                    key={idx}
+                    variant="outline"
+                    className="text-xs px-2 py-1 bg-green-50 text-green-700 border-green-200"
+                    title={nudge.description}
+                  >
+                    {nudge.intent}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-sm text-gray-400">—</span>
+              )}
+            </div>
+          </div>
+          {/* Notes Icon - Shows on hover */}
+          <div className="opacity-0 group-hover/row:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNotesClick(company.id, company.name);
+              }}
+            >
+              <Edit3 className="h-3.5 w-3.5 text-gray-600" />
+            </Button>
+          </div>
         </div>
       </td>
     </tr>
@@ -226,6 +258,11 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<DashboardCompany | null>(null);
 
+  // Notes drawer state
+  const [notesDrawerOpen, setNotesDrawerOpen] = useState(false);
+  const [notesCompanyId, setNotesCompanyId] = useState<string | null>(null);
+  const [notesCompanyName, setNotesCompanyName] = useState<string | null>(null);
+
   const totalCompanies = useMemo(() =>
     groups.reduce((sum, g) => sum + g.companies.length, 0)
     , [groups]);
@@ -233,6 +270,13 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
   const handleCompanyClick = useCallback((company: DashboardCompany) => {
     setSelectedCompany(company);
     setDrawerOpen(true);
+  }, []);
+
+  // Handle notes button click
+  const handleNotesClick = useCallback((companyId: string, companyName: string) => {
+    setNotesCompanyId(companyId);
+    setNotesCompanyName(companyName);
+    setNotesDrawerOpen(true);
   }, []);
 
   const toggleGroupCollapse = useCallback((groupId: string) => {
@@ -259,6 +303,15 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
           open={drawerOpen}
           onOpenChange={setDrawerOpen}
           selectedCompany={selectedCompany}
+        />
+      )}
+      {notesCompanyId && (
+        <NotesDrawer
+          open={notesDrawerOpen}
+          onOpenChange={setNotesDrawerOpen}
+          notableId={notesCompanyId}
+          notableType="company"
+          notableName={notesCompanyName || undefined}
         />
       )}
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -356,11 +409,12 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                           )}
                         />
                       </th>
-                      <th className="px-4 py-2 text-left font-medium w-1/3">Company</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/4">Industry</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/12">Contacts</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/4">Signals</th>
+                      <th className="px-4 py-2 text-left font-medium w-[22%]">Company</th>
+                      <th className="px-2 py-2 text-left font-medium w-[18%]">Industry</th>
+                      <th className="px-2 py-2 text-left font-medium w-[12%]">Location</th>
+                      <th className="px-2 py-2 text-left font-medium w-[8%]">Contacts</th>
+                      <th className="px-2 py-2 text-left font-medium w-[7%]">Tags</th>
+                      <th className="px-2 py-2 text-left font-medium w-[33%]">Signals</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -371,6 +425,7 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                         isSelected={selectedCompanies.has(company.id)}
                         onCompanySelect={onCompanySelect}
                         onCompanyClick={handleCompanyClick}
+                        onNotesClick={handleNotesClick}
                       />
                     ))}
                   </tbody>
