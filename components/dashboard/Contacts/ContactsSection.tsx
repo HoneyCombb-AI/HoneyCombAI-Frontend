@@ -13,6 +13,7 @@ import type {
   SearchResponse
 } from '@/app/api/contacts/route';
 import { ContactsDrawer } from './ContactsDrawer';
+import { NotesDrawer } from '../NotesDrawer';
 import { RingState } from '../Ring-state';
 import { SignalState } from '../Signal-state';
 import { ContactTags } from '../Tags';
@@ -56,7 +57,8 @@ const ContactRow = memo<{
   isSelected: boolean;
   onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
   onContactClick: (contact: DashboardContact) => void;
-}>(({ contact, isSelected, onContactSelect, onContactClick }) => {
+  onNotesClick: (contactId: string, contactName: string) => void;
+}>(({ contact, isSelected, onContactSelect, onContactClick, onNotesClick }) => {
   const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
   const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
   const isTracked = contact.isTracked;
@@ -187,7 +189,7 @@ const ContactRow = memo<{
               className="h-7 w-7 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 flex-shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
-                // TODO: Handle edit notes
+                onNotesClick(contact.id, contact.full_name);
               }}
             >
               <Edit3 className="h-3.5 w-3.5 text-gray-600" />
@@ -274,10 +276,23 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<DashboardContact | null>(null)
+
+  // Notes drawer state
+  const [notesDrawerOpen, setNotesDrawerOpen] = useState(false)
+  const [notesContactId, setNotesContactId] = useState<string | null>(null)
+  const [notesContactName, setNotesContactName] = useState<string | null>(null)
+
   // Handle contact click
   const handleContactClick = useCallback((contact: DashboardContact) => {
     setSelectedContact(contact)
     setDrawerOpen(true)
+  }, []);
+
+  // Handle notes button click
+  const handleNotesClick = useCallback((contactId: string, contactName: string) => {
+    setNotesContactId(contactId)
+    setNotesContactName(contactName)
+    setNotesDrawerOpen(true)
   }, []);
 
   // Toggle individual group collapse
@@ -305,6 +320,15 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
           open={drawerOpen}
           onOpenChange={setDrawerOpen}
           selectedContact={selectedContact}
+        />
+      )}
+      {notesContactId && (
+        <NotesDrawer
+          open={notesDrawerOpen}
+          onOpenChange={setNotesDrawerOpen}
+          notableId={notesContactId}
+          notableType="contact"
+          notableName={notesContactName || undefined}
         />
       )}
       {/* Header */}
@@ -435,6 +459,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                         isSelected={selectedContacts.has(contact.id)}
                         onContactSelect={onContactSelect}
                         onContactClick={handleContactClick}
+                        onNotesClick={handleNotesClick}
                       />
                     ))}
                   </tbody>
