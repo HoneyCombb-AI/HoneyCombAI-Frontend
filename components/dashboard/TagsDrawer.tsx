@@ -78,6 +78,19 @@ export function TagsDrawer({
   const [isUpdating, setIsUpdating] = useState(false)
   const [deletingTagName, setDeletingTagName] = useState<string | null>(null)
 
+  // Get colors that are already in use by existing tags
+  const usedColors = useMemo(() => {
+    return new Map(existingTags.map(tag => [tag.color, tag.name]))
+  }, [existingTags])
+
+  // Update to first available color when existing tags change
+  useEffect(() => {
+    const availableColor = COLOR_PALETTE.find(color => !usedColors.has(color.value))
+    if (availableColor && usedColors.has(newTagColor)) {
+      setNewTagColor(availableColor.value)
+    }
+  }, [usedColors, newTagColor])
+
   // Create a stable key from selected items to prevent unnecessary re-fetches
   const selectedItemsKey = useMemo(() => {
     return selectedItems.sort().join(',')
@@ -149,7 +162,6 @@ export function TagsDrawer({
 
       toast.success(`Tag added to ${selectedItems.length} ${taggableType}(s)`)
       setNewTagName("")
-      setNewTagColor(COLOR_PALETTE[0].value)
       fetchExistingTags()
       onTagsUpdated?.()
     } catch (err) {
@@ -298,29 +310,36 @@ export function TagsDrawer({
                 <div className="space-y-2">
                   <Label className="text-xs">Color</Label>
                   <div className="grid grid-cols-3 gap-3 p-1">
-                    {COLOR_PALETTE.map((color) => (
-                      <button
-                        key={color.value}
-                        onClick={() => setNewTagColor(color.value)}
-                        disabled={isAdding}
-                        className={`relative h-11 rounded-lg border-2 transition-all duration-200 ${
-                          newTagColor === color.value
-                            ? 'border-gray-900 shadow-md scale-105'
-                            : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
-                        } ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        style={{
-                          backgroundColor: color.value,
-                          boxShadow: newTagColor === color.value ? `0 4px 12px ${color.value}40` : undefined
-                        }}
-                        title={color.name}
-                      >
-                        {newTagColor === color.value && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Check className="h-5 w-5 text-white drop-shadow-md" strokeWidth={3} />
-                          </div>
-                        )}
-                      </button>
-                    ))}
+                    {COLOR_PALETTE.map((color) => {
+                      const isColorUsed = usedColors.has(color.value)
+                      const usedByTag = usedColors.get(color.value)
+
+                      return (
+                        <button
+                          key={color.value}
+                          onClick={() => !isColorUsed && setNewTagColor(color.value)}
+                          disabled={isAdding || isColorUsed}
+                          className={`relative h-11 rounded-lg border-2 transition-all duration-200 ${
+                            newTagColor === color.value
+                              ? 'border-gray-900 shadow-md scale-105'
+                              : isColorUsed
+                              ? 'border-gray-300 opacity-40 cursor-not-allowed'
+                              : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
+                          } ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          style={{
+                            backgroundColor: color.value,
+                            boxShadow: newTagColor === color.value ? `0 4px 12px ${color.value}40` : undefined
+                          }}
+                          title={isColorUsed ? `Already used by tag: ${usedByTag}` : color.name}
+                        >
+                          {newTagColor === color.value && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Check className="h-5 w-5 text-white drop-shadow-md" strokeWidth={3} />
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -387,29 +406,39 @@ export function TagsDrawer({
                           <div className="space-y-2">
                             <Label className="text-xs">Color</Label>
                             <div className="grid grid-cols-3 gap-2 p-1">
-                              {COLOR_PALETTE.map((color) => (
-                                <button
-                                  key={color.value}
-                                  onClick={() => setEditTagColor(color.value)}
-                                  disabled={isUpdating}
-                                  className={`relative h-9 rounded-lg border-2 transition-all duration-200 ${
-                                    editTagColor === color.value
-                                      ? 'border-gray-900 shadow-md scale-105'
-                                      : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
-                                  } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                  style={{
-                                    backgroundColor: color.value,
-                                    boxShadow: editTagColor === color.value ? `0 4px 12px ${color.value}40` : undefined
-                                  }}
-                                  title={color.name}
-                                >
-                                  {editTagColor === color.value && (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <Check className="h-4 w-4 text-white drop-shadow-md" strokeWidth={3} />
-                                    </div>
-                                  )}
-                                </button>
-                              ))}
+                              {COLOR_PALETTE.map((color) => {
+                                const isColorUsed = usedColors.has(color.value)
+                                const usedByTag = usedColors.get(color.value)
+                                // Allow the current tag's color even if it's "used" (by itself)
+                                const isCurrentTagColor = editingTag?.color === color.value
+                                const isDisabled = isColorUsed && !isCurrentTagColor
+
+                                return (
+                                  <button
+                                    key={color.value}
+                                    onClick={() => !isDisabled && setEditTagColor(color.value)}
+                                    disabled={isUpdating || isDisabled}
+                                    className={`relative h-9 rounded-lg border-2 transition-all duration-200 ${
+                                      editTagColor === color.value
+                                        ? 'border-gray-900 shadow-md scale-105'
+                                        : isDisabled
+                                        ? 'border-gray-300 opacity-40 cursor-not-allowed'
+                                        : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
+                                    } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    style={{
+                                      backgroundColor: color.value,
+                                      boxShadow: editTagColor === color.value ? `0 4px 12px ${color.value}40` : undefined
+                                    }}
+                                    title={isDisabled ? `Already used by tag: ${usedByTag}` : color.name}
+                                  >
+                                    {editTagColor === color.value && (
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                        <Check className="h-4 w-4 text-white drop-shadow-md" strokeWidth={3} />
+                                      </div>
+                                    )}
+                                  </button>
+                                )
+                              })}
                             </div>
                           </div>
 
