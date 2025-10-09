@@ -741,7 +741,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                   value={searchInput}
                   onChange={handleSearchInputChange}
                   className="pl-10 w-64"
-                  data-testid="search-input"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleSearchSubmit();
@@ -847,7 +846,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
               {/* Add Enrichment Button */}
               <DropdownMenu>
-                <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
+                <DropdownMenuTrigger asChild >
                   <Button
                     size="sm"
                     className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium h-9"

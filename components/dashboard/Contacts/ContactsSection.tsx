@@ -57,7 +57,8 @@ const ContactRow = memo<{
   onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
   onContactClick: (contact: DashboardContact) => void;
   onNotesClick: (contactId: string, contactName: string) => void;
-}>(({ contact, isSelected, onContactSelect, onContactClick, onNotesClick }) => {
+  isFirstInGroup?: boolean;
+}>(({ contact, isSelected, onContactSelect, onContactClick, onNotesClick, isFirstInGroup }) => {
   const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
   const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
   const isTracked = contact.isTracked;
@@ -77,6 +78,7 @@ const ContactRow = memo<{
             full_name: contact.full_name
           })}
           onClick={(e) => e.stopPropagation()}
+          data-testid={isFirstInGroup ? "first-contact-checkbox" : undefined}
         />
       </td>
 
@@ -131,6 +133,7 @@ const ContactRow = memo<{
       <td
         className="px-2 py-3 w-[8%] cursor-pointer"
         onClick={() => onContactClick(contact)}
+        data-testid={isFirstInGroup ? "sample-contact-heat" : undefined}
       >
         <div className="flex justify-center">
           {contact.temperature ? (
@@ -155,6 +158,7 @@ const ContactRow = memo<{
       <td
         className="px-2 py-3 w-[7%] cursor-pointer"
         onClick={() => onContactClick(contact)}
+        data-testid={isFirstInGroup ? "sample-contact-tags" : undefined}
       >
         <ContactTags
           tags={contact.tags || []}
@@ -430,7 +434,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                     </tr>
                   </thead>
                   <tbody>
-                    {(group.contacts || []).map((contact) => (
+                    {(group.contacts || []).map((contact, index) => (
                       <ContactRow
                         key={contact.id}
                         contact={contact}
@@ -438,6 +442,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                         onContactSelect={onContactSelect}
                         onContactClick={handleContactClick}
                         onNotesClick={handleNotesClick}
+                        isFirstInGroup={index === 0}
                       />
                     ))}
                   </tbody>

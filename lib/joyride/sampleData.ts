@@ -72,7 +72,7 @@ export const SAMPLE_ORGANIZATION_DATA = {
         full_name: "Suresh Narasimha",
         title: "CoCreator",
         city: "Bengaluru",
-        state: "Karnataka", 
+        state: "Karnataka",
         country: "India",
         email: null,
         phone: null,
@@ -81,6 +81,7 @@ export const SAMPLE_ORGANIZATION_DATA = {
         isTracked: false,
         primaryAnalysisCompleted: true,
         primaryAnalysisRequested: true,
+        temperature: "hot",
         in_crm: false,
         created_at: "2025-08-02 03:23:45.810097",
         updated_at: "2025-08-02 03:23:45.810097",
@@ -90,6 +91,18 @@ export const SAMPLE_ORGANIZATION_DATA = {
           logo_url: null,
           industry: "Technology"
         },
+        tags: [
+          {
+            id: "tag-1",
+            name: "High Priority",
+            color: "#ef4444"
+          },
+          {
+            id: "tag-2",
+            name: "Investor",
+            color: "#3b82f6"
+          }
+        ],
         signals: [
           {
             id: "1a4baaf2-2f36-4cad-962a-7e428608269f",
@@ -128,6 +141,7 @@ export const SAMPLE_ORGANIZATION_DATA = {
         isTracked: true,
         primaryAnalysisCompleted: true,
         primaryAnalysisRequested: false,
+        temperature: "warm",
         in_crm: false,
         created_at: "2025-08-02 03:23:45.810097",
         updated_at: "2025-08-02 03:23:45.810097",
@@ -137,6 +151,13 @@ export const SAMPLE_ORGANIZATION_DATA = {
           logo_url: null,
           industry: "Technology"
         },
+        tags: [
+          {
+            id: "tag-3",
+            name: "Analyst",
+            color: "#10b981"
+          }
+        ],
         signals: [
           {
             id: "sig-kiriti-1",
@@ -165,6 +186,7 @@ export const SAMPLE_ORGANIZATION_DATA = {
         isTracked: false,
         primaryAnalysisCompleted: false,
         primaryAnalysisRequested: false,
+        temperature: "cold",
         in_crm: false,
         created_at: "2025-08-02 03:23:45.810097",
         updated_at: "2025-08-02 03:23:45.810097",
@@ -174,6 +196,18 @@ export const SAMPLE_ORGANIZATION_DATA = {
           logo_url: null,
           industry: "Technology"
         },
+        tags: [
+          {
+            id: "tag-4",
+            name: "Developer",
+            color: "#8b5cf6"
+          },
+          {
+            id: "tag-5",
+            name: "Product",
+            color: "#f59e0b"
+          }
+        ],
         signals: [
           {
             id: "sig-rakshith-1",
@@ -202,6 +236,7 @@ export const SAMPLE_ORGANIZATION_DATA = {
         isTracked: false,
         primaryAnalysisCompleted: false,
         primaryAnalysisRequested: true,
+        temperature: "warm",
         in_crm: false,
         created_at: "2025-08-02 03:23:45.810097",
         updated_at: "2025-08-02 03:23:45.810097",
@@ -211,6 +246,13 @@ export const SAMPLE_ORGANIZATION_DATA = {
           logo_url: null,
           industry: "Technology"
         },
+        tags: [
+          {
+            id: "tag-6",
+            name: "HR",
+            color: "#ec4899"
+          }
+        ],
         signals: [
           {
             id: "sig-savitri-1",
@@ -239,6 +281,7 @@ export const SAMPLE_ORGANIZATION_DATA = {
         isTracked: false,
         primaryAnalysisCompleted: false,
         primaryAnalysisRequested: false,
+        temperature: "hot",
         in_crm: false,
         created_at: "2025-08-02 03:23:45.810097",
         updated_at: "2025-08-02 03:23:45.810097",
@@ -248,6 +291,18 @@ export const SAMPLE_ORGANIZATION_DATA = {
           logo_url: null,
           industry: "Technology"
         },
+        tags: [
+          {
+            id: "tag-7",
+            name: "Partnerships",
+            color: "#14b8a6"
+          },
+          {
+            id: "tag-8",
+            name: "Strategic",
+            color: "#f97316"
+          }
+        ],
         signals: [
           {
             id: "sig-shweta-1",

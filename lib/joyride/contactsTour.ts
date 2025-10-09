@@ -12,15 +12,6 @@ export const contactsTourSteps: DriveStep[] = [
     }
   },
   {
-    element: '[data-testid="search-input"]',
-    popover: {
-      title: 'Search Contacts',
-      description: 'Quickly find specific contacts by name, company, or any other contact information.',
-      side: "bottom",
-      align: 'start'
-    }
-  },
-  {
     element: '[data-testid="insert-dropdown"]',
     popover: {
       title: 'Insert Options',
@@ -30,29 +21,38 @@ export const contactsTourSteps: DriveStep[] = [
     }
   },
   {
-    element: '[data-testid="enrichment-dropdown"]',
+    element: '[data-testid="sample-contact"]',
     popover: {
-      title: 'Enrichment Actions',
-      description: 'Access two powerful enrichment options: Contact Tracking to monitor contact updates and changes, and Complete Contact Enrichment to perform comprehensive AI-powered analysis of contact profiles.',
-      side: "over",
+      title: 'Contact Profile',
+      description: 'Click on any contact to open a detailed drawer with complete information including enrichment analysis results and contact history.',
+      side: "bottom",
+      align: 'start'
+    }
+  },
+  {
+    element: '[data-testid="sample-contact-heat"]',
+    popover: {
+      title: 'Contact Temperature',
+      description: 'The heat indicator shows contact engagement level: Hot (highly engaged), Warm (moderately engaged), or Cold (low engagement). This helps prioritize your outreach efforts.',
+      side: "top",
       align: 'center'
     }
   },
   {
-    element: '[data-testid="sample-contact"]',
+    element: '[data-testid="sample-contact-tags"]',
     popover: {
-      title: 'Contact Profile',
-      description: 'When this contact is clicked, a drawer will open displaying complete details including enrichment analysis if completed. This shows all the valuable insights you can gather about your contacts.',
-      side: "bottom",
-      align: 'start'
+      title: 'Contact Tags',
+      description: 'Tags help you organize and categorize contacts with custom labels. You can add tags to segment your contacts by team, project, status, or any criteria that matters to your workflow.',
+      side: "top",
+      align: 'center'
     }
   },
   {
     element: '[data-testid="sample-contact-signals"]',
     popover: {
       title: 'Intent Signals',
-      description: 'These badges represent intent signals detected for this contact through AI analysis. They help identify potential opportunities, interests, and behavioral patterns to enhance your intelligence and outreach strategy.',
-      side: "over",
+      description: 'These badges represent intent signals detected for this contact through AI analysis. They help identify potential opportunities, interests, and behavioral patterns to enhance your outreach strategy.',
+      side: "left",
       align: 'start'
     }
   },
@@ -60,9 +60,9 @@ export const contactsTourSteps: DriveStep[] = [
     element: '[data-testid="sample-contact-green-ring"]',
     popover: {
       title: 'Analysis Complete',
-      description: 'The green ring around this contact\'s profile picture indicates that AI-powered enrichment analysis has been completed, providing you with valuable insights about this person.',
+      description: 'The green ring around a contact\'s profile picture indicates that AI-powered enrichment analysis has been completed, providing valuable insights about this person.',
       side: "right",
-      align: 'end'
+      align: 'start'
     }
   },
   {
@@ -78,7 +78,7 @@ export const contactsTourSteps: DriveStep[] = [
     element: '[data-testid="sample-contact-loading-ring"]',
     popover: {
       title: 'Analysis In Progress',
-      description: 'The animated quarter ring indicates that AI analysis is currently being processed for this contact. This typically takes a some time to complete.',
+      description: 'The animated quarter ring indicates that AI analysis is currently being processed for this contact. This typically takes some time to complete.',
       side: "right",
       align: 'start'
     }
@@ -87,7 +87,7 @@ export const contactsTourSteps: DriveStep[] = [
     element: 'body',
     popover: {
       title: 'Next: Companies',
-      description: 'Great! Now you understand the different contact analysis states. Let\'s explore the Companies section to see how you can manage and analyze your company data.',
+      description: 'Great! Now you understand the contact management features. Let\'s explore the Companies section to see how you can manage and analyze your company data.',
       side: "bottom",
       align: 'center'
     }
@@ -101,7 +101,7 @@ export const createContactsTour = (onComplete: () => void) => {
     ...lastStep.popover,
     onNextClick: onComplete
   };
-  
+
   return driver({
     showProgress: true,
     steps: stepsWithCompletion,
