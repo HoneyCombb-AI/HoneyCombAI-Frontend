@@ -94,8 +94,10 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // Perform batch updates
-    const updatePromises = body.updates.map(update => {
+    // Group updates by identical name/color combinations for batch processing
+    const updateGroups = new Map<string, string[]>();
+
+    for (const update of body.updates) {
       const updateData: { name?: string; color?: string } = {};
 
       if (update.name) {
@@ -106,12 +108,24 @@ export async function PATCH(req: NextRequest) {
         updateData.color = update.color.trim().toUpperCase();
       }
 
+      // Create a key based on the update values
+      const groupKey = JSON.stringify(updateData);
+
+      if (!updateGroups.has(groupKey)) {
+        updateGroups.set(groupKey, []);
+      }
+      updateGroups.get(groupKey)!.push(update.id);
+    }
+
+    // Perform batch updates - one query per unique update combination
+    const updatePromises = Array.from(updateGroups.entries()).map(([groupKey, ids]) => {
+      const updateData = JSON.parse(groupKey);
+
       return supabase
         .from('tags')
         .update(updateData)
-        .eq('id', update.id)
-        .select('*')
-        .single();
+        .in('id', ids)
+        .select('*');
     });
 
     const results = await Promise.all(updatePromises);
@@ -145,9 +159,10 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    // Flatten the results since each result now contains an array of tags
     const updatedTags = results
       .filter(r => r.data)
-      .map(r => r.data!);
+      .flatMap(r => r.data!);
 
     const response: UpdateTagsResponse = {
       success: true,
