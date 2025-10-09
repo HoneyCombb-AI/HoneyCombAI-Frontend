@@ -8,7 +8,6 @@ import { GroupByType } from '@/app/contacts/page';
 import type {
   DashboardContact,
   CompanyGroupResponse,
-  SignalGroupResponse,
   LocationGroupResponse,
   SearchResponse
 } from '@/app/api/contacts/route';
@@ -18,7 +17,7 @@ import { RingState } from '../Ring-state';
 import { SignalState } from '../Signal-state';
 import { ContactTags } from '../Tags';
 
-type DashboardResponse = CompanyGroupResponse | SignalGroupResponse | LocationGroupResponse | SearchResponse;
+type DashboardResponse = CompanyGroupResponse  | LocationGroupResponse | SearchResponse;
 
 // Contact validation data interface
 interface ContactValidationData {
@@ -212,20 +211,6 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
         logoUrl: company.logo_url,
         metadata: {
           contactCount: company.contactCount
-        }
-      }));
-    }
-
-    // Handle SignalGroupResponse
-    if (groupBy === 'signals' && 'signals' in records) {
-      return Object.entries(records.signals).map(([signalType, signalData]) => ({
-        id: signalType,
-        label: signalType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        contacts: signalData.contacts,
-        metadata: {
-          contactCount: signalData.contactCount,
-          avgConfidence: signalData.avgConfidence,
-          signalType: signalData.signal_type
         }
       }));
     }

@@ -19,7 +19,6 @@ import {
   Plus,
   Search,
   MapPin,
-  TrendingUp,
   SortAsc,
   SortDesc,
   ChevronLeft,
@@ -34,7 +33,6 @@ import {
 import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
   CompanyGroupResponse,
-  SignalGroupResponse,
   LocationGroupResponse,
   SearchResponse,
   PaginationInfo,
@@ -52,7 +50,7 @@ function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean
   return <>{children({ isJoyrideMode })}</>;
 }
 
-export type GroupByType = "none" | "company" | "signals" | "location" | "city";
+export type GroupByType = "none" | "company" | "location" | "city";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name";
 export type SortOrder = "asc" | "desc";
@@ -66,7 +64,6 @@ interface ContactValidationData {
 
 export type DashboardResponse =
   | CompanyGroupResponse
-  | SignalGroupResponse
   | LocationGroupResponse
   | SearchResponse;
 
@@ -201,11 +198,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const handleGroupByChange = (newGroupBy: GroupByType) => {
     setGroupBy(newGroupBy);
     setCurrentPage(1);
-    if (newGroupBy === "signals") {
-      setSortOrder("desc");
-    } else {
-      setSortOrder("asc");
-    }
+    setSortOrder("asc");
   };
 
   const handleLocationTypeChange = (newLocationType: LocationType) => {
@@ -683,10 +676,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                   >
                     <MapPin className="h-4 w-4 mr-2" />
                     Location
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => handleGroupByChange("signals")}>
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Signals
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
