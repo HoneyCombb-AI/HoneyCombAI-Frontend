@@ -235,9 +235,12 @@ export function NotesDrawer({
                 variant="ghost"
                 size="icon"
                 onClick={() => onOpenChange(false)}
-                className="h-12 w-12"
+                className="h-12 w-auto p-1.5"
               >
-                <X className="h-12 w-12" />
+                <div className="flex flex-1 justify-center  items-center gap-2">
+                  <p className="text-black font-semibold">Close</p>
+                  <X className="h-8 w-8" />
+                </div>
               </Button>
             </DrawerTitle>
           </DrawerHeader>
