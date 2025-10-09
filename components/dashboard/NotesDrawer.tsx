@@ -215,14 +215,21 @@ export function NotesDrawer({
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b px-6">
             <DrawerTitle className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">Notes</h2>
-                <p className="text-sm text-gray-500 font-normal mt-1">
+                <h2 className="text-lg font-semibold">
                   {notableName ? (
-                    <>Notes for {notableName}</>
+                    <>
+                      <span className="text-gray-500 font-normal">Notes for </span>
+                      <span className="text-gray-900">{notableName}</span>
+                    </>
                   ) : (
-                    <>{notableType === "contact" ? "Contact" : "Company"} notes</>
+                    <>Notes</>
                   )}
-                </p>
+                </h2>
+                {!notableName && (
+                  <p className="text-sm text-gray-500 font-normal mt-1">
+                    {notableType === "contact" ? "Contact" : "Company"} notes
+                  </p>
+                )}
               </div>
               <Button
                 variant="ghost"
