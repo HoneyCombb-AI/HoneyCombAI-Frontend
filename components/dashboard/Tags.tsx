@@ -22,7 +22,7 @@ export const ContactTags: React.FC<ContactTagsProps> = ({ tags }) => {
         <Tooltip key={tag.id} delayDuration={200}>
           <TooltipTrigger asChild>
             <div
-              className="w-2 h-2 rounded-full cursor-pointer transition-transform hover:scale-110"
+              className="w-2.5 h-2.5 rounded-full cursor-pointer transition-transform hover:scale-110"
               style={{ backgroundColor: tag.color }}
             ></div>
           </TooltipTrigger>
