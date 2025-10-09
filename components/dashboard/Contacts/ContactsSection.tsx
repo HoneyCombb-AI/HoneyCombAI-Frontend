@@ -157,15 +157,8 @@ const ContactRow = memo<{
         className="px-2 py-3 w-[7%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
-        {/* TODO: Replace with actual tags from contact data */}
         <ContactTags
-          tags={[
-            { id: '1', name: 'VIP', color: '#3B82F6' },
-            { id: '5', name: 'VIP', color: '#3B82F6' },
-            { id: '6', name: 'VIP', color: '#3B82F6' },
-            { id: '2', name: 'Follow-up', color: '#A855F7' },
-            { id: '3', name: 'Partner', color: '#10B981' },
-          ]}
+          tags={contact.tags || []}
         />
       </td>
 

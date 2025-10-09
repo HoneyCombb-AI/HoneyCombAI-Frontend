@@ -33,6 +33,12 @@ export interface ContactSignal {
   is_custom: boolean;
 }
 
+export interface ContactTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface DashboardContact {
   id: string;
   company_id: string;
@@ -48,6 +54,7 @@ export interface DashboardContact {
   profile_picture: string | null;
   company: MinimalCompany | null;
   signals: ContactSignal[];
+  tags: ContactTag[];
 }
 
 // Response interfaces
