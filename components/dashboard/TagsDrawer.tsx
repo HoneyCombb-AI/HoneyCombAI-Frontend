@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect, useMemo } from "react"
-import { X, Plus, Edit2, Trash2 } from "lucide-react"
+import { X, Plus, Edit2, Trash2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +14,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import axios from "axios"
 import { toast } from "sonner"
 
@@ -37,7 +38,7 @@ const customDrawerStyles = {
   minWidth: '320px'
 }
 
-// Predefined color palette
+// Predefined color palette (9 colors for 3x3 grid)
 const COLOR_PALETTE = [
   { name: "Blue", value: "#3B82F6" },
   { name: "Purple", value: "#A855F7" },
@@ -47,6 +48,7 @@ const COLOR_PALETTE = [
   { name: "Pink", value: "#EC4899" },
   { name: "Teal", value: "#14B8A6" },
   { name: "Yellow", value: "#EAB308" },
+  { name: "Indigo", value: "#6366F1" },
 ]
 
 export function TagsDrawer({
@@ -70,6 +72,11 @@ export function TagsDrawer({
 
   // Store all tags (including duplicates) for edit/delete operations
   const [allTagsData, setAllTagsData] = useState<Tag[]>([])
+
+  // Loading states for individual operations
+  const [isAdding, setIsAdding] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [deletingTagName, setDeletingTagName] = useState<string | null>(null)
 
   // Create a stable key from selected items to prevent unnecessary re-fetches
   const selectedItemsKey = useMemo(() => {
@@ -123,15 +130,16 @@ export function TagsDrawer({
       return
     }
 
-    setLoading(true)
+    setIsAdding(true)
     try {
       // Build operations array for bulk insert
+      // Force lowercase format
       const operations = selectedItems.map(itemId => ({
         taggable_type: taggableType,
         taggable_id: itemId,
         tags: [
           {
-            name: newTagName.trim(),
+            name: newTagName.trim().toLowerCase(),
             color: newTagColor
           }
         ]
@@ -152,7 +160,7 @@ export function TagsDrawer({
         toast.error("Failed to add tag")
       }
     } finally {
-      setLoading(false)
+      setIsAdding(false)
     }
   }
 
@@ -168,7 +176,7 @@ export function TagsDrawer({
       return
     }
 
-    setLoading(true)
+    setIsUpdating(true)
     try {
       // Use stored tag data instead of refetching
       const tagIdsToUpdate = allTagsData
@@ -177,13 +185,15 @@ export function TagsDrawer({
 
       if (tagIdsToUpdate.length === 0) {
         toast.error("No tags found to update")
+        setIsUpdating(false)
         return
       }
 
       // Build updates array
+      // Force lowercase format
       const updates = tagIdsToUpdate.map(tagId => ({
         id: tagId,
-        name: editTagName.trim(),
+        name: editTagName.trim().toLowerCase(),
         color: editTagColor
       }))
 
@@ -203,12 +213,11 @@ export function TagsDrawer({
         toast.error("Failed to update tag")
       }
     } finally {
-      setLoading(false)
+      setIsUpdating(false)
     }
   }
 
   const handleRemoveTag = async (tagName: string) => {
-    setLoading(true)
     try {
       // Use stored tag data instead of refetching
       const tagIdsToDelete = allTagsData
@@ -225,6 +234,7 @@ export function TagsDrawer({
       })
 
       toast.success(`Tag removed from ${tagIdsToDelete.length} item(s)`)
+      setDeletingTagName(null)
       fetchExistingTags()
       onTagsUpdated?.()
     } catch (err) {
@@ -234,8 +244,7 @@ export function TagsDrawer({
       } else {
         toast.error("Failed to remove tag")
       }
-    } finally {
-      setLoading(false)
+      setDeletingTagName(null)
     }
   }
 
@@ -280,23 +289,25 @@ export function TagsDrawer({
                     id="tag-name"
                     placeholder="Enter tag name..."
                     value={newTagName}
-                    onChange={(e) => setNewTagName(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
+                    onChange={(e) => setNewTagName(e.target.value.toLowerCase())}
+                    onKeyPress={(e) => e.key === 'Enter' && !isAdding && handleAddTag()}
+                    disabled={isAdding}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-xs">Color</Label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {COLOR_PALETTE.map((color) => (
                       <button
                         key={color.value}
                         onClick={() => setNewTagColor(color.value)}
+                        disabled={isAdding}
                         className={`h-10 rounded-md border-2 transition-all ${
                           newTagColor === color.value
                             ? 'border-gray-900 scale-105'
                             : 'border-gray-200 hover:border-gray-300'
-                        }`}
+                        } ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
                         style={{ backgroundColor: color.value }}
                         title={color.name}
                       />
@@ -306,12 +317,21 @@ export function TagsDrawer({
 
                 <Button
                   onClick={handleAddTag}
-                  disabled={loading || !newTagName.trim()}
+                  disabled={isAdding || !newTagName.trim()}
                   className="w-full"
                   size="sm"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Tag
+                  {isAdding ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Tag
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -330,8 +350,8 @@ export function TagsDrawer({
               </h3>
 
               {loading && existingTags.length === 0 ? (
-                <div className="text-sm text-gray-500 py-4 text-center">
-                  Loading tags...
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 </div>
               ) : existingTags.length === 0 ? (
                 <div className="text-sm text-gray-500 py-4 text-center">
@@ -349,23 +369,25 @@ export function TagsDrawer({
                             <Input
                               id="edit-tag-name"
                               value={editTagName}
-                              onChange={(e) => setEditTagName(e.target.value)}
-                              onKeyPress={(e) => e.key === 'Enter' && handleUpdateTag()}
+                              onChange={(e) => setEditTagName(e.target.value.toLowerCase())}
+                              onKeyPress={(e) => e.key === 'Enter' && !isUpdating && handleUpdateTag()}
+                              disabled={isUpdating}
                             />
                           </div>
 
                           <div className="space-y-2">
                             <Label className="text-xs">Color</Label>
-                            <div className="grid grid-cols-4 gap-2">
+                            <div className="grid grid-cols-3 gap-2">
                               {COLOR_PALETTE.map((color) => (
                                 <button
                                   key={color.value}
                                   onClick={() => setEditTagColor(color.value)}
+                                  disabled={isUpdating}
                                   className={`h-8 rounded-md border-2 transition-all ${
                                     editTagColor === color.value
                                       ? 'border-gray-900 scale-105'
                                       : 'border-gray-200 hover:border-gray-300'
-                                  }`}
+                                  } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                   style={{ backgroundColor: color.value }}
                                   title={color.name}
                                 />
@@ -376,22 +398,59 @@ export function TagsDrawer({
                           <div className="flex gap-2">
                             <Button
                               onClick={handleUpdateTag}
-                              disabled={loading}
+                              disabled={isUpdating}
                               size="sm"
                               className="flex-1"
                             >
-                              Save
+                              {isUpdating ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                'Save'
+                              )}
                             </Button>
                             <Button
                               onClick={cancelEdit}
                               variant="outline"
                               size="sm"
                               className="flex-1"
+                              disabled={isUpdating}
                             >
                               Cancel
                             </Button>
                           </div>
                         </div>
+                      ) : deletingTagName === tag.name ? (
+                        // Delete confirmation mode
+                        <Alert className="p-3 border-red-200 bg-red-50">
+                          <AlertDescription>
+                            <div className="space-y-3">
+                              <p className="text-sm text-red-900 font-medium">
+                                Delete &apos;{tag.name}&apos;?
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleRemoveTag(tag.name)}
+                                  variant="destructive"
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  Delete
+                                </Button>
+                                <Button
+                                  onClick={() => setDeletingTagName(null)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          </AlertDescription>
+                        </Alert>
                       ) : (
                         // View mode
                         <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
@@ -411,7 +470,7 @@ export function TagsDrawer({
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEditTag(tag)}
-                              disabled={loading}
+                              disabled={isAdding || isUpdating || deletingTagName !== null}
                               className="h-8 w-8"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
@@ -419,8 +478,8 @@ export function TagsDrawer({
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleRemoveTag(tag.name)}
-                              disabled={loading}
+                              onClick={() => setDeletingTagName(tag.name)}
+                              disabled={isAdding || isUpdating || deletingTagName !== null}
                               className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
