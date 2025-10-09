@@ -209,7 +209,7 @@ export function NotesDrawer({
   }
 
   return (
-    <Drawer direction="left" open={open} onOpenChange={onOpenChange}>
+    <Drawer direction="left" open={open} onOpenChange={onOpenChange} dismissible={false}>
       <DrawerContent style={customDrawerStyles} className="left-0 right-auto">
         <div className="mx-auto w-full h-screen overflow-y-auto">
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b px-6">
@@ -249,7 +249,7 @@ export function NotesDrawer({
                     value={newNoteContent}
                     onChange={(e) => setNewNoteContent(e.target.value)}
                     disabled={isAdding}
-                    rows={4}
+                    rows={10}
                     className="resize-none"
                   />
                 </div>
@@ -311,7 +311,7 @@ export function NotesDrawer({
                               value={editNoteContent}
                               onChange={(e) => setEditNoteContent(e.target.value)}
                               disabled={isUpdating}
-                              rows={4}
+                              rows={10}
                               className="resize-none"
                             />
                           </div>
