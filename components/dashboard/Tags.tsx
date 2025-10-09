@@ -1,9 +1,10 @@
-import React from 'react';
+import React from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface Tag {
   id: string;
   name: string;
-  color: string; // Hex color code (e.g., "#3B82F6") or any valid CSS color
+  color: string; // Hex color code (e.g. "#3B82F6")
 }
 
 interface ContactTagsProps {
@@ -16,17 +17,22 @@ export const ContactTags: React.FC<ContactTagsProps> = ({ tags }) => {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-2 w-fit">
+    <div className="grid grid-cols-3 gap-3 w-fit">
       {tags.map((tag) => (
-        <div key={tag.id} className="relative group">
-          <div
-            className="w-2 h-2 rounded-full cursor-pointer"
-            style={{ backgroundColor: tag.color }}
-          ></div>
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+        <Tooltip key={tag.id} delayDuration={200}>
+          <TooltipTrigger asChild>
+            <div
+              className="w-2 h-2 rounded-full cursor-pointer transition-transform hover:scale-110"
+              style={{ backgroundColor: tag.color }}
+            ></div>
+          </TooltipTrigger>
+
+          <TooltipContent
+            className="text-sm px-3 py-2 bg-gray-900 text-white rounded-md border border-gray-700 max-w-xs"
+          >
             {tag.name}
-          </div>
-        </div>
+          </TooltipContent>
+        </Tooltip>
       ))}
     </div>
   );
