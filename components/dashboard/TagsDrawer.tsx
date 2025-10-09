@@ -277,6 +277,7 @@ export function TagsDrawer({
   }, [editingTag, editTagName, editTagColor, allTagsData, fetchExistingTags, onTagsUpdated])
 
   const handleRemoveTag = useCallback(async (tagName: string) => {
+    setLoading(true)
     try {
       // Use stored tag data instead of refetching
       const tagIdsToDelete = allTagsData
@@ -285,6 +286,7 @@ export function TagsDrawer({
 
       if (tagIdsToDelete.length === 0) {
         toast.error("No tags found to remove")
+        setLoading(false)
         return
       }
 
@@ -304,6 +306,8 @@ export function TagsDrawer({
         toast.error("Failed to remove tag")
       }
       setDeletingTagName(null)
+    } finally {
+      setLoading(false)
     }
   }, [allTagsData, fetchExistingTags, onTagsUpdated])
 
@@ -514,14 +518,23 @@ export function TagsDrawer({
                                   variant="destructive"
                                   size="sm"
                                   className="flex-1"
+                                  disabled={loading}
                                 >
-                                  Delete
+                                  {loading ? (
+                                    <>
+                                      <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    'Delete'
+                                  )}
                                 </Button>
                                 <Button
                                   onClick={() => setDeletingTagName(null)}
                                   variant="outline"
                                   size="sm"
                                   className="flex-1"
+                                  disabled={loading}
                                 >
                                   Cancel
                                 </Button>
@@ -548,7 +561,7 @@ export function TagsDrawer({
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEditTag(tag)}
-                              disabled={isAdding || isUpdating || deletingTagName !== null}
+                              disabled={isAdding || isUpdating || loading || deletingTagName !== null}
                               className="h-8 w-8"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
@@ -557,7 +570,7 @@ export function TagsDrawer({
                               variant="ghost"
                               size="icon"
                               onClick={() => setDeletingTagName(tag.name)}
-                              disabled={isAdding || isUpdating || deletingTagName !== null}
+                              disabled={isAdding || isUpdating || loading || deletingTagName !== null}
                               className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
