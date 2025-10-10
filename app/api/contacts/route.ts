@@ -33,6 +33,12 @@ export interface ContactSignal {
   is_custom: boolean;
 }
 
+export interface ContactTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface DashboardContact {
   id: string;
   company_id: string;
@@ -48,6 +54,7 @@ export interface DashboardContact {
   profile_picture: string | null;
   company: MinimalCompany | null;
   signals: ContactSignal[];
+  tags: ContactTag[];
 }
 
 // Response interfaces
@@ -68,15 +75,6 @@ export interface CompanyGroupResponse {
   pagination: PaginationInfo;
 }
 
-export interface SignalGroupResponse {
-  signals: Record<string, {
-    signal_type: string;
-    contacts: Array<DashboardContact & { confidence_score: number }>;
-    contactCount: number;
-    avgConfidence: number;
-  }>;
-  pagination: PaginationInfo;
-}
 
 export interface LocationGroupResponse {
   locations: Record<string, {
@@ -141,8 +139,6 @@ export async function GET(req: NextRequest) {
         return handleContactsList(supabase, page, limit, sortBy, sortOrder);
       case 'company':
         return handleCompanyGrouping(supabase, page, limit, sortBy, sortOrder);
-      case 'signals':
-        return handleSignalsGrouping(supabase, page, limit, sortBy, sortOrder);
       case 'location':
         return handleLocationGrouping(supabase, page, limit, locationType, sortBy, sortOrder);
       case 'city':
@@ -220,36 +216,6 @@ async function handleCompanyGrouping(
   } as CompanyGroupResponse);
 }
 
-async function handleSignalsGrouping(
-  supabase: SupabaseClient,
-  page: number,
-  limit: number,
-  _sortBy: string,
-  sortOrder: string
-): Promise<NextResponse> {
-  const offset = (page - 1) * limit;
-
-  // Use RPC function for optimized signals grouping
-  const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_signals', {
-    page_offset: offset,
-    page_limit: limit,
-    sort_order: sortOrder
-  });
-
-  if (error) {
-    throw new Error(`Failed to fetch contacts with signals: ${error.message}`);
-  }
-
-  const signals = result?.signals || {};
-  const totalCount = result?.total_count || 0;
-
-  const pagination = getPaginationInfo(page, limit, totalCount);
-
-  return NextResponse.json({
-    signals,
-    pagination
-  } as SignalGroupResponse);
-}
 
 async function handleLocationGrouping(
   supabase: SupabaseClient,

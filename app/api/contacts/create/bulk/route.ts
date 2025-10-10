@@ -4,19 +4,25 @@ import Papa from 'papaparse';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 
-const EXPECTED_HEADERS = [
+const REQUIRED_HEADERS = [
   'full_name',
+  'company_name',
+  'company_url'
+];
+
+const SOCIAL_MEDIA_HEADERS = [
+  'linkedin_url',
+  'twitter_profile',
+  'instagram_profile'
+];
+
+const OPTIONAL_HEADERS = [
   'title',
   'email',
   'phone',
   'city',
   'state',
   'country',
-  'linkedin_url',
-  'twitter_profile',
-  'instagram_profile',
-  'company_name',
-  'company_url',
   'company_linkedin_url',
   'company_industry',
   'company_city',
@@ -25,23 +31,28 @@ const EXPECTED_HEADERS = [
 ];
 
 interface CSVContactData {
+  // Required fields
   full_name: string;
-  title: string;
-  email: string;
-  phone: string;
-  city: string;
-  state: string;
-  country: string;
-  linkedin_url: string;
-  twitter_profile: string;
-  instagram_profile: string;
   company_name: string;
   company_url: string;
-  company_linkedin_url: string;
-  company_industry: string;
-  company_city: string;
-  company_state: string;
-  company_country: string;
+
+  // At least one social media field required
+  linkedin_url?: string;
+  twitter_profile?: string;
+  instagram_profile?: string;
+
+  // Optional fields
+  title?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  company_linkedin_url?: string;
+  company_industry?: string;
+  company_city?: string;
+  company_state?: string;
+  company_country?: string;
 }
 
 interface OrganizationStatus {
@@ -134,14 +145,30 @@ export async function POST(request: NextRequest) {
 
     // Validate CSV headers
     const csvHeaders = parseResult.meta.fields || [];
-    const missingHeaders = EXPECTED_HEADERS.filter(header => !csvHeaders.includes(header));
-    
-    if (missingHeaders.length > 0) {
+
+    // Check for required headers
+    const missingRequiredHeaders = REQUIRED_HEADERS.filter(header => !csvHeaders.includes(header));
+
+    if (missingRequiredHeaders.length > 0) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: `Missing required CSV columns: ${missingHeaders.join(', ')}`,
-          expected_format: EXPECTED_HEADERS.join(', ')
+          error: `Missing required CSV columns: ${missingRequiredHeaders.join(', ')}`,
+          expected_format: `Required: ${REQUIRED_HEADERS.join(', ')}; At least one social media: ${SOCIAL_MEDIA_HEADERS.join(', ')}; Optional: ${OPTIONAL_HEADERS.join(', ')}`
+        } as BulkImportResponse,
+        { status: 400 }
+      );
+    }
+
+    // Check that at least one social media field is present
+    const hasSocialMedia = SOCIAL_MEDIA_HEADERS.some(header => csvHeaders.includes(header));
+
+    if (!hasSocialMedia) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `At least one social media field is required: ${SOCIAL_MEDIA_HEADERS.join(', ')}`,
+          expected_format: `Required: ${REQUIRED_HEADERS.join(', ')}; At least one social media: ${SOCIAL_MEDIA_HEADERS.join(', ')}; Optional: ${OPTIONAL_HEADERS.join(', ')}`
         } as BulkImportResponse,
         { status: 400 }
       );

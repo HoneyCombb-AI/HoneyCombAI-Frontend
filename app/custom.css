@@ -79,7 +79,6 @@
   
   .driver-popover-custom {
     z-index: 10000 !important;
-    margin-left: 280px !important; 
   }
 
 /* Contact Ring States - scoped to avoid global impact */

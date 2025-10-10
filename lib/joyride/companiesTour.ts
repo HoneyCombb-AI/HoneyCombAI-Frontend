@@ -30,19 +30,19 @@ export const companiesTourSteps: DriveStep[] = [
     }
   },
   {
-    element: '[data-testid="enrichment-dropdown"]',
-    popover: {
-      title: 'Company Enrichment',
-      description: 'Access two enrichment options: Company Enrichment to gather comprehensive company data and insights, and News Enrichment to stay updated with the latest company news and developments.',
-      side: "over",
-      align: 'end'
-    }
-  },
-  {
     element: '[data-testid="sample-company"]',
     popover: {
       title: 'Company Profile',
       description: 'Click on any company to view detailed information including contact count, industry insights, and enrichment data. This helps you understand your target companies better.',
+      side: "left",
+      align: 'start'
+    }
+  },
+  {
+    element: '[data-testid="company-signals"]',
+    popover: {
+      title: 'Company Signals',
+      description: 'View all relevant buying signals and market indicators from leads associated with this company. These signals help you identify the best engagement opportunities.',
       side: "left",
       align: 'start'
     }

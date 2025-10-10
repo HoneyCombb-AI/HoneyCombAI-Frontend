@@ -19,7 +19,6 @@ import {
   Plus,
   Search,
   MapPin,
-  TrendingUp,
   SortAsc,
   SortDesc,
   ChevronLeft,
@@ -29,11 +28,11 @@ import {
   FileUp,
   Download,
   Trash2,
+  Tag,
 } from "lucide-react";
 import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
   CompanyGroupResponse,
-  SignalGroupResponse,
   LocationGroupResponse,
   SearchResponse,
   PaginationInfo,
@@ -41,6 +40,7 @@ import type {
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
+import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
 import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
@@ -50,7 +50,7 @@ function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean
   return <>{children({ isJoyrideMode })}</>;
 }
 
-export type GroupByType = "none" | "company" | "signals" | "location" | "city";
+export type GroupByType = "none" | "company" | "location" | "city";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name";
 export type SortOrder = "asc" | "desc";
@@ -64,7 +64,6 @@ interface ContactValidationData {
 
 export type DashboardResponse =
   | CompanyGroupResponse
-  | SignalGroupResponse
   | LocationGroupResponse
   | SearchResponse;
 
@@ -114,6 +113,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
   const [outreachDrawerOpen, setOutreachDrawerOpen] = useState(false);
+  const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
@@ -198,11 +198,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const handleGroupByChange = (newGroupBy: GroupByType) => {
     setGroupBy(newGroupBy);
     setCurrentPage(1);
-    if (newGroupBy === "signals") {
-      setSortOrder("desc");
-    } else {
-      setSortOrder("asc");
-    }
+    setSortOrder("asc");
   };
 
   const handleLocationTypeChange = (newLocationType: LocationType) => {
@@ -681,10 +677,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                     <MapPin className="h-4 w-4 mr-2" />
                     Location
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => handleGroupByChange("signals")}>
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Signals
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -749,7 +741,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                   value={searchInput}
                   onChange={handleSearchInputChange}
                   className="pl-10 w-64"
-                  data-testid="search-input"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleSearchSubmit();
@@ -824,6 +815,18 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           {/* Action Mode Controls - Shown only when contacts are selected */}
           {selectedContacts.size > 0 && (
             <>
+              {/* Manage Tags Button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 text-sm h-9"
+                onClick={() => setTagsDrawerOpen(true)}
+              >
+                <Tag className="h-4 w-4" />
+                <span className="hidden sm:inline">Manage Tags</span>
+                <span className="sm:hidden">Tags</span>
+              </Button>
+
               {/* Export to CSV Button */}
               <Button
                 size="sm"
@@ -843,7 +846,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
               {/* Add Enrichment Button */}
               <DropdownMenu>
-                <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
+                <DropdownMenuTrigger asChild >
                   <Button
                     size="sm"
                     className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium h-9"
@@ -945,6 +948,15 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             onOpenChange={setOutreachDrawerOpen}
             selectedContacts={selectedContacts}
             onSubmit={() => fetchDashboardData()}
+          />
+
+          {/* Tags Drawer */}
+          <TagsDrawer
+            open={tagsDrawerOpen}
+            onOpenChange={setTagsDrawerOpen}
+            selectedItems={Array.from(selectedContacts.keys())}
+            taggableType="contact"
+            onTagsUpdated={() => fetchDashboardData()}
           />
         </div>
       </div>

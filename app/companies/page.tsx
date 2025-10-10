@@ -28,6 +28,7 @@ import {
   X,
   Download,
   Trash2,
+  Tag,
 } from "lucide-react";
 import CompaniesSection from "@/components/dashboard/Company/CompaniesSection";
 import type {
@@ -39,6 +40,7 @@ import type {
   PaginationInfo,
 } from "@/app/api/companies/route";
 import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
+import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
 import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
 
@@ -111,6 +113,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     new Map()
   );
   const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
+  const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
   const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
@@ -733,6 +736,18 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           {/* Action Mode Controls - Shown only when companies are selected */}
           {selectedCompanies.size > 0 && (
             <>
+              {/* Manage Tags Button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 text-sm h-9"
+                onClick={() => setTagsDrawerOpen(true)}
+              >
+                <Tag className="h-4 w-4" />
+                <span className="hidden sm:inline">Manage Tags</span>
+                <span className="sm:hidden">Tags</span>
+              </Button>
+
               {/* Export to CSV Button */}
               <Button
                 size="sm"
@@ -752,7 +767,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
               {/* Add Enrichment Button */}
               <DropdownMenu>
-                <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
+                <DropdownMenuTrigger asChild >
                   <Button
                     size="sm"
                     className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium h-9"
@@ -832,6 +847,15 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             open={addCompanyDrawerOpen}
             onOpenChange={setAddCompanyDrawerOpen}
             onSubmit={() => fetchDashboardData()}
+          />
+
+          {/* Tags Drawer */}
+          <TagsDrawer
+            open={tagsDrawerOpen}
+            onOpenChange={setTagsDrawerOpen}
+            selectedItems={Array.from(selectedCompanies.keys())}
+            taggableType="company"
+            onTagsUpdated={() => fetchDashboardData()}
           />
         </div>
       </div>

@@ -1,0 +1,591 @@
+"use client"
+
+import * as React from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
+import { X, Plus, Edit2, Trash2, Loader2, Check, Info } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import axios from "axios"
+import { toast } from "sonner"
+
+interface Tag {
+  id: string
+  name: string
+  color: string
+}
+
+interface TagsDrawerProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  selectedItems: string[] // Array of contact/company IDs
+  taggableType: "contact" | "company"
+  onTagsUpdated?: () => void // Callback to refresh data after tag operations
+}
+
+const customDrawerStyles = {
+  width: '28vw',
+  maxWidth: '400px',
+  minWidth: '320px'
+}
+
+// Predefined color palette (9 colors for 3x3 grid)
+const COLOR_PALETTE = [
+  { name: "Blue", value: "#3B82F6" },
+  { name: "Purple", value: "#A855F7" },
+  { name: "Green", value: "#10B981" },
+  { name: "Red", value: "#EF4444" },
+  { name: "Orange", value: "#F97316" },
+  { name: "Pink", value: "#EC4899" },
+  { name: "Teal", value: "#14B8A6" },
+  { name: "Yellow", value: "#EAB308" },
+  { name: "Indigo", value: "#6366F1" },
+]
+
+// Memoized color button component to prevent unnecessary re-renders
+const ColorButton = React.memo(({
+  color,
+  isSelected,
+  isDisabled,
+  usedByTag,
+  onClick,
+  size = "large"
+}: {
+  color: { name: string; value: string }
+  isSelected: boolean
+  isDisabled: boolean
+  usedByTag?: string
+  onClick: () => void
+  size?: "large" | "small"
+}) => {
+  const height = size === "large" ? "h-11" : "h-9"
+  const checkSize = size === "large" ? "h-5 w-5" : "h-4 w-4"
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={isDisabled}
+      className={`relative ${height} rounded-lg border-2 transition-all duration-200 ${
+        isSelected
+          ? 'border-gray-900 shadow-md scale-105'
+          : isDisabled
+          ? 'border-gray-300 opacity-40 cursor-not-allowed'
+          : 'border-gray-200 hover:border-gray-400 hover:shadow-sm hover:scale-102'
+      }`}
+      style={{
+        backgroundColor: color.value,
+        boxShadow: isSelected ? `0 4px 12px ${color.value}40` : undefined
+      }}
+      title={isDisabled ? `Already used by tag: ${usedByTag}` : color.name}
+    >
+      {isSelected && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Check className={`${checkSize} text-white drop-shadow-md`} strokeWidth={3} />
+        </div>
+      )}
+    </button>
+  )
+})
+
+ColorButton.displayName = 'ColorButton'
+
+export function TagsDrawer({
+  open,
+  onOpenChange,
+  selectedItems,
+  taggableType,
+  onTagsUpdated
+}: TagsDrawerProps) {
+  const [existingTags, setExistingTags] = useState<Tag[]>([])
+  const [loading, setLoading] = useState(false)
+  const [editingTag, setEditingTag] = useState<Tag | null>(null)
+
+  // Form states for adding new tags
+  const [newTagName, setNewTagName] = useState("")
+  const [newTagColor, setNewTagColor] = useState(COLOR_PALETTE[0].value)
+
+  // Form states for editing tags
+  const [editTagName, setEditTagName] = useState("")
+  const [editTagColor, setEditTagColor] = useState("")
+
+  // Store all tags (including duplicates) for edit/delete operations
+  const [allTagsData, setAllTagsData] = useState<Tag[]>([])
+
+  // Loading states for individual operations
+  const [isAdding, setIsAdding] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [deletingTagName, setDeletingTagName] = useState<string | null>(null)
+
+  // Get colors that are already in use by existing tags
+  const usedColors = useMemo(() => {
+    return new Map(existingTags.map(tag => [tag.color, tag.name]))
+  }, [existingTags])
+
+  // Update to first available color when existing tags change
+  useEffect(() => {
+    const availableColor = COLOR_PALETTE.find(color => !usedColors.has(color.value))
+    if (availableColor && usedColors.has(newTagColor)) {
+      setNewTagColor(availableColor.value)
+    }
+  }, [usedColors, newTagColor])
+
+  // Create a stable key from selected items to prevent unnecessary re-fetches
+  const selectedItemsKey = useMemo(() => {
+    return [...selectedItems].sort().join(',')
+  }, [selectedItems])
+
+  const fetchExistingTags = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await axios.get('/api/tags/fetch', {
+        params: {
+          taggable_ids: selectedItemsKey,
+          taggable_type: taggableType
+        }
+      })
+
+      // Store all tags (including duplicates) for later use in edit/delete
+      const allTags = (response.data.tags || []) as Tag[]
+      setAllTagsData(allTags)
+
+      // Get unique tags (deduplicate by name for display)
+      const uniqueTags = Array.from(
+        new Map(allTags.map((tag: Tag) => [tag.name, tag])).values()
+      ) as Tag[]
+
+      setExistingTags(uniqueTags)
+    } catch (err) {
+      console.error("Error fetching tags:", err)
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        toast.error(err.response.data.error)
+      } else {
+        toast.error("Failed to load existing tags")
+      }
+      setExistingTags([])
+      setAllTagsData([])
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedItemsKey, taggableType])
+
+  // Fetch existing tags for selected items - only when drawer opens or items change
+  useEffect(() => {
+    if (open && selectedItems.length > 0) {
+      fetchExistingTags()
+    }
+  }, [open, selectedItemsKey, fetchExistingTags])
+
+  const handleAddTag = useCallback(async () => {
+    if (!newTagName.trim()) {
+      toast.error("Please enter a tag name")
+      return
+    }
+
+    setIsAdding(true)
+    try {
+      // Build operations array for bulk insert
+      // Force lowercase format
+      const operations = selectedItems.map(itemId => ({
+        taggable_type: taggableType,
+        taggable_id: itemId,
+        tags: [
+          {
+            name: newTagName.trim().toLowerCase(),
+            color: newTagColor
+          }
+        ]
+      }))
+
+      await axios.post("/api/tags/create", { operations })
+
+      toast.success(`Tag added to ${selectedItems.length} ${taggableType}(s)`)
+      setNewTagName("")
+      fetchExistingTags()
+      onTagsUpdated?.()
+    } catch (err) {
+      console.error("Error adding tag:", err)
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        toast.error(err.response.data.error)
+      } else {
+        toast.error("Failed to add tag")
+      }
+    } finally {
+      setIsAdding(false)
+    }
+  }, [newTagName, newTagColor, selectedItems, taggableType, fetchExistingTags, onTagsUpdated])
+
+  const handleEditTag = useCallback((tag: Tag) => {
+    setEditingTag(tag)
+    setEditTagName(tag.name)
+    setEditTagColor(tag.color)
+  }, [])
+
+  const handleUpdateTag = useCallback(async () => {
+    if (!editingTag || !editTagName.trim()) {
+      toast.error("Please enter a tag name")
+      return
+    }
+
+    setIsUpdating(true)
+    try {
+      // Use stored tag data instead of refetching
+      const tagIdsToUpdate = allTagsData
+        .filter(tag => tag.name === editingTag.name)
+        .map(tag => tag.id)
+
+      if (tagIdsToUpdate.length === 0) {
+        toast.error("No tags found to update")
+        setIsUpdating(false)
+        return
+      }
+
+      // Build updates array
+      // Force lowercase format
+      const updates = tagIdsToUpdate.map(tagId => ({
+        id: tagId,
+        name: editTagName.trim().toLowerCase(),
+        color: editTagColor
+      }))
+
+      await axios.patch("/api/tags/update", { updates })
+
+      toast.success(`Tag updated for ${tagIdsToUpdate.length} item(s)`)
+      setEditingTag(null)
+      setEditTagName("")
+      setEditTagColor("")
+      fetchExistingTags()
+      onTagsUpdated?.()
+    } catch (err) {
+      console.error("Error updating tag:", err)
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        toast.error(err.response.data.error)
+      } else {
+        toast.error("Failed to update tag")
+      }
+    } finally {
+      setIsUpdating(false)
+    }
+  }, [editingTag, editTagName, editTagColor, allTagsData, fetchExistingTags, onTagsUpdated])
+
+  const handleRemoveTag = useCallback(async (tagName: string) => {
+    setLoading(true)
+    try {
+      // Use stored tag data instead of refetching
+      const tagIdsToDelete = allTagsData
+        .filter(tag => tag.name === tagName)
+        .map(tag => tag.id)
+
+      if (tagIdsToDelete.length === 0) {
+        toast.error("No tags found to remove")
+        setLoading(false)
+        return
+      }
+
+      await axios.delete("/api/tags/delete", {
+        data: { tag_ids: tagIdsToDelete }
+      })
+
+      toast.success(`Tag removed from ${tagIdsToDelete.length} item(s)`)
+      setDeletingTagName(null)
+      fetchExistingTags()
+      onTagsUpdated?.()
+    } catch (err) {
+      console.error("Error removing tag:", err)
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        toast.error(err.response.data.error)
+      } else {
+        toast.error("Failed to remove tag")
+      }
+      setDeletingTagName(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [allTagsData, fetchExistingTags, onTagsUpdated])
+
+  const cancelEdit = useCallback(() => {
+    setEditingTag(null)
+    setEditTagName("")
+    setEditTagColor("")
+  }, [])
+
+  return (
+    <Drawer direction="left" open={open} onOpenChange={onOpenChange}>
+      <DrawerContent style={customDrawerStyles} className="left-0 right-auto">
+        <div className="mx-auto w-full h-screen overflow-y-auto">
+          <DrawerHeader className="sticky top-0 bg-white z-10 border-b px-6">
+            <DrawerTitle className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Manage Tags</h2>
+                <p className="text-sm text-gray-500 font-normal mt-1">
+                  {selectedItems.length} {taggableType}(s) selected
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onOpenChange(false)}
+                className="h-8 w-8"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DrawerTitle>
+          </DrawerHeader>
+
+          <div className="px-6 py-4 space-y-6">
+            {/* Add New Tag Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900">Add New Tag</h3>
+
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="tag-name" className="text-xs">Tag Name</Label>
+                  <Input
+                    id="tag-name"
+                    placeholder="Enter tag name..."
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value.toLowerCase())}
+                    onKeyPress={(e) => e.key === 'Enter' && !isAdding && handleAddTag()}
+                    disabled={isAdding}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Color</Label>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Info className="h-3 w-3" />
+                      <span>One color per tag</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 p-1">
+                    {COLOR_PALETTE.map((color) => {
+                      const isColorUsed = usedColors.has(color.value)
+                      const usedByTag = usedColors.get(color.value)
+
+                      return (
+                        <ColorButton
+                          key={color.value}
+                          color={color}
+                          isSelected={newTagColor === color.value}
+                          isDisabled={isAdding || isColorUsed}
+                          usedByTag={usedByTag}
+                          onClick={() => !isColorUsed && setNewTagColor(color.value)}
+                          size="large"
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleAddTag}
+                  disabled={isAdding || !newTagName.trim()}
+                  className="w-full"
+                  size="sm"
+                >
+                  {isAdding ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Tag
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Existing Tags Section */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Existing Tags
+                {existingTags.length > 0 && (
+                  <span className="text-gray-500 font-normal ml-2">
+                    ({existingTags.length})
+                  </span>
+                )}
+              </h3>
+
+              {loading && existingTags.length === 0 ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : existingTags.length === 0 ? (
+                <div className="text-sm text-gray-500 py-4 text-center">
+                  No tags yet. Add one above!
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {existingTags.map((tag) => (
+                    <div key={tag.id}>
+                      {editingTag?.id === tag.id ? (
+                        // Edit mode
+                        <div className="space-y-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                          <div className="space-y-2">
+                            <Label htmlFor="edit-tag-name" className="text-xs">Tag Name</Label>
+                            <Input
+                              id="edit-tag-name"
+                              value={editTagName}
+                              onChange={(e) => setEditTagName(e.target.value.toLowerCase())}
+                              onKeyPress={(e) => e.key === 'Enter' && !isUpdating && handleUpdateTag()}
+                              disabled={isUpdating}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs">Color</Label>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Info className="h-3 w-3" />
+                                <span>One color per tag</span>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 p-1">
+                              {COLOR_PALETTE.map((color) => {
+                                const isColorUsed = usedColors.has(color.value)
+                                const usedByTag = usedColors.get(color.value)
+                                // Allow the current tag's color even if it's "used" (by itself)
+                                const isCurrentTagColor = editingTag?.color === color.value
+                                const isDisabled = isColorUsed && !isCurrentTagColor
+
+                                return (
+                                  <ColorButton
+                                    key={color.value}
+                                    color={color}
+                                    isSelected={editTagColor === color.value}
+                                    isDisabled={isUpdating || isDisabled}
+                                    usedByTag={usedByTag}
+                                    onClick={() => !isDisabled && setEditTagColor(color.value)}
+                                    size="small"
+                                  />
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={handleUpdateTag}
+                              disabled={isUpdating}
+                              size="sm"
+                              className="flex-1"
+                            >
+                              {isUpdating ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                'Save'
+                              )}
+                            </Button>
+                            <Button
+                              onClick={cancelEdit}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                              disabled={isUpdating}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : deletingTagName === tag.name ? (
+                        // Delete confirmation mode
+                        <Alert className="p-3 border-red-200 bg-red-50">
+                          <AlertDescription>
+                            <div className="space-y-3">
+                              <p className="text-sm text-red-900 font-medium">
+                                Delete &apos;{tag.name}&apos;?
+                              </p>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleRemoveTag(tag.name)}
+                                  variant="destructive"
+                                  size="sm"
+                                  className="flex-1"
+                                  disabled={loading}
+                                >
+                                  {loading ? (
+                                    <>
+                                      <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    'Delete'
+                                  )}
+                                </Button>
+                                <Button
+                                  onClick={() => setDeletingTagName(null)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1"
+                                  disabled={loading}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          </AlertDescription>
+                        </Alert>
+                      ) : (
+                        // View mode
+                        <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                          <Badge
+                            style={{
+                              backgroundColor: tag.color + '20',
+                              color: tag.color,
+                              borderColor: tag.color + '40'
+                            }}
+                            className="border"
+                          >
+                            {tag.name}
+                          </Badge>
+
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditTag(tag)}
+                              disabled={isAdding || isUpdating || loading || deletingTagName !== null}
+                              className="h-8 w-8"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeletingTagName(tag.name)}
+                              disabled={isAdding || isUpdating || loading || deletingTagName !== null}
+                              className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  )
+}

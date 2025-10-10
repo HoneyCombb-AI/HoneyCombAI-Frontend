@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronRight, MoreHorizontal, Edit3 } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import React, { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
@@ -8,15 +8,16 @@ import { GroupByType } from '@/app/contacts/page';
 import type {
   DashboardContact,
   CompanyGroupResponse,
-  SignalGroupResponse,
   LocationGroupResponse,
   SearchResponse
 } from '@/app/api/contacts/route';
 import { ContactsDrawer } from './ContactsDrawer';
+import { NotesDrawer } from '../NotesDrawer';
 import { RingState } from '../Ring-state';
 import { SignalState } from '../Signal-state';
+import { ContactTags } from '../Tags';
 
-type DashboardResponse = CompanyGroupResponse | SignalGroupResponse | LocationGroupResponse | SearchResponse;
+type DashboardResponse = CompanyGroupResponse  | LocationGroupResponse | SearchResponse;
 
 // Contact validation data interface
 interface ContactValidationData {
@@ -48,11 +49,6 @@ interface ProcessedGroup {
   };
 }
 
-const truncateTitle = (title: string) => {
-  if (!title) return "No title";
-  const words = title.split(' ');
-  return words.length > 3 ? words.slice(0, 3).join(' ') + '...' : title;
-};
 
 // Memoized Contact Row Component
 const ContactRow = memo<{
@@ -60,14 +56,16 @@ const ContactRow = memo<{
   isSelected: boolean;
   onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
   onContactClick: (contact: DashboardContact) => void;
-}>(({ contact, isSelected, onContactSelect, onContactClick }) => {
+  onNotesClick: (contactId: string, contactName: string) => void;
+  isFirstInGroup?: boolean;
+}>(({ contact, isSelected, onContactSelect, onContactClick, onNotesClick, isFirstInGroup }) => {
   const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
   const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
   const isTracked = contact.isTracked;
 
   return (
     <tr
-      className={`hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''}`}
+      className={`group/row hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''} relative`}
     >
       {/* Checkbox */}
       <td className="px-4 py-3 w-12">
@@ -80,12 +78,13 @@ const ContactRow = memo<{
             full_name: contact.full_name
           })}
           onClick={(e) => e.stopPropagation()}
+          data-testid={isFirstInGroup ? "first-contact-checkbox" : undefined}
         />
       </td>
 
-      {/* Name */}
+      {/* Name with Title */}
       <td
-        className="px-4 py-3 w-1/4 cursor-pointer"
+        className="px-4 py-3 w-[24%] cursor-pointer"
         onClick={() => onContactClick(contact)}
         data-testid="sample-contact"
       >
@@ -101,60 +100,106 @@ const ContactRow = memo<{
             <div className="text-sm font-medium text-gray-900 truncate">
               {contact.full_name || "Unknown"}
             </div>
+            {contact.title && (
+              <div className="text-xs text-gray-500 mt-0.5" title={contact.title}>
+                {contact.title}
+              </div>
+            )}
           </div>
         </div>
       </td>
 
-      {/* Title */}
+      {/* Company */}
       <td
-        className="px-2 py-3 w-1/4 cursor-pointer"
+        className="px-2 py-3 w-[18%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
-        <div className="text-sm text-gray-600 truncate" title={contact.title || "No title"}>
-          {truncateTitle(contact.title || "")}
+        <div className="text-sm text-gray-600" title={contact.company?.name || "No company"}>
+          {contact.company?.name || "—"}
         </div>
       </td>
 
       {/* Location */}
       <td
-        className="px-2 py-3 w-1/6 cursor-pointer"
+        className="px-2 py-3 w-[11%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
-        <div className="text-sm text-gray-600 truncate">
-          {contact.city || "—"}
+        <div className="text-sm truncate">
+          {contact.city ? (
+            <span className="text-gray-600">{contact.city}</span>
+          ) : contact.state ? (
+            <span className="text-gray-400">{contact.state}</span>
+          ) : contact.country ? (
+            <span className="text-gray-400">{contact.country}</span>
+          ) : (
+            <span className="text-gray-600">—</span>
+          )}
         </div>
       </td>
 
-      {/* Temperature */}
+      {/* Heat */}
       <td
-        className="px-2 py-3 w-16 cursor-pointer"
+        className="px-2 py-3 w-[8%] cursor-pointer"
         onClick={() => onContactClick(contact)}
+        data-testid={isFirstInGroup ? "sample-contact-heat" : undefined}
       >
-        {contact.temperature && (
-          <div className="flex justify-center">
-            <div
-              className={`w-2 h-2 rounded-full ${
+        <div className="flex justify-center">
+          {contact.temperature ? (
+            <span
+              className={`text-xs px-2 py-0.5 rounded ${
                 contact.temperature === 'hot'
-                  ? 'bg-red-500'
+                  ? 'bg-red-50 text-red-700'
                   : contact.temperature === 'warm'
-                  ? 'bg-orange-400'
-                  : 'bg-blue-400'
+                  ? 'bg-orange-50 text-orange-700'
+                  : 'bg-blue-50 text-blue-700'
               }`}
-              title={contact.temperature.charAt(0).toUpperCase() + contact.temperature.slice(1)}
-            />
-          </div>
-        )}
+            >
+              {contact.temperature.charAt(0).toUpperCase() + contact.temperature.slice(1)}
+            </span>
+          ) : (
+            <span className="text-sm text-gray-400">—</span>
+          )}
+        </div>
+      </td>
+
+      {/* Tags */}
+      <td
+        className="px-2 py-3 w-[7%] cursor-pointer"
+        onClick={() => onContactClick(contact)}
+        data-testid={isFirstInGroup ? "sample-contact-tags" : undefined}
+      >
+        <ContactTags
+          tags={contact.tags || []}
+        />
       </td>
 
       {/* Signals */}
       <td
-        className="px-2 py-3 w-1/3 cursor-pointer"
+        className="px-2 py-3 w-[35%] cursor-pointer relative"
         onClick={() => onContactClick(contact)}
       >
-        <SignalState
-          signals={contact.signals}
-          contactId={contact.id}
-        />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <SignalState
+              signals={contact.signals}
+              contactId={contact.id}
+            />
+          </div>
+          {/* Notes Icon - Shows on hover */}
+          <div className="opacity-0 group-hover/row:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 flex-shrink-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNotesClick(contact.id, contact.full_name);
+              }}
+            >
+              <Edit3 className="h-3.5 w-3.5 text-gray-600" />
+            </Button>
+          </div>
+        </div>
       </td>
     </tr>
   );
@@ -178,20 +223,6 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
         logoUrl: company.logo_url,
         metadata: {
           contactCount: company.contactCount
-        }
-      }));
-    }
-
-    // Handle SignalGroupResponse
-    if (groupBy === 'signals' && 'signals' in records) {
-      return Object.entries(records.signals).map(([signalType, signalData]) => ({
-        id: signalType,
-        label: signalType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        contacts: signalData.contacts,
-        metadata: {
-          contactCount: signalData.contactCount,
-          avgConfidence: signalData.avgConfidence,
-          signalType: signalData.signal_type
         }
       }));
     }
@@ -235,10 +266,23 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedContact, setSelectedContact] = useState<DashboardContact | null>(null)
+
+  // Notes drawer state
+  const [notesDrawerOpen, setNotesDrawerOpen] = useState(false)
+  const [notesContactId, setNotesContactId] = useState<string | null>(null)
+  const [notesContactName, setNotesContactName] = useState<string | null>(null)
+
   // Handle contact click
   const handleContactClick = useCallback((contact: DashboardContact) => {
     setSelectedContact(contact)
     setDrawerOpen(true)
+  }, []);
+
+  // Handle notes button click
+  const handleNotesClick = useCallback((contactId: string, contactName: string) => {
+    setNotesContactId(contactId)
+    setNotesContactName(contactName)
+    setNotesDrawerOpen(true)
   }, []);
 
   // Toggle individual group collapse
@@ -266,6 +310,15 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
           open={drawerOpen}
           onOpenChange={setDrawerOpen}
           selectedContact={selectedContact}
+        />
+      )}
+      {notesContactId && (
+        <NotesDrawer
+          open={notesDrawerOpen}
+          onOpenChange={setNotesDrawerOpen}
+          notableId={notesContactId}
+          notableType="contact"
+          notableName={notesContactName || undefined}
         />
       )}
       {/* Header */}
@@ -380,21 +433,24 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                           )}
                         />
                       </th>
-                      <th className="px-4 py-2 text-left font-medium w-1/4">Name</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/4">Title</th>
-                      <th className="px-2 py-2 text-left font-medium w-1/6">Location</th>
-                      <th className="px-2 py-2 text-center font-medium w-16"></th>
-                      <th className="px-2 py-2 text-left font-medium w-1/3">Signals</th>
+                      <th className="px-4 py-2 text-left font-medium w-[24%]">Name</th>
+                      <th className="px-2 py-2 text-left font-medium w-[18%]">Company</th>
+                      <th className="px-2 py-2 text-left font-medium w-[11%]">Location</th>
+                      <th className="px-2 py-2 text-center font-medium w-[8%]">Heat</th>
+                      <th className="px-2 py-2 text-left font-medium w-[7%]">Tags</th>
+                      <th className="px-2 py-2 text-left font-medium w-[35%]">Signals</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(group.contacts || []).map((contact) => (
+                    {(group.contacts || []).map((contact, index) => (
                       <ContactRow
                         key={contact.id}
                         contact={contact}
                         isSelected={selectedContacts.has(contact.id)}
                         onContactSelect={onContactSelect}
                         onContactClick={handleContactClick}
+                        onNotesClick={handleNotesClick}
+                        isFirstInGroup={index === 0}
                       />
                     ))}
                   </tbody>
