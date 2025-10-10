@@ -2,15 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 
-export interface CompanyNudge {
-  intent: string;
-  description: string;
-  source: string;
-  tags: string[];
+// Signal interface matching contact signals structure
+export interface CompanySignal {
+  id: string;
+  signal_type: string;
+  confidence_score: number;
+  is_custom: boolean;
 }
 
-export interface CompanyNudges {
-  signals: CompanyNudge[];
+// Tag interface
+export interface CompanyTag {
+  id: string;
+  name: string;
+  color: string;
 }
 
 // CLEAN: Only data that appears in the table
@@ -26,7 +30,8 @@ export interface DashboardCompany {
   company_analysis_completed : boolean;
   company_analysis_requested : boolean;
   news_requested : boolean;
-  nudges: CompanyNudge[];
+  signals: CompanySignal[];
+  tags: CompanyTag[];
 }
 
 // Response interfaces
@@ -81,20 +86,6 @@ export interface SearchResponse {
   searchTerm: string;
 }
 
-// Helper function to build search conditions
-function buildSearchConditions(searchTerm: string) {
-  const conditions = [];
-  
-  // Search in company fields
-  conditions.push(`name.ilike.%${searchTerm}%`);
-  conditions.push(`industry.ilike.%${searchTerm}%`);
-  conditions.push(`city.ilike.%${searchTerm}%`);
-  conditions.push(`state.ilike.%${searchTerm}%`);
-  conditions.push(`country.ilike.%${searchTerm}%`);
-  
-  return conditions;
-}
-
 // Helper function to get pagination info
 function getPaginationInfo(page: number, limit: number, total: number): PaginationInfo {
   const totalPages = Math.ceil(total / limit);
@@ -108,16 +99,6 @@ function getPaginationInfo(page: number, limit: number, total: number): Paginati
   };
 }
 
-// Helper function to get employee size range
-function getEmployeeSizeRange(employeeCount: number | null): string {
-  if (!employeeCount) return 'Unknown';
-  if (employeeCount <= 10) return '1-10';
-  if (employeeCount <= 50) return '11-50';
-  if (employeeCount <= 200) return '51-200';
-  if (employeeCount <= 1000) return '201-1000';
-  return '1000+';
-}
-
 // Helper function to format company data from RPC
 function formatCompanyFromRPC(company: {
   id: string;
@@ -128,17 +109,12 @@ function formatCompanyFromRPC(company: {
   state: string | null;
   country: string | null;
   contact_count: number;
-  Company_Nudges: CompanyNudges | null;
+  signals?: CompanySignal[];
+  tags?: CompanyTag[];
   company_analysis_completed?: boolean;
   company_analysis_requested?: boolean;
   news_requested?: boolean;
 }): DashboardCompany {
-  // Parse and filter nudges to top 3
-  let nudges: CompanyNudge[] = [];
-  if (company.Company_Nudges?.signals && Array.isArray(company.Company_Nudges.signals)) {
-    nudges = company.Company_Nudges.signals.slice(0, 3);
-  }
-
   return {
     id: company.id,
     name: company.name,
@@ -151,45 +127,11 @@ function formatCompanyFromRPC(company: {
     company_analysis_completed: company.company_analysis_completed || false,
     company_analysis_requested: company.company_analysis_requested || false,
     news_requested: company.news_requested || false,
-    nudges
+    signals: company.signals || [],
+    tags: company.tags || []
   };
 }
 
-// Helper function to format company data for non-RPC queries
-function formatCompanyData(company: {
-  id: string;
-  name: string;
-  logo_url: string | null;
-  industry: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  Company_Nudges: CompanyNudges | null;
-  company_analysis_completed?: boolean;
-  company_analysis_requested?: boolean;
-  news_requested?: boolean;
-}, contactCounts: Record<string, number>): DashboardCompany {
-  // Parse and filter nudges to top 3
-  let nudges: CompanyNudge[] = [];
-  if (company.Company_Nudges?.signals && Array.isArray(company.Company_Nudges.signals)) {
-    nudges = company.Company_Nudges.signals.slice(0, 3);
-  }
-
-  return {
-    id: company.id,
-    name: company.name,
-    logo_url: company.logo_url,
-    industry: company.industry,
-    city: company.city,
-    state: company.state,
-    country: company.country,
-    contact_count: contactCounts[company.id] || 0,
-    company_analysis_completed: company.company_analysis_completed || false,
-    company_analysis_requested: company.company_analysis_requested || false,
-    news_requested: company.news_requested || false,
-    nudges
-  };
-}
 
 // Move shared query param parsing outside GET
 function getQueryParams(req: NextRequest) {
@@ -286,7 +228,8 @@ async function handleCompanyListing(
     state: string | null;
     country: string | null;
     contact_count: number;
-    Company_Nudges: CompanyNudges | null;
+    signals?: CompanySignal[];
+    tags?: CompanyTag[];
     company_analysis_completed?: boolean;
     company_analysis_requested?: boolean;
     news_requested?: boolean;
@@ -309,55 +252,41 @@ async function handleSearch(
   sortOrder: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
-  
-  // Build the search query - only essential fields for table display
-  let query = supabase
-    .from('companies')
-    .select(`
-      id, name, logo_url, industry, city, state, country, "Company_Nudges"
-    `, { count: 'exact' });
 
-  // Add search conditions
-  const searchConditions = buildSearchConditions(searchTerm);
-  query = query.or(searchConditions.join(','));
+  // Use RPC function for optimized search with counts, tags, and signals
+  const { data: result, error } = await supabase.rpc('search_companies_with_counts', {
+    search_term: searchTerm,
+    page_offset: offset,
+    page_limit: limit,
+    sort_field: sortBy === 'name' ? 'name' : 'created_at',
+    sort_order: sortOrder
+  });
 
-  // Add sorting
-  const sortField = sortBy === 'name' ? 'name' : sortBy === 'created_at' ? 'created_at' : 'name';
-  query = query.order(sortField, { ascending: sortOrder === 'asc' });
-
-  // Add pagination
-  query = query.range(offset, offset + limit - 1);
-
-  const { data: companies, error, count } = await query;
-  
   if (error) {
     throw new Error(`Failed to search companies: ${error.message}`);
   }
 
-  // Get contact counts for these companies
-  const contactCounts: Record<string, number> = {};
-  if (companies && companies.length > 0) {
-    const companyIds = companies.map((c) => c.id);
-    const { data: contacts, error: contactsError } = await supabase
-      .from('contacts')
-      .select('company_id')
-      .in('company_id', companyIds);
+  const companies = result?.companies || [];
+  const totalCount = result?.total_count || 0;
 
-    if (!contactsError && contacts) {
-      contacts.forEach((c: { company_id: string }) => {
-        if (c.company_id) {
-          contactCounts[c.company_id] = (contactCounts[c.company_id] || 0) + 1;
-        }
-      });
-    }
-  }
+  // Format companies data using RPC results
+  const formattedCompanies: DashboardCompany[] = companies.map((company: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+    industry: string | null;
+    city: string | null;
+    state: string | null;
+    country: string | null;
+    contact_count: number;
+    signals?: CompanySignal[];
+    tags?: CompanyTag[];
+    company_analysis_completed?: boolean;
+    company_analysis_requested?: boolean;
+    news_requested?: boolean;
+  }) => formatCompanyFromRPC(company));
 
-  // Format companies data
-  const formattedCompanies: DashboardCompany[] = (companies || []).map((company) => 
-    formatCompanyData(company, contactCounts)
-  );
-
-  const pagination = getPaginationInfo(page, limit, count || 0);
+  const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
     companies: formattedCompanies,
@@ -370,108 +299,30 @@ async function handleIndustryGrouping(
   supabase: SupabaseClient,
   page: number,
   limit: number,
-  _sortBy: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-  _sortOrder: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  sortBy: string,
+  sortOrder: string
 ): Promise<NextResponse> {
-  // Get all companies - only essential fields for table display
-  const { data: companies, error: companiesError } = await supabase
-    .from('companies')
-    .select(`
-      id, name, logo_url, industry, city, state, country, "Company_Nudges", estimated_num_employees
-    `);
-
-  if (companiesError) {
-    throw new Error(`Failed to fetch companies: ${companiesError.message}`);
-  }
-
-  // Get contact counts for all companies
-  const contactCounts: Record<string, number> = {};
-  if (companies && companies.length > 0) {
-    const companyIds = companies.map((c) => c.id);
-    const { data: contacts, error: contactsError } = await supabase
-      .from('contacts')
-      .select('company_id')
-      .in('company_id', companyIds);
-
-    if (!contactsError && contacts) {
-      contacts.forEach((c: { company_id: string }) => {
-        if (c.company_id) {
-          contactCounts[c.company_id] = (contactCounts[c.company_id] || 0) + 1;
-        }
-      });
-    }
-  }
-
-  // Group by industry
-  const industryMap: Record<string, {
-    industry: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-    avgEmployees: number;
-  }> = {};
-
-  (companies || []).forEach((company: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-    industry: string | null;
-    city: string | null;
-    state: string | null;
-    country: string | null;
-    Company_Nudges: CompanyNudges | null;
-    estimated_num_employees: number | null;
-  }) => {
-    const formattedCompany = formatCompanyData(company, contactCounts);
-    const industryKey = company.industry || 'Unknown';
-
-    if (!industryMap[industryKey]) {
-      industryMap[industryKey] = {
-        industry: industryKey,
-        companies: [],
-        companyCount: 0,
-        totalContacts: 0,
-        avgEmployees: 0
-      };
-    }
-
-    industryMap[industryKey].companies.push(formattedCompany);
-    industryMap[industryKey].companyCount++;
-    industryMap[industryKey].totalContacts += formattedCompany.contact_count;
-  });
-
-  // Calculate average employees for each industry
-  Object.values(industryMap).forEach(industry => {
-    const employeeCounts = industry.companies
-      .map(c => companies?.find(comp => comp.id === c.id)?.estimated_num_employees || 0)
-      .filter(count => count > 0);
-    
-    industry.avgEmployees = employeeCounts.length > 0 
-      ? Math.round(employeeCounts.reduce((sum, count) => sum + count, 0) / employeeCounts.length)
-      : 0;
-  });
-
-  // Apply pagination to industry groups
-  const industries = Object.keys(industryMap);
-  const totalIndustries = industries.length;
   const offset = (page - 1) * limit;
-  const paginatedIndustries = industries.slice(offset, offset + limit);
-  
-  const paginatedIndustryMap: Record<string, {
-    industry: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-    avgEmployees: number;
-  }> = {};
-  paginatedIndustries.forEach(industry => {
-    paginatedIndustryMap[industry] = industryMap[industry];
+
+  // Use RPC function for optimized industry grouping with counts, tags, and signals
+  const { data: result, error } = await supabase.rpc('get_companies_grouped_by_industry', {
+    page_offset: offset,
+    page_limit: limit,
+    sort_field: sortBy,
+    sort_order: sortOrder
   });
 
-  const pagination = getPaginationInfo(page, limit, totalIndustries);
+  if (error) {
+    throw new Error(`Failed to fetch companies by industry: ${error.message}`);
+  }
+
+  const industries = result?.industries || {};
+  const totalCount = result?.total_count || 0;
+
+  const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
-    industries: paginatedIndustryMap,
+    industries,
     pagination
   } as IndustryGroupResponse);
 }
@@ -481,101 +332,31 @@ async function handleLocationGrouping(
   page: number,
   limit: number,
   locationType: string,
-  _sortBy: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-  _sortOrder: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  sortBy: string,
+  sortOrder: string
 ): Promise<NextResponse> {
-  // Get all companies - only essential fields for table display
-  const { data: companies, error: companiesError } = await supabase
-    .from('companies')
-    .select(`
-      id, name, logo_url, industry, city, state, country, "Company_Nudges"
-    `);
-
-  if (companiesError) {
-    throw new Error(`Failed to fetch companies: ${companiesError.message}`);
-  }
-
-  // Get contact counts for all companies
-  const contactCounts: Record<string, number> = {};
-  if (companies && companies.length > 0) {
-    const companyIds = companies.map((c) => c.id);
-    const { data: contacts, error: contactsError } = await supabase
-      .from('contacts')
-      .select('company_id')
-      .in('company_id', companyIds);
-
-    if (!contactsError && contacts) {
-      contacts.forEach((c: { company_id: string }) => {
-        if (c.company_id) {
-          contactCounts[c.company_id] = (contactCounts[c.company_id] || 0) + 1;
-        }
-      });
-    }
-  }
-
-  // Group by location
-  const locationMap: Record<string, {
-    location: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-  }> = {};
-
-  (companies || []).forEach((company: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-    industry: string | null;
-    city: string | null;
-    state: string | null;
-    country: string | null;
-    Company_Nudges: CompanyNudges | null;
-  }) => {
-    const formattedCompany = formatCompanyData(company, contactCounts);
-    let locationKey = 'Unknown';
-    
-    if (locationType === 'city') {
-      locationKey = company.city || 'Unknown';
-    } else if (locationType === 'state') {
-      locationKey = company.state || 'Unknown';
-    } else if (locationType === 'country') {
-      locationKey = company.country || 'Unknown';
-    }
-
-    if (!locationMap[locationKey]) {
-      locationMap[locationKey] = {
-        location: locationKey,
-        companies: [],
-        companyCount: 0,
-        totalContacts: 0
-      };
-    }
-
-    locationMap[locationKey].companies.push(formattedCompany);
-    locationMap[locationKey].companyCount++;
-    locationMap[locationKey].totalContacts += formattedCompany.contact_count;
-  });
-
-  // Apply pagination to location groups
-  const locations = Object.keys(locationMap);
-  const totalLocations = locations.length;
   const offset = (page - 1) * limit;
-  const paginatedLocations = locations.slice(offset, offset + limit);
-  
-  const paginatedLocationMap: Record<string, {
-    location: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-  }> = {};
-  paginatedLocations.forEach(location => {
-    paginatedLocationMap[location] = locationMap[location];
+
+  // Use RPC function for optimized location grouping with counts, tags, and signals
+  const { data: result, error } = await supabase.rpc('get_companies_grouped_by_location', {
+    location_type: locationType,
+    page_offset: offset,
+    page_limit: limit,
+    sort_field: sortBy,
+    sort_order: sortOrder
   });
 
-  const pagination = getPaginationInfo(page, limit, totalLocations);
+  if (error) {
+    throw new Error(`Failed to fetch companies by location: ${error.message}`);
+  }
+
+  const locations = result?.locations || {};
+  const totalCount = result?.total_count || 0;
+
+  const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
-    locations: paginatedLocationMap,
+    locations,
     pagination
   } as LocationGroupResponse);
 }
@@ -584,94 +365,30 @@ async function handleEmployeeSizeGrouping(
   supabase: SupabaseClient,
   page: number,
   limit: number,
-  _sortBy: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-  _sortOrder: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  sortBy: string,
+  sortOrder: string
 ): Promise<NextResponse> {
-  // Get all companies - need estimated_num_employees for grouping
-  const { data: companies, error: companiesError } = await supabase
-    .from('companies')
-    .select(`
-      id, name, logo_url, industry, city, state, country, "Company_Nudges", estimated_num_employees
-    `);
-
-  if (companiesError) {
-    throw new Error(`Failed to fetch companies: ${companiesError.message}`);
-  }
-
-  // Get contact counts for all companies
-  const contactCounts: Record<string, number> = {};
-  if (companies && companies.length > 0) {
-    const companyIds = companies.map((c) => c.id);
-    const { data: contacts, error: contactsError } = await supabase
-      .from('contacts')
-      .select('company_id')
-      .in('company_id', companyIds);
-
-    if (!contactsError && contacts) {
-      contacts.forEach((c: { company_id: string }) => {
-        if (c.company_id) {
-          contactCounts[c.company_id] = (contactCounts[c.company_id] || 0) + 1;
-        }
-      });
-    }
-  }
-
-  // Group by employee size
-  const employeeSizeMap: Record<string, {
-    size_range: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-  }> = {};
-
-  (companies || []).forEach((company: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-    industry: string | null;
-    city: string | null;
-    state: string | null;
-    country: string | null;
-    Company_Nudges: CompanyNudges | null;
-    estimated_num_employees: number | null;
-  }) => {
-    const formattedCompany = formatCompanyData(company, contactCounts);
-    const sizeRange = getEmployeeSizeRange(company.estimated_num_employees);
-
-    if (!employeeSizeMap[sizeRange]) {
-      employeeSizeMap[sizeRange] = {
-        size_range: sizeRange,
-        companies: [],
-        companyCount: 0,
-        totalContacts: 0
-      };
-    }
-
-    employeeSizeMap[sizeRange].companies.push(formattedCompany);
-    employeeSizeMap[sizeRange].companyCount++;
-    employeeSizeMap[sizeRange].totalContacts += formattedCompany.contact_count;
-  });
-
-  // Apply pagination to employee size groups
-  const employeeSizes = Object.keys(employeeSizeMap);
-  const totalEmployeeSizes = employeeSizes.length;
   const offset = (page - 1) * limit;
-  const paginatedEmployeeSizes = employeeSizes.slice(offset, offset + limit);
-  
-  const paginatedEmployeeSizeMap: Record<string, {
-    size_range: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-  }> = {};
-  paginatedEmployeeSizes.forEach(size => {
-    paginatedEmployeeSizeMap[size] = employeeSizeMap[size];
+
+  // Use RPC function for optimized employee size grouping with counts, tags, and signals
+  const { data: result, error } = await supabase.rpc('get_companies_grouped_by_employee_size', {
+    page_offset: offset,
+    page_limit: limit,
+    sort_field: sortBy,
+    sort_order: sortOrder
   });
 
-  const pagination = getPaginationInfo(page, limit, totalEmployeeSizes);
+  if (error) {
+    throw new Error(`Failed to fetch companies by employee size: ${error.message}`);
+  }
+
+  const employee_sizes = result?.employee_sizes || {};
+  const totalCount = result?.total_count || 0;
+
+  const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
-    employee_sizes: paginatedEmployeeSizeMap,
+    employee_sizes,
     pagination
   } as EmployeeSizeGroupResponse);
 }

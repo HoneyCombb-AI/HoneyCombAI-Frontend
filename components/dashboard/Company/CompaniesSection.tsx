@@ -16,6 +16,7 @@ import type {
   EmployeeSizeGroupResponse,
   SearchResponse
 } from '@/app/api/companies/route';
+import { SignalState } from '../Signal-state';
 
 type DashboardResponse = CompanyListResponse | IndustryGroupResponse | LocationGroupResponse | EmployeeSizeGroupResponse | SearchResponse;
 
@@ -55,7 +56,6 @@ const CompanyRow = memo<{
   onCompanyClick: (company: DashboardCompany) => void;
   onNotesClick: (companyId: string, companyName: string) => void;
 }>(({ company, isSelected, onCompanySelect, onCompanyClick, onNotesClick }) => {
-  const topNudges = company.nudges?.slice(0, 3) || [];
   const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
   const hasAnalysisCompleted = company.company_analysis_completed;
   const hasNewsRequested = company.news_requested;
@@ -134,7 +134,7 @@ const CompanyRow = memo<{
         onClick={() => onCompanyClick(company)}
       >
         <ContactTags
-          tags={[]}
+          tags={company.tags || []}
         />
       </td>
 
@@ -146,20 +146,10 @@ const CompanyRow = memo<{
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap gap-1">
-              {topNudges.length > 0 ? (
-                topNudges.map((nudge, idx) => (
-                  <Badge
-                    key={idx}
-                    variant="outline"
-                    className="text-xs px-2 py-1 bg-green-50 text-green-700 border-green-200"
-                    title={nudge.description}
-                  >
-                    {nudge.intent}
-                  </Badge>
-                ))
-              ) : (
-                <span className="text-sm text-gray-400">—</span>
-              )}
+              <SignalState
+                signals={company.signals}
+                contactId={company.id}
+              />
             </div>
           </div>
           {/* Notes Icon - Shows on hover */}
