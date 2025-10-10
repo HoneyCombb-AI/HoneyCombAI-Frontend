@@ -124,8 +124,16 @@ const ContactRow = memo<{
         className="px-2 py-3 w-[11%] cursor-pointer"
         onClick={() => onContactClick(contact)}
       >
-        <div className="text-sm text-gray-600 truncate">
-          {contact.city || "—"}
+        <div className="text-sm truncate">
+          {contact.city ? (
+            <span className="text-gray-600">{contact.city}</span>
+          ) : contact.state ? (
+            <span className="text-gray-400">{contact.state}</span>
+          ) : contact.country ? (
+            <span className="text-gray-400">{contact.country}</span>
+          ) : (
+            <span className="text-gray-600">—</span>
+          )}
         </div>
       </td>
 
