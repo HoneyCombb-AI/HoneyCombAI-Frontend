@@ -39,6 +39,15 @@ export const companiesTourSteps: DriveStep[] = [
     }
   },
   {
+    element: '[data-testid="company-signals"]',
+    popover: {
+      title: 'Company Signals',
+      description: 'View all relevant buying signals and market indicators from leads associated with this company. These signals help you identify the best engagement opportunities.',
+      side: "left",
+      align: 'start'
+    }
+  },
+  {
     element: 'body',
     popover: {
       title: 'Next: Organizations',

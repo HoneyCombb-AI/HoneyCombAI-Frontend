@@ -9,10 +9,41 @@ export const SAMPLE_COMPANY_DATA = {
         state: "Karnataka",
         country: "India",
         contact_count: 11,
-        nudges: [],
         company_analysis_completed : true,
         company_analysis_requested : true,
-        news_requested : true
+        news_requested : true,
+        tags: [
+          {
+            id: "company-tag-1",
+            name: "Venture Capital",
+            color: "#3b82f6"
+          },
+          {
+            id: "company-tag-2",
+            name: "High Growth",
+            color: "#10b981"
+          }
+        ],
+        signals: [
+          {
+            id: "company-signal-1",
+            signal_type: "FUNDING ROUND",
+            confidence_score: 92,
+            is_custom: false
+          },
+          {
+            id: "company-signal-2",
+            signal_type: "EXPANSION",
+            confidence_score: 85,
+            is_custom: false
+          },
+          {
+            id: "company-signal-3",
+            signal_type: "MARKET LEADER",
+            confidence_score: 88,
+            is_custom: true
+          }
+        ]
       }
     ],
     pagination: {

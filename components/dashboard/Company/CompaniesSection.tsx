@@ -164,6 +164,7 @@ const CompanyRow = memo<{
       <td
         className="px-2 py-3 w-[33%] cursor-pointer relative"
         onClick={() => onCompanyClick(company)}
+        data-testid="company-signals"
       >
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
