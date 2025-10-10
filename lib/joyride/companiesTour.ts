@@ -30,15 +30,6 @@ export const companiesTourSteps: DriveStep[] = [
     }
   },
   {
-    element: '[data-testid="enrichment-dropdown"]',
-    popover: {
-      title: 'Company Enrichment',
-      description: 'Access two enrichment options: Company Enrichment to gather comprehensive company data and insights, and News Enrichment to stay updated with the latest company news and developments.',
-      side: "over",
-      align: 'end'
-    }
-  },
-  {
     element: '[data-testid="sample-company"]',
     popover: {
       title: 'Company Profile',

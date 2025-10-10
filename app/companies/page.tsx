@@ -767,7 +767,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
               {/* Add Enrichment Button */}
               <DropdownMenu>
-                <DropdownMenuTrigger asChild data-testid="enrichment-dropdown">
+                <DropdownMenuTrigger asChild >
                   <Button
                     size="sm"
                     className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium h-9"
