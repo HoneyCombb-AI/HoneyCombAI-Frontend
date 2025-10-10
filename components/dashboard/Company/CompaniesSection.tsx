@@ -113,9 +113,31 @@ const CompanyRow = memo<{
         className="px-2 py-3 w-[12%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
       >
-        <div className="text-sm text-gray-600 flex items-center gap-1">
-          <MapPin className="h-3 w-3" />
-          {company.city || company.country || "—"}
+        <div className="flex items-start gap-1">
+          <MapPin className="h-3 w-3 text-gray-600 mt-0.5 flex-shrink-0" />
+          <div className="flex flex-col min-w-0">
+            {company.city ? (
+              <>
+                <div className="text-sm text-gray-900 truncate">{company.city}</div>
+                {(company.state || company.country) && (
+                  <div className="text-xs text-gray-500 truncate">
+                    {[company.state, company.country].filter(Boolean).join(', ')}
+                  </div>
+                )}
+              </>
+            ) : company.state ? (
+              <>
+                <div className="text-sm text-gray-900 truncate">{company.state}</div>
+                {company.country && (
+                  <div className="text-xs text-gray-500 truncate">{company.country}</div>
+                )}
+              </>
+            ) : company.country ? (
+              <div className="text-sm text-gray-900 truncate">{company.country}</div>
+            ) : (
+              <div className="text-sm text-gray-600">—</div>
+            )}
+          </div>
         </div>
       </td>
 
