@@ -130,9 +130,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // DEBUG: Log the first row to see what we're getting
-      console.log("DEBUG - First contact data:", JSON.stringify(data?.[0], null, 2));
-
       csvData = convertToCSV(data, getContactsHeaders());
       filename = `contacts_export_${new Date().toISOString().split('T')[0]}.csv`;
 
