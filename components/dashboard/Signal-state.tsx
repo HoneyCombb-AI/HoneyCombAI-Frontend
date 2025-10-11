@@ -101,16 +101,6 @@ export const SignalState: React.FC<SignalStateProps> = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between py-3 gap-3">
                 <p className="font-bold text-sm">{signal.key}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-100">Confidence</span>
-                  <div className="w-16 h-2 bg-amber-900/50 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-300 ${getConfidenceClass(signal.score)}`}
-                      style={{ width: `${Math.round(signal.score)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-white w-8">{Math.round(signal.score)}%</span>
-                </div>
               </div>
               {signal.description && (
                 <>
