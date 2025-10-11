@@ -49,6 +49,7 @@ export interface DashboardContact {
   isTracked : boolean;
   primaryAnalysisCompleted : boolean;
   primaryAnalysisRequested : boolean;
+  hasNotes : boolean;
   temperature: 'hot' | 'warm' | 'cold' | null;
   country: string | null;
   profile_picture: string | null;
@@ -89,6 +90,16 @@ export interface SearchResponse {
   contacts: DashboardContact[];
   pagination: PaginationInfo;
   searchTerm: string;
+}
+
+export interface TagGroupResponse {
+  tags: Record<string, {
+    tagName: string;
+    color: string | null;
+    contacts: DashboardContact[];
+    contactCount: number;
+  }>;
+  pagination: PaginationInfo;
 }
 
 
@@ -143,6 +154,8 @@ export async function GET(req: NextRequest) {
         return handleLocationGrouping(supabase, page, limit, locationType, sortBy, sortOrder);
       case 'city':
         return handleLocationGrouping(supabase, page, limit, 'city', sortBy, sortOrder);
+      case 'tags':
+        return handleTagsGrouping(supabase, page, limit, sortBy, sortOrder);
       default:
         return handleContactsList(supabase, page, limit, sortBy, sortOrder);
     }
@@ -249,6 +262,38 @@ async function handleLocationGrouping(
     locations,
     pagination
   } as LocationGroupResponse);
+}
+
+async function handleTagsGrouping(
+  supabase: SupabaseClient,
+  page: number,
+  limit: number,
+  sortBy: string,
+  sortOrder: string
+): Promise<NextResponse> {
+  const offset = (page - 1) * limit;
+
+  // Use RPC function for optimized tags grouping
+  const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_tags', {
+    page_offset: offset,
+    page_limit: limit,
+    sort_field: sortBy === 'name' ? 'name' : 'created_at',
+    sort_order: sortOrder
+  });
+
+  if (error) {
+    throw new Error(`Failed to fetch contacts by tags: ${error.message}`);
+  }
+
+  const tags = result?.tags || {};
+  const totalCount = result?.total_count || 0;
+
+  const pagination = getPaginationInfo(page, limit, totalCount);
+
+  return NextResponse.json({
+    tags,
+    pagination
+  } as TagGroupResponse);
 }
 
 async function handleContactsList(

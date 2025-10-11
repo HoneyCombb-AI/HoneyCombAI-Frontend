@@ -35,6 +35,7 @@ import type {
   CompanyGroupResponse,
   LocationGroupResponse,
   SearchResponse,
+  TagGroupResponse,
   PaginationInfo,
 } from "@/app/api/contacts/route";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
@@ -50,7 +51,7 @@ function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean
   return <>{children({ isJoyrideMode })}</>;
 }
 
-export type GroupByType = "none" | "company" | "location" | "city";
+export type GroupByType = "none" | "company" | "location" | "city" | "tags";
 export type LocationType = "country" | "state" | "city";
 export type SortBy = "name";
 export type SortOrder = "asc" | "desc";
@@ -65,7 +66,8 @@ interface ContactValidationData {
 export type DashboardResponse =
   | CompanyGroupResponse
   | LocationGroupResponse
-  | SearchResponse;
+  | SearchResponse
+  | TagGroupResponse;
 
 // State interface for managing dashboard data
 interface DashboardState {
@@ -654,7 +656,13 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild data-testid="group-dropdown">
                   <Button variant="outline" size="sm" className="gap-2 text-sm">
-                    <Building2 className="h-4 w-4" />
+                    {groupBy === "tags" ? (
+                      <Tag className="h-4 w-4" />
+                    ) : groupBy === "location" ? (
+                      <MapPin className="h-4 w-4" />
+                    ) : (
+                      <Building2 className="h-4 w-4" />
+                    )}
                     <span className="hidden sm:inline">Group:</span>
                     <span>
                       {groupBy === "none" ? "None" : groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
@@ -676,6 +684,10 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                   >
                     <MapPin className="h-4 w-4 mr-2" />
                     Location
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleGroupByChange("tags")}>
+                    <Tag className="h-4 w-4 mr-2" />
+                    Tags
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

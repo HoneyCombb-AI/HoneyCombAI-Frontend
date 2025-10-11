@@ -42,23 +42,18 @@ interface ContactExportData {
   experience_summary: string | null;
   certifications_summary: string | null;
   projects_summary: string | null;
-  is_tracked: boolean;
-  analysis_completed: boolean;
-  in_crm: boolean;
   nudges: string | null;
   nudges_date: Date | null;
   signal_types: string | null;
   signals_summary: string | null;
   highest_confidence_signal: string | null;
-  ai_primary_analysis: string | null;
-  ai_detective_reasoning: string | null;
-  ai_investigation_decision: string | null;
-  ai_strategic_recommendations: string | null;
-  ai_confidence_score: number | null;
+  temperature: string | null;
+  when_to_reach_out: string | null;
+  account_overview: string | null;
+  contact_insights: string | null;
+  strategic_recommendations: string | null;
   ai_confidence_reasoning: string | null;
   created_at: Date;
-  updated_at: Date;
-  analysis_date: Date | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -226,22 +221,17 @@ function getContactsHeaders(): string[] {
     'Experience Summary',
     'Certifications Summary',
     'Projects Summary',
-    'Is Tracked',
-    'Analysis Completed',
-    'In CRM',
     'Nudges',
     'Nudges Date',
     'Signal Types',
     'Signals Summary',
     'Highest Confidence Signal',
-    'AI Primary Analysis',
-    'AI Detective Reasoning',
-    'AI Investigation Decision',
-    'AI Strategic Recommendations',
-    'AI Confidence Score',
+    'Temperature',
+    'When To Reach Out',
+    'Account Overview',
+    'Contact Insights',
+    'Strategic Recommendations',
     'AI Confidence Reasoning',
-    'Created At',
-    'Updated At',
-    'Analysis Date'
+    'Created At'
   ];
 }
