@@ -9,7 +9,8 @@ import type {
   DashboardContact,
   CompanyGroupResponse,
   LocationGroupResponse,
-  SearchResponse
+  SearchResponse,
+  TagGroupResponse
 } from '@/app/api/contacts/route';
 import { ContactsDrawer } from './ContactsDrawer';
 import { NotesDrawer } from '../NotesDrawer';
@@ -17,7 +18,7 @@ import { RingState } from '../Ring-state';
 import { SignalState } from '../Signal-state';
 import { ContactTags } from '../Tags';
 
-type DashboardResponse = CompanyGroupResponse  | LocationGroupResponse | SearchResponse;
+type DashboardResponse = CompanyGroupResponse | LocationGroupResponse | SearchResponse | TagGroupResponse;
 
 // Contact validation data interface
 interface ContactValidationData {
@@ -42,6 +43,7 @@ interface ProcessedGroup {
   label: string;
   contacts: DashboardContact[];
   logoUrl?: string | null;
+  tagColor?: string | null;
   metadata?: {
     contactCount?: number;
     avgConfidence?: number;
@@ -239,6 +241,19 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
       }));
     }
 
+    // Handle TagGroupResponse
+    if (groupBy === 'tags' && 'tags' in records) {
+      return Object.entries(records.tags).map(([tagKey, tagData]) => ({
+        id: tagKey,
+        label: tagData.tagName,
+        contacts: tagData.contacts,
+        tagColor: tagData.color,
+        metadata: {
+          contactCount: tagData.contactCount
+        }
+      }));
+    }
+
     // Handle SearchResponse
     if ('contacts' in records && Array.isArray(records.contacts)) {
       return [{
@@ -377,9 +392,16 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                           }}
                         />
                       </div>
+                    ) : group.tagColor ? (
+                      <div
+                        className="w-6 h-6 rounded flex items-center justify-center text-xs font-semibold text-white"
+                        style={{ backgroundColor: group.tagColor }}
+                      >
+                        {group.label.charAt(0).toUpperCase()}
+                      </div>
                     ) : null}
                     <div
-                      className={`w-6 h-6 rounded bg-white border border-gray-200 flex items-center justify-center text-xs font-semibold ${group.logoUrl ? 'hidden' : ''}`}
+                      className={`w-6 h-6 rounded bg-white border border-gray-200 flex items-center justify-center text-xs font-semibold ${group.logoUrl || group.tagColor ? 'hidden' : ''}`}
                     >
                       {group.label.charAt(0).toUpperCase()}
                     </div>
