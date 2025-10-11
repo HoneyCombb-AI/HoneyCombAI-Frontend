@@ -185,8 +185,8 @@ const ContactRow = memo<{
               contactId={contact.id}
             />
           </div>
-          {/* Notes Icon - Shows on hover */}
-          <div className="opacity-0 group-hover/row:opacity-100 transition-opacity">
+          {/* Notes Icon - Persistent if hasNotes, shows edit button on hover otherwise */}
+          <div className={contact.hasNotes ? "" : "opacity-0 group-hover/row:opacity-100 transition-opacity"}>
             <Button
               variant="ghost"
               size="sm"
@@ -196,7 +196,7 @@ const ContactRow = memo<{
                 onNotesClick(contact.id, contact.full_name);
               }}
             >
-              <Edit3 className="h-3.5 w-3.5 text-gray-600" />
+              <Edit3 className={`h-3.5 w-3.5 ${contact.hasNotes ? 'text-blue-600' : 'text-gray-600'}`} />
             </Button>
           </div>
         </div>
