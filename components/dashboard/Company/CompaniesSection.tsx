@@ -60,9 +60,22 @@ const CompanyRow = memo<{
   const hasAnalysisCompleted = company.company_analysis_completed;
   const hasNewsRequested = company.news_requested;
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default browser context menu
+    e.stopPropagation(); // Prevent event bubbling
+
+    onCompanySelect(company.id, {
+      company_analysis_completed: company.company_analysis_completed,
+      company_analysis_requested: company.company_analysis_requested,
+      news_requested: company.news_requested,
+      name: company.name
+    });
+  };
+
   return (
     <tr
       className={`group/row hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''} relative`}
+      onContextMenu={handleContextMenu}
     >
       {/* Checkbox */}
       <td className="px-4 py-3 w-12">
