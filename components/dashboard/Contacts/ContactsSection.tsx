@@ -65,9 +65,22 @@ const ContactRow = memo<{
   const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
   const isTracked = contact.isTracked;
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default browser context menu
+    e.stopPropagation(); // Prevent event bubbling
+
+    onContactSelect(contact.id, {
+      isTracked: contact.isTracked,
+      primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+      primaryAnalysisRequested: contact.primaryAnalysisRequested,
+      full_name: contact.full_name
+    });
+  };
+
   return (
     <tr
       className={`group/row hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''} relative`}
+      onContextMenu={handleContextMenu}
     >
       {/* Checkbox */}
       <td className="px-4 py-3 w-12">
