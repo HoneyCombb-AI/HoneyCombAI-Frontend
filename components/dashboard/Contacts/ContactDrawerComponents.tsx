@@ -32,30 +32,61 @@ const parseColonItem = (item: string) => {
   }
 }
 
+// Type for why_reach_out values (can be string, string array, or nested object)
+type WhyReachOutValue = string | string[] | Record<string, string | string[]>
+
+// Helper to safely convert any value to string array
+const valueToStringArray = (value: WhyReachOutValue | null | undefined): string[] => {
+  // Handle null/undefined
+  if (value == null) return []
+
+  // Handle arrays
+  if (Array.isArray(value)) {
+    return value.map(item => {
+      if (typeof item === 'string') return item
+      if (typeof item === 'object') return JSON.stringify(item)
+      return String(item)
+    })
+  }
+
+  // Handle objects (nested objects)
+  if (typeof value === 'object') {
+    return Object.entries(value).map(([k, v]) => {
+      if (typeof v === 'string') return `${sentenceCase(k)}: ${v}`
+      if (Array.isArray(v)) return `${sentenceCase(k)}: ${v.join(', ')}`
+      return `${sentenceCase(k)}: ${JSON.stringify(v)}`
+    })
+  }
+
+  // Handle strings and other primitives
+  return [String(value)]
+}
+
 // Flatten why_reach_out for copy functionality
-const flattenWhyReachOut = (whyReachOut: Record<string, string | string[]> | null): string => {
+const flattenWhyReachOut = (whyReachOut: Record<string, WhyReachOutValue> | null): string => {
   if (!whyReachOut || typeof whyReachOut !== 'object') return ''
 
   const lines: string[] = []
   Object.entries(whyReachOut).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      lines.push(`${sentenceCase(key)}:\n${value.map(item => `- ${item}`).join('\n')}`)
+    const values = valueToStringArray(value)
+    if (values.length === 1) {
+      lines.push(`${sentenceCase(key)}:\n${values[0]}`)
     } else {
-      lines.push(`${sentenceCase(key)}:\n${value}`)
+      lines.push(`${sentenceCase(key)}:\n${values.map(item => `- ${item}`).join('\n')}`)
     }
   })
   return lines.join('\n\n')
 }
 
 // Parse why_reach_out entries
-const parseWhyReachOutEntries = (whyReachOut: Record<string, string | string[]> | null) => {
+const parseWhyReachOutEntries = (whyReachOut: Record<string, WhyReachOutValue> | null) => {
   if (!whyReachOut || typeof whyReachOut !== 'object') return []
 
   const entries: Array<{ key: string, values: string[] }> = []
   Object.entries(whyReachOut).forEach(([key, value]) => {
     entries.push({
       key: sentenceCase(key),
-      values: Array.isArray(value) ? value : [value]
+      values: valueToStringArray(value)
     })
   })
   return entries
@@ -583,7 +614,7 @@ export function SocialIntelligenceSection({ aiAnalysis, nudgesData }: SocialInte
 // ============================================================================
 
 interface WhyReachOutSectionProps {
-  whyReachOutData: Record<string, string | string[]>
+  whyReachOutData: Record<string, WhyReachOutValue>
 }
 
 export function WhyReachOutSection({ whyReachOutData }: WhyReachOutSectionProps) {
