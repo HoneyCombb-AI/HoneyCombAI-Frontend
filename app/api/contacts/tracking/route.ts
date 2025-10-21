@@ -80,11 +80,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify contact IDs exist and get current tracking states (single query for both validation and token calculation)
-    const { data: contacts, error: contactsError } = await supabase
+    // Verify contact IDs exist and get their companies with tracking states
+    // Only contacts with companies can be tracked
+    const { data: contactsWithCompanies, error: contactsError } = await supabase
       .from('contacts')
-      .select('id, istracked')
-      .in('id', body.contact_ids);
+      .select(`
+        id,
+        company_id,
+        companies!inner(id, istracked)
+      `)
+      .in('id', body.contact_ids)
+      .not('company_id', 'is', null);
 
     if (contactsError) {
       return NextResponse.json(
@@ -93,11 +99,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const foundContacts = contacts || [];
+    const foundContacts = contactsWithCompanies || [];
     const foundContactIds = foundContacts.map(c => c.id);
     const missingIds = body.contact_ids.filter(id => !foundContactIds.includes(id));
 
     if (missingIds.length > 0) {
+      // Check if missing IDs are personal contacts (no company)
+      const { data: personalContacts } = await supabase
+        .from('contacts')
+        .select('id')
+        .in('id', missingIds)
+        .is('company_id', null);
+
+      if (personalContacts && personalContacts.length > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Cannot track personal contacts (contacts without a company): ${personalContacts.map(c => c.id).join(', ')}`
+          },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
         {
           success: false,
@@ -107,17 +130,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let contactsToEnable = 0;
+    // Get unique companies to calculate token cost (track at company level, not per contact)
+    const uniqueCompanies = new Map<string, boolean>();
+    foundContacts.forEach(contact => {
+      if (contact.company_id && contact.companies) {
+        const companyData = Array.isArray(contact.companies) ? contact.companies[0] : contact.companies;
+        uniqueCompanies.set(contact.company_id, companyData.istracked);
+      }
+    });
+
+    let companiesToEnable = 0;
 
     if (body.action === 'enable') {
-      contactsToEnable = foundContacts.length;
+      companiesToEnable = Array.from(uniqueCompanies.values()).filter(tracked => !tracked).length;
     } else if (body.action === 'disable') {
-      contactsToEnable = 0;
+      companiesToEnable = 0;
     } else if (body.action === 'toggle') {
-      contactsToEnable = foundContacts.filter(c => !c.istracked).length;
+      companiesToEnable = Array.from(uniqueCompanies.values()).filter(tracked => !tracked).length;
     }
 
-    const totalTokens = getWorkflowTokenCost(TaskType.SIGNALS_AGENT, contactsToEnable);
+    const totalTokens = getWorkflowTokenCost(TaskType.SIGNALS_AGENT, companiesToEnable);
     if (totalTokens > 0) {
       const { data: tokenCheck, error: tokenError } = await supabase
         .rpc('check_user_tokens', {

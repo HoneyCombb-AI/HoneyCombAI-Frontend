@@ -173,8 +173,8 @@ export async function POST(req: NextRequest) {
       twitter_handle: body.twitterProfile?.trim() ? extractTwitterHandle(body.twitterProfile.trim()) : null,
       instagram_handle: body.instagramProfile?.trim() ? extractInstagramHandle(body.instagramProfile.trim()) : null,
       user_id: user.id,
-      istracked: false,
       in_crm: false,
+      // NOTE: istracked removed - tracking is now handled at company level via companies.istracked
     };
 
     // Insert the contact
