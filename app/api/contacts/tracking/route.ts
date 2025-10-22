@@ -171,9 +171,6 @@ export async function POST(req: NextRequest) {
       newTrackingValue = false;
     }
 
-    let updateQuery;
-    let actualChanges = 0;
-
     if (body.action === 'toggle') {
       // For toggle, simply flip the tracking state for each company
       const updatePromises = companies.map(async company => {
@@ -181,7 +178,6 @@ export async function POST(req: NextRequest) {
           .from('companies')
           .update({ istracked: !company.istracked })
           .eq('id', company.id);
-        if (!error) actualChanges++;
         return { error };
       });
 

@@ -164,12 +164,27 @@ const CompanyRow = memo<{
 
       {/* Tags */}
       <td
-        className="px-2 py-3 w-[8%] cursor-pointer"
+        className="px-2 py-3 w-[8%] cursor-pointer relative"
         onClick={() => onCompanyClick(company)}
       >
-        <ContactTags
-          tags={company.tags || []}
-        />
+        <div className="flex items-center justify-between gap-2">
+          <ContactTags
+            tags={company.tags || []}
+          />
+          <div className="opacity-0 group-hover/row:opacity-100 transition-opacity absolute right-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNotesClick(company.id, company.name);
+              }}
+            >
+              <Edit3 className="h-3.5 w-3.5 text-gray-600" />
+            </Button>
+          </div>
+        </div>
       </td>
     </tr>
   );

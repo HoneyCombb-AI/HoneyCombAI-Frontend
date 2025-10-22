@@ -324,7 +324,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
     // Get eligible company IDs based on enrichment type
     const selectedCompaniesArray = Array.from(selectedCompanies.entries());
-    let eligibleCompanyIds = selectedCompaniesArray
+    const eligibleCompanyIds = selectedCompaniesArray
       .filter(([, data]) => !data.company_analysis_completed && !data.company_analysis_requested)
       .map(([id]) => id);
 
