@@ -294,9 +294,13 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
               {/* Important Alert - CSV Format */}
               <Alert className="border-amber-200 bg-amber-50">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
-                <AlertTitle className="text-amber-900 font-semibold">Important: CSV Format Requirements</AlertTitle>
+                <AlertTitle className="text-amber-900 font-semibold">Helpful CSV Tips</AlertTitle>
                 <AlertDescription className="text-amber-800">
-                  <p className="mb-3">Click on any header below to copy it to your clipboard. Headers are case-sensitive and must match exactly.</p>
+                  <p className="mb-3">
+                    Click any header below to copy it to your clipboard. We automatically normalize case and common variations
+                    (e.g. <span className="font-semibold">Full Name</span>, <span className="font-semibold">Name</span>, or separate <span className="font-semibold">First Name</span> / <span className="font-semibold">Last Name</span> columns),
+                    so feel free to use natural casing in your CSV.
+                  </p>
 
                   {/* Download Template Button */}
                   <Button
@@ -334,6 +338,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       >
                         full_name
                       </code>
+                      <p className="text-xs text-red-700 ml-2">
+                        We also accept <span className="font-semibold">Full Name</span>, <span className="font-semibold">Name</span>, or separate <span className="font-semibold">First Name</span> and <span className="font-semibold">Last Name</span> columns.
+                      </p>
                       <div className="text-xs text-red-800 ml-2 mb-2">At least ONE social media profile:</div>
                       <code
                         onClick={() => copyHeader('linkedin_url')}
@@ -345,6 +352,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       >
                         linkedin_url
                       </code>
+                      <p className="text-xs text-red-700 ml-2">
+                        Includes variations such as <span className="font-semibold">LinkedIn URL</span>, <span className="font-semibold">LinkedIn Profile</span>, or <span className="font-semibold">Person Linkedin Url</span>.
+                      </p>
                       <code
                         onClick={() => copyHeader('twitter_profile')}
                         className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
@@ -355,6 +365,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       >
                         twitter_profile
                       </code>
+                      <p className="text-xs text-red-700 ml-2">
+                        Handles variations like <span className="font-semibold">Twitter URL</span>, <span className="font-semibold">Twitter Handle</span>
+                      </p>
                       <code
                         onClick={() => copyHeader('instagram_profile')}
                         className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
@@ -365,6 +378,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       >
                         instagram_profile
                       </code>
+                      <p className="text-xs text-red-700 ml-2">
+                        Also matches <span className="font-semibold">Instagram</span> or <span className="font-semibold">Instagram URL</span>.
+                      </p>
                     </div>
                   </div>
 
@@ -455,6 +471,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       >
                         company_name
                       </code>
+                      <p className="text-xs text-amber-700 ml-2">
+                        Variations such as <span className="font-semibold">Company</span>, <span className="font-semibold">Organization</span>, or <span className="font-semibold">Business Name</span> are accepted.
+                      </p>
                       <code
                         onClick={() => copyHeader('company_url')}
                         className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
@@ -465,6 +484,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       >
                         company_url
                       </code>
+                      <p className="text-xs text-amber-700 ml-2">
+                        We&apos;ll match <span className="font-semibold">Website</span>, <span className="font-semibold">Company Website</span>, and similar labels automatically.
+                      </p>
                     </div>
                   </div>
 
@@ -495,6 +517,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       >
                         company_industry
                       </code>
+                      <p className="text-xs text-purple-700 ml-2">
+                        You can use labels like <span className="font-semibold">Industry</span>—we&apos;ll map them for you.
+                      </p>
                       <code
                         onClick={() => copyHeader('company_city')}
                         className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
