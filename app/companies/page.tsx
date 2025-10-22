@@ -255,11 +255,20 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         acc.ineligibleForCompanyEnrichment++;
       }
 
+      // Tracking states
+      if (data.istracked) {
+        acc.tracked++;
+      } else {
+        acc.untracked++;
+      }
+
       return acc;
     }, {
       total: 0,
       eligibleForCompanyEnrichment: 0,
-      ineligibleForCompanyEnrichment: 0
+      ineligibleForCompanyEnrichment: 0,
+      tracked: 0,
+      untracked: 0
     });
 
     return {
@@ -270,6 +279,10 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       eligibleCompanyEnrichmentCount: states.eligibleForCompanyEnrichment,
       ineligibleCompanyEnrichmentCount: states.ineligibleForCompanyEnrichment,
       hasEligibleForCompanyEnrichment: states.eligibleForCompanyEnrichment > 0,
+
+      // Tracking states
+      trackedCount: states.tracked,
+      untrackedCount: states.untracked,
     };
   }, [selectedCompanies]);
 
@@ -499,6 +512,40 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       if (axios.isAxiosError(error) && error.response?.data) {
         const errorData = error.response.data;
         toast.error(errorData.message || "Failed to delete companies");
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setEnrichmentLoading(false);
+    }
+  };
+
+  const handleTrackingToggle = async () => {
+    if (selectedCompanies.size === 0) {
+      toast.error("No companies selected for tracking update");
+      return;
+    }
+
+    try {
+      setEnrichmentLoading(true);
+      const selectedCompaniesArray = Array.from(selectedCompanies.entries());
+      
+      const response = await axios.post("/api/contacts/tracking", {
+        company_ids: selectedCompaniesArray.map(([id]) => id),
+        action: "toggle"
+      });
+
+      if (response.data.success) {
+        toast.success(response.data.message || "Successfully updated tracking status");
+        setSelectedCompanies(new Map());
+        fetchDashboardData();
+      } else {
+        toast.error(response.data.message || "Failed to update tracking status");
+      }
+    } catch (error) {
+      console.error('Tracking update failed:', error);
+      if (axios.isAxiosError(error) && error.response?.data) {
+        toast.error(error.response.data.message || "Failed to update tracking status");
       } else {
         toast.error("Network error. Please try again.");
       }
@@ -770,6 +817,9 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                       Company Enrichment ({companyStates.ineligibleCompanyEnrichmentCount} ineligible)
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem onSelect={handleTrackingToggle}>
+                    Toggle Tracking ({companyStates.trackedCount} to disable, {companyStates.untrackedCount} to enable)
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
