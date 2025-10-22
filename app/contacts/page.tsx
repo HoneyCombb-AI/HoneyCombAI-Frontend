@@ -61,6 +61,7 @@ interface ContactValidationData {
   primaryAnalysisCompleted: boolean;
   primaryAnalysisRequested: boolean;
   full_name: string;
+  company_id: string | null;
 }
 
 export type DashboardResponse =
@@ -248,10 +249,16 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
     const states = selectedContactsArray.reduce((acc, [, data]) => {
       acc.total++;
-      if (data.primaryAnalysisCompleted) {
+      // Tracking eligibility is now based on having a company
+      if (data.company_id) {
         acc.eligibleForTracking++;
         if (data.isTracked) acc.tracked++;
         else acc.untracked++;
+
+        // Track unique companies for display
+        if (!acc.uniqueCompanies.has(data.company_id)) {
+          acc.uniqueCompanies.set(data.company_id, data.isTracked);
+        }
       } else {
         acc.ineligibleForTracking++;
       }
@@ -265,8 +272,14 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       eligibleForTracking: 0,
       ineligibleForTracking: 0,
       eligibleForEnrichment: 0,
-      ineligibleForEnrichment: 0
+      ineligibleForEnrichment: 0,
+      uniqueCompanies: new Map<string, boolean>()
     });
+
+    // Calculate company-level tracking counts
+    const companyStates = Array.from(states.uniqueCompanies.values());
+    const trackedCompanies = companyStates.filter(isTracked => isTracked).length;
+    const untrackedCompanies = companyStates.filter(isTracked => !isTracked).length;
 
     return {
       totalSelected: states.total,
@@ -274,6 +287,9 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       untrackedCount: states.untracked,
       eligibleForTrackingCount: states.eligibleForTracking,
       ineligibleForTrackingCount: states.ineligibleForTracking,
+      uniqueCompanyCount: states.uniqueCompanies.size,
+      trackedCompanyCount: trackedCompanies,
+      untrackedCompanyCount: untrackedCompanies,
       hasTracked: states.tracked > 0,
       hasUntracked: states.untracked > 0,
       hasEligibleForTracking: states.eligibleForTracking > 0,
@@ -293,14 +309,17 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const getTrackingButtonText = () => {
     if (contactStates.totalSelected === 0) return "Contact Tracking";
     if (!contactStates.hasEligibleForTracking) {
-      return `Contact Tracking (${contactStates.ineligibleForTrackingCount} ineligible)`;
+      return `Contact Tracking (${contactStates.ineligibleForTrackingCount} without company)`;
     }
+
+    const companyText = contactStates.uniqueCompanyCount === 1 ? "company" : "companies";
+
     if (contactStates.allTracked) {
-      return `Disable Tracking (${contactStates.trackedCount})`;
+      return `Disable Tracking (${contactStates.trackedCompanyCount} ${companyText})`;
     } else if (contactStates.allUntracked) {
-      return `Enable Tracking (${contactStates.untrackedCount})`;
+      return `Enable Tracking (${contactStates.untrackedCompanyCount} ${companyText})`;
     } else if (contactStates.trackingIsMixed) {
-      return `Toggle Tracking (${contactStates.untrackedCount} enable, ${contactStates.trackedCount} disable)`;
+      return `Toggle Tracking (${contactStates.untrackedCompanyCount} enable, ${contactStates.trackedCompanyCount} disable)`;
     }
 
     return "Contact Tracking";
@@ -450,19 +469,26 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       toast.error("No contacts selected for tracking");
       return;
     }
-    const selectedContactsArray = Array.from(selectedContacts.entries());
-    const eligibleContactIds = selectedContactsArray
-      .filter(([, data]) => data.primaryAnalysisCompleted)
-      .map(([id]) => id);
 
-    if (eligibleContactIds.length === 0) {
-      toast.error("No eligible contacts selected for tracking");
+    const selectedContactsArray = Array.from(selectedContacts.entries());
+
+    // Extract unique company IDs from selected contacts
+    const uniqueCompanyIds = new Set<string>();
+    selectedContactsArray.forEach(([, data]) => {
+      if (data.company_id) {
+        uniqueCompanyIds.add(data.company_id);
+      }
+    });
+
+    if (uniqueCompanyIds.size === 0) {
+      toast.error("Selected contacts do not have companies. Only contacts with companies can be tracked.");
       return;
     }
+
     try {
       setEnrichmentLoading(true);
       const response = await axios.post("/api/contacts/tracking", {
-        contact_ids: eligibleContactIds,
+        company_ids: Array.from(uniqueCompanyIds),
         action: contactStates.trackingIsMixed ? "toggle" : (contactStates.allTracked ? "disable" : "enable")
       });
 

@@ -26,6 +26,7 @@ interface ContactValidationData {
   primaryAnalysisCompleted: boolean;
   primaryAnalysisRequested: boolean;
   full_name: string;
+  company_id: string | null;
 }
 
 // Props for ContactsSection
@@ -73,7 +74,8 @@ const ContactRow = memo<{
       isTracked: contact.isTracked,
       primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
       primaryAnalysisRequested: contact.primaryAnalysisRequested,
-      full_name: contact.full_name
+      full_name: contact.full_name,
+      company_id: contact.company?.id || null
     });
   };
 
@@ -90,7 +92,8 @@ const ContactRow = memo<{
             isTracked: contact.isTracked,
             primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
             primaryAnalysisRequested: contact.primaryAnalysisRequested,
-            full_name: contact.full_name
+            full_name: contact.full_name,
+            company_id: contact.company?.id || null
           })}
           onClick={(e) => e.stopPropagation()}
           data-testid={isFirstInGroup ? "first-contact-checkbox" : undefined}
@@ -462,7 +465,8 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                                 isTracked: contact.isTracked,
                                 primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
                                 primaryAnalysisRequested: contact.primaryAnalysisRequested,
-                                full_name: contact.full_name
+                                full_name: contact.full_name,
+                                company_id: contact.company?.id || null
                               }
                             })) || []
                           )}

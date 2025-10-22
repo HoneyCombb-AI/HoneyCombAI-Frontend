@@ -16,7 +16,6 @@ import type {
   EmployeeSizeGroupResponse,
   SearchResponse
 } from '@/app/api/companies/route';
-import { SignalState } from '../Signal-state';
 
 type DashboardResponse = CompanyListResponse | IndustryGroupResponse | LocationGroupResponse | EmployeeSizeGroupResponse | SearchResponse;
 
@@ -24,7 +23,7 @@ type DashboardResponse = CompanyListResponse | IndustryGroupResponse | LocationG
 interface CompanyValidationData {
   company_analysis_completed: boolean;
   company_analysis_requested: boolean;
-  news_requested: boolean;
+  istracked: boolean;
   name: string;
 }
 
@@ -58,7 +57,7 @@ const CompanyRow = memo<{
 }>(({ company, isSelected, onCompanySelect, onCompanyClick, onNotesClick }) => {
   const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
   const hasAnalysisCompleted = company.company_analysis_completed;
-  const hasNewsRequested = company.news_requested;
+  const isTracked = company.istracked;
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default browser context menu
@@ -67,7 +66,7 @@ const CompanyRow = memo<{
     onCompanySelect(company.id, {
       company_analysis_completed: company.company_analysis_completed,
       company_analysis_requested: company.company_analysis_requested,
-      news_requested: company.news_requested,
+      istracked: company.istracked,
       name: company.name
     });
   };
@@ -78,13 +77,13 @@ const CompanyRow = memo<{
       onContextMenu={handleContextMenu}
     >
       {/* Checkbox */}
-      <td className="px-4 py-3 w-12">
+      <td className="px-4 py-3 w-[4%]">
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => onCompanySelect(company.id, {
             company_analysis_completed: company.company_analysis_completed,
             company_analysis_requested: company.company_analysis_requested,
-            news_requested: company.news_requested,
+            istracked: company.istracked,
             name: company.name
           })}
           onClick={(e) => e.stopPropagation()}
@@ -93,14 +92,14 @@ const CompanyRow = memo<{
 
       {/* Company Name */}
       <td
-        className="px-4 py-3 w-[22%] cursor-pointer"
+        className="px-4 py-3 w-[28%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
         data-testid="sample-company"
       >
         <div className="flex items-center gap-3">
           <RingState
             green={hasAnalysisCompleted}
-            golden={hasNewsRequested}
+            golden={isTracked}
             requested={hasAnalysisRequested}
             profilePicture={company.logo_url}
             fullName={company.name}
@@ -114,7 +113,7 @@ const CompanyRow = memo<{
       </td>
 
       <td
-        className="px-2 py-3 w-[18%] cursor-pointer"
+        className="px-2 py-3 w-[20%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
       >
         <div className="text-sm text-gray-600 truncate" title={company.industry || "No industry"}>
@@ -123,7 +122,7 @@ const CompanyRow = memo<{
       </td>
 
       <td
-        className="px-2 py-3 w-[12%] cursor-pointer"
+        className="px-2 py-3 w-[20%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
       >
         <div className="flex items-start gap-1">
@@ -155,7 +154,7 @@ const CompanyRow = memo<{
       </td>
 
       <td
-        className="px-2 py-3 w-[8%] cursor-pointer"
+        className="px-2 py-3 w-[12%] cursor-pointer"
         onClick={() => onCompanyClick(company)}
       >
         <div className="text-sm text-gray-600 text-center">
@@ -165,35 +164,18 @@ const CompanyRow = memo<{
 
       {/* Tags */}
       <td
-        className="px-2 py-3 w-[7%] cursor-pointer"
+        className="px-2 py-3 w-[8%] cursor-pointer relative"
         onClick={() => onCompanyClick(company)}
-      >
-        <ContactTags
-          tags={company.tags || []}
-        />
-      </td>
-
-      {/* Signals */}
-      <td
-        className="px-2 py-3 w-[33%] cursor-pointer relative"
-        onClick={() => onCompanyClick(company)}
-        data-testid="company-signals"
       >
         <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap gap-1">
-              <SignalState
-                signals={company.signals}
-                contactId={company.id}
-              />
-            </div>
-          </div>
-          {/* Notes Icon - Shows on hover */}
-          <div className="opacity-0 group-hover/row:opacity-100 transition-opacity">
+          <ContactTags
+            tags={company.tags || []}
+          />
+          <div className="opacity-0 group-hover/row:opacity-100 transition-opacity absolute right-2">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 flex-shrink-0"
+              className="h-7 w-7 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50"
               onClick={(e) => {
                 e.stopPropagation();
                 onNotesClick(company.id, company.name);
@@ -416,7 +398,7 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                 <table className="w-full table-fixed">
                   <thead>
                     <tr className="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
-                      <th className="px-4 py-2 text-left font-medium w-12">
+                      <th className="px-4 py-2 text-left font-medium w-[4%]">
                         <Checkbox
                           checked={
                             group.companies.length > 0 &&
@@ -428,19 +410,18 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                               data: {
                                 company_analysis_completed: company.company_analysis_completed,
                                 company_analysis_requested: company.company_analysis_requested,
-                                news_requested: company.news_requested,
+                                istracked: company.istracked,
                                 name: company.name
                               }
                             }))
                           )}
                         />
                       </th>
-                      <th className="px-4 py-2 text-left font-medium w-[22%]">Company</th>
-                      <th className="px-2 py-2 text-left font-medium w-[18%]">Industry</th>
-                      <th className="px-2 py-2 text-left font-medium w-[12%]">Location</th>
-                      <th className="px-2 py-2 text-left font-medium w-[8%]">Contacts</th>
-                      <th className="px-2 py-2 text-left font-medium w-[7%]">Tags</th>
-                      <th className="px-2 py-2 text-left font-medium w-[33%]">Signals</th>
+                      <th className="px-4 py-2 text-left font-medium w-[28%]">Company</th>
+                      <th className="px-2 py-2 text-left font-medium w-[20%]">Industry</th>
+                      <th className="px-2 py-2 text-left font-medium w-[20%]">Location</th>
+                      <th className="px-2 py-2 text-left font-medium w-[12%]">Contacts</th>
+                      <th className="px-2 py-2 text-left font-medium w-[8%]">Tags</th>
                     </tr>
                   </thead>
                   <tbody>

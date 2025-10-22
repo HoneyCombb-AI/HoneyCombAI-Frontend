@@ -58,7 +58,7 @@ export type SortOrder = "asc" | "desc";
 interface CompanyValidationData {
   company_analysis_completed: boolean;
   company_analysis_requested: boolean;
-  news_requested: boolean;
+  istracked: boolean;
   name: string;
 }
 
@@ -255,11 +255,11 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         acc.ineligibleForCompanyEnrichment++;
       }
 
-      // News enrichment eligibility states
-      if (!data.news_requested) {
-        acc.eligibleForNewsEnrichment++;
+      // Tracking states
+      if (data.istracked) {
+        acc.tracked++;
       } else {
-        acc.ineligibleForNewsEnrichment++;
+        acc.untracked++;
       }
 
       return acc;
@@ -267,8 +267,8 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       total: 0,
       eligibleForCompanyEnrichment: 0,
       ineligibleForCompanyEnrichment: 0,
-      eligibleForNewsEnrichment: 0,
-      ineligibleForNewsEnrichment: 0
+      tracked: 0,
+      untracked: 0
     });
 
     return {
@@ -280,10 +280,9 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       ineligibleCompanyEnrichmentCount: states.ineligibleForCompanyEnrichment,
       hasEligibleForCompanyEnrichment: states.eligibleForCompanyEnrichment > 0,
 
-      // News enrichment states
-      eligibleNewsEnrichmentCount: states.eligibleForNewsEnrichment,
-      ineligibleNewsEnrichmentCount: states.ineligibleForNewsEnrichment,
-      hasEligibleForNewsEnrichment: states.eligibleForNewsEnrichment > 0,
+      // Tracking states
+      trackedCount: states.tracked,
+      untrackedCount: states.untracked,
     };
   }, [selectedCompanies]);
 
@@ -317,11 +316,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     });
   };
 
-  const handleEnrichmentAction = async (
-    type:
-      | "company_enrichment"
-      | "news_enrichment"
-  ) => {
+  const handleEnrichmentAction = async (type: "company_enrichment") => {
     if (selectedCompanies.size === 0) {
       toast.error("No companies selected for enrichment");
       return;
@@ -329,17 +324,9 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
     // Get eligible company IDs based on enrichment type
     const selectedCompaniesArray = Array.from(selectedCompanies.entries());
-    let eligibleCompanyIds: string[] = [];
-
-    if (type === "company_enrichment") {
-      eligibleCompanyIds = selectedCompaniesArray
-        .filter(([, data]) => !data.company_analysis_completed && !data.company_analysis_requested)
-        .map(([id]) => id);
-    } else if (type === "news_enrichment") {
-      eligibleCompanyIds = selectedCompaniesArray
-        .filter(([, data]) => !data.news_requested)
-        .map(([id]) => id);
-    }
+    const eligibleCompanyIds = selectedCompaniesArray
+      .filter(([, data]) => !data.company_analysis_completed && !data.company_analysis_requested)
+      .map(([id]) => id);
 
     if (eligibleCompanyIds.length === 0) {
       toast.error("No eligible companies selected for enrichment");
@@ -525,6 +512,40 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       if (axios.isAxiosError(error) && error.response?.data) {
         const errorData = error.response.data;
         toast.error(errorData.message || "Failed to delete companies");
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setEnrichmentLoading(false);
+    }
+  };
+
+  const handleTrackingToggle = async () => {
+    if (selectedCompanies.size === 0) {
+      toast.error("No companies selected for tracking update");
+      return;
+    }
+
+    try {
+      setEnrichmentLoading(true);
+      const selectedCompaniesArray = Array.from(selectedCompanies.entries());
+      
+      const response = await axios.post("/api/contacts/tracking", {
+        company_ids: selectedCompaniesArray.map(([id]) => id),
+        action: "toggle"
+      });
+
+      if (response.data.success) {
+        toast.success(response.data.message || "Successfully updated tracking status");
+        setSelectedCompanies(new Map());
+        fetchDashboardData();
+      } else {
+        toast.error(response.data.message || "Failed to update tracking status");
+      }
+    } catch (error) {
+      console.error('Tracking update failed:', error);
+      if (axios.isAxiosError(error) && error.response?.data) {
+        toast.error(error.response.data.message || "Failed to update tracking status");
       } else {
         toast.error("Network error. Please try again.");
       }
@@ -796,18 +817,9 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                       Company Enrichment ({companyStates.ineligibleCompanyEnrichmentCount} ineligible)
                     </DropdownMenuItem>
                   )}
-                  {companyStates.hasEligibleForNewsEnrichment && (
-                    <DropdownMenuItem
-                      onSelect={() => handleEnrichmentAction("news_enrichment")}
-                    >
-                      News Enrichment ({companyStates.eligibleNewsEnrichmentCount})
-                    </DropdownMenuItem>
-                  )}
-                  {!companyStates.hasEligibleForNewsEnrichment && selectedCompanies.size > 0 && (
-                    <DropdownMenuItem disabled>
-                      News Enrichment ({companyStates.ineligibleNewsEnrichmentCount} ineligible)
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem onSelect={handleTrackingToggle}>
+                    Toggle Tracking ({companyStates.trackedCount} to disable, {companyStates.untrackedCount} to enable)
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 

@@ -2,14 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 
-// Signal interface matching contact signals structure
-export interface CompanySignal {
-  id: string;
-  signal_type: string;
-  confidence_score: number;
-  is_custom: boolean;
-}
-
 // Tag interface
 export interface CompanyTag {
   id: string;
@@ -29,8 +21,7 @@ export interface DashboardCompany {
   contact_count: number;
   company_analysis_completed : boolean;
   company_analysis_requested : boolean;
-  news_requested : boolean;
-  signals: CompanySignal[];
+  istracked : boolean;
   tags: CompanyTag[];
 }
 
@@ -109,11 +100,10 @@ function formatCompanyFromRPC(company: {
   state: string | null;
   country: string | null;
   contact_count: number;
-  signals?: CompanySignal[];
   tags?: CompanyTag[];
   company_analysis_completed?: boolean;
   company_analysis_requested?: boolean;
-  news_requested?: boolean;
+  istracked?: boolean;
 }): DashboardCompany {
   return {
     id: company.id,
@@ -126,8 +116,7 @@ function formatCompanyFromRPC(company: {
     contact_count: company.contact_count,
     company_analysis_completed: company.company_analysis_completed || false,
     company_analysis_requested: company.company_analysis_requested || false,
-    news_requested: company.news_requested || false,
-    signals: company.signals || [],
+    istracked: company.istracked || false,
     tags: company.tags || []
   };
 }
@@ -228,11 +217,10 @@ async function handleCompanyListing(
     state: string | null;
     country: string | null;
     contact_count: number;
-    signals?: CompanySignal[];
     tags?: CompanyTag[];
     company_analysis_completed?: boolean;
     company_analysis_requested?: boolean;
-    news_requested?: boolean;
+    istracked?: boolean;
   }) => formatCompanyFromRPC(company));
 
   const pagination = getPaginationInfo(page, limit, totalCount);
@@ -253,7 +241,7 @@ async function handleSearch(
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // Use RPC function for optimized search with counts, tags, and signals
+  // Use RPC function for optimized search with counts, tags
   const { data: result, error } = await supabase.rpc('search_companies_with_counts', {
     search_term: searchTerm,
     page_offset: offset,
@@ -279,11 +267,10 @@ async function handleSearch(
     state: string | null;
     country: string | null;
     contact_count: number;
-    signals?: CompanySignal[];
     tags?: CompanyTag[];
     company_analysis_completed?: boolean;
     company_analysis_requested?: boolean;
-    news_requested?: boolean;
+    istracked?: boolean;
   }) => formatCompanyFromRPC(company));
 
   const pagination = getPaginationInfo(page, limit, totalCount);
@@ -304,7 +291,7 @@ async function handleIndustryGrouping(
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // Use RPC function for optimized industry grouping with counts, tags, and signals
+  // Use RPC function for optimized industry grouping with counts, tags
   const { data: result, error } = await supabase.rpc('get_companies_grouped_by_industry', {
     page_offset: offset,
     page_limit: limit,
@@ -337,7 +324,7 @@ async function handleLocationGrouping(
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // Use RPC function for optimized location grouping with counts, tags, and signals
+  // Use RPC function for optimized location grouping with counts, tags
   const { data: result, error } = await supabase.rpc('get_companies_grouped_by_location', {
     location_type: locationType,
     page_offset: offset,
@@ -370,7 +357,7 @@ async function handleEmployeeSizeGrouping(
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // Use RPC function for optimized employee size grouping with counts, tags, and signals
+  // Use RPC function for optimized employee size grouping with counts, tags
   const { data: result, error } = await supabase.rpc('get_companies_grouped_by_employee_size', {
     page_offset: offset,
     page_limit: limit,
