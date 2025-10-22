@@ -4,17 +4,14 @@ import { rateLimiters } from '@/app/api/utils/rate-limiter';
 import { getWorkflowTokenCost, TaskType } from '@/app/api/utils/cost-estimation';
 
 interface TrackingRequest {
-  contact_ids: string[];
+  company_ids: string[];
   action: 'enable' | 'disable' | 'toggle';
 }
 
 interface TrackingResponse {
   success: boolean;
   message: string;
-  updated_contacts: Array<{
-    id: string;
-    isTracked: boolean;
-  }>;
+  updated_companies: number;
   errors?: Array<{
     field?: string;
     message: string;
@@ -22,30 +19,27 @@ interface TrackingResponse {
   }>;
 }
 
-interface RPCResult {
-  id: string;
-  is_tracked: boolean;
-  was_updated: boolean;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body: TrackingRequest = await req.json();
 
     // Validate request structure
-    if (!body.contact_ids || !Array.isArray(body.contact_ids) || body.contact_ids.length === 0) {
+    if (!body.company_ids || !Array.isArray(body.company_ids) || body.company_ids.length === 0) {
       return NextResponse.json(
-        { success: false, message: 'contact_ids must be a non-empty array' },
+        { success: false, message: 'company_ids must be a non-empty array', updated_companies: 0 },
         { status: 400 }
       );
     }
 
     if (!body.action || !['enable', 'disable', 'toggle'].includes(body.action)) {
       return NextResponse.json(
-        { success: false, message: 'action must be "enable", "disable", or "toggle"' },
+        { success: false, message: 'action must be "enable", "disable", or "toggle"', updated_companies: 0 },
         { status: 400 }
       );
     }
+
+    // Deduplicate company IDs to prevent processing the same company multiple times
+    const uniqueCompanyIds = Array.from(new Set(body.company_ids));
 
     const supabase = await createClient();
 
@@ -54,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
+        { success: false, message: 'Unauthorized', updated_companies: 0 },
         { status: 401 }
       );
     }
@@ -66,6 +60,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           message: 'Enrichment rate limit exceeded. Please wait before trying again.',
+          updated_companies: 0,
           errors: [{ message: `Rate limit exceeded. You can try again at ${new Date(rateLimit.resetTime).toLocaleString()}` }]
         } as TrackingResponse,
         {
@@ -80,73 +75,53 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify contact IDs exist and get their companies with tracking states
-    // Only contacts with companies can be tracked
-    const { data: contactsWithCompanies, error: contactsError } = await supabase
-      .from('contacts')
-      .select(`
-        id,
-        company_id,
-        companies!inner(id, istracked)
-      `)
-      .in('id', body.contact_ids)
-      .not('company_id', 'is', null);
+    // Verify company IDs exist and get their current tracking states
+    const { data: companies, error: companiesError } = await supabase
+      .from('companies')
+      .select('id, istracked')
+      .in('id', uniqueCompanyIds);
 
-    if (contactsError) {
+    if (companiesError) {
       return NextResponse.json(
-        { success: false, message: 'Error validating contact IDs' },
+        { success: false, message: 'Error validating company IDs', updated_companies: 0 },
         { status: 500 }
       );
     }
 
-    const foundContacts = contactsWithCompanies || [];
-    const foundContactIds = foundContacts.map(c => c.id);
-    const missingIds = body.contact_ids.filter(id => !foundContactIds.includes(id));
-
-    if (missingIds.length > 0) {
-      // Check if missing IDs are personal contacts (no company)
-      const { data: personalContacts } = await supabase
-        .from('contacts')
-        .select('id')
-        .in('id', missingIds)
-        .is('company_id', null);
-
-      if (personalContacts && personalContacts.length > 0) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: `Cannot track personal contacts (contacts without a company): ${personalContacts.map(c => c.id).join(', ')}`
-          },
-          { status: 400 }
-        );
-      }
-
+    if (!companies || companies.length === 0) {
       return NextResponse.json(
         {
           success: false,
-          message: `Contact IDs not found: ${missingIds.join(', ')}`
+          message: 'No valid company IDs found',
+          updated_companies: 0
         },
         { status: 404 }
       );
     }
 
-    // Get unique companies to calculate token cost (track at company level, not per contact)
-    const uniqueCompanies = new Map<string, boolean>();
-    foundContacts.forEach(contact => {
-      if (contact.company_id && contact.companies) {
-        const companyData = Array.isArray(contact.companies) ? contact.companies[0] : contact.companies;
-        uniqueCompanies.set(contact.company_id, companyData.istracked);
-      }
-    });
+    const foundCompanyIds = companies.map(c => c.id);
+    const missingIds = body.company_ids.filter(id => !foundCompanyIds.includes(id));
 
+    if (missingIds.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Company IDs not found: ${missingIds.join(', ')}`,
+          updated_companies: 0
+        },
+        { status: 404 }
+      );
+    }
+
+    // Calculate token cost based on companies being enabled
     let companiesToEnable = 0;
 
     if (body.action === 'enable') {
-      companiesToEnable = Array.from(uniqueCompanies.values()).filter(tracked => !tracked).length;
+      companiesToEnable = companies.filter(c => !c.istracked).length;
     } else if (body.action === 'disable') {
       companiesToEnable = 0;
     } else if (body.action === 'toggle') {
-      companiesToEnable = Array.from(uniqueCompanies.values()).filter(tracked => !tracked).length;
+      companiesToEnable = companies.filter(c => !c.istracked).length;
     }
 
     const totalTokens = getWorkflowTokenCost(TaskType.SIGNALS_AGENT, companiesToEnable);
@@ -160,6 +135,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: false,
           message: 'Error checking token balance',
+          updated_companies: 0,
           errors: [{ message: tokenError.message }]
         } as TrackingResponse, { status: 500 });
       }
@@ -169,6 +145,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: false,
           message: 'User token limit reached',
+          updated_companies: 0,
           errors: [{ message: 'You have reached your token usage limit' }]
         } as TrackingResponse, { status: 403 });
       }
@@ -177,61 +154,101 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           success: false,
           message: 'Insufficient tokens',
+          updated_companies: 0,
           errors: [{
             message: `Not enough tokens available. Need ${totalTokens}, have ${tokenData.available_tokens}`
           }]
         } as TrackingResponse, { status: 403 });
       }
     }
-    // Use RPC function for optimized bulk update
-    const { data: rpcResults, error: rpcError } = await supabase
-      .rpc('update_contact_tracking', {
-        contact_ids: body.contact_ids,
-        action_type: body.action
-      });
 
-    if (rpcError) {
-      console.error('Error updating contact tracking:', rpcError);
-      return NextResponse.json({
-        success: false,
-        message: 'Error updating contact tracking',
-        errors: [{ message: rpcError.message }]
-      } as TrackingResponse, { status: 500 });
+    // Determine new tracking value for each action
+    let newTrackingValue: boolean | null = null;
+
+    if (body.action === 'enable') {
+      newTrackingValue = true;
+    } else if (body.action === 'disable') {
+      newTrackingValue = false;
     }
 
-    // Filter to get only the contacts that were actually updated
-    const updatedContacts = (rpcResults as RPCResult[] || [])
-      .filter((result: RPCResult) => result.was_updated)
-      .map((result: RPCResult) => ({
-        id: result.id,
-        isTracked: result.is_tracked
-      }));
-
-    // Generate success message
-    let message = '';
-    const enabledCount = updatedContacts.filter((c: { id: string; isTracked: boolean }) => c.isTracked).length;
-    const disabledCount = updatedContacts.filter((c: { id: string; isTracked: boolean }) => !c.isTracked).length;
+    let updateQuery;
+    let actualChanges = 0;
 
     if (body.action === 'toggle') {
+      // For toggle, simply flip the tracking state for each company
+      const updatePromises = companies.map(async company => {
+        const { error } = await supabase
+          .from('companies')
+          .update({ istracked: !company.istracked })
+          .eq('id', company.id);
+        if (!error) actualChanges++;
+        return { error };
+      });
+
+      const results = await Promise.all(updatePromises);
+      const hasError = results.some(result => result.error);
+
+      if (hasError) {
+        return NextResponse.json({
+          success: false,
+          message: 'Error updating company tracking',
+          updated_companies: 0,
+          errors: [{ message: 'Failed to toggle tracking for some companies' }]
+        } as TrackingResponse, { status: 500 });
+      }
+
+      // Count how many were enabled/disabled after the toggle
+      const { data: updatedCompanies } = await supabase
+        .from('companies')
+        .select('id, istracked')
+        .in('id', uniqueCompanyIds);
+
+      const enabledCount = updatedCompanies?.filter(c => c.istracked).length || 0;
+      const disabledCount = (updatedCompanies?.length || 0) - enabledCount;
+
       const parts = [];
-      if (enabledCount > 0) parts.push(`${enabledCount} contact(s) enabled`);
-      if (disabledCount > 0) parts.push(`${disabledCount} contact(s) disabled`);
-      message = `Tracking updated: ${parts.join(', ')}`;
-    } else if (body.action === 'enable') {
-      message = `Tracking enabled for ${updatedContacts.length} contact(s)`;
-    } else if (body.action === 'disable') {
-      message = `Tracking disabled for ${updatedContacts.length} contact(s)`;
-    }
+      if (enabledCount > 0) {
+        const enableText = enabledCount === 1 ? 'company' : 'companies';
+        parts.push(`${enabledCount} ${enableText} enabled`);
+      }
+      if (disabledCount > 0) {
+        const disableText = disabledCount === 1 ? 'company' : 'companies';
+        parts.push(`${disabledCount} ${disableText} disabled`);
+      }
 
-    if (updatedContacts.length === 0) {
-      message = 'No changes needed - contacts already in requested state';
-    }
+      return NextResponse.json({
+        success: true,
+        message: `Tracking updated: ${parts.join(' and ')}`,
+        updated_companies: companies.length
+      } as TrackingResponse);
+    } else {
+      // Handle enable/disable cases
+      const { error: updateError, count } = await supabase
+        .from('companies')
+        .update({ istracked: newTrackingValue })
+        .in('id', uniqueCompanyIds);
 
-    return NextResponse.json({
-      success: true,
-      message,
-      updated_contacts: updatedContacts
-    } as TrackingResponse);
+      if (updateError) {
+        console.error('Error updating company tracking:', updateError);
+        return NextResponse.json({
+          success: false,
+          message: 'Error updating company tracking',
+          updated_companies: 0,
+          errors: [{ message: updateError.message }]
+        } as TrackingResponse, { status: 500 });
+      }
+
+      const companyText = uniqueCompanyIds.length === 1 ? 'company' : 'companies';
+      const message = body.action === 'enable'
+        ? `Tracking enabled for ${uniqueCompanyIds.length} ${companyText}`
+        : `Tracking disabled for ${uniqueCompanyIds.length} ${companyText}`;
+
+      return NextResponse.json({
+        success: true,
+        message,
+        updated_companies: count || 0
+      } as TrackingResponse);
+    }
 
   } catch (error: unknown) {
     console.error('API /api/contacts/tracking error:', error);
@@ -239,7 +256,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: false,
       message: errorMessage,
-      updated_contacts: [],
+      updated_companies: 0,
       errors: [{ message: errorMessage }]
     } as TrackingResponse, { status: 500 });
   }
