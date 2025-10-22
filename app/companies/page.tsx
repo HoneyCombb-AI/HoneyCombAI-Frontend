@@ -58,7 +58,7 @@ export type SortOrder = "asc" | "desc";
 interface CompanyValidationData {
   company_analysis_completed: boolean;
   company_analysis_requested: boolean;
-  news_requested: boolean;
+  istracked: boolean;
   name: string;
 }
 
@@ -255,20 +255,11 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         acc.ineligibleForCompanyEnrichment++;
       }
 
-      // News enrichment eligibility states
-      if (!data.news_requested) {
-        acc.eligibleForNewsEnrichment++;
-      } else {
-        acc.ineligibleForNewsEnrichment++;
-      }
-
       return acc;
     }, {
       total: 0,
       eligibleForCompanyEnrichment: 0,
-      ineligibleForCompanyEnrichment: 0,
-      eligibleForNewsEnrichment: 0,
-      ineligibleForNewsEnrichment: 0
+      ineligibleForCompanyEnrichment: 0
     });
 
     return {
@@ -279,11 +270,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       eligibleCompanyEnrichmentCount: states.eligibleForCompanyEnrichment,
       ineligibleCompanyEnrichmentCount: states.ineligibleForCompanyEnrichment,
       hasEligibleForCompanyEnrichment: states.eligibleForCompanyEnrichment > 0,
-
-      // News enrichment states
-      eligibleNewsEnrichmentCount: states.eligibleForNewsEnrichment,
-      ineligibleNewsEnrichmentCount: states.ineligibleForNewsEnrichment,
-      hasEligibleForNewsEnrichment: states.eligibleForNewsEnrichment > 0,
     };
   }, [selectedCompanies]);
 
@@ -317,11 +303,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     });
   };
 
-  const handleEnrichmentAction = async (
-    type:
-      | "company_enrichment"
-      | "news_enrichment"
-  ) => {
+  const handleEnrichmentAction = async (type: "company_enrichment") => {
     if (selectedCompanies.size === 0) {
       toast.error("No companies selected for enrichment");
       return;
@@ -329,17 +311,9 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
     // Get eligible company IDs based on enrichment type
     const selectedCompaniesArray = Array.from(selectedCompanies.entries());
-    let eligibleCompanyIds: string[] = [];
-
-    if (type === "company_enrichment") {
-      eligibleCompanyIds = selectedCompaniesArray
-        .filter(([, data]) => !data.company_analysis_completed && !data.company_analysis_requested)
-        .map(([id]) => id);
-    } else if (type === "news_enrichment") {
-      eligibleCompanyIds = selectedCompaniesArray
-        .filter(([, data]) => !data.news_requested)
-        .map(([id]) => id);
-    }
+    let eligibleCompanyIds = selectedCompaniesArray
+      .filter(([, data]) => !data.company_analysis_completed && !data.company_analysis_requested)
+      .map(([id]) => id);
 
     if (eligibleCompanyIds.length === 0) {
       toast.error("No eligible companies selected for enrichment");
@@ -794,18 +768,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                   {!companyStates.hasEligibleForCompanyEnrichment && selectedCompanies.size > 0 && (
                     <DropdownMenuItem disabled>
                       Company Enrichment ({companyStates.ineligibleCompanyEnrichmentCount} ineligible)
-                    </DropdownMenuItem>
-                  )}
-                  {companyStates.hasEligibleForNewsEnrichment && (
-                    <DropdownMenuItem
-                      onSelect={() => handleEnrichmentAction("news_enrichment")}
-                    >
-                      News Enrichment ({companyStates.eligibleNewsEnrichmentCount})
-                    </DropdownMenuItem>
-                  )}
-                  {!companyStates.hasEligibleForNewsEnrichment && selectedCompanies.size > 0 && (
-                    <DropdownMenuItem disabled>
-                      News Enrichment ({companyStates.ineligibleNewsEnrichmentCount} ineligible)
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>

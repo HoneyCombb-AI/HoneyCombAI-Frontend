@@ -21,7 +21,7 @@ export interface DashboardCompany {
   contact_count: number;
   company_analysis_completed : boolean;
   company_analysis_requested : boolean;
-  news_requested : boolean;
+  istracked : boolean;
   tags: CompanyTag[];
 }
 
@@ -103,7 +103,7 @@ function formatCompanyFromRPC(company: {
   tags?: CompanyTag[];
   company_analysis_completed?: boolean;
   company_analysis_requested?: boolean;
-  news_requested?: boolean;
+  istracked?: boolean;
 }): DashboardCompany {
   return {
     id: company.id,
@@ -116,7 +116,7 @@ function formatCompanyFromRPC(company: {
     contact_count: company.contact_count,
     company_analysis_completed: company.company_analysis_completed || false,
     company_analysis_requested: company.company_analysis_requested || false,
-    news_requested: company.news_requested || false,
+    istracked: company.istracked || false,
     tags: company.tags || []
   };
 }
@@ -220,7 +220,7 @@ async function handleCompanyListing(
     tags?: CompanyTag[];
     company_analysis_completed?: boolean;
     company_analysis_requested?: boolean;
-    news_requested?: boolean;
+    istracked?: boolean;
   }) => formatCompanyFromRPC(company));
 
   const pagination = getPaginationInfo(page, limit, totalCount);
@@ -270,7 +270,7 @@ async function handleSearch(
     tags?: CompanyTag[];
     company_analysis_completed?: boolean;
     company_analysis_requested?: boolean;
-    news_requested?: boolean;
+    istracked?: boolean;
   }) => formatCompanyFromRPC(company));
 
   const pagination = getPaginationInfo(page, limit, totalCount);
