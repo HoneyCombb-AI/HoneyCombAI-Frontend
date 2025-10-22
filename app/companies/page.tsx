@@ -529,7 +529,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     try {
       setEnrichmentLoading(true);
       const selectedCompaniesArray = Array.from(selectedCompanies.entries());
-      
+
       const response = await axios.post("/api/contacts/tracking", {
         company_ids: selectedCompaniesArray.map(([id]) => id),
         action: "toggle"
@@ -818,7 +818,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onSelect={handleTrackingToggle}>
-                    Toggle Tracking ({companyStates.trackedCount} to disable, {companyStates.untrackedCount} to enable)
+                    Toggle Tracking ({[companyStates.trackedCount > 0 ? `${companyStates.trackedCount} to disable` : null, companyStates.untrackedCount > 0 ? `${companyStates.untrackedCount} to enable` : null].filter(Boolean).join(', ')})
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
