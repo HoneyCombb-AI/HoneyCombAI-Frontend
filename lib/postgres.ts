@@ -28,9 +28,6 @@ export async function sql<T extends QueryResultRow = QueryResultRow>(
     const result = typeof query === 'string'
       ? await client.query<T>(query, params)
       : await client.query<T>(query);
-    const duration = Date.now() - start;
-    const text = typeof query === 'string' ? query : query.text;
-    console.log('Executed query:', { text, duration, rows: result.rowCount });
     return result;
   } catch (err) {
     console.error('Database Query Error:', err);

@@ -34,6 +34,9 @@ export default function ABMDashboard() {
   // Drawer state management - handles opening company and contact drawers
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const selectedCompany = selectedCompanyId
+    ? companies.find((c) => c.company_id === selectedCompanyId) ?? null
+    : null;
 
   const computeKpis = (companyList: GrowthEngineCompany[]): KPIData => {
     const totals = companyList.reduce(
@@ -205,6 +208,7 @@ export default function ABMDashboard() {
       <CompanyDrawer
         companyId={selectedCompanyId}
         open={!!selectedCompanyId}
+        initialCompany={selectedCompany}
         onOpenChange={(open) => !open && setSelectedCompanyId(null)}
         onContactClick={(contactId) => {
           // When contact is clicked in company drawer, close company drawer and open contact drawer

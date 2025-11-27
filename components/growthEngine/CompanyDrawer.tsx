@@ -22,9 +22,10 @@ interface CompanyDrawerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onContactClick?: (contactId: string) => void
+  initialCompany?: GrowthEngineCompany | null
 }
 
-export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }: CompanyDrawerProps) {
+export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, initialCompany }: CompanyDrawerProps) {
   const [company, setCompany] = useState<GrowthEngineCompany | null>(null)
   const [contacts, setContacts] = useState<CompanyContactSummary[]>([])
   const [signals, setSignals] = useState<CompanySignal[]>([])
@@ -46,6 +47,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
       if (!companyId || !open) return
 
       try {
+        setCompany(initialCompany ?? null)
         setLoadingCompany(true)
         setError(null)
         setSignals([])
@@ -58,7 +60,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
 
         const companiesRes = await axios.get("/api/growthEngine/companies")
         const companies: GrowthEngineCompany[] = companiesRes.data?.companies ?? []
-        setCompany(companies.find((c) => c.company_id === companyId) ?? null)
+        setCompany(companies.find((c) => c.company_id === companyId) ?? initialCompany ?? null)
 
         setContactsLoading(true)
         const contactsRes = await axios.get<CompanyContactsResponse>(`/api/growthEngine/companies/${companyId}/contacts`)
@@ -113,7 +115,18 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
     fetchTabData()
   }, [activeTab, companyId, open, signals.length, actions.length, hierarchy, signalsLoading, actionsLoading, hierarchyLoading])
 
-  const contactCount = contacts.length
+  const contactCount =
+    contactsLoading || loadingCompany
+      ? company?.contact_count ?? 0
+      : contacts.length
+  const signalCountDisplay =
+    signalsLoading || loadingCompany
+      ? company?.signal_count ?? 0
+      : signals.length
+  const actionCountDisplay =
+    actionsLoading || loadingCompany
+      ? company?.action_count ?? 0
+      : actions.length
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} modal={true}>
@@ -164,11 +177,11 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
               </div>
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4" />
-                <span>{signals.length} Signals</span>
+                <span>{signalCountDisplay} Signals</span>
               </div>
               <div className="flex items-center gap-2">
                 <Target className="w-4 h-4" />
-                <span>{actions.length} Actions</span>
+                <span>{actionCountDisplay} Actions</span>
               </div>
             </div>
           )}
@@ -176,16 +189,11 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {loadingCompany && contactsLoading ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <Loading />
-              <p className="text-sm text-muted-foreground mt-4">Loading company data...</p>
-            </div>
-          ) : error || !company ? (
+          {error ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <h3 className="text-lg font-semibold mb-2">Error Loading Company</h3>
-                <p className="text-muted-foreground">{error || 'Company not found'}</p>
+                <p className="text-muted-foreground">{error}</p>
               </div>
             </div>
           ) : (
