@@ -12,6 +12,7 @@ import {
   Building2,
   Network,
   SendHorizontal,
+  Target,
 } from "lucide-react";
 
 import {
@@ -47,6 +48,12 @@ import { toast } from "sonner";
 
 // Menu items
 const items = [
+  {
+    title: "Growth Engine",
+    icon: Target,
+    url: "/growthEngine",
+    hasChevron: false,
+  },
   {
     title: "Contacts",
     icon: Users,
