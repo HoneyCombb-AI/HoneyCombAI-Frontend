@@ -15,8 +15,8 @@ const pool = new Pool({
  * @param {Array} params Parameters to safely inject into the query.
  * @returns {Promise<import('pg').QueryResult>} The result of the query.
  */
-export async function sql<T extends QueryResultRow = any>(
-  query: string | QueryConfig<T>,
+export async function sql<T extends QueryResultRow = QueryResultRow>(
+  query: string | QueryConfig<any[]>,
   params: unknown[] = []
 ): Promise<QueryResult<T>> {
   const start = Date.now();

@@ -11,6 +11,7 @@ export interface GrowthEngineCompany {
   deal_health: string | null;
   signal_count: number;
   action_count: number;
+  contact_count: number;
 }
 
 export interface GrowthEngineCompaniesResponse {
@@ -32,7 +33,8 @@ export async function GET(): Promise<
           c.company_name,
           c.deal_health,
           COALESCE(cs.signal_count, 0)::INT AS signal_count,
-          COALESCE(a.action_count, 0)::INT AS action_count
+          COALESCE(a.action_count, 0)::INT AS action_count,
+          COALESCE(ct.contact_count, 0)::INT AS contact_count
         FROM companies c
         LEFT JOIN (
           SELECT company_id, COUNT(*)::INT AS signal_count
@@ -44,6 +46,11 @@ export async function GET(): Promise<
           FROM account_action_plan
           GROUP BY company_id
         ) a ON a.company_id = c.company_id
+        LEFT JOIN (
+          SELECT company_id, COUNT(*)::INT AS contact_count
+          FROM contacts
+          GROUP BY company_id
+        ) ct ON ct.company_id = c.company_id
       `
     });
 
