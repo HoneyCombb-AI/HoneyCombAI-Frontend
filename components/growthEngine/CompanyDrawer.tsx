@@ -214,7 +214,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
                       {contacts.map((contact) => (
                         <Card
                           key={contact.contact_id}
-                          className="hover:shadow-lg transition-all duration-300 cursor-pointer border border-muted bg-white hover:scale-[1.01]"
+                          className="hover:shadow-lg transition-all duration-300 cursor-pointer border border-muted bg-slate-50 hover:scale-[1.01]"
                           onClick={() => onContactClick?.(contact.contact_id)}
                         >
                           <CardContent className="p-4 flex items-start gap-3">
@@ -258,20 +258,22 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
                       <p className="text-sm text-muted-foreground mt-4">Loading your signals...</p>
                     </div>
                   ) : signals.length > 0 ? (
-                    signals.map((signal) => (
-                      <SignalCard
-                        key={signal.signal_id}
-                        signalType={signal.signal_type}
-                        summary={signal.summary}
-                        evidence={signal.evidence}
-                        confidence={signal.confidence}
-                        recommendedAction={signal.recommended_action}
-                        urgency={signal.urgency}
-                        reasoning={signal.reasoning}
-                        sourceDate={signal.source_date}
-                        linkedPriorities={signal.linked_priorities}
-                      />
-                    ))
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {signals.map((signal) => (
+                        <SignalCard
+                          key={signal.signal_id}
+                          signalType={signal.signal_type}
+                          summary={signal.summary}
+                          evidence={signal.evidence}
+                          confidence={signal.confidence}
+                          recommendedAction={signal.recommended_action}
+                          urgency={signal.urgency}
+                          reasoning={signal.reasoning}
+                          sourceDate={signal.source_date}
+                          linkedPriorities={signal.linked_priorities}
+                        />
+                      ))}
+                    </div>
                   ) : (
                     <Card>
                       <CardContent className="p-12 text-center flex flex-col items-center justify-center min-h-[200px]">

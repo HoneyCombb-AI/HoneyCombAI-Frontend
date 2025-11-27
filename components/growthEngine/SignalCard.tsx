@@ -4,24 +4,25 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertCircle, TrendingUp, Calendar, Lightbulb } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { CompanySignal } from "@/app/api/growthEngine/companies/[companyId]/signals/route"
+import type { ContactSignal } from "@/app/api/growthEngine/contacts/[contactId]/signals/route"
 
 type EvidenceShape =
-  | Record<string, unknown>
-  | Array<Record<string, unknown>>
-  | { description?: string; sources?: string[]; event_count?: number }
+  | CompanySignal["evidence"]
+  | ContactSignal["evidence"]
   | null
   | undefined
 
 interface SignalCardProps {
-  signalType?: string | null
-  summary?: string | null
+  signalType?: CompanySignal["signal_type"] | ContactSignal["signal_type"]
+  summary?: CompanySignal["summary"] | ContactSignal["summary"]
   evidence?: EvidenceShape
-  confidence?: number | string | null
-  recommendedAction?: string | null
-  urgency?: string | null
-  reasoning?: string | null
-  sourceDate?: string | null
-  linkedPriorities?: string[] | null
+  confidence?: CompanySignal["confidence"] | ContactSignal["confidence"]
+  recommendedAction?: CompanySignal["recommended_action"] | ContactSignal["recommended_action"]
+  urgency?: CompanySignal["urgency"] | ContactSignal["urgency"]
+  reasoning?: CompanySignal["reasoning"] | ContactSignal["reasoning"]
+  sourceDate?: CompanySignal["source_date"] | ContactSignal["source_date"]
+  linkedPriorities?: CompanySignal["linked_priorities"] | ContactSignal["linked_priorities"]
 }
 
 export function SignalCard({
@@ -52,7 +53,7 @@ export function SignalCard({
     return confidence
   })()
 
-  const confidencePercent = Math.round(confidenceScore * 100)
+  const confidencePercent = Number.isFinite(confidenceScore) ? confidenceScore : 0
 
   const extractEvidenceLinks = (e: EvidenceShape) => {
     const links: string[] = []
@@ -91,81 +92,39 @@ export function SignalCard({
   }
 
   const evidenceLinks = extractEvidenceLinks(evidence as Record<string, any>)
-  const displaySignalType = signalType ?? "Signal"
+  const displaySignalTypeRaw = signalType ?? "Signal"
+  const displaySignalType = displaySignalTypeRaw
+    .toString()
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^\w/, (c) => c.toUpperCase())
   const displaySummary = summary ?? "No summary available"
   const displayUrgency = urgency ?? "info"
   const displayRecommendedAction = recommendedAction ?? "No recommendation provided yet."
 
   return (
-    <Card className="border border-muted bg-white hover:shadow-lg transition-shadow">
-      <CardContent className="p-6 space-y-4">
-        {/* Header: Signal Type & Urgency */}
+    <Card className="border border-muted bg-slate-50 hover:shadow-lg transition-shadow h-full">
+      <CardContent className="p-4 space-y-3 flex flex-col h-full">
+        {/* Header */}
         <div className="flex items-start justify-between gap-2">
-          <Badge className="bg-primary/10 text-primary">
-            {displaySignalType}
-          </Badge>
-          <Badge className={cn(getUrgencyColor(displayUrgency))}>
-            {displayUrgency.toUpperCase()}
-          </Badge>
-        </div>
-
-        {/* Summary */}
-        <div>
-          <h4 className="font-semibold text-lg mb-2">{displaySummary}</h4>
-          {reasoning && (
-            <p className="text-sm text-muted-foreground">{reasoning}</p>
-          )}
-        </div>
-
-        {/* Evidence */}
-        {evidence && (
-          <div className="p-3 rounded-lg bg-muted/50 space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <AlertCircle className="w-4 h-4" />
-              Evidence
-            </div>
-            {!(Array.isArray(evidence)) && (evidence as any).description && (
-              <p className="text-sm text-muted-foreground">{evidence.description}</p>
+          <div className="flex flex-col gap-1">
+            <Badge className="bg-primary/10 text-primary w-fit text-sm">
+              {displaySignalType}
+            </Badge>
+            {displayUrgency && (
+              <Badge className={cn(getUrgencyColor(displayUrgency), "w-fit text-[11px]")}>
+                {displayUrgency.toUpperCase()}
+              </Badge>
             )}
-            {evidenceLinks.length > 0 && (
-              <div className="space-y-1">
-                {evidenceLinks.slice(0, 3).map((source: string, idx: number) => (
-                  <a
-                    key={idx}
-                    href={source}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-primary hover:underline block truncate"
-                  >
-                    Source {idx + 1}
-                  </a>
-                ))}
+          </div>
+          <div className="text-xs text-muted-foreground flex flex-col items-end gap-1">
+            {Number.isFinite(confidencePercent) && (
+              <div className="flex items-center gap-1 text-sm font-medium">
+                <TrendingUp className="w-3 h-3" />
+                <span>{confidencePercent}</span>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Recommended Action */}
-        <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-          <div className="flex items-start gap-2">
-            <Lightbulb className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-xs font-medium text-primary mb-1">Recommended Action</p>
-              <p className="text-sm">{displayRecommendedAction}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer: Confidence, Date, Priorities */}
-        <div className="flex items-center justify-between pt-3 border-t text-xs text-muted-foreground">
-          <div className="flex items-center gap-4">
-            {/* Confidence */}
-            <div className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              <span>Confidence: {confidencePercent}%</span>
-            </div>
-            
-            {/* Source Date */}
             {sourceDate && (
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
@@ -173,18 +132,68 @@ export function SignalCard({
               </div>
             )}
           </div>
+        </div>
 
-          {/* Linked Priorities */}
-          {linkedPriorities && linkedPriorities.length > 0 && (
-            <div className="flex gap-1">
-              {linkedPriorities.slice(0, 2).map((priority, idx) => (
-                <Badge key={idx} variant="outline" className="text-xs">
-                  {priority}
-                </Badge>
-              ))}
-            </div>
+        {/* Summary / Reasoning */}
+        <div className="space-y-2">
+          <h4 className="font-semibold text-base leading-snug">{displaySummary}</h4>
+          {reasoning && (
+            <p className="text-sm text-muted-foreground leading-relaxed">{reasoning}</p>
           )}
         </div>
+
+        {/* Recommended Action */}
+        <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+          <div className="flex items-start gap-2">
+            <Lightbulb className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-primary">Recommended Action</p>
+              <p className="text-sm leading-relaxed">{displayRecommendedAction}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Evidence */}
+        <div className="mt-auto">
+          {evidenceLinks.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {evidenceLinks.slice(0, 3).map((source: string, idx: number) => (
+                <a
+                  key={idx}
+                  href={source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-3 h-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 3h7m0 0v7m0-7L10 14m-4 1v6h6" />
+                  </svg>
+                  Source {idx + 1}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No evidence provided.</p>
+          )}
+        </div>
+
+        {/* Priorities */}
+        {linkedPriorities && linkedPriorities.length > 0 && (
+          <div className="flex gap-1 pt-2 border-t text-xs text-muted-foreground">
+            {linkedPriorities.slice(0, 2).map((priority, idx) => (
+              <Badge key={idx} variant="outline" className="text-[11px]">
+                {priority}
+              </Badge>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
