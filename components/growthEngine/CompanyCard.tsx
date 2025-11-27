@@ -10,7 +10,6 @@ interface CompanyCardProps {
   companyId: string
   name: string
   domain?: string
-  dealHealth?: number
   stage?: string
   contactCount?: number
   signalCount?: number
@@ -22,32 +21,13 @@ export function CompanyCard({
   companyId,
   name,
   domain,
-  dealHealth,
   stage,
   contactCount = 0,
   signalCount = 0,
   actionCount = 0,
   onClick
 }: CompanyCardProps) {
-  const healthScore =
-    typeof dealHealth === "number" && !Number.isNaN(dealHealth) ? dealHealth : 0
-  const hasHealthValue = dealHealth !== undefined
-  const displayHealth = healthScore !== 0 ? healthScore : "~"
-  
-  // Determine health color based on score
-  const getHealthColor = (score: number) => {
-    if (score >= 80) return "text-green-500"
-    if (score >= 60) return "text-yellow-500"
-    if (score >= 40) return "text-orange-500"
-    return "text-red-500"
-  }
 
-  const getHealthBgColor = (score: number) => {
-    if (score >= 80) return "bg-green-500/10"
-    if (score >= 60) return "bg-yellow-500/10"
-    if (score >= 40) return "bg-orange-500/10"
-    return "bg-red-500/10"
-  }
 
   const getStageBadgeColor = (stage?: string) => {
     if (!stage) return "bg-gray-500/10 text-gray-600"

@@ -4,6 +4,7 @@ import { sql } from '@/lib/postgres';
 export interface CompanyContactSummary {
   contact_id: string;
   company_id: string | null;
+  full_name: string | null;
   profile_picture_url: string | null;
   headline: string | null;
 }
@@ -30,6 +31,7 @@ export async function GET(
         SELECT
           contact_id,
           company_id,
+          full_name,
           profile_picture_url,
           headline
         FROM contacts

@@ -14,6 +14,7 @@ import {
   Building2,
 } from "lucide-react";
 import { Loading } from "@/components/loading";
+import { GrowthEngineCompany } from "../api/growthEngine/companies/route";
 
 interface KPIData {
   signalsDetected: number;
@@ -23,18 +24,6 @@ interface KPIData {
   avgDealHealth: number;
 }
 
-interface GrowthEngineCompany {
-  company_id: string;
-  organization_id: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  domain: string | null;
-  company_name: string | null;
-  deal_health: string | null;
-  signal_count: number;
-  action_count: number;
-  contact_count: number;
-}
 
 export default function ABMDashboard() {
   const [kpis, setKpis] = useState<KPIData | null>(null);
@@ -201,7 +190,6 @@ export default function ABMDashboard() {
                   companyId={company.company_id}
                   name={companyName}
                   domain={company.domain ?? undefined}
-                  dealHealth={Number.isFinite(dealHealthNumber) ? dealHealthNumber : undefined}
                   contactCount={company.contact_count ?? 0}
                   signalCount={company.signal_count ?? 0}
                   actionCount={company.action_count ?? 0}

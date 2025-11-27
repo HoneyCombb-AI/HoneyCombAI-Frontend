@@ -5,16 +5,23 @@ import { Badge } from "@/components/ui/badge"
 import { AlertCircle, TrendingUp, Calendar, Lightbulb } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+type EvidenceShape =
+  | Record<string, unknown>
+  | Array<Record<string, unknown>>
+  | { description?: string; sources?: string[]; event_count?: number }
+  | null
+  | undefined
+
 interface SignalCardProps {
-  signalType: string
-  summary: string
-  evidence: Record<string, any> | Array<Record<string, any>> | { description?: string; sources?: string[]; event_count?: number }
-  confidence?: number | string
-  recommendedAction: string
-  urgency: string
-  reasoning?: string
-  sourceDate?: string
-  linkedPriorities?: string[]
+  signalType?: string | null
+  summary?: string | null
+  evidence?: EvidenceShape
+  confidence?: number | string | null
+  recommendedAction?: string | null
+  urgency?: string | null
+  reasoning?: string | null
+  sourceDate?: string | null
+  linkedPriorities?: string[] | null
 }
 
 export function SignalCard({
@@ -36,21 +43,26 @@ export function SignalCard({
     return "bg-blue-500/10 text-blue-600"
   }
 
-  const confidenceScore = typeof confidence === 'string' 
-    ? parseFloat(confidence) 
-    : (confidence || 0)
+  const confidenceScore = (() => {
+    if (confidence === null || confidence === undefined) return 0
+    if (typeof confidence === "string") {
+      const parsed = parseFloat(confidence)
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+    return confidence
+  })()
 
   const confidencePercent = Math.round(confidenceScore * 100)
 
-  const extractEvidenceLinks = (e: any) => {
+  const extractEvidenceLinks = (e: EvidenceShape) => {
     const links: string[] = []
 
-    const scanObject = (obj: Record<string, any>) => {
+    const scanObject = (obj: Record<string, unknown>) => {
       if (!obj || typeof obj !== "object") return
 
       // Explicit sources array
       if (Array.isArray(obj.sources)) {
-        obj.sources.forEach((src: any) => {
+        obj.sources.forEach((src) => {
           if (typeof src === "string") links.push(src)
         })
       }
@@ -69,9 +81,9 @@ export function SignalCard({
     }
 
     if (Array.isArray(e)) {
-      e.forEach((item) => scanObject(item as Record<string, any>))
+      e.forEach((item) => scanObject(item as Record<string, unknown>))
     } else if (e && typeof e === "object") {
-      scanObject(e as Record<string, any>)
+      scanObject(e as Record<string, unknown>)
     }
 
     // Deduplicate and filter to plausible links
@@ -79,23 +91,27 @@ export function SignalCard({
   }
 
   const evidenceLinks = extractEvidenceLinks(evidence as Record<string, any>)
+  const displaySignalType = signalType ?? "Signal"
+  const displaySummary = summary ?? "No summary available"
+  const displayUrgency = urgency ?? "info"
+  const displayRecommendedAction = recommendedAction ?? "No recommendation provided yet."
 
   return (
-    <Card className="border-none bg-gradient-to-br from-card to-card/50 hover:shadow-lg transition-shadow">
+    <Card className="border border-muted bg-white hover:shadow-lg transition-shadow">
       <CardContent className="p-6 space-y-4">
         {/* Header: Signal Type & Urgency */}
         <div className="flex items-start justify-between gap-2">
           <Badge className="bg-primary/10 text-primary">
-            {signalType}
+            {displaySignalType}
           </Badge>
-          <Badge className={cn(getUrgencyColor(urgency))}>
-            {urgency.toUpperCase()}
+          <Badge className={cn(getUrgencyColor(displayUrgency))}>
+            {displayUrgency.toUpperCase()}
           </Badge>
         </div>
 
         {/* Summary */}
         <div>
-          <h4 className="font-semibold text-lg mb-2">{summary}</h4>
+          <h4 className="font-semibold text-lg mb-2">{displaySummary}</h4>
           {reasoning && (
             <p className="text-sm text-muted-foreground">{reasoning}</p>
           )}
@@ -135,7 +151,7 @@ export function SignalCard({
             <Lightbulb className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-xs font-medium text-primary mb-1">Recommended Action</p>
-              <p className="text-sm">{recommendedAction}</p>
+              <p className="text-sm">{displayRecommendedAction}</p>
             </div>
           </div>
         </div>
