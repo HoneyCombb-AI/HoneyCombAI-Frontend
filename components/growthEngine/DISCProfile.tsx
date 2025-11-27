@@ -39,12 +39,12 @@ export function DISCProfile({
   const dominantTrait = scores.find(s => s.value === maxScore)
 
   return (
-    <Card className="border-none bg-gradient-to-br from-card to-card/50">
+    <Card className="border border-muted bg-white shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>DISC Personality Profile</span>
+        <CardTitle className="flex items-center justify-between text-[1.05rem]">
+          <span>Personality Profile</span>
           {confidence && (
-            <Badge variant="outline">
+            <Badge variant="outline" className="text-xs px-2 py-1">
               Confidence: {confidence}
             </Badge>
           )}
@@ -56,9 +56,9 @@ export function DISCProfile({
           <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-3 h-3 rounded-full ${dominantTrait.color}`} />
-              <span className="font-semibold">Primary Style: {dominantTrait.label}</span>
+              <span className="font-semibold text-sm">Primary Style: {dominantTrait.label}</span>
             </div>
-            <p className="text-sm text-muted-foreground">{dominantTrait.description}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{dominantTrait.description}</p>
           </div>
         )}
 
@@ -66,7 +66,7 @@ export function DISCProfile({
         <div className="space-y-4">
           {scores.map((score) => (
             <div key={score.label} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-[0.95rem]">
                 <span className="font-medium">{score.label}</span>
                 <span className="text-muted-foreground">{score.value}/100</span>
               </div>
@@ -83,8 +83,8 @@ export function DISCProfile({
         {/* Interpretation */}
         {interpretation && (
           <div className="p-4 rounded-lg bg-muted/50">
-            <h4 className="font-medium mb-2">Interpretation</h4>
-            <p className="text-sm text-muted-foreground">{interpretation}</p>
+            <h4 className="font-medium mb-2 text-[0.95rem]">Interpretation</h4>
+            <p className="text-sm text-muted-foreground leading-relaxed">{interpretation}</p>
           </div>
         )}
 
@@ -93,11 +93,11 @@ export function DISCProfile({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="w-4 h-4 text-green-500" />
-              <h4 className="font-medium">Strengths</h4>
+              <h4 className="font-medium text-sm">Strengths</h4>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 text-[0.95rem]">
               {strengths.map((strength, idx) => (
-                <Badge key={idx} className="bg-green-500/10 text-green-600">
+                <Badge key={idx} className="bg-green-500/10 text-green-600 text-xs px-3 py-1">
                   {strength}
                 </Badge>
               ))}
@@ -110,11 +110,11 @@ export function DISCProfile({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <TrendingDown className="w-4 h-4 text-red-500" />
-              <h4 className="font-medium">Areas to Navigate</h4>
+              <h4 className="font-medium text-sm">Areas to Navigate</h4>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 text-[0.95rem]">
               {weaknesses.map((weakness, idx) => (
-                <Badge key={idx} className="bg-red-500/10 text-red-600">
+                <Badge key={idx} className="bg-red-500/10 text-red-600 text-xs px-3 py-1">
                   {weakness}
                 </Badge>
               ))}
@@ -125,12 +125,11 @@ export function DISCProfile({
         {/* Recommended Adaptation */}
         {recommendedAdaptation && (
           <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-            <h4 className="font-medium mb-2">Recommended Communication Style</h4>
-            <p className="text-sm">{recommendedAdaptation}</p>
+            <h4 className="font-medium mb-2 text-[0.95rem]">Recommended Communication Style</h4>
+            <p className="text-sm leading-relaxed">{recommendedAdaptation}</p>
           </div>
         )}
       </CardContent>
     </Card>
   )
 }
-

@@ -1,65 +1,56 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Brain, Heart, Zap, AlertCircle, ThumbsUp, ThumbsDown, Target } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Brain, ThumbsUp, ThumbsDown, Sparkles, Activity, Shield, MessageCircle } from "lucide-react";
+import type { ContactPersona } from "@/app/api/growthEngine/contacts/[contactId]/persona/route";
 
 interface PersonaCardProps {
-  summary?: string
-  likes?: string[]
-  dislikes?: string[]
-  personalityTraits?: string[]
-  cognitiveStyle?: string
-  decisionStyle?: string
-  riskPosture?: string
-  socialBehavior?: string
-  emotionalDrivers?: string[]
-  frictionTriggers?: string[]
-  strengths?: string[]
-  weaknesses?: string[]
+  persona: ContactPersona;
 }
 
-export function PersonaCard({
-  summary,
-  likes,
-  dislikes,
-  personalityTraits,
-  cognitiveStyle,
-  decisionStyle,
-  riskPosture,
-  socialBehavior,
-  emotionalDrivers,
-  frictionTriggers,
-  strengths,
-  weaknesses
-}: PersonaCardProps) {
-  
+export function PersonaCard({ persona }: PersonaCardProps) {
+  const {
+    summary,
+    likes,
+    dislikes,
+    personality_traits,
+    cognitive_style,
+    decision_style,
+    risk_posture,
+    social_behavior,
+    conversation_behavior,
+    emotional_drivers,
+    friction_triggers,
+    strengths,
+    weaknesses,
+  } = persona;
+
   return (
-    <Card className="border-none bg-gradient-to-br from-card to-card/50">
-      <CardHeader>
+    <Card className="border border-muted bg-white shadow-sm">
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <Brain className="w-5 h-5 text-primary" />
-          Persona Intelligence
+          Persona
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Summary */}
+      <CardContent className="space-y-5">
         {summary && (
-          <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-            <p className="text-sm leading-relaxed">{summary}</p>
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 text-[0.95rem] leading-relaxed">
+            {summary}
           </div>
         )}
 
-        {/* Personality Traits */}
-        {personalityTraits && personalityTraits.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-purple-500" />
+        {/* Traits */}
+        {personality_traits && personality_traits.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Sparkles className="w-4 h-4 text-purple-600" />
               Personality Traits
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {personalityTraits.map((trait, idx) => (
-                <Badge key={idx} className="bg-purple-500/10 text-purple-600">
+            </div>
+            <div className="flex flex-wrap gap-2 text-[0.95rem]">
+              {personality_traits.map((trait, idx) => (
+                <Badge key={idx} variant="secondary" className="text-[0.8rem] px-3 py-1">
                   {trait}
                 </Badge>
               ))}
@@ -67,134 +58,144 @@ export function PersonaCard({
           </div>
         )}
 
-        {/* Decision Making Styles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cognitiveStyle && (
-            <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs font-medium text-muted-foreground mb-1">Cognitive Style</p>
-              <p className="text-sm font-medium">{cognitiveStyle}</p>
-            </div>
-          )}
-          {decisionStyle && (
-            <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs font-medium text-muted-foreground mb-1">Decision Style</p>
-              <p className="text-sm font-medium">{decisionStyle}</p>
-            </div>
-          )}
-          {riskPosture && (
-            <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs font-medium text-muted-foreground mb-1">Risk Posture</p>
-              <p className="text-sm font-medium">{riskPosture}</p>
-            </div>
-          )}
-          {socialBehavior && (
-            <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs font-medium text-muted-foreground mb-1">Social Behavior</p>
-              <p className="text-sm font-medium">{socialBehavior}</p>
-            </div>
-          )}
-        </div>
+        {/* Likes / Dislikes */}
+        {(likes?.length || dislikes?.length) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {likes && likes.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <ThumbsUp className="w-4 h-4 text-green-600" />
+                  Likes
+                </div>
+                <div className="flex flex-wrap gap-2 text-[0.95rem]">
+                  {likes.map((like, idx) => (
+                    <Badge key={idx} variant="outline" className="text-[0.8rem] px-3 py-1 border-green-200 text-green-700">
+                      {like}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {dislikes && dislikes.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <ThumbsDown className="w-4 h-4 text-red-600" />
+                  Dislikes
+                </div>
+                <div className="flex flex-wrap gap-2 text-[0.95rem]">
+                  {dislikes.map((d, idx) => (
+                    <Badge key={idx} variant="outline" className="text-[0.8rem] px-3 py-1 border-red-200 text-red-700">
+                      {d}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
 
-        {/* Likes */}
-        {likes && likes.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <ThumbsUp className="w-4 h-4 text-green-500" />
-              Likes & Interests
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {likes.map((like, idx) => (
-                <Badge key={idx} className="bg-green-500/10 text-green-600">
-                  {like}
+        {/* Styles / Behaviors */}
+        {(cognitive_style || decision_style || risk_posture || social_behavior || conversation_behavior) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            {cognitive_style && (
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Cognitive style</p>
+                <p className="font-medium">{cognitive_style}</p>
+              </div>
+            )}
+            {decision_style && (
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Decision style</p>
+                <p className="font-medium">{decision_style}</p>
+              </div>
+            )}
+            {risk_posture && (
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Risk posture</p>
+                <p className="font-medium">{risk_posture}</p>
+              </div>
+            )}
+            {social_behavior && (
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Social behavior</p>
+                <p className="font-medium">{social_behavior}</p>
+              </div>
+            )}
+            {conversation_behavior && (
+              <div className="p-3 rounded-lg bg-muted/50">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Conversation behavior</p>
+                <p className="font-medium">{conversation_behavior}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Emotional drivers */}
+        {emotional_drivers && emotional_drivers.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Activity className="w-4 h-4 text-pink-600" />
+              Emotional drivers
+            </div>
+            <div className="flex flex-wrap gap-2 text-[0.95rem]">
+              {emotional_drivers.map((d, idx) => (
+                <Badge key={idx} variant="outline" className="text-[0.8rem] px-3 py-1 border-pink-200 text-pink-700">
+                  {d}
                 </Badge>
               ))}
             </div>
           </div>
         )}
 
-        {/* Dislikes */}
-        {dislikes && dislikes.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <ThumbsDown className="w-4 h-4 text-red-500" />
-              Dislikes & Aversions
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {dislikes.map((dislike, idx) => (
-                <Badge key={idx} className="bg-red-500/10 text-red-600">
-                  {dislike}
+        {/* Friction triggers */}
+        {friction_triggers && friction_triggers.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Shield className="w-4 h-4 text-orange-600" />
+              Friction triggers
+            </div>
+            <div className="flex flex-wrap gap-2 text-[0.95rem]">
+              {friction_triggers.map((f, idx) => (
+                <Badge key={idx} variant="outline" className="text-[0.8rem] px-3 py-1 border-orange-200 text-orange-700">
+                  {f}
                 </Badge>
               ))}
             </div>
           </div>
         )}
 
-        {/* Emotional Drivers */}
-        {emotionalDrivers && emotionalDrivers.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <Heart className="w-4 h-4 text-pink-500" />
-              Emotional Drivers
-            </h4>
-            <div className="space-y-2">
-              {emotionalDrivers.map((driver, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-pink-500/5 border border-pink-500/10">
-                  <p className="text-sm">{driver}</p>
-                </div>
-              ))}
-            </div>
+        {/* Strengths / Weaknesses */}
+        {(strengths?.length || weaknesses?.length) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {strengths && strengths.length > 0 && (
+              <div className="p-3 rounded-lg bg-green-50 border border-green-100 space-y-1">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-green-600" />
+                  Strengths
+                </p>
+                <ul className="list-disc pl-4 text-sm text-muted-foreground space-y-1">
+                  {strengths.map((s, idx) => (
+                    <li key={idx}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {weaknesses && weaknesses.length > 0 && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-100 space-y-1">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-red-600" />
+                  Weaknesses
+                </p>
+                <ul className="list-disc pl-4 text-sm text-muted-foreground space-y-1">
+                  {weaknesses.map((w, idx) => (
+                    <li key={idx}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* Friction Triggers */}
-        {frictionTriggers && frictionTriggers.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-orange-500" />
-              Friction Triggers (Avoid These)
-            </h4>
-            <div className="space-y-2">
-              {frictionTriggers.map((trigger, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
-                  <p className="text-sm">{trigger}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Strengths & Weaknesses */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {strengths && strengths.length > 0 && (
-            <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/10">
-              <h4 className="font-medium mb-2 flex items-center gap-2">
-                <Target className="w-4 h-4 text-green-500" />
-                Strengths
-              </h4>
-              <ul className="space-y-1">
-                {strengths.map((strength, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">• {strength}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {weaknesses && weaknesses.length > 0 && (
-            <div className="p-4 rounded-lg bg-red-500/5 border border-red-500/10">
-              <h4 className="font-medium mb-2 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-500" />
-                Weaknesses
-              </h4>
-              <ul className="space-y-1">
-                {weaknesses.map((weakness, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground">• {weakness}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* Evidence intentionally hidden per request */}
+        ) : null}
       </CardContent>
     </Card>
-  )
+  );
 }
