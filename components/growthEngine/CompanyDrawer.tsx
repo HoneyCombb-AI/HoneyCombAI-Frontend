@@ -16,6 +16,8 @@ import type { CompanyContactsResponse, CompanyContactSummary } from "@/app/api/g
 import type { CompanySignalsResponse, CompanySignal } from "@/app/api/growthEngine/companies/[companyId]/signals/route"
 import type { CompanyActionsResponse, CompanyAction } from "@/app/api/growthEngine/companies/[companyId]/actions/route"
 import type { CompanyHierarchyResponse, CompanyHierarchySegment } from "@/app/api/growthEngine/companies/[companyId]/hierarchy/route"
+import type { ContactBulkResponse, ContactSummary } from "@/app/api/growthEngine/contacts/bulk/route"
+import { OrgHierarchyMap } from "./OrgHierarchyMap"
 
 interface CompanyDrawerProps {
   companyId: string | null
@@ -31,6 +33,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
   const [signals, setSignals] = useState<CompanySignal[]>([])
   const [actions, setActions] = useState<CompanyAction[]>([])
   const [hierarchy, setHierarchy] = useState<CompanyHierarchySegment[] | null>(null)
+  const [memberLookup, setMemberLookup] = useState<Record<string, ContactSummary>>({})
   const [loadingCompany, setLoadingCompany] = useState(false)
   const [contactsLoading, setContactsLoading] = useState(false)
   const [contactsLoaded, setContactsLoaded] = useState(false)
@@ -57,6 +60,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
         setSignalsLoaded(false)
         setActionsLoaded(false)
         setHierarchyLoaded(false)
+        setMemberLookup({})
         setActiveTab("contacts")
 
         const companiesRes = await axios.get("/api/growthEngine/companies")
@@ -102,7 +106,28 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
         if (activeTab === "hierarchy" && !hierarchyLoaded && !hierarchyLoading) {
           setHierarchyLoading(true)
           const res = await axios.get<CompanyHierarchyResponse>(`/api/growthEngine/companies/${companyId}/hierarchy`)
-          setHierarchy(res.data?.hierarchy ?? null)
+          const segments = res.data?.hierarchy ?? null
+          setHierarchy(segments)
+
+          // fetch member details if any
+          const memberIds = segments
+            ? Array.from(
+                new Set(
+                  segments.flatMap((seg) => seg.members ?? [])
+                )
+              )
+            : []
+          if (memberIds.length > 0) {
+            const contactsRes = await axios.post<ContactBulkResponse>('/api/growthEngine/contacts/bulk', {
+              ids: memberIds,
+            })
+            const lookup: Record<string, ContactSummary> = {}
+            ;(contactsRes.data?.contacts ?? []).forEach((c) => {
+              lookup[c.contact_id] = c
+            })
+            setMemberLookup(lookup)
+          }
+
           setHierarchyLoading(false)
           setHierarchyLoaded(true)
         }
@@ -329,29 +354,11 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
                       <p className="text-sm text-muted-foreground mt-3">Loading organization map...</p>
                     </div>
                   ) : hierarchy && hierarchy.length > 0 ? (
-                    hierarchy.map((segment, idx) => (
-                      <Card key={idx}>
-                        <CardContent className="p-4 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Network className="w-4 h-4 text-primary" />
-                            <h3 className="font-semibold text-base">
-                              {segment.name ?? "Segment"}
-                            </h3>
-                          </div>
-                          {segment.description && (
-                            <p className="text-sm text-muted-foreground">{segment.description}</p>
-                          )}
-                          <div className="text-xs text-muted-foreground">
-                            {segment.members?.length ?? 0} members
-                          </div>
-                          {segment.rationale && (
-                            <div className="p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-                              {segment.rationale}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))
+                    <OrgHierarchyMap
+                      segments={hierarchy}
+                      membersById={memberLookup}
+                      onContactClick={onContactClick}
+                    />
                   ) : (
                     <Card>
                       <CardContent className="p-12 text-center">
