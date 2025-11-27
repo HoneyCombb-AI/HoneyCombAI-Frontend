@@ -244,7 +244,7 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
                 <TabsList className="grid w-full grid-cols-6 max-w-4xl">
                   <TabsTrigger value="persona">Persona</TabsTrigger>
-                  <TabsTrigger value="disc">DISC</TabsTrigger>
+                  <TabsTrigger value="disc">Profile</TabsTrigger>
                   <TabsTrigger value="signals">Signals</TabsTrigger>
                   <TabsTrigger value="tone">Tone</TabsTrigger>
                   <TabsTrigger value="network">Network</TabsTrigger>
