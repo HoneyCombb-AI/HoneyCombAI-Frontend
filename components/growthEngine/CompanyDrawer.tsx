@@ -294,18 +294,17 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
                       <p className="text-sm text-muted-foreground mt-3">Loading actions...</p>
                     </div>
                   ) : actions.length > 0 ? (
-                    actions.map((action) => (
-                      <ActionRecommendationCard
-                        key={action.action_id}
-                        actionType={action.action_type ?? "Action"}
-                        description={action.natural_language_action ?? "No description available"}
-                        rationale={action.rationale ?? undefined}
-                        priority={action.priority ?? "medium"}
-                        status={action.deal_stage ?? "pending"}
-                        targetContacts={action.target_contact_id ? [action.target_contact_id] : undefined}
-                        validUntil={action.analysis_date ?? undefined}
-                      />
-                    ))
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {actions
+                        .slice()
+                        .sort((a, b) => a.action_id.localeCompare(b.action_id))
+                        .map((action) => (
+                          <ActionRecommendationCard
+                            key={action.action_id}
+                            {...action}
+                          />
+                        ))}
+                    </div>
                   ) : (
                     <Card>
                       <CardContent className="p-12 text-center">

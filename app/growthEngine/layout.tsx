@@ -33,7 +33,7 @@ export default function ABMLayout({ children }: { children: ReactNode }) {
                             </div>
                         </header>
                     </div>
-                    <main className="flex-1 flex flex-col w-full">{children}</main>
+                    <main className="flex-1 flex flex-col w-full bg-white">{children}</main>
                 </div>
             </SidebarProvider>
         </AuthProvider>
