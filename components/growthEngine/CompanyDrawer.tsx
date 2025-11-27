@@ -154,7 +154,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
               </Button>
             </div>
           </div>
-          
+
           {/* Quick Stats */}
           {company && (
             <div className="flex items-center gap-6 flex-wrap mt-3 text-sm text-muted-foreground">
@@ -248,9 +248,9 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
 
                 <TabsContent value="signals" className="space-y-4 pt-4">
                   {signalsLoading ? (
-                    <div className="flex flex-col items-center justify-center py-14 min-h-[200px]">
+                    <div className="flex flex-col items-center justify-center w-full py-16">
                       <Loading />
-                      <p className="text-sm text-muted-foreground mt-3">Loading signals...</p>
+                      <p className="text-sm text-muted-foreground mt-4">Loading your signals...</p>
                     </div>
                   ) : signals.length > 0 ? (
                     signals.map((signal) => (
