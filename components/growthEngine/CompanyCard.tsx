@@ -61,12 +61,12 @@ export function CompanyCard({
 
   return (
     <Card 
-      className="hover:shadow-xl transition-all duration-300 cursor-pointer border-none bg-gradient-to-br from-card to-card/50 hover:scale-[1.02]"
+      className="hover:shadow-xl transition-all duration-300 cursor-pointer border border-muted bg-white hover:scale-[1.02]"
       onClick={onClick}
     >
-      <CardContent className="p-6">
-        {/* Header with company name and health */}
-        <div className="flex items-start justify-between mb-4">
+      <CardContent className="p-5">
+        {/* Header with company name */}
+        <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-primary/10">
               <Building2 className="w-6 h-6 text-primary" />
@@ -78,33 +78,17 @@ export function CompanyCard({
               )}
             </div>
           </div>
-          
-          {/* Deal Health Score */}
-          {hasHealthValue && (
-            <div className={cn(
-              "flex flex-col items-center gap-1 p-3 rounded-xl",
-              healthScore && healthScore > 0 ? getHealthBgColor(healthScore) : "bg-muted"
-            )}>
-              <span className={cn(
-                "text-2xl font-bold",
-                healthScore && healthScore > 0 ? getHealthColor(healthScore) : "text-muted-foreground"
-              )}>
-                {displayHealth}
-              </span>
-              <span className="text-xs text-muted-foreground">Health</span>
-            </div>
-          )}
         </div>
 
         {/* Stage Badge */}
         {stage && (
-          <Badge className={cn("mb-4", getStageBadgeColor(stage))}>
+          <Badge className={cn("mb-3", getStageBadgeColor(stage))}>
             {stage}
           </Badge>
         )}
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t">
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1 text-muted-foreground">
               <Users className="w-4 h-4" />
