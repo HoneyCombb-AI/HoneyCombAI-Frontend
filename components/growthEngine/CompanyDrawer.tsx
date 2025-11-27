@@ -35,6 +35,9 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
   const [signalsLoading, setSignalsLoading] = useState(false)
   const [actionsLoading, setActionsLoading] = useState(false)
   const [hierarchyLoading, setHierarchyLoading] = useState(false)
+  const [signalsLoaded, setSignalsLoaded] = useState(false)
+  const [actionsLoaded, setActionsLoaded] = useState(false)
+  const [hierarchyLoaded, setHierarchyLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"contacts" | "signals" | "actions" | "hierarchy">("contacts")
 
@@ -48,6 +51,9 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
         setSignals([])
         setActions([])
         setHierarchy(null)
+        setSignalsLoaded(false)
+        setActionsLoaded(false)
+        setHierarchyLoaded(false)
         setActiveTab("contacts")
 
         const companiesRes = await axios.get("/api/growthEngine/companies")
@@ -74,23 +80,26 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
     const fetchTabData = async () => {
       if (!companyId || !open) return
       try {
-        if (activeTab === "signals" && signals.length === 0 && !signalsLoading) {
+        if (activeTab === "signals" && !signalsLoaded && !signalsLoading) {
           setSignalsLoading(true)
           const res = await axios.get<CompanySignalsResponse>(`/api/growthEngine/companies/${companyId}/signals`)
           setSignals(res.data?.signals ?? [])
           setSignalsLoading(false)
+          setSignalsLoaded(true)
         }
-        if (activeTab === "actions" && actions.length === 0 && !actionsLoading) {
+        if (activeTab === "actions" && !actionsLoaded && !actionsLoading) {
           setActionsLoading(true)
           const res = await axios.get<CompanyActionsResponse>(`/api/growthEngine/companies/${companyId}/actions`)
           setActions(res.data?.actions ?? [])
           setActionsLoading(false)
+          setActionsLoaded(true)
         }
-        if (activeTab === "hierarchy" && hierarchy === null && !hierarchyLoading) {
+        if (activeTab === "hierarchy" && !hierarchyLoaded && !hierarchyLoading) {
           setHierarchyLoading(true)
           const res = await axios.get<CompanyHierarchyResponse>(`/api/growthEngine/companies/${companyId}/hierarchy`)
           setHierarchy(res.data?.hierarchy ?? null)
           setHierarchyLoading(false)
+          setHierarchyLoaded(true)
         }
       } catch (err) {
         console.error('Error fetching tab data:', err)
@@ -183,9 +192,9 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
             <div className="space-y-6">
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
                 <TabsList className="grid w-full max-w-2xl grid-cols-4">
-                  <TabsTrigger value="contacts">Contacts ({contactCount})</TabsTrigger>
-                  <TabsTrigger value="signals">Signals ({signals.length})</TabsTrigger>
-                  <TabsTrigger value="actions">Actions ({actions.length})</TabsTrigger>
+                  <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                  <TabsTrigger value="signals">Signals</TabsTrigger>
+                  <TabsTrigger value="actions">Actions</TabsTrigger>
                   <TabsTrigger value="hierarchy">Org Map</TabsTrigger>
                 </TabsList>
 
@@ -239,7 +248,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
 
                 <TabsContent value="signals" className="space-y-4 pt-4">
                   {signalsLoading ? (
-                    <div className="flex flex-col items-center justify-center py-10">
+                    <div className="flex flex-col items-center justify-center py-14 min-h-[200px]">
                       <Loading />
                       <p className="text-sm text-muted-foreground mt-3">Loading signals...</p>
                     </div>
@@ -260,11 +269,11 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick }:
                     ))
                   ) : (
                     <Card>
-                      <CardContent className="p-12 text-center">
-                        <Activity className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No Signals Detected</h3>
+                      <CardContent className="p-12 text-center flex flex-col items-center justify-center min-h-[200px]">
+                        <Activity className="w-16 h-16 text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No Signals Found</h3>
                         <p className="text-muted-foreground">
-                          No intelligence signals have been captured for this account yet
+                          This account does not have signals yet.
                         </p>
                       </CardContent>
                     </Card>

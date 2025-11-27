@@ -37,9 +37,9 @@ type Params = { companyId?: string };
 
 export async function GET(
   _req: Request,
-  context: { params: Params }
+  context: { params: Promise<Params> }
 ): Promise<NextResponse<CompanyActionsResponse | { error: string }>> {
-  const companyId = context.params.companyId;
+  const { companyId } = await context.params;
 
   if (!companyId) {
     return NextResponse.json(
