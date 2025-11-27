@@ -185,7 +185,11 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
         </DrawerHeader>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div
+          className="flex-1 overflow-y-auto p-6"
+          style={{ backgroundColor: "#ffffff" }}
+        >
+
           {error ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">

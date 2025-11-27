@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Phone, Calendar, CheckCircle2, Clock, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CompanyAction } from "@/app/api/growthEngine/companies/[companyId]/actions/route";
+import { JSX } from "react";
 
 type ActionRecommendationCardProps = CompanyAction;
 
@@ -18,6 +19,90 @@ const formatText = (text: string | null) =>
 const stepFromId = (action_id: string) => {
   const match = action_id.match(/\d+/);
   return match ? parseInt(match[0], 10) : undefined;
+};
+
+const formatLabel = (text: string) =>
+  text
+    .replace(/_/g, " ")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/^\w/, (c) => c.toUpperCase());
+
+type DraftRenderOptions = { hideLabelOnObject?: boolean };
+
+const tryParseJson = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return null;
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return null;
+  }
+};
+
+const renderDraftValue = (
+  label: string,
+  value: unknown,
+  options: DraftRenderOptions = {}
+): JSX.Element | null => {
+  if (value === null || value === undefined || value === "") return null;
+
+  if (typeof value === "string") {
+    const parsed = tryParseJson(value);
+    if (parsed !== null) {
+      return renderDraftValue(label, parsed, options);
+    }
+    return (
+      <p className="text-sm">
+        <span className="font-semibold">{label}:</span> {value}
+      </p>
+    );
+  }
+
+  if (typeof value === "number") {
+    return (
+      <p className="text-sm">
+        <span className="font-semibold">{label}:</span> {value}
+      </p>
+    );
+  }
+
+  if (Array.isArray(value)) {
+    return (
+      <div className="space-y-1">
+        <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+        <ul className="list-disc pl-4 text-sm space-y-1">
+          {value.map((item, idx) => (
+            <li key={`${label}-arr-${idx}`}>
+              {typeof item === "string" || typeof item === "number"
+                ? item
+                : JSON.stringify(item)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  if (typeof value === "object") {
+    const hideLabel = options.hideLabelOnObject === true;
+    return (
+      <div className="space-y-1">
+        {!hideLabel && (
+          <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+        )}
+        <div className="space-y-1">
+          {Object.entries(value as Record<string, unknown>).map(([k, v]) => (
+            <div key={`${label}-${k}`} className="pl-2 border-l border-muted">
+              {renderDraftValue(formatLabel(k), v)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 export function ActionRecommendationCard(props: ActionRecommendationCardProps) {
@@ -149,24 +234,12 @@ export function ActionRecommendationCard(props: ActionRecommendationCardProps) {
           draft_subject_line) && (
           <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
             <p className="text-xs font-semibold text-muted-foreground">Draft Content</p>
-            {draft_connection_note && (
-              <p className="text-sm"><span className="font-semibold">Connection note:</span> {draft_connection_note}</p>
-            )}
-            {draft_subject_line && (
-              <p className="text-sm"><span className="font-semibold">Subject:</span> {draft_subject_line}</p>
-            )}
-            {draft_message_draft && (
-              <p className="text-sm"><span className="font-semibold">Message:</span> {draft_message_draft}</p>
-            )}
-            {draft_tone_notes && (
-              <p className="text-sm"><span className="font-semibold">Tone:</span> {draft_tone_notes}</p>
-            )}
-            {draft_follow_up_if_accepted && (
-              <p className="text-sm"><span className="font-semibold">If accepted:</span> {draft_follow_up_if_accepted}</p>
-            )}
-            {draft_follow_up_if_no_response && (
-              <p className="text-sm"><span className="font-semibold">If no response:</span> {draft_follow_up_if_no_response}</p>
-            )}
+            {renderDraftValue("Subject", draft_subject_line)}
+            {renderDraftValue("Message", draft_message_draft, { hideLabelOnObject: true })}
+            {renderDraftValue("Connection note", draft_connection_note)}
+            {renderDraftValue("Tone", draft_tone_notes)}
+            {renderDraftValue("If accepted", draft_follow_up_if_accepted)}
+            {renderDraftValue("If no response", draft_follow_up_if_no_response)}
           </div>
         )}
 
