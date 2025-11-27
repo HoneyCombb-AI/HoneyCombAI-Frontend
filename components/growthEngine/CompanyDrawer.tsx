@@ -33,6 +33,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
   const [hierarchy, setHierarchy] = useState<CompanyHierarchySegment[] | null>(null)
   const [loadingCompany, setLoadingCompany] = useState(false)
   const [contactsLoading, setContactsLoading] = useState(false)
+  const [contactsLoaded, setContactsLoaded] = useState(false)
   const [signalsLoading, setSignalsLoading] = useState(false)
   const [actionsLoading, setActionsLoading] = useState(false)
   const [hierarchyLoading, setHierarchyLoading] = useState(false)
@@ -63,9 +64,11 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
         setCompany(companies.find((c) => c.company_id === companyId) ?? initialCompany ?? null)
 
         setContactsLoading(true)
+        setContactsLoaded(false)
         const contactsRes = await axios.get<CompanyContactsResponse>(`/api/growthEngine/companies/${companyId}/contacts`)
         setContacts(contactsRes.data?.contacts ?? [])
         setContactsLoading(false)
+        setContactsLoaded(true)
       } catch (err) {
         console.error('Error fetching company:', err)
         setError('Failed to load company data')
@@ -116,17 +119,11 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
   }, [activeTab, companyId, open, signals.length, actions.length, hierarchy, signalsLoading, actionsLoading, hierarchyLoading])
 
   const contactCount =
-    contactsLoading || loadingCompany
-      ? company?.contact_count ?? 0
-      : contacts.length
+    contactsLoaded ? contacts.length : company?.contact_count ?? 0
   const signalCountDisplay =
-    signalsLoading || loadingCompany
-      ? company?.signal_count ?? 0
-      : signals.length
+    signalsLoaded ? signals.length : company?.signal_count ?? 0
   const actionCountDisplay =
-    actionsLoading || loadingCompany
-      ? company?.action_count ?? 0
-      : actions.length
+    actionsLoaded ? actions.length : company?.action_count ?? 0
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} modal={true}>
@@ -207,7 +204,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
                 </TabsList>
 
                 <TabsContent value="contacts" className="space-y-4 pt-4">
-                  {contactsLoading ? (
+                  {contactsLoading || !contactsLoaded ? (
                     <div className="flex flex-col items-center justify-center py-10">
                       <Loading />
                       <p className="text-sm text-muted-foreground mt-3">Loading contacts...</p>
