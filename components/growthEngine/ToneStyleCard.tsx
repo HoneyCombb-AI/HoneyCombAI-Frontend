@@ -3,18 +3,55 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles, Wand2, CheckCircle2, XCircle, Lightbulb } from "lucide-react";
 import type { ContactToneStyle } from "@/app/api/growthEngine/contacts/[contactId]/tone-style/route";
+import { cleanDisplayText } from "./cleanDisplayText";
 
 interface ToneStyleCardProps {
   toneStyle: ContactToneStyle;
 }
 
-const cleanText = (text: string) =>
-  text
-    .replace(/\s*\[.*?\]\s*/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+const normalizeText = (value?: string | null) => {
+  const cleaned = cleanDisplayText(value);
+  return cleaned ? cleaned : null;
+};
+
+const normalizeList = (items?: string[] | null) =>
+  Array.isArray(items)
+    ? items
+        .map((item) => cleanDisplayText(item))
+        .filter((item) => Boolean(item.trim()))
+    : [];
 
 export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
+  const idealTone = normalizeText(toneStyle.ideal_tone);
+  const idealStyle = normalizeText(toneStyle.ideal_style);
+  const tone = normalizeText(toneStyle.tone);
+  const structure = normalizeText(toneStyle.structure);
+  const emotionalTone = normalizeText(toneStyle.emotional_tone);
+  const warmthVsFormality = normalizeText(toneStyle.warmth_vs_formality);
+  const agreementStyle = normalizeText(toneStyle.agreement_disagreement_style);
+  const toleranceForDetail = normalizeText(toneStyle.tolerance_for_detail);
+  const pace = normalizeText(toneStyle.pace);
+  const structureToUse = normalizeText(toneStyle.structure_to_use);
+  const emotionalApproach = normalizeText(toneStyle.emotional_approach);
+
+  const trustedInformation = normalizeList(toneStyle.trusted_information_types);
+  const languagePatterns = normalizeList(toneStyle.language_patterns);
+  const shortOpeners = normalizeList(toneStyle.short_openers);
+  const longOpeners = normalizeList(toneStyle.long_openers);
+  const revivalMessages = normalizeList(toneStyle.revival_messages);
+  const doList = normalizeList(toneStyle.do_list);
+  const dontList = normalizeList(toneStyle.dont_list);
+  const sensitivities = normalizeList(toneStyle.sensitivities);
+  const behavioralTriggers = normalizeList(toneStyle.behavioral_triggers);
+  const topicsToAvoid = normalizeList(toneStyle.topics_to_avoid);
+  const counterproductiveTones = normalizeList(toneStyle.counterproductive_tones);
+  const affinityNudges = normalizeList(toneStyle.affinity_nudges);
+  const contextNudges = normalizeList(toneStyle.context_nudges);
+  const emotionalNudges = normalizeList(toneStyle.emotional_nudges);
+  const reciprocityNudges = normalizeList(toneStyle.reciprocity_nudges);
+  const curiosityHooks = normalizeList(toneStyle.curiosity_hooks);
+  const authorityCues = normalizeList(toneStyle.authority_cues);
+
   return (
     <Card className="border border-muted bg-white shadow-sm">
       <CardHeader className="pb-3">
@@ -25,96 +62,96 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
       </CardHeader>
       <CardContent className="space-y-5 text-[0.85rem] leading-relaxed">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {toneStyle.ideal_tone && (
+          {idealTone && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Ideal tone</p>
-              <p className="font-medium">{toneStyle.ideal_tone}</p>
+              <p className="font-medium">{idealTone}</p>
             </div>
           )}
-          {toneStyle.ideal_style && (
+          {idealStyle && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Ideal style</p>
-              <p className="font-medium">{toneStyle.ideal_style}</p>
+              <p className="font-medium">{idealStyle}</p>
             </div>
           )}
-          {toneStyle.tone && (
+          {tone && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Tone</p>
-              <p className="font-medium">{toneStyle.tone}</p>
+              <p className="font-medium">{tone}</p>
             </div>
           )}
-          {toneStyle.structure && (
+          {structure && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Structure</p>
-              <p className="font-medium">{toneStyle.structure}</p>
+              <p className="font-medium">{structure}</p>
             </div>
           )}
-          {toneStyle.emotional_tone && (
+          {emotionalTone && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Emotional tone</p>
-              <p className="font-medium">{toneStyle.emotional_tone}</p>
+              <p className="font-medium">{emotionalTone}</p>
             </div>
           )}
-          {toneStyle.warmth_vs_formality && (
+          {warmthVsFormality && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Warmth vs formality</p>
-              <p className="font-medium">{toneStyle.warmth_vs_formality}</p>
+              <p className="font-medium">{warmthVsFormality}</p>
             </div>
           )}
-          {toneStyle.agreement_disagreement_style && (
+          {agreementStyle && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Agreement / disagreement style</p>
-              <p className="font-medium">{toneStyle.agreement_disagreement_style}</p>
+              <p className="font-medium">{agreementStyle}</p>
             </div>
           )}
-          {toneStyle.tolerance_for_detail && (
+          {toleranceForDetail && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Tolerance for detail</p>
-              <p className="font-medium">{toneStyle.tolerance_for_detail}</p>
+              <p className="font-medium">{toleranceForDetail}</p>
             </div>
           )}
-          {toneStyle.pace && (
+          {pace && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Pace</p>
-              <p className="font-medium">{toneStyle.pace}</p>
+              <p className="font-medium">{pace}</p>
             </div>
           )}
-          {toneStyle.structure_to_use && (
+          {structureToUse && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Structure to use</p>
-              <p className="font-medium">{toneStyle.structure_to_use}</p>
+              <p className="font-medium">{structureToUse}</p>
             </div>
           )}
-          {toneStyle.emotional_approach && (
+          {emotionalApproach && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Emotional approach</p>
-              <p className="font-medium">{toneStyle.emotional_approach}</p>
+              <p className="font-medium">{emotionalApproach}</p>
             </div>
           )}
         </div>
 
         {/* Messaging helpers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          {toneStyle.trusted_information_types && toneStyle.trusted_information_types.length > 0 && (
+          {trustedInformation.length > 0 && (
             <div className="p-3 rounded-lg bg-muted/30 space-y-2">
               <p className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" /> Trusted information
               </p>
               <ul className="list-disc pl-4 space-y-1">
-                {toneStyle.trusted_information_types.map((item, idx) => (
-                  <li key={idx}>{cleanText(item)}</li>
+                {trustedInformation.map((item, idx) => (
+                  <li key={idx}>{item}</li>
                 ))}
               </ul>
             </div>
           )}
-          {toneStyle.language_patterns && toneStyle.language_patterns.length > 0 && (
+          {languagePatterns.length > 0 && (
             <div className="p-3 rounded-lg bg-muted/30 space-y-2">
               <p className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" /> Language patterns
               </p>
               <ul className="list-disc pl-4 space-y-1">
-                {toneStyle.language_patterns.map((item, idx) => (
-                  <li key={idx}>{cleanText(item)}</li>
+                {languagePatterns.map((item, idx) => (
+                  <li key={idx}>{item}</li>
                 ))}
               </ul>
             </div>
@@ -123,22 +160,22 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
 
         {/* Openers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          {toneStyle.short_openers && toneStyle.short_openers.length > 0 && (
+          {shortOpeners.length > 0 && (
             <div className="p-3 rounded-lg bg-muted/30 space-y-2">
               <p className="text-xs font-semibold text-muted-foreground">Short openers</p>
               <ul className="list-disc pl-4 space-y-1">
-                {toneStyle.short_openers.map((item, idx) => (
-                  <li key={idx}>{cleanText(item)}</li>
+                {shortOpeners.map((item, idx) => (
+                  <li key={idx}>{item}</li>
                 ))}
               </ul>
             </div>
           )}
-          {toneStyle.long_openers && toneStyle.long_openers.length > 0 && (
+          {longOpeners.length > 0 && (
             <div className="p-3 rounded-lg bg-muted/30 space-y-2">
               <p className="text-xs font-semibold text-muted-foreground">Long openers</p>
               <ul className="list-disc pl-4 space-y-1">
-                {toneStyle.long_openers.map((item, idx) => (
-                  <li key={idx}>{cleanText(item)}</li>
+                {longOpeners.map((item, idx) => (
+                  <li key={idx}>{item}</li>
                 ))}
               </ul>
             </div>
@@ -146,40 +183,40 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
         </div>
 
         {/* Revival messages */}
-        {toneStyle.revival_messages && toneStyle.revival_messages.length > 0 && (
+        {revivalMessages.length > 0 && (
           <div className="p-3 rounded-lg bg-muted/30 space-y-2 text-sm">
             <p className="text-xs font-semibold text-muted-foreground">Revival messages</p>
             <ul className="list-disc pl-4 space-y-1">
-              {toneStyle.revival_messages.map((item, idx) => (
-                <li key={idx}>{cleanText(item)}</li>
+              {revivalMessages.map((item, idx) => (
+                <li key={idx}>{item}</li>
               ))}
             </ul>
           </div>
         )}
 
         {/* Do / Don't */}
-        {(toneStyle.do_list?.length || toneStyle.dont_list?.length) ? (
+        {(doList.length || dontList.length) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            {toneStyle.do_list && toneStyle.do_list.length > 0 && (
+            {doList.length > 0 && (
               <div className="p-3 rounded-lg bg-green-50 border border-green-100 space-y-1">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1">
                   <CheckCircle2 className="w-4 h-4 text-green-600" /> Do
                 </p>
                 <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
-                  {toneStyle.do_list.map((d, idx) => (
-                    <li key={idx}>{cleanText(d)}</li>
+                  {doList.map((d, idx) => (
+                    <li key={idx}>{d}</li>
                   ))}
                 </ul>
               </div>
             )}
-            {toneStyle.dont_list && toneStyle.dont_list.length > 0 && (
+            {dontList.length > 0 && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-100 space-y-1">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1">
                   <XCircle className="w-4 h-4 text-red-600" /> Don&rsquo;t
                 </p>
                 <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
-                  {toneStyle.dont_list.map((d, idx) => (
-                    <li key={idx}>{cleanText(d)}</li>
+                  {dontList.map((d, idx) => (
+                    <li key={idx}>{d}</li>
                   ))}
                 </ul>
               </div>
@@ -189,22 +226,22 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
 
         {/* Sensitivities / Triggers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          {toneStyle.sensitivities && toneStyle.sensitivities.length > 0 && (
+          {sensitivities.length > 0 && (
             <div className="p-3 rounded-lg bg-muted/30 space-y-1">
               <p className="text-xs font-semibold text-muted-foreground">Sensitivities</p>
               <ul className="list-disc pl-4 space-y-1">
-                {toneStyle.sensitivities.map((s, idx) => (
-                  <li key={idx}>{cleanText(s)}</li>
+                {sensitivities.map((s, idx) => (
+                  <li key={idx}>{s}</li>
                 ))}
               </ul>
             </div>
           )}
-          {toneStyle.behavioral_triggers && toneStyle.behavioral_triggers.length > 0 && (
+          {behavioralTriggers.length > 0 && (
             <div className="p-3 rounded-lg bg-muted/30 space-y-1">
               <p className="text-xs font-semibold text-muted-foreground">Behavioral triggers</p>
               <ul className="list-disc pl-4 space-y-1">
-                {toneStyle.behavioral_triggers.map((b, idx) => (
-                  <li key={idx}>{cleanText(b)}</li>
+                {behavioralTriggers.map((b, idx) => (
+                  <li key={idx}>{b}</li>
                 ))}
               </ul>
             </div>
@@ -213,22 +250,22 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
 
         {/* Topics / tones to avoid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          {toneStyle.topics_to_avoid && toneStyle.topics_to_avoid.length > 0 && (
+          {topicsToAvoid.length > 0 && (
             <div className="p-3 rounded-lg bg-muted/30 space-y-1">
               <p className="text-xs font-semibold text-muted-foreground">Topics to avoid</p>
               <ul className="list-disc pl-4 space-y-1">
-                {toneStyle.topics_to_avoid.map((t, idx) => (
-                  <li key={idx}>{cleanText(t)}</li>
+                {topicsToAvoid.map((t, idx) => (
+                  <li key={idx}>{t}</li>
                 ))}
               </ul>
             </div>
           )}
-          {toneStyle.counterproductive_tones && toneStyle.counterproductive_tones.length > 0 && (
+          {counterproductiveTones.length > 0 && (
             <div className="p-3 rounded-lg bg-muted/30 space-y-1">
               <p className="text-xs font-semibold text-muted-foreground">Counterproductive tones</p>
               <ul className="list-disc pl-4 space-y-1">
-                {toneStyle.counterproductive_tones.map((t, idx) => (
-                  <li key={idx}>{cleanText(t)}</li>
+                {counterproductiveTones.map((t, idx) => (
+                  <li key={idx}>{t}</li>
                 ))}
               </ul>
             </div>
@@ -236,73 +273,73 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
         </div>
 
         {/* Nudges */}
-        {(toneStyle.affinity_nudges?.length ||
-          toneStyle.context_nudges?.length ||
-          toneStyle.emotional_nudges?.length ||
-          toneStyle.reciprocity_nudges?.length ||
-          toneStyle.curiosity_hooks?.length ||
-          toneStyle.authority_cues?.length) && (
+        {(affinityNudges.length ||
+          contextNudges.length ||
+          emotionalNudges.length ||
+          reciprocityNudges.length ||
+          curiosityHooks.length ||
+          authorityCues.length) && (
           <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 space-y-2 text-[0.85rem] leading-relaxed">
             <p className="text-xs font-semibold text-primary flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Nudges
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {toneStyle.affinity_nudges && toneStyle.affinity_nudges.length > 0 && (
+              {affinityNudges.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">Affinity</p>
                   <ul className="list-disc pl-4 space-y-1">
-                    {toneStyle.affinity_nudges.map((n, idx) => (
-                      <li key={idx}>{cleanText(n)}</li>
+                    {affinityNudges.map((n, idx) => (
+                      <li key={idx}>{n}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              {toneStyle.context_nudges && toneStyle.context_nudges.length > 0 && (
+              {contextNudges.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">Context</p>
                   <ul className="list-disc pl-4 space-y-1">
-                    {toneStyle.context_nudges.map((n, idx) => (
-                      <li key={idx}>{cleanText(n)}</li>
+                    {contextNudges.map((n, idx) => (
+                      <li key={idx}>{n}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              {toneStyle.emotional_nudges && toneStyle.emotional_nudges.length > 0 && (
+              {emotionalNudges.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">Emotional</p>
                   <ul className="list-disc pl-4 space-y-1">
-                    {toneStyle.emotional_nudges.map((n, idx) => (
-                      <li key={idx}>{cleanText(n)}</li>
+                    {emotionalNudges.map((n, idx) => (
+                      <li key={idx}>{n}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              {toneStyle.reciprocity_nudges && toneStyle.reciprocity_nudges.length > 0 && (
+              {reciprocityNudges.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">Reciprocity</p>
                   <ul className="list-disc pl-4 space-y-1">
-                    {toneStyle.reciprocity_nudges.map((n, idx) => (
-                      <li key={idx}>{cleanText(n)}</li>
+                    {reciprocityNudges.map((n, idx) => (
+                      <li key={idx}>{n}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              {toneStyle.curiosity_hooks && toneStyle.curiosity_hooks.length > 0 && (
+              {curiosityHooks.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">Curiosity hooks</p>
                   <ul className="list-disc pl-4 space-y-1">
-                    {toneStyle.curiosity_hooks.map((n, idx) => (
-                      <li key={idx}>{cleanText(n)}</li>
+                    {curiosityHooks.map((n, idx) => (
+                      <li key={idx}>{n}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              {toneStyle.authority_cues && toneStyle.authority_cues.length > 0 && (
+              {authorityCues.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">Authority cues</p>
                   <ul className="list-disc pl-4 space-y-1">
-                    {toneStyle.authority_cues.map((n, idx) => (
-                      <li key={idx}>{cleanText(n)}</li>
+                    {authorityCues.map((n, idx) => (
+                      <li key={idx}>{n}</li>
                     ))}
                   </ul>
                 </div>

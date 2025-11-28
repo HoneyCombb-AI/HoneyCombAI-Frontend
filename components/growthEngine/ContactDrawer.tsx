@@ -27,6 +27,7 @@ import { DISCProfile } from "@/components/growthEngine/DISCProfile";
 import { ToneStyleCard } from "@/components/growthEngine/ToneStyleCard";
 import { TrendForecast } from "@/components/growthEngine/TrendForecast";
 import { ContactNetwork as ContactNetworkView } from "@/components/growthEngine/ContactNetwork";
+import { cleanDisplayText } from "./cleanDisplayText";
 
 interface ContactDrawerProps {
   contactId: string | null;
@@ -195,20 +196,22 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                   <Avatar className="w-12 h-12 border-2 border-primary/20">
                     {contact.profile_picture_url && <AvatarImage src={contact.profile_picture_url} alt="Profile" />}
                     <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
-                      {getInitials(contact.full_name)}
+                      {getInitials(cleanDisplayText(contact.full_name) || contact.full_name)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col gap-1 leading-tight text-left min-w-0">
                     <div className="text-2xl font-bold leading-tight truncate">
-                      {contact.full_name || "Unknown"}
+                      {cleanDisplayText(contact.full_name) || "Unknown"}
                     </div>
                     {contact.headline && (
-                      <p className="text-sm text-muted-foreground truncate">{contact.headline}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {cleanDisplayText(contact.headline)}
+                      </p>
                     )}
                     {contact.current_company && (
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <Users className="w-3 h-3" />
-                        {contact.current_company}
+                        {cleanDisplayText(contact.current_company)}
                       </p>
                     )}
                   </div>
@@ -230,10 +233,10 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
               {contact.email && (
                 <a href={`mailto:${contact.email}`} className="flex items-center gap-1 hover:text-primary">
                   <Mail className="w-4 h-4" />
-                  {contact.email}
+                  {cleanDisplayText(contact.email)}
                 </a>
               )}
-              {contact.city && <span>{contact.city}</span>}
+              {contact.city && <span>{cleanDisplayText(contact.city)}</span>}
             </div>
           )}
         </DrawerHeader>
@@ -369,10 +372,10 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                         {contact.email && (
                           <a href={`mailto:${contact.email}`} className="flex items-center gap-2 hover:text-primary">
                             <Mail className="w-4 h-4" />
-                            {contact.email}
+                            {cleanDisplayText(contact.email)}
                           </a>
                         )}
-                        {contact.location_full && <p>Location: {contact.location_full}</p>}
+                        {contact.location_full && <p>Location: {cleanDisplayText(contact.location_full)}</p>}
                       </CardContent>
                     </Card>
                   ) : (
@@ -412,7 +415,10 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                       <p className="text-sm text-muted-foreground mt-3">Loading network...</p>
                     </div>
                   ) : network ? (
-                    <ContactNetworkView network={network} contactName={contact?.full_name} />
+                    <ContactNetworkView
+                      network={network}
+                      contactName={cleanDisplayText(contact?.full_name)}
+                    />
                   ) : (
                     <Card>
                       <CardContent className="p-10 text-center">

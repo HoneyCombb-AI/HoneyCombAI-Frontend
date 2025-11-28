@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, TrendingDown } from "lucide-react"
+import { cleanDisplayText } from "./cleanDisplayText"
 
 interface DISCProfileProps {
   scoreD: number
@@ -15,6 +16,18 @@ interface DISCProfileProps {
   weaknesses?: string[]
   recommendedAdaptation?: string
 }
+
+const normalizeText = (value?: string | null) => {
+  const cleaned = cleanDisplayText(value)
+  return cleaned ? cleaned : null
+}
+
+const normalizeList = (items?: string[] | null) =>
+  Array.isArray(items)
+    ? items
+        .map((item) => cleanDisplayText(item))
+        .filter((item) => Boolean(item.trim()))
+    : []
 
 export function DISCProfile({
   scoreD,
@@ -38,14 +51,20 @@ export function DISCProfile({
   const maxScore = Math.max(scoreD, scoreI, scoreS, scoreC)
   const dominantTrait = scores.find(s => s.value === maxScore)
 
+  const confidenceText = normalizeText(confidence)
+  const interpretationText = normalizeText(interpretation)
+  const strengthsList = normalizeList(strengths)
+  const weaknessesList = normalizeList(weaknesses)
+  const recommendedText = normalizeText(recommendedAdaptation)
+
   return (
     <Card className="border border-muted bg-white shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-[1.05rem]">
           <span>Personality Profile</span>
-          {confidence && (
+          {confidenceText && (
             <Badge variant="outline" className="text-xs px-2 py-1">
-              Confidence: {confidence}
+              Confidence: {confidenceText}
             </Badge>
           )}
         </CardTitle>
@@ -81,22 +100,22 @@ export function DISCProfile({
         </div>
 
         {/* Interpretation */}
-        {interpretation && (
+        {interpretationText && (
           <div className="p-4 rounded-lg bg-muted/50">
             <h4 className="font-medium mb-2 text-[0.95rem]">Interpretation</h4>
-            <p className="text-sm text-muted-foreground leading-relaxed">{interpretation}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{interpretationText}</p>
           </div>
         )}
 
         {/* Strengths */}
-        {strengths && strengths.length > 0 && (
+        {strengthsList.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="w-4 h-4 text-green-500" />
               <h4 className="font-medium text-sm">Strengths</h4>
             </div>
             <div className="flex flex-wrap gap-2 text-[0.95rem]">
-              {strengths.map((strength, idx) => (
+              {strengthsList.map((strength, idx) => (
                 <Badge key={idx} className="bg-green-500/10 text-green-600 text-xs px-3 py-1">
                   {strength}
                 </Badge>
@@ -106,14 +125,14 @@ export function DISCProfile({
         )}
 
         {/* Weaknesses */}
-        {weaknesses && weaknesses.length > 0 && (
+        {weaknessesList.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-3">
               <TrendingDown className="w-4 h-4 text-red-500" />
               <h4 className="font-medium text-sm">Areas to Navigate</h4>
             </div>
             <div className="flex flex-wrap gap-2 text-[0.95rem]">
-              {weaknesses.map((weakness, idx) => (
+              {weaknessesList.map((weakness, idx) => (
                 <Badge key={idx} className="bg-red-500/10 text-red-600 text-xs px-3 py-1">
                   {weakness}
                 </Badge>
@@ -123,10 +142,10 @@ export function DISCProfile({
         )}
 
         {/* Recommended Adaptation */}
-        {recommendedAdaptation && (
+        {recommendedText && (
           <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
             <h4 className="font-medium mb-2 text-[0.95rem]">Recommended Communication Style</h4>
-            <p className="text-sm leading-relaxed">{recommendedAdaptation}</p>
+            <p className="text-sm leading-relaxed">{recommendedText}</p>
           </div>
         )}
       </CardContent>
