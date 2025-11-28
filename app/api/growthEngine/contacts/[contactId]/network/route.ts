@@ -50,9 +50,9 @@ type Params = { contactId?: string };
 
 export async function GET(
   _req: Request,
-  context: { params: Params }
+  { params }: { params: Promise<Params> }
 ): Promise<NextResponse<ContactNetworkResponse | { error: string }>> {
-  const contactId = context.params.contactId;
+  const { contactId } = await params;
 
   if (!contactId) {
     return NextResponse.json({ error: 'contactId is required' }, { status: 400 });
