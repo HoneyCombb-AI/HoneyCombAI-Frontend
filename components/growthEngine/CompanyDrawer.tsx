@@ -157,15 +157,15 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
         style={{ height: "100vh", maxHeight: "100vh", width: "100vw" }}
       >
         <DrawerHeader className="border-b px-6">
-          <div className="flex items-center justify-between">
-            <DrawerTitle className="flex items-center gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <DrawerTitle className="flex items-start gap-3 text-left">
               {company && (
                 <>
                   <div className="p-2 rounded-lg bg-primary/10">
                     <Building2 className="w-6 h-6 text-primary" />
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold">
+                  <div className="flex flex-col gap-1 leading-tight text-left min-w-0">
+                    <div className="text-2xl font-bold leading-tight truncate">
                       {company.company_name ?? company.domain ?? "Company"}
                     </div>
                     {company.domain && (
@@ -173,7 +173,7 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
                         href={`https://${company.domain}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1"
+                        className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1 truncate"
                       >
                         {company.domain}
                         <ExternalLink className="w-3 h-3" />

@@ -182,10 +182,13 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} modal={true}>
-      <DrawerContent className="!h-screen !max-h-screen !w-screen flex flex-col !rounded-none !border-none !fixed !inset-0 !mt-0 !mb-0 !left-0 !right-0 !top-0 !bottom-0" style={{ height: "100vh", maxHeight: "100vh", width: "100vw" }}>
-        <DrawerHeader className="border-b">
-          <div className="flex items-center justify-between">
-            <DrawerTitle className="flex items-center gap-3">
+      <DrawerContent
+        className="!h-screen !max-h-screen !w-screen flex flex-col !rounded-none !border-none !fixed !inset-0 !mt-0 !mb-0 !left-0 !right-0 !top-0 !bottom-0"
+        style={{ height: "100vh", maxHeight: "100vh", width: "100vw" }}
+      >
+        <DrawerHeader className="border-b px-6">
+          <div className="flex items-start justify-between gap-3">
+            <DrawerTitle className="flex items-start gap-3 text-left">
               {contact && (
                 <>
                   <Avatar className="w-12 h-12 border-2 border-primary/20">
@@ -194,11 +197,13 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                       {getInitials(contact.full_name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <div className="text-2xl font-bold">
+                  <div className="flex flex-col gap-1 leading-tight text-left min-w-0">
+                    <div className="text-2xl font-bold leading-tight truncate">
                       {contact.full_name || "Unknown"}
                     </div>
-                    {contact.headline && <p className="text-sm text-muted-foreground">{contact.headline}</p>}
+                    {contact.headline && (
+                      <p className="text-sm text-muted-foreground truncate">{contact.headline}</p>
+                    )}
                     {contact.current_company && (
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <Users className="w-3 h-3" />
