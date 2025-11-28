@@ -172,8 +172,9 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
         return;
       }
 
-      const width = container.clientWidth || 600;
-      const height = container.clientHeight || 440;
+      const rect = container.getBoundingClientRect();
+      const width = Math.max(rect.width, 300);
+      const height = Math.max(rect.height, 300);
 
       // --- Clone Data ---
       // D3 mutates data in place (adding x, y, vx, vy). 
@@ -185,9 +186,10 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
       const svg = d3
         .select(container)
         .append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("viewBox", [0, 0, width, height]); // Better scaling
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("viewBox", [0, 0, width, height])
+        .attr("preserveAspectRatio", "xMidYMid meet");
 
       const g = svg.append("g");
 
@@ -250,7 +252,7 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
         .style("opacity", (d: any) => {
           if (d.id === targetId) return 1;
           const score = d.engagement_score || 0;
-          return score >= 0.4 ? 1 : 0; // Hide low value labels by default
+          return score >= 0.8 ? 1 : 0; // Only show high by default; others on hover
         });
 
       // 3. Draw Nodes
@@ -306,7 +308,7 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
             .style("opacity", (l: any) => {
               if (l.id === targetId) return 1;
               const score = l.engagement_score || 0;
-              return score >= 0.4 ? 1 : 0;
+              return score >= 0.8 ? 1 : 0;
             });
         });
 
@@ -372,7 +374,7 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
 
   return (
     <div className="space-y-4">
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid lg:grid-cols-3 gap-3 lg:gap-4">
         <Card className="lg:col-span-2 border border-muted bg-slate-50">
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between gap-2">
@@ -410,14 +412,14 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
           </CardHeader>
           <CardContent>
             {/* The Graph Container */}
-            <div 
-                ref={graphRef} 
-                className="h-[460px] w-full border border-muted rounded-lg bg-white overflow-hidden" 
+            <div
+              ref={graphRef}
+              className="h-[680px] lg:h-[740px] w-full border border-muted rounded-lg bg-white overflow-hidden"
             />
           </CardContent>
         </Card>
 
-        <Card className="border border-muted bg-slate-50">
+        <Card className="border border-muted bg-slate-50 lg:max-w-[340px]">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-muted-foreground">Key People</CardTitle>
             <p className="text-xs text-muted-foreground">
@@ -425,15 +427,15 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
             </p>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[460px] pr-2">
+            <div className="space-y-4">
               {renderList("Top Influence", top_influence)}
               {renderList("Inbound Engagers", top_engagers_inbound)}
               {renderList("Outbound Engagers", top_engagers_outbound)}
-              
+
               {!top_influence && !top_engagers_inbound && !top_engagers_outbound && (
-                 <p className="text-sm text-muted-foreground">No ranked data available.</p>
+                <p className="text-sm text-muted-foreground">No ranked data available.</p>
               )}
-            </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       </div>
