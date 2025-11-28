@@ -17,15 +17,15 @@ const cleanText = (text: string) =>
 
 export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
   return (
-    <Card className="border border-muted bg-slate-50 shadow-sm">
+    <Card className="border border-muted bg-white shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-[1.05rem]">
           <Wand2 className="w-5 h-5 text-primary" />
           Tone & Style Guidance
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+      <CardContent className="space-y-5 text-[0.85rem] leading-relaxed">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {toneStyle.ideal_tone && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-xs font-semibold text-muted-foreground">Ideal tone</p>
@@ -243,7 +243,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
           toneStyle.reciprocity_nudges?.length ||
           toneStyle.curiosity_hooks?.length ||
           toneStyle.authority_cues?.length) && (
-          <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 space-y-2 text-sm">
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/10 space-y-2 text-[0.85rem] leading-relaxed">
             <p className="text-xs font-semibold text-primary flex items-center gap-2">
               <Lightbulb className="w-4 h-4" /> Nudges
             </p>
