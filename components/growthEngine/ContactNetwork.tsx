@@ -3,23 +3,39 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import type { ContactNetwork } from "@/app/api/growthEngine/contacts/[contactId]/network/route";
+import type {
+  ContactNetwork,
+  NetworkEdge,
+  NetworkEngager,
+  NetworkInfluence,
+  NetworkNode,
+} from "@/app/api/growthEngine/contacts/[contactId]/network/route";
 import { ExternalLink } from "lucide-react";
+import type * as d3Types from "d3";
+
+type D3 = typeof import("d3");
+type EdgeWithRefs = NetworkEdge & { source: string; target: string };
+type SimNode = NetworkNode & d3Types.SimulationNodeDatum;
+type EdgeWithNodes = NetworkEdge & { source: SimNode; target: SimNode };
+type SimEdge = NetworkEdge &
+  d3Types.SimulationLinkDatum<SimNode> & {
+    source: SimNode | string;
+    target: SimNode | string;
+  };
 
 declare global {
   interface Window {
-    d3?: any;
+    d3?: D3;
   }
 }
 
-let d3Loader: Promise<any> | null = null;
+let d3Loader: Promise<D3 | null> | null = null;
 
-const loadD3 = () => {
+const loadD3 = (): Promise<D3 | null> => {
   if (typeof window === "undefined") return Promise.resolve(null);
   if (window.d3) return Promise.resolve(window.d3);
   if (!d3Loader) {
-    d3Loader = new Promise((resolve, reject) => {
+    d3Loader = new Promise<typeof import("d3") | null>((resolve, reject) => {
       const script = document.createElement("script");
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js";
       script.async = true;
@@ -41,7 +57,6 @@ type ContactNetworkProps = {
 
 export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
   const graphRef = useRef<HTMLDivElement | null>(null);
-  const d3Instance = useRef<any>(null);
 
   const {
     nodes,
@@ -54,7 +69,7 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
 
   // --- 1. Data Normalization ---
   
-  const normalizeId = (val: unknown) => {
+  const normalizeId = (val: unknown): string | null => {
     if (val === undefined || val === null) return null;
     try {
       return String(val);
@@ -63,19 +78,23 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
     }
   };
 
-  const normalizedNodes = useMemo(() => {
+  const normalizedNodes = useMemo<NetworkNode[]>(() => {
     // Handle case where DB returns stringified JSON instead of object
     let rawNodes = nodes;
     if (typeof nodes === "string") {
-      try { rawNodes = JSON.parse(nodes); } catch (e) { rawNodes = []; }
+      try {
+        rawNodes = JSON.parse(nodes);
+      } catch {
+        rawNodes = [];
+      }
     }
     
     const arr = Array.isArray(rawNodes) ? rawNodes : [];
-    const map = new Map<string, any>();
+    const map = new Map<string, NetworkNode>();
     
     arr.forEach((n) => {
       if (!n) return;
-      const id = normalizeId((n as any).id);
+      const id = normalizeId((n as NetworkNode).id);
       if (!id) return;
       if (!map.has(id)) {
         map.set(id, { ...n, id });
@@ -91,7 +110,11 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
 
   // --- 2. Filter & Prepare Graph Data ---
 
-  const { displayNodes, displayEdges, lowWasTrimmed } = useMemo(() => {
+  const { displayNodes, displayEdges, lowWasTrimmed } = useMemo<{
+    displayNodes: NetworkNode[];
+    displayEdges: EdgeWithRefs[];
+    lowWasTrimmed: boolean;
+  }>(() => {
     const rawNodes = normalizedNodes;
     
     // Filter logic matching your prototype
@@ -119,9 +142,13 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
     const nodeIds = new Set(merged.map((n) => n.id));
     
     // Handle edge parsing if stringified
-    let rawEdges = edges;
+    let rawEdges = edges as NetworkEdge[] | string | null | undefined;
     if (typeof edges === "string") {
-      try { rawEdges = JSON.parse(edges); } catch (e) { rawEdges = []; }
+      try {
+        rawEdges = JSON.parse(edges) as NetworkEdge[];
+      } catch {
+        rawEdges = [];
+      }
     }
     const edgeArr = Array.isArray(rawEdges) ? rawEdges : [];
 
@@ -129,22 +156,20 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
       .map((e) => {
         if (!e) return null;
         
-        // --- THE CRITICAL FIX ---
-        // D3 requires 'source' and 'target' keys.
-        // Your data has 'from' and 'to'. We must map them.
-        const source = normalizeId((e as any).from);
-        const target = normalizeId((e as any).to);
+        // Map from/to to D3 source/target
+        const source = normalizeId(e.from);
+        const target = normalizeId(e.to);
         
         if (!source || !target) return null;
         if (!nodeIds.has(source) || !nodeIds.has(target)) return null;
 
-        return { 
-          ...e, 
-          source, // Mapped for D3
-          target  // Mapped for D3
+        return {
+          ...e,
+          source,
+          target,
         };
       })
-      .filter(Boolean) as any[];
+      .filter((edge): edge is EdgeWithRefs => Boolean(edge));
 
     return {
       displayNodes: merged,
@@ -159,12 +184,10 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
     let isMounted = true;
 
     const renderGraph = async () => {
-      if (!graphRef.current) return;
-      const d3 = await loadD3();
-      d3Instance.current = d3;
-      if (!isMounted || !d3 || !graphRef.current) return;
-
       const container = graphRef.current;
+      if (!container) return;
+      const d3 = await loadD3();
+      if (!isMounted || !d3) return;
       container.innerHTML = "";
 
       if (!displayNodes.length) {
@@ -181,8 +204,8 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
       // D3 mutates data in place (adding x, y, vx, vy). 
       // In React Strict Mode, this causes crashes on re-renders. 
       // We must pass deep copies to D3.
-      const nodesData = displayNodes.map(d => ({ ...d }));
-      const edgesData = displayEdges.map(e => ({ ...e }));
+      const nodesData: SimNode[] = displayNodes.map((d) => ({ ...d }));
+      const edgesData: SimEdge[] = displayEdges.map((e) => ({ ...e }));
 
       const svg = d3
         .select(container)
@@ -194,29 +217,31 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
 
       const g = svg.append("g");
 
-      const zoom = d3.zoom()
+      const zoom = d3.zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 4])
-        .on("zoom", (event: any) => {
-          g.attr("transform", event.transform);
+        .on("zoom", (event: d3Types.D3ZoomEvent<SVGSVGElement, unknown>) => {
+          g.attr("transform", event.transform.toString());
         });
-      svg.call(zoom as any);
+      svg.call(zoom as never);
 
       // --- Force Simulation (Matching fe_view.html) ---
-      const simulation = d3.forceSimulation(nodesData)
+      const simulation = d3
+        .forceSimulation<SimNode>(nodesData)
         .force(
           "link",
-          d3.forceLink(edgesData)
-            .id((d: any) => d.id)
+          d3
+            .forceLink<SimNode, SimEdge>(edgesData)
+            .id((d: NetworkNode) => d.id)
             .distance(100) // Match HTML
         )
         .force("charge", d3.forceManyBody().strength(-250)) // Match HTML
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force(
           "collide",
-          d3.forceCollide().radius((d: any) => 12 + (d.engagement_score || 0) * 5)
+          d3.forceCollide<SimNode>().radius((d: SimNode) => 12 + (d.engagement_score || 0) * 5)
         );
 
-      const colorByScore = (d: any) => {
+      const colorByScore = (d: SimNode) => {
         if (d.id === targetId || d.type === "target") return "#ef4444"; // Red
         const score = d.engagement_score || 0;
         if (score >= 0.8) return "#22d3ee"; // Cyan
@@ -229,28 +254,28 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
         .append("g")
         .attr("stroke", "#cbd5e1")
         .attr("stroke-opacity", 0.4)
-        .selectAll("line")
+        .selectAll<SVGLineElement, SimEdge>("line")
         .data(edgesData)
         .join("line")
-        .attr("stroke-width", (d: any) => Math.sqrt(d.weight || 1));
+        .attr("stroke-width", (d: NetworkEdge) => Math.sqrt(d.weight || 1));
 
       // 2. Draw Labels (Behind nodes or separate group so they don't block clicks usually, 
       // but here we follow typical pattern)
       const labelGroup = g.append("g").attr("class", "labels");
       
       const labels = labelGroup
-        .selectAll("text")
+        .selectAll<SVGTextElement, SimNode>("text")
         .data(nodesData)
         .join("text")
         .attr("dx", 14)
         .attr("dy", 4)
-        .text((d: any) => d.name || d.id)
+        .text((d: SimNode) => d.name || d.id)
         .attr("fill", "#0f172a")
         .style("pointer-events", "none")
         .style("text-shadow", "0 1px 2px rgba(255,255,255,0.8)")
-        .attr("font-size", (d: any) => (d.id === targetId ? "14px" : "11px"))
-        .attr("font-weight", (d: any) => (d.id === targetId ? "700" : "400"))
-        .style("opacity", (d: any) => {
+        .attr("font-size", (d: SimNode) => (d.id === targetId ? "14px" : "11px"))
+        .attr("font-weight", (d: SimNode) => (d.id === targetId ? "700" : "400"))
+        .style("opacity", (d: SimNode) => {
           if (d.id === targetId) return 1;
           const score = d.engagement_score || 0;
           return score >= 0.8 ? 1 : 0; // Only show high by default; others on hover
@@ -259,54 +284,59 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
       // 3. Draw Nodes
       const nodesSel = g
         .append("g")
-        .selectAll("circle")
+        .selectAll<SVGCircleElement, SimNode>("circle")
         .data(nodesData)
         .join("circle")
-        .attr("r", (d: any) =>
+        .attr("r", (d: SimNode) =>
           d.id === targetId ? 14 : 6 + (d.engagement_score || 0) * 6
         )
-        .attr("fill", (d: any) => colorByScore(d))
+        .attr("fill", (d: SimNode) => colorByScore(d))
         .attr("stroke", "#fff")
         .attr("stroke-width", 1.5)
         .style("cursor", "grab")
         .call(
           d3
-            .drag()
-            .on("start", (event: any, d: any) => {
-              if (!event.active) simulation.alphaTarget(0.3).restart();
+            .drag<SVGCircleElement, SimNode>()
+            .on("start", (_event, d) => {
+              if (!d3) return;
+              const sim = simulation as d3Types.Simulation<SimNode, SimEdge>;
+              if (!sim) return;
+              if (!_event.active) sim.alphaTarget(0.3).restart();
               d.fx = d.x;
               d.fy = d.y;
             })
-            .on("drag", (event: any, d: any) => {
-              d.fx = event.x;
-              d.fy = event.y;
+            .on("drag", (_event, d) => {
+              d.fx = _event.x;
+              d.fy = _event.y;
             })
-            .on("end", (event: any, d: any) => {
-              if (!event.active) simulation.alphaTarget(0);
+            .on("end", (_event, d) => {
+              if (!d3) return;
+              const sim = simulation as d3Types.Simulation<SimNode, SimEdge>;
+              if (!_event.active) sim.alphaTarget(0);
               d.fx = null;
               d.fy = null;
             })
         );
 
-      nodesSel.append("title").text((d: any) => d.name || d.id);
+      nodesSel.append("title").text((d: SimNode) => d.name || d.id);
 
       // --- Interactions ---
       nodesSel
-        .on("mouseover", (_event: any, d: any) => {
+        .on("mouseover", (_event: unknown, d: SimNode) => {
           labels
-            .filter((l: any) => l.id === d.id)
+            .filter((l: SimNode) => l.id === d.id)
             .transition()
             .duration(120)
             .style("opacity", 1)
             .attr("font-weight", "700");
         })
-        .on("mouseout", (_event: any, d: any) => {
+        .on("mouseout", (_event: unknown, d: SimNode) => {
           labels
-            .filter((l: any) => l.id === d.id)
+            .filter((l: SimNode) => l.id === d.id)
             .transition()
             .duration(180)
-            .attr("font-weight", (l: any) => (l.id === targetId ? "700" : "400"))
-            .style("opacity", (l: any) => {
+            .attr("font-weight", (l: SimNode) => (l.id === targetId ? "700" : "400"))
+            .style("opacity", (l: SimNode) => {
               if (l.id === targetId) return 1;
               const score = l.engagement_score || 0;
               return score >= 0.8 ? 1 : 0;
@@ -314,15 +344,24 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
         });
 
       simulation.on("tick", () => {
+        const coord = (edge: SimEdge, key: "source" | "target", axis: "x" | "y") => {
+          const endpoint = edge[key];
+          if (endpoint && typeof endpoint === "object") {
+            const val = axis === "x" ? (endpoint as SimNode).x : (endpoint as SimNode).y;
+            return val ?? 0;
+          }
+          return 0;
+        };
+
         links
-          .attr("x1", (d: any) => d.source.x)
-          .attr("y1", (d: any) => d.source.y)
-          .attr("x2", (d: any) => d.target.x)
-          .attr("y2", (d: any) => d.target.y);
+          .attr("x1", (d: SimEdge) => coord(d, "source", "x"))
+          .attr("y1", (d: SimEdge) => coord(d, "source", "y"))
+          .attr("x2", (d: SimEdge) => coord(d, "target", "x"))
+          .attr("y2", (d: SimEdge) => coord(d, "target", "y"));
 
-        nodesSel.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
+        nodesSel.attr("cx", (d: SimNode) => d.x ?? 0).attr("cy", (d: SimNode) => d.y ?? 0);
 
-        labels.attr("x", (d: any) => d.x).attr("y", (d: any) => d.y);
+        labels.attr("x", (d: SimNode) => d.x ?? 0).attr("y", (d: SimNode) => d.y ?? 0);
       });
     };
 
@@ -330,33 +369,41 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
 
     return () => {
       isMounted = false;
-      if (graphRef.current) {
-        graphRef.current.innerHTML = "";
+      const container = graphRef.current;
+      if (container) {
+        container.innerHTML = "";
       }
     };
   }, [displayNodes, displayEdges, targetId]);
 
   // --- 4. Sidebar Parsing ---
-  const parseList = (list: any) => {
-    if (Array.isArray(list)) return list;
-    if (typeof list === 'string') {
-        try { return JSON.parse(list); } catch { return []; }
+  const parseList = (list: unknown): (NetworkInfluence | NetworkEngager)[] => {
+    if (Array.isArray(list)) return list as (NetworkInfluence | NetworkEngager)[];
+    if (typeof list === "string") {
+      try {
+        return JSON.parse(list) as (NetworkInfluence | NetworkEngager)[];
+      } catch {
+        return [];
+      }
     }
     return [];
-  }
+  };
 
-  const renderList = (title: string, itemsRaw: any) => {
+  const renderList = (
+    title: string,
+    itemsRaw: NetworkInfluence[] | NetworkEngager[] | string | null | undefined
+  ) => {
     const items = parseList(itemsRaw);
     if (!items || items.length === 0) return null;
 
     const withIds = items
-      .map((item: any) => {
+      .map((item: NetworkInfluence | NetworkEngager) => {
         const id = normalizeId(item?.id);
         return id ? { ...item, id } : null;
       })
-      .filter(Boolean) as any[];
+      .filter(Boolean) as (NetworkInfluence | NetworkEngager)[];
 
-    const scoreOf = (item: any) => {
+    const scoreOf = (item: NetworkInfluence | NetworkEngager) => {
       if (typeof item?.score === "number" && Number.isFinite(item.score)) return item.score;
       if (typeof item?.total_weight === "number" && Number.isFinite(item.total_weight)) return item.total_weight;
       return -Infinity;
@@ -370,7 +417,7 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
       <div className="space-y-2 mb-4">
         <p className="text-xs font-semibold text-foreground">{title}</p>
         <ul className="space-y-2">
-          {sorted.slice(0, 5).map((item: any, idx: number) => (
+          {sorted.slice(0, 5).map((item, idx: number) => (
             <li
               key={item.id || idx}
               className="flex items-center justify-between rounded-md border border-muted px-3 py-2 bg-white"
