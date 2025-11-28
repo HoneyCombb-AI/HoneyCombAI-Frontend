@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ContactNetwork } from "@/app/api/growthEngine/contacts/[contactId]/network/route";
+import { ExternalLink } from "lucide-react";
 
 declare global {
   interface Window {
@@ -347,12 +348,29 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
   const renderList = (title: string, itemsRaw: any) => {
     const items = parseList(itemsRaw);
     if (!items || items.length === 0) return null;
-    
+
+    const withIds = items
+      .map((item: any) => {
+        const id = normalizeId(item?.id);
+        return id ? { ...item, id } : null;
+      })
+      .filter(Boolean) as any[];
+
+    const scoreOf = (item: any) => {
+      if (typeof item?.score === "number" && Number.isFinite(item.score)) return item.score;
+      if (typeof item?.total_weight === "number" && Number.isFinite(item.total_weight)) return item.total_weight;
+      return -Infinity;
+    };
+
+    const sorted = [...withIds].sort((a, b) => scoreOf(b) - scoreOf(a));
+
+    const toLinkedIn = (id: string) => `https://www.linkedin.com/in/${encodeURIComponent(id)}`;
+
     return (
       <div className="space-y-2 mb-4">
         <p className="text-xs font-semibold text-foreground">{title}</p>
         <ul className="space-y-2">
-          {items.slice(0, 5).map((item: any, idx: number) => (
+          {sorted.slice(0, 5).map((item: any, idx: number) => (
             <li
               key={item.id || idx}
               className="flex items-center justify-between rounded-md border border-muted px-3 py-2 bg-white"
@@ -360,11 +378,15 @@ export function ContactNetwork({ network, contactName }: ContactNetworkProps) {
               <span className="truncate text-sm text-foreground pr-2">
                 {item.name || item.id}
               </span>
-              {item.score !== undefined && (
-                <span className="text-sm font-bold text-cyan-600">
-                    {typeof item.score === 'number' ? item.score.toFixed(2) : item.score}
-                </span>
-              )}
+              <a
+                href={toLinkedIn(item.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline flex items-center gap-1 text-xs"
+              >
+                <ExternalLink className="w-4 h-4" />
+                LinkedIn
+              </a>
             </li>
           ))}
         </ul>
