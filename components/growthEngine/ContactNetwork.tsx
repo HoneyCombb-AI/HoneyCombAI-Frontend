@@ -16,7 +16,6 @@ import type * as d3Types from "d3";
 type D3 = typeof import("d3");
 type EdgeWithRefs = NetworkEdge & { source: string; target: string };
 type SimNode = NetworkNode & d3Types.SimulationNodeDatum;
-type EdgeWithNodes = NetworkEdge & { source: SimNode; target: SimNode };
 type SimEdge = NetworkEdge &
   d3Types.SimulationLinkDatum<SimNode> & {
     source: SimNode | string;

@@ -6,23 +6,28 @@ import { cn } from "@/lib/utils";
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { ContactTrendForecast } from "@/app/api/growthEngine/contacts/[contactId]/trend-forecast/route";
 
+type ChartJsCtor = new (
+  ctx: CanvasRenderingContext2D,
+  config: unknown
+) => { destroy: () => void };
+
 declare global {
   interface Window {
-    Chart?: any;
+    Chart?: ChartJsCtor;
   }
 }
 
-let chartJsLoader: Promise<any> | null = null;
+let chartJsLoader: Promise<ChartJsCtor | null> | null = null;
 
-const loadChartJs = () => {
+const loadChartJs = (): Promise<ChartJsCtor | null> => {
   if (typeof window === "undefined") return Promise.resolve(null);
   if (window.Chart) return Promise.resolve(window.Chart);
   if (!chartJsLoader) {
-    chartJsLoader = new Promise((resolve, reject) => {
+    chartJsLoader = new Promise<ChartJsCtor | null>((resolve, reject) => {
       const script = document.createElement("script");
       script.src = "https://cdn.jsdelivr.net/npm/chart.js";
       script.async = true;
-      script.onload = () => resolve(window.Chart);
+      script.onload = () => resolve(window.Chart ?? null);
       script.onerror = (err) => reject(err);
       document.body.appendChild(script);
     }).catch((err) => {
@@ -39,7 +44,7 @@ interface TrendForecastProps {
 
 export function TrendForecast({ trend }: TrendForecastProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const chartRef = useRef<any>(null);
+  const chartRef = useRef<{ destroy: () => void } | null>(null);
 
   const forecastPoints = useMemo(() => {
     const data = Array.isArray(trend.daily_forecast) ? trend.daily_forecast : [];
