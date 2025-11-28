@@ -26,6 +26,7 @@ import { PersonaCard } from "@/components/growthEngine/PersonaCard";
 import { DISCProfile } from "@/components/growthEngine/DISCProfile";
 import { ToneStyleCard } from "@/components/growthEngine/ToneStyleCard";
 import { TrendForecast } from "@/components/growthEngine/TrendForecast";
+import { ContactNetwork as ContactNetworkView } from "@/components/growthEngine/ContactNetwork";
 
 interface ContactDrawerProps {
   contactId: string | null;
@@ -411,38 +412,7 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                       <p className="text-sm text-muted-foreground mt-3">Loading network...</p>
                     </div>
                   ) : network ? (
-                    <Card>
-                      <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center gap-2">
-                          <Network className="w-5 h-5 text-primary" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Network Snapshot</p>
-                            <p className="text-lg font-semibold text-foreground">Connections overview</p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="flex items-center justify-between rounded-md border border-muted p-3 bg-white">
-                            <span className="text-muted-foreground">Nodes</span>
-                            <span className="font-semibold text-foreground">{network.nodes?.length ?? 0}</span>
-                          </div>
-                          <div className="flex items-center justify-between rounded-md border border-muted p-3 bg-white">
-                            <span className="text-muted-foreground">Connections</span>
-                            <span className="font-semibold text-foreground">{network.edges?.length ?? 0}</span>
-                          </div>
-                          <div className="flex items-center justify-between rounded-md border border-muted p-3 bg-white">
-                            <span className="text-muted-foreground">Influencers</span>
-                            <span className="font-semibold text-foreground">{network.top_influence?.length ?? 0}</span>
-                          </div>
-                          <div className="flex items-center justify-between rounded-md border border-muted p-3 bg-white">
-                            <span className="text-muted-foreground">Engagers</span>
-                            <span className="font-semibold text-foreground">
-                              {(network.top_engagers_inbound?.length ?? 0) + (network.top_engagers_outbound?.length ?? 0)}
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Detailed network visualization coming soon.</p>
-                      </CardContent>
-                    </Card>
+                    <ContactNetworkView network={network} contactName={contact?.full_name} />
                   ) : (
                     <Card>
                       <CardContent className="p-10 text-center">

@@ -129,13 +129,14 @@ export function TrendForecast({ trend }: TrendForecastProps) {
               legend: {
                 position: "top",
                 labels: {
-                  filter: (item) => item.text === "Predicted Activity" || item.text === "Range",
+                  filter: (item: { text: string; }) =>
+                    item.text === "Predicted Activity" || item.text === "Forecast Range",
                 },
               },
               tooltip: {
                 mode: "index",
                 intersect: false,
-              filter: (tooltipItem) => tooltipItem.datasetIndex === 2,
+              filter: (tooltipItem: { datasetIndex: number; }) => tooltipItem.datasetIndex === 2,
             },
             title: {
               display: true,
@@ -251,6 +252,9 @@ export function TrendForecast({ trend }: TrendForecastProps) {
         <Card className="border border-muted bg-slate-50">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-muted-foreground">Engagement Quality</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Quick read on whether this person&apos;s social activity momentum is rising, fading, or flat.
+            </p>
           </CardHeader>
           <CardContent className="flex items-center justify-between">
             <div>
@@ -278,6 +282,9 @@ export function TrendForecast({ trend }: TrendForecastProps) {
         <Card className="border border-muted bg-slate-50">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-muted-foreground">Engagement Outlook</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Shows how the forecasted daily activity stacks against today&apos;s baseline to spot lift vs. drop in engagement volume.
+            </p>
           </CardHeader>
           <CardContent className="flex items-center justify-between">
             <div>
@@ -296,10 +303,10 @@ export function TrendForecast({ trend }: TrendForecastProps) {
         </Card>
       </div>
 
-      <Card className="border border-muted">
+      <Card className="border border-muted bg-slate-50">
         <CardContent className="p-4">
           {hasForecastChart ? (
-            <div className="h-[340px]">
+            <div className="h-[420px]">
               <canvas ref={canvasRef} />
             </div>
           ) : (
