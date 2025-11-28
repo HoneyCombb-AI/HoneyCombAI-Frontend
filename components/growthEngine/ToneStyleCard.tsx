@@ -9,6 +9,12 @@ interface ToneStyleCardProps {
   toneStyle: ContactToneStyle;
 }
 
+const cleanText = (text: string) =>
+  text
+    .replace(/\s*\[.*?\]\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
 export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
   return (
     <Card className="border border-muted bg-slate-50 shadow-sm">
@@ -97,7 +103,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
               </p>
               <ul className="list-disc pl-4 space-y-1">
                 {toneStyle.trusted_information_types.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                  <li key={idx}>{cleanText(item)}</li>
                 ))}
               </ul>
             </div>
@@ -109,7 +115,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
               </p>
               <ul className="list-disc pl-4 space-y-1">
                 {toneStyle.language_patterns.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                  <li key={idx}>{cleanText(item)}</li>
                 ))}
               </ul>
             </div>
@@ -123,7 +129,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
               <p className="text-xs font-semibold text-muted-foreground">Short openers</p>
               <ul className="list-disc pl-4 space-y-1">
                 {toneStyle.short_openers.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                  <li key={idx}>{cleanText(item)}</li>
                 ))}
               </ul>
             </div>
@@ -133,7 +139,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
               <p className="text-xs font-semibold text-muted-foreground">Long openers</p>
               <ul className="list-disc pl-4 space-y-1">
                 {toneStyle.long_openers.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                  <li key={idx}>{cleanText(item)}</li>
                 ))}
               </ul>
             </div>
@@ -146,7 +152,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
             <p className="text-xs font-semibold text-muted-foreground">Revival messages</p>
             <ul className="list-disc pl-4 space-y-1">
               {toneStyle.revival_messages.map((item, idx) => (
-                <li key={idx}>{item}</li>
+                <li key={idx}>{cleanText(item)}</li>
               ))}
             </ul>
           </div>
@@ -162,7 +168,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
                 </p>
                 <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
                   {toneStyle.do_list.map((d, idx) => (
-                    <li key={idx}>{d}</li>
+                    <li key={idx}>{cleanText(d)}</li>
                   ))}
                 </ul>
               </div>
@@ -174,7 +180,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
                 </p>
                 <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
                   {toneStyle.dont_list.map((d, idx) => (
-                    <li key={idx}>{d}</li>
+                    <li key={idx}>{cleanText(d)}</li>
                   ))}
                 </ul>
               </div>
@@ -189,7 +195,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
               <p className="text-xs font-semibold text-muted-foreground">Sensitivities</p>
               <ul className="list-disc pl-4 space-y-1">
                 {toneStyle.sensitivities.map((s, idx) => (
-                  <li key={idx}>{s}</li>
+                  <li key={idx}>{cleanText(s)}</li>
                 ))}
               </ul>
             </div>
@@ -199,7 +205,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
               <p className="text-xs font-semibold text-muted-foreground">Behavioral triggers</p>
               <ul className="list-disc pl-4 space-y-1">
                 {toneStyle.behavioral_triggers.map((b, idx) => (
-                  <li key={idx}>{b}</li>
+                  <li key={idx}>{cleanText(b)}</li>
                 ))}
               </ul>
             </div>
@@ -213,7 +219,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
               <p className="text-xs font-semibold text-muted-foreground">Topics to avoid</p>
               <ul className="list-disc pl-4 space-y-1">
                 {toneStyle.topics_to_avoid.map((t, idx) => (
-                  <li key={idx}>{t}</li>
+                  <li key={idx}>{cleanText(t)}</li>
                 ))}
               </ul>
             </div>
@@ -223,7 +229,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
               <p className="text-xs font-semibold text-muted-foreground">Counterproductive tones</p>
               <ul className="list-disc pl-4 space-y-1">
                 {toneStyle.counterproductive_tones.map((t, idx) => (
-                  <li key={idx}>{t}</li>
+                  <li key={idx}>{cleanText(t)}</li>
                 ))}
               </ul>
             </div>
@@ -247,7 +253,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
                   <p className="text-xs font-semibold text-muted-foreground">Affinity</p>
                   <ul className="list-disc pl-4 space-y-1">
                     {toneStyle.affinity_nudges.map((n, idx) => (
-                      <li key={idx}>{n}</li>
+                      <li key={idx}>{cleanText(n)}</li>
                     ))}
                   </ul>
                 </div>
@@ -257,7 +263,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
                   <p className="text-xs font-semibold text-muted-foreground">Context</p>
                   <ul className="list-disc pl-4 space-y-1">
                     {toneStyle.context_nudges.map((n, idx) => (
-                      <li key={idx}>{n}</li>
+                      <li key={idx}>{cleanText(n)}</li>
                     ))}
                   </ul>
                 </div>
@@ -267,7 +273,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
                   <p className="text-xs font-semibold text-muted-foreground">Emotional</p>
                   <ul className="list-disc pl-4 space-y-1">
                     {toneStyle.emotional_nudges.map((n, idx) => (
-                      <li key={idx}>{n}</li>
+                      <li key={idx}>{cleanText(n)}</li>
                     ))}
                   </ul>
                 </div>
@@ -277,7 +283,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
                   <p className="text-xs font-semibold text-muted-foreground">Reciprocity</p>
                   <ul className="list-disc pl-4 space-y-1">
                     {toneStyle.reciprocity_nudges.map((n, idx) => (
-                      <li key={idx}>{n}</li>
+                      <li key={idx}>{cleanText(n)}</li>
                     ))}
                   </ul>
                 </div>
@@ -287,7 +293,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
                   <p className="text-xs font-semibold text-muted-foreground">Curiosity hooks</p>
                   <ul className="list-disc pl-4 space-y-1">
                     {toneStyle.curiosity_hooks.map((n, idx) => (
-                      <li key={idx}>{n}</li>
+                      <li key={idx}>{cleanText(n)}</li>
                     ))}
                   </ul>
                 </div>
@@ -297,7 +303,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
                   <p className="text-xs font-semibold text-muted-foreground">Authority cues</p>
                   <ul className="list-disc pl-4 space-y-1">
                     {toneStyle.authority_cues.map((n, idx) => (
-                      <li key={idx}>{n}</li>
+                      <li key={idx}>{cleanText(n)}</li>
                     ))}
                   </ul>
                 </div>
