@@ -16,12 +16,9 @@ const pool = new Pool({
  * @returns {Promise<import('pg').QueryResult>} The result of the query.
  */
 export async function sql<T extends QueryResultRow = QueryResultRow>(
-  query: string | QueryConfig<any[]>,
+  query: string | QueryConfig<unknown[]>,
   params: unknown[] = []
 ): Promise<QueryResult<T>> {
-  const start = Date.now();
-  
-  // Use the pool to get a client connection
   const client = await pool.connect();
   
   try {
