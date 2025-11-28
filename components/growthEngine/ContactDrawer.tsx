@@ -25,6 +25,7 @@ import type { ContactNetworkResponse, ContactNetwork } from "@/app/api/growthEng
 import { SignalCard } from "@/components/growthEngine/SignalCard";
 import { PersonaCard } from "@/components/growthEngine/PersonaCard";
 import { DISCProfile } from "@/components/growthEngine/DISCProfile";
+import { ToneStyleCard } from "@/components/growthEngine/ToneStyleCard";
 
 interface ContactDrawerProps {
   contactId: string | null;
@@ -245,8 +246,8 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                 <TabsList className="grid w-full grid-cols-6 max-w-4xl">
                   <TabsTrigger value="persona">Persona</TabsTrigger>
                   <TabsTrigger value="disc">Profile</TabsTrigger>
-                  <TabsTrigger value="signals">Signals</TabsTrigger>
                   <TabsTrigger value="tone">Tone</TabsTrigger>
+                  <TabsTrigger value="signals">Signals</TabsTrigger>
                   <TabsTrigger value="network">Network</TabsTrigger>
                   <TabsTrigger value="profile">Profile</TabsTrigger>
                 </TabsList>
@@ -386,26 +387,7 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                     </div>
                   ) : tone.length > 0 ? (
                     tone.map((style) => (
-                      <Card key={style.id}>
-                        <CardContent className="p-4 space-y-2">
-                          {style.ideal_tone && (
-                            <p className="text-sm"><span className="font-semibold">Ideal tone:</span> {style.ideal_tone}</p>
-                          )}
-                          {style.ideal_style && (
-                            <p className="text-sm"><span className="font-semibold">Ideal style:</span> {style.ideal_style}</p>
-                          )}
-                          {style.do_list && (
-                            <div className="text-xs text-muted-foreground">
-                              <span className="font-semibold">Do:</span> {style.do_list.join(", ")}
-                            </div>
-                          )}
-                          {style.dont_list && (
-                            <div className="text-xs text-muted-foreground">
-                              <span className="font-semibold">Don't:</span> {style.dont_list.join(", ")}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                      <ToneStyleCard key={style.id} toneStyle={style} />
                     ))
                   ) : (
                     <Card>

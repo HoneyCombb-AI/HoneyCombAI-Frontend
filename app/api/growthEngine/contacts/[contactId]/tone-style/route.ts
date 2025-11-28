@@ -46,9 +46,9 @@ type Params = { contactId?: string };
 
 export async function GET(
   _req: Request,
-  context: { params: Params }
+  context: { params: Promise<Params> }
 ): Promise<NextResponse<ContactToneStyleResponse | { error: string }>> {
-  const contactId = context.params.contactId;
+  const { contactId } = await context.params;
 
   if (!contactId) {
     return NextResponse.json({ error: 'contactId is required' }, { status: 400 });
