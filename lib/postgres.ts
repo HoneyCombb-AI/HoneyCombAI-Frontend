@@ -2,7 +2,7 @@ import { Pool, QueryConfig, QueryResult, QueryResultRow } from 'pg';
 
 // Only create the pool once, using the secure environment variable
 const pool = new Pool({
-  connectionString: process.env.NEXT_PUBLIC_SUPEBASE_TRAN_POOLER_URL,
+  connectionString: process.env.SUPEBASE_TRAN_POOLER_URL,
   // Add SSL settings for production environments
   ssl: {
     rejectUnauthorized: false, // Required for Supabase SSL/Vercel
