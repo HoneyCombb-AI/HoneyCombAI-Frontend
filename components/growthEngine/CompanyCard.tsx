@@ -7,7 +7,6 @@ import { Building2, Users, Activity, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface CompanyCardProps {
-  companyId: string
   name: string
   domain?: string
   stage?: string
@@ -18,7 +17,6 @@ interface CompanyCardProps {
 }
 
 export function CompanyCard({
-  companyId,
   name,
   domain,
   stage,

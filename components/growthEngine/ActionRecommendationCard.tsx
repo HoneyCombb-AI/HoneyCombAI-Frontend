@@ -119,7 +119,6 @@ export function ActionRecommendationCard(props: ActionRecommendationCardProps) {
     timeline,
     analysis_date,
     expected_outcome,
-    personalization_used_json,
     draft_connection_note,
     draft_tone_notes,
     draft_follow_up_if_accepted,

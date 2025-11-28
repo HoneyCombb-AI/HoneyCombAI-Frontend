@@ -197,13 +197,11 @@ export default function ABMDashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {companies.map((company) => {
-              const dealHealthNumber = Number(company.deal_health);
               const companyName =
                 company.company_name ?? company.domain ?? "Unnamed Company";
               return (
                 <CompanyCard
                   key={company.company_id}
-                  companyId={company.company_id}
                   name={companyName}
                   domain={company.domain ?? undefined}
                   contactCount={company.contact_count ?? 0}

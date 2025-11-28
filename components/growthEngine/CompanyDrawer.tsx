@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SignalCard } from "@/components/growthEngine/SignalCard"
 import { ActionRecommendationCard } from "@/components/growthEngine/ActionRecommendationCard"
-import { Building2, Users, Activity, Target, ExternalLink, X, Network } from "lucide-react"
+import { Building2, Users, Activity, Target, ExternalLink, X } from "lucide-react"
 import { Loading } from "@/components/loading"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { GrowthEngineCompany } from "@/app/api/growthEngine/companies/route"
@@ -34,7 +34,6 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
   const [actions, setActions] = useState<CompanyAction[]>([])
   const [hierarchy, setHierarchy] = useState<CompanyHierarchySegment[] | null>(null)
   const [memberLookup, setMemberLookup] = useState<Record<string, ContactSummary>>({})
-  const [loadingCompany, setLoadingCompany] = useState(false)
   const [contactsLoading, setContactsLoading] = useState(false)
   const [contactsLoaded, setContactsLoaded] = useState(false)
   const [signalsLoading, setSignalsLoading] = useState(false)
@@ -52,7 +51,6 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
 
       try {
         setCompany(initialCompany ?? null)
-        setLoadingCompany(true)
         setError(null)
         setSignals([])
         setActions([])
@@ -77,8 +75,6 @@ export function CompanyDrawer({ companyId, open, onOpenChange, onContactClick, i
         console.error('Error fetching company:', err)
         setError('Failed to load company data')
         setContactsLoading(false)
-      } finally {
-        setLoadingCompany(false)
       }
     }
 
