@@ -25,6 +25,7 @@ import { SignalCard } from "@/components/growthEngine/SignalCard";
 import { PersonaCard } from "@/components/growthEngine/PersonaCard";
 import { DISCProfile } from "@/components/growthEngine/DISCProfile";
 import { ToneStyleCard } from "@/components/growthEngine/ToneStyleCard";
+import { TrendForecast } from "@/components/growthEngine/TrendForecast";
 
 interface ContactDrawerProps {
   contactId: string | null;
@@ -459,11 +460,7 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                       <p className="text-sm text-muted-foreground mt-3">Loading trend forecast...</p>
                     </div>
                   ) : trend ? (
-                    <Card>
-                      <CardContent className="p-10 text-center">
-                        <p className="text-muted-foreground">Trend data coming soon.</p>
-                      </CardContent>
-                    </Card>
+                    <TrendForecast trend={trend} />
                   ) : (
                     <Card>
                       <CardContent className="p-10 text-center">
