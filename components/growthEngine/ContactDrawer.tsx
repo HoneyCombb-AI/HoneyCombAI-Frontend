@@ -243,13 +243,13 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
           ) : (
             <div className="space-y-6">
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="w-full">
-                <TabsList className="grid w-full grid-cols-6 max-w-4xl">
+                <TabsList className="grid w-full grid-cols-7 max-w-5xl">
                   <TabsTrigger value="persona">Persona</TabsTrigger>
-                  <TabsTrigger value="disc">Profile</TabsTrigger>
+                  <TabsTrigger value="disc">DISC</TabsTrigger>
                   <TabsTrigger value="tone">Tone</TabsTrigger>
                   <TabsTrigger value="signals">Signals</TabsTrigger>
                   <TabsTrigger value="network">Network</TabsTrigger>
-                  <TabsTrigger value="profile">Profile</TabsTrigger>
+                  <TabsTrigger value="trend">Trend</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="signals" className="space-y-4 pt-4">
@@ -400,28 +400,31 @@ export function ContactDrawer({ contactId, open, onOpenChange }: ContactDrawerPr
                 </TabsContent>
 
                 <TabsContent value="network" className="space-y-4 pt-4">
-                  {networkLoading ? (
+                  <Card>
+                    <CardContent className="p-10 text-center">
+                      <Network className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground">No network data available. Coming soon.</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="trend" className="space-y-4 pt-4">
+                  {trendLoading ? (
                     <div className="flex flex-col items-center justify-center py-12">
                       <Loading />
-                      <p className="text-sm text-muted-foreground mt-3">Loading network...</p>
+                      <p className="text-sm text-muted-foreground mt-3">Loading trend forecast...</p>
                     </div>
-                  ) : network ? (
+                  ) : trend ? (
                     <Card>
-                      <CardContent className="p-4 space-y-2">
-                        <p className="text-sm font-semibold flex items-center gap-2">
-                          <Network className="w-4 h-4" />
-                          Network graph data loaded
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Nodes: {Array.isArray(network.nodes) ? network.nodes.length : 0} · Edges: {Array.isArray(network.edges) ? network.edges.length : 0}
-                        </p>
+                      <CardContent className="p-10 text-center">
+                        <p className="text-muted-foreground">Trend data coming soon.</p>
                       </CardContent>
                     </Card>
                   ) : (
                     <Card>
                       <CardContent className="p-10 text-center">
-                        <Network className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-                        <p className="text-muted-foreground">No network data.</p>
+                        <BookOpen className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                        <p className="text-muted-foreground">No trend data.</p>
                       </CardContent>
                     </Card>
                   )}
