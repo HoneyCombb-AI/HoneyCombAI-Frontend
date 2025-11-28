@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { AlertCircle, TrendingUp, Calendar, Lightbulb } from "lucide-react"
+import { TrendingUp, Calendar, Lightbulb } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { CompanySignal } from "@/app/api/growthEngine/companies/[companyId]/signals/route"
 import type { ContactSignal } from "@/app/api/growthEngine/contacts/[contactId]/signals/route"
@@ -55,7 +55,7 @@ export function SignalCard({
 
   const confidencePercent = Number.isFinite(confidenceScore) ? confidenceScore : 0
 
-  const extractEvidenceLinks = (e: EvidenceShape) => {
+  const extractEvidenceLinks = (e: EvidenceShape): string[] => {
     const links: string[] = []
 
     const scanObject = (obj: Record<string, unknown>) => {
@@ -91,7 +91,7 @@ export function SignalCard({
     return Array.from(new Set(links.filter(Boolean)))
   }
 
-  const evidenceLinks = extractEvidenceLinks(evidence as Record<string, any>)
+  const evidenceLinks = extractEvidenceLinks(evidence)
   const displaySignalTypeRaw = signalType ?? "Signal"
   const displaySignalType = displaySignalTypeRaw
     .toString()

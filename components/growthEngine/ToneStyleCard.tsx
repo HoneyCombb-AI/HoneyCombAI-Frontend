@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Sparkles, Wand2, CheckCircle2, XCircle, Lightbulb } from "lucide-react";
 import type { ContactToneStyle } from "@/app/api/growthEngine/contacts/[contactId]/tone-style/route";
 
@@ -176,7 +175,7 @@ export function ToneStyleCard({ toneStyle }: ToneStyleCardProps) {
             {toneStyle.dont_list && toneStyle.dont_list.length > 0 && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-100 space-y-1">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1">
-                  <XCircle className="w-4 h-4 text-red-600" /> Don't
+                  <XCircle className="w-4 h-4 text-red-600" /> Don&rsquo;t
                 </p>
                 <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
                   {toneStyle.dont_list.map((d, idx) => (
