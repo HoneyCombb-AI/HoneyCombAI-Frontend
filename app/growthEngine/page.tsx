@@ -12,6 +12,8 @@ import {
   Users,
   TrendingUp,
   Building2,
+  ClipboardCheck,
+  RefreshCcw,
 } from "lucide-react";
 import { Loading } from "@/components/loading";
 import { GrowthEngineCompany } from "../api/growthEngine/companies/route";
@@ -118,7 +120,7 @@ export default function ABMDashboard() {
       {kpis && (
         <section>
           <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <KPICard
               title="Signals Detected"
               value={kpis.signalsDetected}
@@ -155,11 +157,22 @@ export default function ABMDashboard() {
               iconBgColor="bg-emerald-500/10"
             />
             <KPICard
-              title="Avg Deal Health"
-              value={kpis.avgDealHealth}
-              description="Average health score across accounts"
-              icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
-              iconBgColor="bg-emerald-500/10"
+              title="Actions Executed"
+              value={0}
+              description="Completed by sales team"
+              trend="neutral"
+              trendValue="0%"
+              icon={<ClipboardCheck className="w-5 h-5 text-teal-600" />}
+              iconBgColor="bg-teal-500/10"
+            />
+            <KPICard
+              title="Deals Reactivated"
+              value={0}
+              description="Stalled accounts revived"
+              trend="neutral"
+              trendValue="0%"
+              icon={<RefreshCcw className="w-5 h-5 text-amber-600" />}
+              iconBgColor="bg-amber-500/10"
             />
           </div>
         </section>

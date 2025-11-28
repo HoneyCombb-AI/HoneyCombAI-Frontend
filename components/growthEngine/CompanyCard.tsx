@@ -41,7 +41,7 @@ export function CompanyCard({
 
   return (
     <Card 
-      className="hover:shadow-xl transition-all duration-300 cursor-pointer border border-muted bg-white hover:scale-[1.02]"
+      className="hover:shadow-xl transition-all duration-300 cursor-pointer border border-muted bg-slate-50 hover:scale-[1.02]"
       onClick={onClick}
     >
       <CardContent className="p-5">

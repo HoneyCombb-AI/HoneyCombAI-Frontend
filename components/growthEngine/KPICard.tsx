@@ -24,7 +24,7 @@ export function KPICard({
   iconBgColor = "bg-blue-500/10"
 }: KPICardProps) {
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300 border border-muted bg-white">
+    <Card className="hover:shadow-lg transition-shadow duration-300 border border-muted bg-slate-50">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
