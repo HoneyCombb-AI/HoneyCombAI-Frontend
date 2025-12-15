@@ -230,7 +230,7 @@ const IntegrationPage: React.FC = () => {
     }
     return (
       <DialogTrigger asChild>
-        <Button className="w-full bg-[#0077b5] hover:bg-[#005885] text-white">
+        <Button className="w-full bg-[#0077b5] hover:bg-[#005885] text-white transition-all duration-200 cursor-pointer">
           Connect LinkedIn
         </Button>
       </DialogTrigger>
@@ -280,7 +280,7 @@ const IntegrationPage: React.FC = () => {
                 ) : (
                   <Button
                     variant="outline"
-                    className="w-full bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
+                    className="w-full bg-white hover:bg-gray-100 text-gray-700 border-gray-200 transition-all duration-200 cursor-pointer"
                     onClick={() => {
                       window.location.href = "/api/gmail/connect";
                     }}
