@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAdminClient } from "@supabase/supabase-js";
+
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -31,8 +31,6 @@ export async function GET(req: Request) {
         }
 
         const tokens = await tokenRes.json();
-        console.log("--- GOOGLE OAUTH DEBUG START ---");
-        console.log("Full Token Response:", JSON.stringify(tokens, null, 2));
 
         // 2. Get Gmail profile
         const profileRes = await fetch(
@@ -50,8 +48,6 @@ export async function GET(req: Request) {
         }
 
         const profile = await profileRes.json();
-        console.log("Full Profile Response:", JSON.stringify(profile, null, 2));
-        console.log("--- GOOGLE OAUTH DEBUG END ---");
 
         // 3. Get Supabase user (authenticate the session)
         const supabase = await createClient();
@@ -63,27 +59,33 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // 4. Store tokens using Service Role (Admin) to bypass RLS and ensure write
-        // Note: We use the admin client just for the database write.
-        const adminSupabase = createAdminClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY! // Used strictly server-side here
-        );
-
-        const { error: insertError } = await adminSupabase.from("gmail_accounts").insert({
+        // 4. Store tokens using standard authenticated client
+        // The table RLS policy must allow 'insert' for authenticated users with matching user_id
+        const upsertData = {
             user_id: user.id,
             email: profile.emailAddress,
             access_token: tokens.access_token,
             refresh_token: tokens.refresh_token,
             token_expiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-        });
+            scope: tokens.scope,
+            token_type: tokens.token_type,
+            messages_total: profile.messagesTotal,
+            threads_total: profile.threadsTotal,
+            history_id: profile.historyId
+        };
+
+
+        const { error: insertError } = await supabase.from("gmail_accounts").upsert(
+            upsertData,
+            { onConflict: 'user_id' }
+        );
 
         if (insertError) {
             console.error("Database insert error:", insertError);
-            return NextResponse.json({ error: "Failed to save account" }, { status: 500 });
+            return NextResponse.json({ error: "Failed to save account: " + insertError.message }, { status: 500 });
         }
 
-        return NextResponse.redirect(new URL("/profile", req.url)); // Redirect back to profile
+        return NextResponse.redirect(new URL("/integration", req.url)); // Redirect back to integration page
     } catch (error) {
         console.error("Callback error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

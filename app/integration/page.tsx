@@ -21,9 +21,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Zod Schema for LinkedIn Credentials
 const linkedInSchema = z.object({
@@ -72,27 +78,48 @@ const IntegrationPage: React.FC = () => {
   const [linkedInPassword, setLinkedInPassword] = React.useState("");
   const [linkedInLoading, setLinkedInLoading] = React.useState(false);
 
-  React.useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const res = await fetch("/api/gmail/status");
-        if (res.ok) {
-          const data = await res.json();
-          setIsConnected(data.isConnected);
-          setConnectedEmail(data.email);
-        }
-      } catch (error) {
-        console.error("Failed to check status", error);
-      } finally {
-        setIsLoading(false);
+  // LinkedIn Status State
+  const [liStatus, setLiStatus] = React.useState<"pending" | "connected" | "failed" | null>(null);
+  const [liConnectedEmail, setLiConnectedEmail] = React.useState<string | null>(null);
+  const [liError, setLiError] = React.useState<string | null>(null);
+
+  const checkStatuses = async () => {
+    try {
+      // Gmail Check
+      const gmailRes = await fetch("/api/gmail/status");
+      if (gmailRes.ok) {
+        const data = await gmailRes.json();
+        setIsConnected(data.isConnected);
+        setConnectedEmail(data.email);
       }
-    };
-    checkStatus();
+
+      // LinkedIn Check
+      const liRes = await fetch("/api/linkedin/status");
+      if (liRes.ok) {
+        const data = await liRes.json();
+        setLiStatus(data.status);
+        setLiConnectedEmail(data.email);
+        setLiError(data.error);
+      }
+    } catch (error) {
+      console.error("Failed to check status", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    checkStatuses();
   }, []);
 
   const handleLinkedInSave = async () => {
-    if (!linkedInEmail || !linkedInPassword) {
-      toast.error("Please fill in all fields");
+    // Validate with Zod
+    const result = linkedInSchema.safeParse({ email: linkedInEmail, password: linkedInPassword });
+
+    if (!result.success) {
+      // Show the first error message
+      const firstError = result.error.errors[0]?.message || "Invalid input";
+      toast.error(firstError);
       return;
     }
 
@@ -109,6 +136,8 @@ const IntegrationPage: React.FC = () => {
         setLinkedInOpen(false);
         setLinkedInEmail("");
         setLinkedInPassword("");
+        // Refresh status
+        checkStatuses();
       } else {
         toast.error("Failed to save credentials");
       }
@@ -117,6 +146,83 @@ const IntegrationPage: React.FC = () => {
     } finally {
       setLinkedInLoading(false);
     }
+  };
+
+  const getLinkedInButton = () => {
+    if (isLoading) {
+      return (
+        <Button
+          variant="outline"
+          className="w-full bg-white text-gray-500 border-gray-200 cursor-default"
+          disabled
+        >
+          <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-500" />
+          Checking...
+        </Button>
+      );
+    }
+
+    if (liStatus === "connected") {
+      return (
+        <Button
+          className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100"
+        >
+          <Check className="mr-2 h-4 w-4" />
+          Connected
+        </Button>
+      );
+    }
+    if (liStatus === "pending") {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full bg-white text-gray-500 border-gray-200 cursor-default"
+                >
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-500" />
+                  Connecting...
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs text-center">
+                Connection might take a while. Please approve any login requests on your LinkedIn mobile app if prompted.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    if (liStatus === "failed") {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full">
+                <DialogTrigger asChild>
+                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                    Connection Failed - Retry
+                  </Button>
+                </DialogTrigger>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Error: {liError || "Unknown error occurred"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    return (
+      <DialogTrigger asChild>
+        <Button className="w-full bg-[#0077b5] hover:bg-[#005885] text-white">
+          Connect LinkedIn
+        </Button>
+      </DialogTrigger>
+    );
   };
 
   return (
@@ -135,7 +241,7 @@ const IntegrationPage: React.FC = () => {
       <div className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Gmail Card */}
-          <Card className="hover:shadow-lg transition-shadow duration-200">
+          <Card className="hover:shadow-lg transition-shadow duration-200 flex flex-col h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GoogleLogo />
@@ -145,8 +251,8 @@ const IntegrationPage: React.FC = () => {
                 Sync your emails seamlessly.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4">
+            <CardContent className="flex-1 flex flex-col">
+              <div className="flex flex-col flex-1 justify-between gap-4">
                 <p className="text-sm text-gray-500">
                   {isConnected
                     ? `Connected as: ${connectedEmail}`
@@ -154,20 +260,31 @@ const IntegrationPage: React.FC = () => {
                 </p>
                 {isConnected ? (
                   <Button
-                    className="w-full bg-green-600 hover:bg-green-700 text-white cursor-default"
-                    disabled
+                    className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100"
                   >
-                    Context Connected
+                    <Check className="mr-2 h-4 w-4" />
+                    Connected
                   </Button>
                 ) : (
                   <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    variant="outline"
+                    className="w-full bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
                     onClick={() => {
                       window.location.href = "/api/gmail/connect";
                     }}
                     disabled={isLoading}
                   >
-                    {isLoading ? "Checking..." : "Connect Gmail"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-500" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <GoogleLogo />
+                        <span className="ml-2">Connect Gmail</span>
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
@@ -175,7 +292,7 @@ const IntegrationPage: React.FC = () => {
           </Card>
 
           {/* LinkedIn Card */}
-          <Card className="hover:shadow-lg transition-shadow duration-200">
+          <Card className="hover:shadow-lg transition-shadow duration-200 flex flex-col h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <LinkedInLogo />
@@ -185,17 +302,15 @@ const IntegrationPage: React.FC = () => {
                 Automate your professional networking.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-4">
+            <CardContent className="flex-1 flex flex-col">
+              <div className="flex flex-col flex-1 justify-between gap-4">
                 <p className="text-sm text-gray-500">
-                  Connect your LinkedIn account to enable automated outreach and networking features.
+                  {liStatus && liConnectedEmail
+                    ? `Account: ${liConnectedEmail}`
+                    : "Connect your LinkedIn account to enable automated outreach and networking features."}
                 </p>
                 <Dialog open={linkedInOpen} onOpenChange={setLinkedInOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full bg-[#0077b5] hover:bg-[#005885] text-white">
-                      Connect LinkedIn
-                    </Button>
-                  </DialogTrigger>
+                  {getLinkedInButton()}
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle>Connect LinkedIn Account</DialogTitle>
