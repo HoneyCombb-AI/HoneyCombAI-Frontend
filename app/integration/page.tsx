@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Loader2, Check } from "lucide-react";
+import { AlertTriangle, Loader2, Check, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
@@ -82,6 +82,7 @@ const IntegrationPage: React.FC = () => {
   const [liStatus, setLiStatus] = React.useState<"pending" | "connected" | "failed" | null>(null);
   const [liConnectedEmail, setLiConnectedEmail] = React.useState<string | null>(null);
   const [liError, setLiError] = React.useState<string | null>(null);
+  const [liFailedHover, setLiFailedHover] = React.useState(false);
 
   const checkStatuses = async () => {
     try {
@@ -203,8 +204,19 @@ const IntegrationPage: React.FC = () => {
             <TooltipTrigger asChild>
               <div className="w-full">
                 <DialogTrigger asChild>
-                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
-                    Connection Failed - Retry
+                  <Button
+                    className="w-full bg-red-600 hover:bg-red-700 text-white transition-all duration-200"
+                    onMouseEnter={() => setLiFailedHover(true)}
+                    onMouseLeave={() => setLiFailedHover(false)}
+                  >
+                    {liFailedHover ? (
+                      <>
+                        <RotateCw className="mr-2 h-4 w-4" />
+                        Retry
+                      </>
+                    ) : (
+                      "Connection Failed"
+                    )}
                   </Button>
                 </DialogTrigger>
               </div>
@@ -311,7 +323,7 @@ const IntegrationPage: React.FC = () => {
                 </p>
                 <Dialog open={linkedInOpen} onOpenChange={setLinkedInOpen}>
                   {getLinkedInButton()}
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="sm:max-w-[550px]">
                     <DialogHeader>
                       <DialogTitle>Connect LinkedIn Account</DialogTitle>
                       <DialogDescription>
@@ -322,8 +334,8 @@ const IntegrationPage: React.FC = () => {
                     <Alert variant="destructive" className="bg-red-50 text-red-900 border-red-200">
                       <AlertTriangle className="h-4 w-4 text-red-600" />
                       <AlertTitle className="text-red-800 font-semibold mb-1">Vital Warning</AlertTitle>
-                      <AlertDescription className="text-red-700 text-xs text-justify">
-                        You MUST have completed security verification (ID/Persona) on LinkedIn before connecting. Failure to do so may result in LinkedIn restricting access to your account due to automated logins.
+                      <AlertDescription className="text-red-700 text-sm font-medium text-justify">
+                        You MUST have completed security verification (ID/Persona) on LinkedIn before connecting. Failure to do so may result in LinkedIn restricting access due to automated logins.
                       </AlertDescription>
                     </Alert>
 
