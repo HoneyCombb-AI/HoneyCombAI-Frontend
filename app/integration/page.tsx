@@ -1,5 +1,6 @@
 'use client'
-import React from 'react';
+import React, { Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,7 +68,9 @@ const LinkedInLogo = () => (
   </svg>
 );
 
-const IntegrationPage: React.FC = () => {
+const IntegrationContent: React.FC = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [isConnected, setIsConnected] = React.useState(false);
   const [connectedEmail, setConnectedEmail] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -112,6 +115,8 @@ const IntegrationPage: React.FC = () => {
   React.useEffect(() => {
     checkStatuses();
   }, []);
+
+
 
   const handleLinkedInSave = async () => {
     // Validate with Zod
@@ -374,6 +379,15 @@ const IntegrationPage: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Wrap in Suspense because useSearchParams causes hydration errors if not wrapped
+const IntegrationPage = () => {
+  return (
+    <Suspense fallback={<div className="p-8">Loading...</div>}>
+      <IntegrationContent />
+    </Suspense>
   );
 };
 

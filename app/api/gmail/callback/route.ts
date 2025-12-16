@@ -5,9 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
+    const error = searchParams.get("error");
 
-    if (!code) {
-        return NextResponse.json({ error: "No code provided" }, { status: 400 });
+    if (error || !code) {
+        return NextResponse.redirect(new URL("/integration", req.url));
     }
 
     try {
