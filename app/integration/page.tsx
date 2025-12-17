@@ -1,6 +1,6 @@
-'use client'
-import React, { Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+"use client";
+import React, { Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Loader2, Check, RotateCw } from "lucide-react";
+import {
+  AlertTriangle,
+  Loader2,
+  Check,
+  RotateCw,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
@@ -40,7 +47,12 @@ const linkedInSchema = z.object({
 
 // Simple Google Logo SVG component
 const GoogleLogo = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    height="24"
+    viewBox="0 0 24 24"
+    width="24"
+  >
     <path
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
       fill="#4285F4"
@@ -63,7 +75,13 @@ const GoogleLogo = () => (
 
 // Simple LinkedIn Logo SVG component
 const LinkedInLogo = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#0077b5">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="#0077b5"
+  >
     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
   </svg>
 );
@@ -72,7 +90,9 @@ const IntegrationContent: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isConnected, setIsConnected] = React.useState(false);
-  const [connectedEmail, setConnectedEmail] = React.useState<string | null>(null);
+  const [connectedEmail, setConnectedEmail] = React.useState<string | null>(
+    null
+  );
   const [isLoading, setIsLoading] = React.useState(true);
 
   // LinkedIn State
@@ -80,10 +100,18 @@ const IntegrationContent: React.FC = () => {
   const [linkedInEmail, setLinkedInEmail] = React.useState("");
   const [linkedInPassword, setLinkedInPassword] = React.useState("");
   const [linkedInLoading, setLinkedInLoading] = React.useState(false);
+  // Controls whether the LinkedIn password field is masked ("password") or visible ("text").
+  // UX + safety: defaults to masked and resets whenever the dialog closes or save completes.
+  const [isLinkedInPasswordVisible, setIsLinkedInPasswordVisible] =
+    React.useState(false);
 
   // LinkedIn Status State
-  const [liStatus, setLiStatus] = React.useState<"pending" | "connected" | "failed" | null>(null);
-  const [liConnectedEmail, setLiConnectedEmail] = React.useState<string | null>(null);
+  const [liStatus, setLiStatus] = React.useState<
+    "pending" | "connected" | "failed" | null
+  >(null);
+  const [liConnectedEmail, setLiConnectedEmail] = React.useState<string | null>(
+    null
+  );
   const [liError, setLiError] = React.useState<string | null>(null);
   const [liFailedHover, setLiFailedHover] = React.useState(false);
 
@@ -116,11 +144,12 @@ const IntegrationContent: React.FC = () => {
     checkStatuses();
   }, []);
 
-
-
   const handleLinkedInSave = async () => {
     // Validate with Zod
-    const result = linkedInSchema.safeParse({ email: linkedInEmail, password: linkedInPassword });
+    const result = linkedInSchema.safeParse({
+      email: linkedInEmail,
+      password: linkedInPassword,
+    });
 
     if (!result.success) {
       // Show the first error message
@@ -134,12 +163,16 @@ const IntegrationContent: React.FC = () => {
       const res = await fetch("/api/linkedin/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: linkedInEmail, password: linkedInPassword }),
+        body: JSON.stringify({
+          email: linkedInEmail,
+          password: linkedInPassword,
+        }),
       });
 
       if (res.ok) {
         toast.success("LinkedIn credentials saved successfully");
         setLinkedInOpen(false);
+        setIsLinkedInPasswordVisible(false);
         setLinkedInEmail("");
         setLinkedInPassword("");
         // Refresh status
@@ -170,9 +203,7 @@ const IntegrationContent: React.FC = () => {
 
     if (liStatus === "connected") {
       return (
-        <Button
-          className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100"
-        >
+        <Button className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
           <Check className="mr-2 h-4 w-4" />
           Connected
         </Button>
@@ -195,7 +226,8 @@ const IntegrationContent: React.FC = () => {
             </TooltipTrigger>
             <TooltipContent>
               <p className="max-w-xs text-center">
-                Connection might take a while. Please approve any login requests on your LinkedIn mobile app if prompted.
+                Connection might take a while. Please approve any login requests
+                on your LinkedIn mobile app if prompted.
               </p>
             </TooltipContent>
           </Tooltip>
@@ -264,9 +296,7 @@ const IntegrationContent: React.FC = () => {
                 <GoogleLogo />
                 Gmail
               </CardTitle>
-              <CardDescription>
-                Sync your emails seamlessly.
-              </CardDescription>
+              <CardDescription>Sync your emails seamlessly.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col">
               <div className="flex flex-col flex-1 justify-between gap-4">
@@ -276,9 +306,7 @@ const IntegrationContent: React.FC = () => {
                     : "Connect your Google account to enable email capabilities."}
                 </p>
                 {isConnected ? (
-                  <Button
-                    className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100"
-                  >
+                  <Button className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
                     <Check className="mr-2 h-4 w-4" />
                     Connected
                   </Button>
@@ -326,7 +354,14 @@ const IntegrationContent: React.FC = () => {
                     ? `Account: ${liConnectedEmail}`
                     : "Connect your LinkedIn account to enable automated outreach and networking features."}
                 </p>
-                <Dialog open={linkedInOpen} onOpenChange={setLinkedInOpen}>
+                <Dialog
+                  open={linkedInOpen}
+                  onOpenChange={(open) => {
+                    setLinkedInOpen(open);
+                    // Reset visibility whenever the dialog closes so the next open starts masked.
+                    if (!open) setIsLinkedInPasswordVisible(false);
+                  }}
+                >
                   {getLinkedInButton()}
                   <DialogContent className="sm:max-w-[550px]">
                     <DialogHeader>
@@ -336,11 +371,19 @@ const IntegrationContent: React.FC = () => {
                       </DialogDescription>
                     </DialogHeader>
 
-                    <Alert variant="destructive" className="bg-red-50 text-red-900 border-red-200">
+                    <Alert
+                      variant="destructive"
+                      className="bg-red-50 text-red-900 border-red-200"
+                    >
                       <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <AlertTitle className="text-red-800 font-semibold mb-1">Vital Warning</AlertTitle>
+                      <AlertTitle className="text-red-800 font-semibold mb-1">
+                        Vital Warning
+                      </AlertTitle>
                       <AlertDescription className="text-red-700 text-sm font-medium text-justify">
-                        You MUST have completed security verification (ID/Persona) on LinkedIn before connecting. Failure to do so may result in LinkedIn restricting access due to automated logins.
+                        You MUST have completed security verification
+                        (ID/Persona) on LinkedIn before connecting. Failure to
+                        do so may result in LinkedIn restricting access due to
+                        automated logins.
                       </AlertDescription>
                     </Alert>
 
@@ -356,17 +399,51 @@ const IntegrationContent: React.FC = () => {
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="li-password">Password</Label>
-                        <Input
-                          id="li-password"
-                          type="password"
-                          placeholder="********"
-                          value={linkedInPassword}
-                          onChange={(e) => setLinkedInPassword(e.target.value)}
-                        />
+                        {/* Password field with a standard "show/hide" toggle to reduce typing errors. */}
+                        <div className="relative">
+                          <Input
+                            id="li-password"
+                            type={
+                              isLinkedInPasswordVisible ? "text" : "password"
+                            }
+                            placeholder="********"
+                            value={linkedInPassword}
+                            onChange={(e) =>
+                              setLinkedInPassword(e.target.value)
+                            }
+                            className="pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                            aria-label={
+                              isLinkedInPasswordVisible
+                                ? "Hide password"
+                                : "Show password"
+                            }
+                            aria-pressed={isLinkedInPasswordVisible}
+                            onClick={() =>
+                              setIsLinkedInPasswordVisible(
+                                (current) => !current
+                              )
+                            }
+                          >
+                            {isLinkedInPasswordVisible ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button onClick={handleLinkedInSave} disabled={linkedInLoading}>
+                      <Button
+                        onClick={handleLinkedInSave}
+                        disabled={linkedInLoading}
+                      >
                         {linkedInLoading ? "Saving..." : "Save Integration"}
                       </Button>
                     </DialogFooter>
@@ -375,7 +452,6 @@ const IntegrationContent: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-
         </div>
       </div>
     </div>
