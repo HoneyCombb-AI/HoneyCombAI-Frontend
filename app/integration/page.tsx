@@ -86,6 +86,34 @@ const LinkedInLogo = () => (
   </svg>
 );
 
+// Simple Outlook Logo SVG component
+const OutlookLogo = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+  >
+    <path
+      fill="#0078D4"
+      d="M1 18.2l7.1 5.2L14.6 18H23V6h-8.4L8.1.6 1 5.8v12.4z"
+    />
+    <path
+      fill="#26A1EB"
+      d="M23 18V6h-9l-2.4 2.8L9 6H1v12h8l2.5-3 2.5 3h9z"
+    />
+    <path
+      fill="#E6F3FB"
+      d="M2.5 16.5l5.5-3.5 1-2.5-2-4-5.5 3v7z"
+    />
+    <path
+      fill="#4BC3F3"
+      d="M2.5 16.5V9.5L8 6l6 3.5v7l-5.5 4-6-4z"
+    />
+    <path fill="white" d="M4.6 13.9l.7-4.5 3.5 1.3L4.6 13.9z" />
+  </svg>
+);
+
 const IntegrationContent: React.FC = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -93,6 +121,12 @@ const IntegrationContent: React.FC = () => {
   const [connectedEmail, setConnectedEmail] = React.useState<string | null>(
     null
   );
+  // Outlook State
+  const [isOutlookConnected, setIsOutlookConnected] = React.useState(false);
+  const [outlookConnectedEmail, setOutlookConnectedEmail] = React.useState<string | null>(
+    null
+  );
+
   const [isLoading, setIsLoading] = React.useState(true);
 
   // LinkedIn State
@@ -131,7 +165,16 @@ const IntegrationContent: React.FC = () => {
         const data = await liRes.json();
         setLiStatus(data.status);
         setLiConnectedEmail(data.email);
+        setLiConnectedEmail(data.email);
         setLiError(data.error);
+      }
+
+      // Outlook Check
+      const outlookRes = await fetch("/api/outlook/status");
+      if (outlookRes.ok) {
+        const data = await outlookRes.json();
+        setIsOutlookConnected(data.isConnected);
+        setOutlookConnectedEmail(data.email);
       }
     } catch (error) {
       console.error("Failed to check status", error);
@@ -334,6 +377,56 @@ const IntegrationContent: React.FC = () => {
                 )}
               </div>
             </CardContent>
+
+          </Card>
+
+          {/* Outlook Card */}
+          <Card className="hover:shadow-lg transition-shadow duration-200 flex flex-col h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <OutlookLogo />
+                Outlook
+              </CardTitle>
+              <CardDescription>
+                Sync your Microsoft Outlook emails.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              <div className="flex flex-col flex-1 justify-between gap-4">
+                <p className="text-sm text-gray-500">
+                  {isOutlookConnected
+                    ? `Connected as: ${outlookConnectedEmail}`
+                    : "Connect your Outlook account to enable email capabilities."}
+                </p>
+                {isOutlookConnected ? (
+                  <Button className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
+                    <Check className="mr-2 h-4 w-4" />
+                    Connected
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full bg-white hover:bg-gray-100 text-[#0078D4] border-gray-200 transition-all duration-200 cursor-pointer"
+                    onClick={() => {
+                      window.location.href = "/api/outlook/connect";
+                    }}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-500" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <OutlookLogo />
+                        <span className="ml-2">Connect Outlook</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
           </Card>
 
           {/* LinkedIn Card */}
@@ -454,7 +547,7 @@ const IntegrationContent: React.FC = () => {
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
