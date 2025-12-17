@@ -11,6 +11,8 @@ export async function GET(req: Request) {
         return NextResponse.redirect(new URL("/integration?error=outlook_auth_failed", req.url));
     }
 
+
+
     try {
         // 1. Exchange code for tokens
         const clientId = process.env.MS_CLIENT_ID!;
@@ -38,6 +40,7 @@ export async function GET(req: Request) {
 
         const tokens = await tokenRes.json();
 
+
         // 2. Get User Profile (to get email)
         const profileRes = await fetch("https://graph.microsoft.com/v1.0/me", {
             headers: {
@@ -51,6 +54,7 @@ export async function GET(req: Request) {
         }
 
         const profile = await profileRes.json();
+
         const email = profile.mail || profile.userPrincipalName; // Fallback if mail is null
 
         // 3. Get Supabase User
@@ -72,6 +76,21 @@ export async function GET(req: Request) {
             refresh_token: tokens.refresh_token,
             token_expiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
             scope: tokens.scope,
+
+            // New mapped fields
+            outlook_id: profile.id,
+            token_type: tokens.token_type,
+            expires_in: tokens.expires_in,
+            ext_expires_in: tokens.ext_expires_in,
+            display_name: profile.displayName,
+            surname: profile.surname,
+            given_name: profile.givenName,
+            preferred_language: profile.preferredLanguage,
+            mobile_phone: profile.mobilePhone,
+            job_title: profile.jobTitle,
+            office_location: profile.officeLocation,
+            business_phones: profile.businessPhones, // Supabase handles JSON/JSONB automatically
+            user_principal_name: profile.userPrincipalName,
         };
 
         const { error: dbError } = await supabase
