@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Calendar, Mail, CheckCircle2, Clock, Linkedin, Twitter, Facebook, Instagram, Send, Copy } from "lucide-react";
-import { optimizeImageUrl } from "@/lib/ContactUtils";
 import Image from 'next/image';
 import { parseBracketedText } from "./MessageUtil";
 import { useFontSize } from "@/lib/font-size-context";
@@ -46,7 +45,7 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
   const [imageError, setImageError] = useState(false);
 
   const optimizedPicture = useMemo(
-    () => message?.profile_picture ? optimizeImageUrl(message.profile_picture) : null,
+    () => message?.profile_picture,
     [message?.profile_picture]
   );
 

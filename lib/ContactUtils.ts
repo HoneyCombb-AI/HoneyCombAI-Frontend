@@ -136,12 +136,7 @@ export const formatTimeSpent = (minutes: number): string => {
   return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
 };
 
-export const optimizeImageUrl = (url: string) => {
-  if (url.includes('linkedin.com')) {
-    return url.replace(/shrink_\d+_\d+/g, 'shrink_100_100');
-  }
-  return url;
-};
+
 
 export const getSectionHeadingBadgeColor = (sectionName: string): string => {
   const headingColorMap: Record<string, string> = {

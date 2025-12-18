@@ -34,21 +34,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (user && request.nextUrl.pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/contacts";
+    return NextResponse.redirect(url);
+  }
+
   // Protected routes (everything except home, login and auth callback)
   if (
     !user &&
     request.nextUrl.pathname !== "/" &&
-    !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth/")
   ) {
     // Redirect to login page
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  // If user is logged in and tries to access login page, redirect to home
-  if (user && request.nextUrl.pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

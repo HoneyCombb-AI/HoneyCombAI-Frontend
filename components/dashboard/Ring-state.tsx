@@ -1,4 +1,4 @@
-import { optimizeImageUrl } from '@/lib/ContactUtils';
+import { getSignalBadgeColor } from '@/lib/ContactUtils';
 import Image from 'next/image';
 import { useState } from 'react';
 
@@ -22,7 +22,7 @@ export function RingState({ green, golden, requested, profilePicture, fullName }
     };
 
     const shouldShowImage = profilePicture && !imageError;
-    const optimizedProfilePicture = profilePicture ? optimizeImageUrl(profilePicture) : null;
+    const optimizedProfilePicture = profilePicture;
 
     const initialsDiv = (
         <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium rounded-full">

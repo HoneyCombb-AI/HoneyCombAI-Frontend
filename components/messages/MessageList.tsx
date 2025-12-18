@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock } from "lucide-react";
-import { optimizeImageUrl } from "@/lib/ContactUtils";
+import { getSignalBadgeColor } from '@/lib/ContactUtils';
 import Image from 'next/image';
 
 export interface OutreachMessage {
@@ -36,9 +36,7 @@ const MessageListItem = React.memo(({
   const snippet = message.outreach_message
     ? message.outreach_message.replace(/\n/g, " ").slice(20, 50)
     : "Generating message...";
-  const optimizedPicture = message.profile_picture
-    ? optimizeImageUrl(message.profile_picture)
-    : null;
+  const optimizedPicture = message.profile_picture;
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase();

@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { WhyReachOutSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
 import { SignalState } from "../Signal-state"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
-import { optimizeImageUrl, getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
+import { getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
 
 
 interface DrawerDemoProps {
@@ -92,7 +92,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
   }
 
   const shouldShowImage = selectedContact.profile_picture && !imageError
-  const optimizedProfilePicture = selectedContact.profile_picture ? optimizeImageUrl(selectedContact.profile_picture) : null;
+  const optimizedProfilePicture = selectedContact.profile_picture;
 
   return (
     <Drawer direction="right" open={open} onOpenChange={onOpenChange}>
@@ -136,13 +136,12 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                     {drawerContact.temperature && (
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-gray-200 bg-gray-50/50">
                         <div
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            drawerContact.temperature === 'hot'
+                          className={`w-1.5 h-1.5 rounded-full ${drawerContact.temperature === 'hot'
                               ? 'bg-red-500'
                               : drawerContact.temperature === 'warm'
-                              ? 'bg-orange-400'
-                              : 'bg-blue-400'
-                          }`}
+                                ? 'bg-orange-400'
+                                : 'bg-blue-400'
+                            }`}
                         />
                         <span className="text-xs text-gray-600 font-medium">
                           {drawerContact.temperature.charAt(0).toUpperCase() + drawerContact.temperature.slice(1)}
