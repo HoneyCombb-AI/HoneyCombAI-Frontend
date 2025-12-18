@@ -144,7 +144,7 @@ export default function LoginPage() {
                 <div>
                   <Button
                     variant="outline"
-                    className="w-full h-12 flex items-center justify-center bg-black text-white hover:bg-green-700 hover:text-white"
+                    className="w-full h-12 flex items-center justify-center cursor-pointer bg-gray-50 text-black hover:bg-green-700 hover:text-white"
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
                   >

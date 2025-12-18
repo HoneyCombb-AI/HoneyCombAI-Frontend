@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimiters, getRealIP } from './app/api/utils/rate-limiter';
 
+import { updateSession } from '@/lib/supabase/middleware';
+
 export async function middleware(request: NextRequest) {
   // Only apply rate limiting to API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
     try {
       const ip = getRealIP(request);
       const globalLimit = await rateLimiters.globalPerIP(ip);
-      
+
       if (!globalLimit.allowed) {
         console.log(`Global rate limit exceeded for IP: ${ip}`);
         return NextResponse.json(
-          { 
+          {
             error: 'Too many requests from this IP address',
-            resetTime: globalLimit.resetTime 
+            resetTime: globalLimit.resetTime
           },
-          { 
+          {
             status: 429,
             headers: {
               'X-RateLimit-Limit': '1000',
@@ -26,19 +28,27 @@ export async function middleware(request: NextRequest) {
           }
         );
       }
+
+      // Call updateSession instead of just returning next()
+      // This ensures the session cookie is refreshed if needed
+      const response = await updateSession(request);
+
       // Add rate limit headers to successful responses
-      const response = NextResponse.next();
       response.headers.set('X-RateLimit-Global-Limit', '1000');
       response.headers.set('X-RateLimit-Global-Remaining', globalLimit.remaining.toString());
       response.headers.set('X-RateLimit-Global-Reset', Math.ceil(globalLimit.resetTime / 1000).toString());
       return response;
+
     } catch (error) {
       // If Redis is down or there's an error, fail open (allow the request)
       console.error('Middleware rate limiting error:', error);
-      return NextResponse.next();
+      // Still update the session
+      return await updateSession(request);
     }
   }
-  return NextResponse.next();
+
+  // For non-API routes, just update the session
+  return await updateSession(request);
 }
 
 export const config = {
