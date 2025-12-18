@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
   const code = searchParams.get("code");
   const error = searchParams.get("error");
   const error_description = searchParams.get("error_description");
@@ -66,11 +67,11 @@ export async function GET(request: NextRequest) {
     const user = data.user;
     const createdAt = new Date(user.created_at);
     const lastSignInAt = new Date(user.last_sign_in_at || user.created_at);
-    
+
     // If the difference between creation and last sign-in is less than 30 seconds,
     // this is likely their first sign-in (new user)
     const isNewUser = (lastSignInAt.getTime() - createdAt.getTime()) < 30000; // 30 seconds
-    
+
     // Auto-join new users to default organization
     if (isNewUser) {
       try {
@@ -135,9 +136,9 @@ export async function GET(request: NextRequest) {
     } else {
       redirectUrl = `${origin}${finalDestination}`;
     }
-    
+
     console.log(`User ${user.id} - Created: ${user.created_at}, Last Sign-in: ${user.last_sign_in_at}, Is New: ${isNewUser}, Redirecting to: ${redirectUrl}`);
-    
+
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error("Unexpected error in callback:", error);
