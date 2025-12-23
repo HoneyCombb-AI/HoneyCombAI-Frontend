@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createDataClient } from '@/lib/supabase/data-server';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 // Tag interface
@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createDataClient();
     
     // If search is provided, handle search functionality
     if (searchTerm.trim()) {

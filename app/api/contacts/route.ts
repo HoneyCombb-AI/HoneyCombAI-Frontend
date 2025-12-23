@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { NextRequest, NextResponse } from "next/server";
+import { createDataClient } from "@/lib/supabase/data-server";
+import { createClient as createAuthClient } from "@/lib/supabase/server";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * PERFORMANCE OPTIMIZATIONS APPLIED:
@@ -10,7 +11,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
  * - Only load essential fields: name, title, city/state/country, profile_picture
  * - Company data: only id, name, logo_url, industry
  * - Location grouping uses contact location data
- * 
+ *
  * PERFORMANCE IMPACT:
  * - ~80-85% reduction in data transfer for large contact lists
  * - Significantly faster query execution
@@ -46,11 +47,11 @@ export interface DashboardContact {
   title: string | null;
   city: string | null;
   state: string | null;
-  isTracked : boolean;
-  primaryAnalysisCompleted : boolean;
-  primaryAnalysisRequested : boolean;
-  hasNotes : boolean;
-  temperature: 'hot' | 'warm' | 'cold' | null;
+  isTracked: boolean;
+  primaryAnalysisCompleted: boolean;
+  primaryAnalysisRequested: boolean;
+  hasNotes: boolean;
+  temperature: "hot" | "warm" | "cold" | null;
   country: string | null;
   profile_picture: string | null;
   company: MinimalCompany | null;
@@ -69,20 +70,24 @@ export interface PaginationInfo {
 }
 
 export interface CompanyGroupResponse {
-  companies: Array<MinimalCompany & { 
-    contacts: DashboardContact[];
-    contactCount: number;
-  }>;
+  companies: Array<
+    MinimalCompany & {
+      contacts: DashboardContact[];
+      contactCount: number;
+    }
+  >;
   pagination: PaginationInfo;
 }
 
-
 export interface LocationGroupResponse {
-  locations: Record<string, {
-    location: string;
-    contacts: DashboardContact[];
-    contactCount: number;
-  }>;
+  locations: Record<
+    string,
+    {
+      location: string;
+      contacts: DashboardContact[];
+      contactCount: number;
+    }
+  >;
   pagination: PaginationInfo;
 }
 
@@ -93,18 +98,24 @@ export interface SearchResponse {
 }
 
 export interface TagGroupResponse {
-  tags: Record<string, {
-    tagName: string;
-    color: string | null;
-    contacts: DashboardContact[];
-    contactCount: number;
-  }>;
+  tags: Record<
+    string,
+    {
+      tagName: string;
+      color: string | null;
+      contacts: DashboardContact[];
+      contactCount: number;
+    }
+  >;
   pagination: PaginationInfo;
 }
 
-
 // Helper function to get pagination info
-function getPaginationInfo(page: number, limit: number, total: number): PaginationInfo {
+function getPaginationInfo(
+  page: number,
+  limit: number,
+  total: number
+): PaginationInfo {
   const totalPages = Math.ceil(total / limit);
   return {
     page,
@@ -112,66 +123,181 @@ function getPaginationInfo(page: number, limit: number, total: number): Paginati
     total,
     totalPages,
     hasNext: page < totalPages,
-    hasPrev: page > 1
+    hasPrev: page > 1,
   };
+}
+
+/**
+ * RPC helper for dual-supabase setups.
+ *
+ * We *prefer* calling email-bridged RPCs (those with `input_user_email` param).
+ * If the DB hasn't been updated yet, PostgREST will throw "Could not find the function ... in the schema cache".
+ * In that case, we fall back to calling the legacy RPC signature (without `input_user_email`).
+ */
+async function rpcWithEmailFallback<T>(
+  supabase: SupabaseClient,
+  functionName: string,
+  argsWithEmail: Record<string, unknown>,
+  argsWithoutEmail: Record<string, unknown>
+): Promise<{ data: T | null; error: { message: string } | null }> {
+  // Try email-bridged signature first
+  const firstAttempt = await supabase.rpc(functionName, argsWithEmail);
+  if (!firstAttempt.error) {
+    return { data: firstAttempt.data as T, error: null };
+  }
+
+  const msg = firstAttempt.error.message ?? "";
+  const looksLikeSchemaCacheMissing =
+    msg.includes("Could not find the function") &&
+    msg.includes("schema cache") &&
+    msg.includes("input_user_email");
+
+  if (!looksLikeSchemaCacheMissing) {
+    return { data: null, error: { message: firstAttempt.error.message } };
+  }
+
+  // Fallback to legacy signature
+  const secondAttempt = await supabase.rpc(functionName, argsWithoutEmail);
+  if (secondAttempt.error) {
+    return { data: null, error: { message: secondAttempt.error.message } };
+  }
+  return { data: secondAttempt.data as T, error: null };
 }
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    
+
     // Parse query parameters
-    const groupBy = searchParams.get('groupBy') || 'company'; 
-    const locationType = searchParams.get('locationType') || 'country'; 
-    const search = searchParams.get('search') || '';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const sortBy = searchParams.get('sortBy') || 'name';
-    const sortOrder = searchParams.get('sortOrder') || 'asc'; 
-    
+    const groupBy = searchParams.get("groupBy") || "company";
+    const locationType = searchParams.get("locationType") || "country";
+    const search = searchParams.get("search") || "";
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const sortBy = searchParams.get("sortBy") || "name";
+    const sortOrder = searchParams.get("sortOrder") || "asc";
+
     // Validate pagination parameters
     if (page < 1 || limit < 1 || limit > 100) {
       return NextResponse.json(
-        { error: 'Invalid pagination parameters. Page must be >= 1, limit must be 1-100.' },
+        {
+          error:
+            "Invalid pagination parameters. Page must be >= 1, limit must be 1-100.",
+        },
         { status: 400 }
       );
     }
 
-    const supabase = await createClient();
-    
+    /**
+     * Auth client (old Supabase):
+     * - validates the user's session (Google OAuth remains unchanged)
+     * - provides email we can use to scope data queries in the NEW Supabase
+     */
+    const authSupabase = await createAuthClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await authSupabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!user.email) {
+      return NextResponse.json(
+        { error: "Missing user email from auth session" },
+        { status: 400 }
+      );
+    }
+
+    /**
+     * Data client (new Supabase):
+     * - we pass the auth user's email to RPCs so they can derive the correct
+     *   `auth.users.id` inside the NEW Supabase (since we are not logged-in there).
+     */
+    const supabase = createDataClient();
+
     // If search is provided, handle search functionality
     if (search.trim()) {
-      return handleSearch(supabase, search, page, limit, sortBy, sortOrder);
+      return handleSearch(
+        supabase,
+        user.email,
+        search,
+        page,
+        limit,
+        sortBy,
+        sortOrder
+      );
     }
 
     // Handle different groupBy options
     switch (groupBy) {
-      case 'none':
-        return handleContactsList(supabase, page, limit, sortBy, sortOrder);
-      case 'company':
-        return handleCompanyGrouping(supabase, page, limit, sortBy, sortOrder);
-      case 'location':
-        return handleLocationGrouping(supabase, page, limit, locationType, sortBy, sortOrder);
-      case 'city':
-        return handleLocationGrouping(supabase, page, limit, 'city', sortBy, sortOrder);
-      case 'tags':
-        return handleTagsGrouping(supabase, page, limit, sortBy, sortOrder);
+      case "none":
+        return handleContactsList(
+          supabase,
+          user.email,
+          page,
+          limit,
+          sortBy,
+          sortOrder
+        );
+      case "company":
+        return handleCompanyGrouping(
+          supabase,
+          user.email,
+          page,
+          limit,
+          sortBy,
+          sortOrder
+        );
+      case "location":
+        return handleLocationGrouping(
+          supabase,
+          user.email,
+          page,
+          limit,
+          locationType,
+          sortBy,
+          sortOrder
+        );
+      case "city":
+        return handleLocationGrouping(
+          supabase,
+          user.email,
+          page,
+          limit,
+          "city",
+          sortBy,
+          sortOrder
+        );
+      case "tags":
+        return handleTagsGrouping(
+          supabase,
+          user.email,
+          page,
+          limit,
+          sortBy,
+          sortOrder
+        );
       default:
-        return handleContactsList(supabase, page, limit, sortBy, sortOrder);
+        return handleContactsList(
+          supabase,
+          user.email,
+          page,
+          limit,
+          sortBy,
+          sortOrder
+        );
     }
-
   } catch (error: unknown) {
-    console.error('API /api/contacts error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    console.error("API /api/contacts error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
 async function handleSearch(
   supabase: SupabaseClient,
+  userEmail: string,
   searchTerm: string,
   page: number,
   limit: number,
@@ -181,13 +307,25 @@ async function handleSearch(
   const offset = (page - 1) * limit;
 
   // Use RPC function for optimized search
-  const { data: result, error } = await supabase.rpc('search_contacts', {
-    search_term: searchTerm,
-    page_offset: offset,
-    page_limit: limit,
-    sort_field: sortBy === 'name' ? 'name' : sortBy,
-    sort_order: sortOrder
-  });
+  const { data: result, error } = await rpcWithEmailFallback<SearchResponse>(
+    supabase,
+    "search_contacts",
+    {
+      input_user_email: userEmail,
+      search_term: searchTerm,
+      page_offset: offset,
+      page_limit: limit,
+      sort_field: sortBy === "name" ? "name" : sortBy,
+      sort_order: sortOrder,
+    },
+    {
+      search_term: searchTerm,
+      page_offset: offset,
+      page_limit: limit,
+      sort_field: sortBy === "name" ? "name" : sortBy,
+      sort_order: sortOrder,
+    }
+  );
 
   if (error) {
     throw new Error(`Failed to search contacts: ${error.message}`);
@@ -199,6 +337,7 @@ async function handleSearch(
 
 async function handleCompanyGrouping(
   supabase: SupabaseClient,
+  userEmail: string,
   page: number,
   limit: number,
   sortBy: string,
@@ -207,12 +346,26 @@ async function handleCompanyGrouping(
   const offset = (page - 1) * limit;
 
   // Use RPC function for optimized company grouping
-  const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_company', {
-    page_offset: offset,
-    page_limit: limit,
-    sort_field: sortBy === 'name' ? 'name' : 'created_at',
-    sort_order: sortOrder
-  });
+  const { data: result, error } = await rpcWithEmailFallback<{
+    companies: unknown[];
+    total_count: number;
+  }>(
+    supabase,
+    "get_contacts_grouped_by_company",
+    {
+      input_user_email: userEmail,
+      page_offset: offset,
+      page_limit: limit,
+      sort_field: sortBy === "name" ? "name" : "created_at",
+      sort_order: sortOrder,
+    },
+    {
+      page_offset: offset,
+      page_limit: limit,
+      sort_field: sortBy === "name" ? "name" : "created_at",
+      sort_order: sortOrder,
+    }
+  );
 
   if (error) {
     throw new Error(`Failed to fetch companies: ${error.message}`);
@@ -225,13 +378,13 @@ async function handleCompanyGrouping(
 
   return NextResponse.json({
     companies,
-    pagination
+    pagination,
   } as CompanyGroupResponse);
 }
 
-
 async function handleLocationGrouping(
   supabase: SupabaseClient,
+  userEmail: string,
   page: number,
   limit: number,
   locationType: string,
@@ -241,13 +394,28 @@ async function handleLocationGrouping(
   const offset = (page - 1) * limit;
 
   // Use RPC function for optimized location grouping
-  const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_location', {
-    page_offset: offset,
-    page_limit: limit,
-    location_type: locationType,
-    sort_field: sortBy === 'name' ? 'name' : sortBy,
-    sort_order: sortOrder
-  });
+  const { data: result, error } = await rpcWithEmailFallback<{
+    locations: Record<string, unknown>;
+    total_count: number;
+  }>(
+    supabase,
+    "get_contacts_grouped_by_location",
+    {
+      input_user_email: userEmail,
+      page_offset: offset,
+      page_limit: limit,
+      location_type: locationType,
+      sort_field: sortBy === "name" ? "name" : sortBy,
+      sort_order: sortOrder,
+    },
+    {
+      page_offset: offset,
+      page_limit: limit,
+      location_type: locationType,
+      sort_field: sortBy === "name" ? "name" : sortBy,
+      sort_order: sortOrder,
+    }
+  );
 
   if (error) {
     throw new Error(`Failed to fetch contacts: ${error.message}`);
@@ -260,12 +428,13 @@ async function handleLocationGrouping(
 
   return NextResponse.json({
     locations,
-    pagination
+    pagination,
   } as LocationGroupResponse);
 }
 
 async function handleTagsGrouping(
   supabase: SupabaseClient,
+  userEmail: string,
   page: number,
   limit: number,
   sortBy: string,
@@ -274,12 +443,26 @@ async function handleTagsGrouping(
   const offset = (page - 1) * limit;
 
   // Use RPC function for optimized tags grouping
-  const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_tags', {
-    page_offset: offset,
-    page_limit: limit,
-    sort_field: sortBy === 'name' ? 'name' : 'created_at',
-    sort_order: sortOrder
-  });
+  const { data: result, error } = await rpcWithEmailFallback<{
+    tags: Record<string, unknown>;
+    total_count: number;
+  }>(
+    supabase,
+    "get_contacts_grouped_by_tags",
+    {
+      input_user_email: userEmail,
+      page_offset: offset,
+      page_limit: limit,
+      sort_field: sortBy === "name" ? "name" : "created_at",
+      sort_order: sortOrder,
+    },
+    {
+      page_offset: offset,
+      page_limit: limit,
+      sort_field: sortBy === "name" ? "name" : "created_at",
+      sort_order: sortOrder,
+    }
+  );
 
   if (error) {
     throw new Error(`Failed to fetch contacts by tags: ${error.message}`);
@@ -292,12 +475,13 @@ async function handleTagsGrouping(
 
   return NextResponse.json({
     tags,
-    pagination
+    pagination,
   } as TagGroupResponse);
 }
 
 async function handleContactsList(
   supabase: SupabaseClient,
+  userEmail: string,
   page: number,
   limit: number,
   sortBy: string,
@@ -306,12 +490,23 @@ async function handleContactsList(
   const offset = (page - 1) * limit;
 
   // Use RPC function for optimized contacts list
-  const { data: result, error } = await supabase.rpc('get_contacts_list', {
-    page_offset: offset,
-    page_limit: limit,
-    sort_field: sortBy === 'name' ? 'signals_first' : sortBy,
-    sort_order: sortOrder
-  });
+  const { data: result, error } = await rpcWithEmailFallback<SearchResponse>(
+    supabase,
+    "get_contacts_list",
+    {
+      input_user_email: userEmail,
+      page_offset: offset,
+      page_limit: limit,
+      sort_field: sortBy === "name" ? "signals_first" : sortBy,
+      sort_order: sortOrder,
+    },
+    {
+      page_offset: offset,
+      page_limit: limit,
+      sort_field: sortBy === "name" ? "signals_first" : sortBy,
+      sort_order: sortOrder,
+    }
+  );
 
   if (error) {
     throw new Error(`Failed to fetch contacts list: ${error.message}`);

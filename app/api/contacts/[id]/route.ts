@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient as createAuthClient } from '@/lib/supabase/server';
+import { createDataClient } from '@/lib/supabase/data-server';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 /**
@@ -12,6 +13,10 @@ import { rateLimiters } from '@/app/api/utils/rate-limiter';
  * - Topics of interest
  * - AI analysis results
  * - Social activity metrics
+ *
+ * Additionally, we fetch the raw `contacts` table row as `full_details` so the
+ * UI can display *all* columns from the new Supabase schema in a dedicated
+ * “Full details” section (without bloating list RPC responses).
  */
 
 // Detailed interfaces for drawer data
@@ -90,6 +95,105 @@ export interface DrawerContact {
   ai_analysis: DrawerAIAnalysis[];
   social_activity: DrawerSocialActivity | null;
 }
+
+/**
+ * Full `contacts` row from the new Supabase schema.
+ * NOTE: Keep this strictly typed (no `any`) and aligned with the DB columns.
+ * We intentionally model JSONB as `unknown | null` to avoid unsafe assumptions.
+ */
+export interface ContactFullDetails {
+  id: string;
+  company_id: string | null;
+  full_name: string | null;
+  city: string | null;
+  email: string | null;
+  phone: string | null;
+  linkedin_url: string | null;
+  twitter_handle: string | null;
+  in_crm: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
+  profile_picture_url: string | null;
+  instagram_handle: string | null;
+  country: string | null;
+  languages: string[] | null;
+  user_id: string | null;
+  primary_analysis_completed: boolean | null;
+  primary_analysis_requested: boolean;
+  temperature: 'hot' | 'warm' | 'cold' | null;
+  contact_sort_score: number;
+  first_name: string | null;
+  last_name: string | null;
+  headline: string | null;
+  about: string | null;
+  background_picture_url: string | null;
+  location_full: string | null;
+  country_code: string | null;
+  follower_count: number | null;
+  connection_count: number | null;
+  current_company: string | null;
+  is_creator: boolean;
+  is_influencer: boolean;
+  is_premium: boolean;
+  open_to_work: boolean;
+  show_follower_count: boolean;
+}
+
+const CONTACT_FULL_DETAILS_SELECT = [
+  // Identifiers and relationships
+  'id',
+  'company_id',
+  'user_id',
+
+  // Core profile fields
+  'full_name',
+  'first_name',
+  'last_name',
+  'headline',
+  'about',
+  'email',
+  'phone',
+
+  // Social links/handles
+  'linkedin_url',
+  'twitter_handle',
+  'instagram_handle',
+
+  // Media
+  'profile_picture_url',
+  'background_picture_url',
+
+  // Location/language
+  'city',
+  'country',
+  'country_code',
+  'location_full',
+  'languages',
+
+  // CRM flags and scoring
+  'in_crm',
+  'contact_sort_score',
+
+  // Analysis flags and derived status
+  'primary_analysis_completed',
+  'primary_analysis_requested',
+  'temperature',
+
+  // Audience metrics
+  'follower_count',
+  'connection_count',
+  'current_company',
+  'is_creator',
+  'is_influencer',
+  'is_premium',
+  'open_to_work',
+  'show_follower_count',
+
+  // Timestamps
+  'created_at',
+  'updated_at',
+].join(',');
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -104,10 +208,11 @@ export async function GET(
       );
     }
 
-    const supabase = await createClient();
+    // Auth client (old Supabase): used only to validate user + rate-limit.
+    const authSupabase = await createAuthClient();
     
     // Get the current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -135,7 +240,11 @@ export async function GET(
     }
 
     // Use optimized single RPC function for maximum performance
-    const { data: contacts, error } = await supabase.rpc('get_contact_details', {
+    // Data client (new Supabase): used to fetch contact data.
+    const dataSupabase = createDataClient();
+
+    const { data: contacts, error } = await dataSupabase.rpc('get_contact_details', {
+      input_user_email: user.email ?? null,
       input_contact_id: contactId
     });
 
@@ -162,7 +271,24 @@ export async function GET(
       social_activity: contact.social_activity || null
     };
 
-    return NextResponse.json({ contact: formattedContact });
+    /**
+     * Fetch raw contact row for “Full details”.
+     *
+     * Important:
+     * - We do NOT filter by user_id (RLS handles scoping).
+     * - We use an explicit select list for stability and strict typing.
+     */
+    const { data: fullDetails, error: fullDetailsError } = await dataSupabase
+      .from('contacts')
+      .select(CONTACT_FULL_DETAILS_SELECT)
+      .eq('id', contactId)
+      .single<ContactFullDetails>();
+
+    if (fullDetailsError) {
+      throw new Error(`Failed to fetch contact full_details: ${fullDetailsError.message}`);
+    }
+
+    return NextResponse.json({ contact: formattedContact, full_details: fullDetails });
 
   } catch (error: unknown) {
     console.error('API /api/contacts/[id] error:', error);

@@ -16,8 +16,8 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
-import { DashboardCompany } from "@/app/api/companies/route"
-import { DrawerCompany } from "@/app/api/companies/[id]/route"
+import type { DashboardCompany } from "@/app/api/companies/route"
+import type { CompanyFullDetails, DrawerCompany } from "@/app/api/companies/[id]/route"
 import { Badge } from "@/components/ui/badge"
 import CompleteCompanySkeleton from "./CompanyDrawerSkeleton"
 
@@ -33,6 +33,79 @@ const customDrawerStyles = {
   maxWidth: '55vw'
 };
 
+/**
+ * Shape of the Companies drawer API response.
+ * We use strict typing here (no `any`) to keep UI rendering safe.
+ */
+interface CompanyDetailsResponse {
+  company: DrawerCompany;
+  full_details: CompanyFullDetails;
+}
+
+/**
+ * Helpers for rendering “Full details” values in a compact, readable way.
+ */
+function humanizeKey(key: string) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatFullDetailValue(value: unknown): React.ReactNode {
+  if (value === null || value === undefined) return <span className="text-gray-400">—</span>;
+
+  if (typeof value === "boolean") {
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded ${value ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-700"}`}>
+        {value ? "Yes" : "No"}
+      </span>
+    );
+  }
+
+  if (typeof value === "number") return <span className="text-gray-900">{value}</span>;
+
+  if (typeof value === "string") {
+    const isUrl = value.startsWith("http://") || value.startsWith("https://");
+    if (isUrl) {
+      return (
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline break-all"
+        >
+          {value}
+        </a>
+      );
+    }
+    return <span className="text-gray-900 break-words">{value}</span>;
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return <span className="text-gray-400">—</span>;
+    return (
+      <div className="flex flex-wrap gap-1">
+        {value.map((item, idx) => (
+          <Badge key={idx} variant="secondary" className="text-xs">
+            {typeof item === "string" || typeof item === "number" ? String(item) : "Item"}
+          </Badge>
+        ))}
+      </div>
+    );
+  }
+
+  // Objects / JSONB: show a scrollable pretty JSON block.
+  try {
+    return (
+      <pre className="text-xs bg-gray-50 border border-gray-200 rounded p-2 max-h-48 overflow-auto whitespace-pre-wrap break-words">
+        {JSON.stringify(value, null, 2)}
+      </pre>
+    );
+  } catch {
+    return <span className="text-gray-900">[Unrenderable]</span>;
+  }
+}
+
 const formatEmployeeCount = (count: number | null) => {
   if (!count) return "Unknown";
   if (count >= 1000) return `${(count / 1000).toFixed(1)}k employees`;
@@ -41,6 +114,7 @@ const formatEmployeeCount = (count: number | null) => {
 
 export function CompaniesDrawer({ open, onOpenChange, trigger, selectedCompany }: CompaniesDrawerProps) {
   const [drawerCompany, setDrawerCompany] = useState<DrawerCompany | null>(null)
+  const [fullDetails, setFullDetails] = useState<CompanyFullDetails | null>(null)
   const [loading, setLoading] = useState(false)
   const [, setError] = useState<string | null>(null)
 
@@ -56,9 +130,10 @@ export function CompaniesDrawer({ open, onOpenChange, trigger, selectedCompany }
     setError(null)
 
     try {
-      const response = await axios.get(`/api/companies/${companyId}`)
+      const response = await axios.get<CompanyDetailsResponse>(`/api/companies/${companyId}`)
       console.log("Company Data", response.data)
       setDrawerCompany(response.data.company)
+      setFullDetails(response.data.full_details)
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const status = err.response.status
@@ -80,6 +155,7 @@ export function CompaniesDrawer({ open, onOpenChange, trigger, selectedCompany }
         setError(err instanceof Error ? err.message : 'Unknown error occurred')
       }
       setDrawerCompany(null)
+      setFullDetails(null)
     } finally {
       setLoading(false)
     }
@@ -354,6 +430,28 @@ export function CompaniesDrawer({ open, onOpenChange, trigger, selectedCompany }
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* Full Details Section - shows every column from the `companies` table */}
+              {fullDetails && (
+                <>
+                  <Separator className="my-5" />
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-600">Full Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(Object.keys(fullDetails) as Array<keyof CompanyFullDetails>).map((key) => (
+                        <div key={String(key)} className="space-y-1">
+                          <div className="text-xs font-medium text-gray-500">
+                            {humanizeKey(String(key))}
+                          </div>
+                          <div className="text-sm">
+                            {formatFullDetailValue(fullDetails[key])}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
