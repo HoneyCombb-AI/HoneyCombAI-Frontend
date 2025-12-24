@@ -126,21 +126,31 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
     if (signals.length === 0) return null
 
     const renderSignalCard = (processed: ProcessedSignal, index: number) => {
-        const { signal, timeAgo, sources, icon: Icon } = processed
-        const isCustom = signal.is_custom === true
-        const title = toSentenceCase(signal.signal_type)
+        const { signal, sources, icon: Icon } = processed
+        let rawSignalType = signal.signal_type || ''
+        // Matches "Custom" at start followed by separators (underscore, space, colon)
+        const customPrefixRegex = /^custom[_\s:]+/i
+        const hasCustomPrefix = customPrefixRegex.test(rawSignalType)
+        const isCustom = signal.is_custom === true || hasCustomPrefix
+
+        // Strip the prefix for the display title
+        if (hasCustomPrefix) {
+            rawSignalType = rawSignalType.replace(customPrefixRegex, '')
+        }
+
+        const title = toSentenceCase(rawSignalType)
 
         // The header content is used in both the spacer (invisible) and the actual card
         const HeaderContent = () => (
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                     <div className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border shadow-sm transition-colors",
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border shadow-sm transition-colors",
                         isCustom
                             ? "bg-amber-50 border-amber-100 text-amber-600"
                             : "bg-gray-50 border-gray-100 text-gray-500 group-hover:text-blue-600 group-hover:bg-blue-50 group-hover:border-blue-100"
                     )}>
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-3.5 w-3.5" />
                     </div>
                     <div className="flex flex-col">
                         <h4 className={cn("font-semibold text-gray-900 leading-tight line-clamp-1", fontSizeClass)}>
@@ -163,14 +173,14 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
                 className="relative group cursor-default"
             >
                 {/* Spacer: Invisible copy of the header to reserve grid space */}
-                <div className="invisible p-4 border border-transparent">
+                <div className="invisible p-3 border border-transparent">
                     <HeaderContent />
                 </div>
 
                 {/* Floating Card: Absolute positioned, expands on hover */}
                 <div className={cn(
-                    "absolute top-0 left-0 w-full rounded-xl border bg-white p-4 transition-all duration-200 ease-out origin-top",
-                    "z-10 group-hover:z-50",
+                    "absolute top-0 left-0 w-full rounded-xl border bg-white p-3 transition-all duration-200 ease-out origin-top",
+                    "z-10 group-hover:z-50 group-hover:w-[115%] group-hover:-left-[7.5%]",
                     "group-hover:shadow-xl group-hover:ring-1",
                     isCustom
                         ? "border-amber-200/60 shadow-[0_0_15px_-3px_rgba(251,191,36,0.15)] group-hover:ring-amber-200"
@@ -181,7 +191,7 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
                     {/* Expandable Content */}
                     <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-200 ease-out">
                         <div className="overflow-hidden">
-                            <div className="pt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="pt-3 animate-in fade-in slide-in-from-top-2 duration-300">
                                 <div className={cn(
                                     "relative rounded-md p-2 mb-3 text-sm leading-relaxed",
                                     isCustom ? "bg-amber-50/50" : "bg-gray-50"
