@@ -22,7 +22,6 @@ type DashboardResponse = CompanyGroupResponse | LocationGroupResponse | SearchRe
 
 // Contact validation data interface
 interface ContactValidationData {
-  isTracked: boolean;
   primaryAnalysisCompleted: boolean;
   primaryAnalysisRequested: boolean;
   full_name: string;
@@ -64,14 +63,12 @@ const ContactRow = memo<{
 }>(({ contact, isSelected, onContactSelect, onContactClick, onNotesClick, isFirstInGroup }) => {
   const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
   const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
-  const isTracked = contact.isTracked;
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent default browser context menu
     e.stopPropagation(); // Prevent event bubbling
 
     onContactSelect(contact.id, {
-      isTracked: contact.isTracked,
       primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
       primaryAnalysisRequested: contact.primaryAnalysisRequested,
       full_name: contact.full_name,
@@ -89,7 +86,6 @@ const ContactRow = memo<{
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => onContactSelect(contact.id, {
-            isTracked: contact.isTracked,
             primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
             primaryAnalysisRequested: contact.primaryAnalysisRequested,
             full_name: contact.full_name,
@@ -109,7 +105,7 @@ const ContactRow = memo<{
         <div className="flex items-center gap-3">
           <RingState
             green={hasAnalysisCompleted}
-            golden={isTracked}
+            golden={false}
             requested={hasAnalysisRequested}
             profilePicture={contact.profile_picture}
             fullName={contact.full_name}
@@ -145,8 +141,6 @@ const ContactRow = memo<{
         <div className="text-sm truncate">
           {contact.city ? (
             <span className="text-gray-600">{contact.city}</span>
-          ) : contact.state ? (
-            <span className="text-gray-400">{contact.state}</span>
           ) : contact.country ? (
             <span className="text-gray-400">{contact.country}</span>
           ) : (
@@ -164,13 +158,12 @@ const ContactRow = memo<{
         <div className="flex justify-center">
           {contact.temperature ? (
             <span
-              className={`text-xs px-2 py-0.5 rounded ${
-                contact.temperature === 'hot'
-                  ? 'bg-red-50 text-red-700'
-                  : contact.temperature === 'warm'
+              className={`text-xs px-2 py-0.5 rounded ${contact.temperature === 'hot'
+                ? 'bg-red-50 text-red-700'
+                : contact.temperature === 'warm'
                   ? 'bg-orange-50 text-orange-700'
                   : 'bg-blue-50 text-blue-700'
-              }`}
+                }`}
             >
               {contact.temperature.charAt(0).toUpperCase() + contact.temperature.slice(1)}
             </span>
@@ -462,7 +455,6 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                             group.contacts?.map(contact => ({
                               id: contact.id,
                               data: {
-                                isTracked: contact.isTracked,
                                 primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
                                 primaryAnalysisRequested: contact.primaryAnalysisRequested,
                                 full_name: contact.full_name,

@@ -52,12 +52,11 @@ function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean
 }
 
 export type GroupByType = "none" | "company" | "location" | "city" | "tags";
-export type LocationType = "country" | "state" | "city";
+export type LocationType = "country" | "city";
 export type SortBy = "name";
 export type SortOrder = "asc" | "desc";
 
 interface ContactValidationData {
-  isTracked: boolean;
   primaryAnalysisCompleted: boolean;
   primaryAnalysisRequested: boolean;
   full_name: string;
@@ -109,7 +108,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageLimit, setPageLimit] = useState<number>(20);
   const [sortBy, setSortBy] = useState<SortBy>("name");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [selectedContacts, setSelectedContacts] = useState<Map<string, ContactValidationData>>(
     new Map()
   );
@@ -201,7 +200,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const handleGroupByChange = (newGroupBy: GroupByType) => {
     setGroupBy(newGroupBy);
     setCurrentPage(1);
-    setSortOrder("asc");
   };
 
   const handleLocationTypeChange = (newLocationType: LocationType) => {
@@ -238,7 +236,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     setSearchTerm("");
     setSearchInput("");
     setSortBy("name");
-    setSortOrder("asc");
+    setSortOrder("desc");
     setCurrentPage(1);
     setSelectedContacts(new Map());
   };
@@ -249,53 +247,17 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
     const states = selectedContactsArray.reduce((acc, [, data]) => {
       acc.total++;
-      // Tracking eligibility is now based on having a company
-      if (data.company_id) {
-        acc.eligibleForTracking++;
-        if (data.isTracked) acc.tracked++;
-        else acc.untracked++;
-
-        // Track unique companies for display
-        if (!acc.uniqueCompanies.has(data.company_id)) {
-          acc.uniqueCompanies.set(data.company_id, data.isTracked);
-        }
-      } else {
-        acc.ineligibleForTracking++;
-      }
       if (!data.primaryAnalysisCompleted && !data.primaryAnalysisRequested) acc.eligibleForEnrichment++;
       else acc.ineligibleForEnrichment++;
       return acc;
     }, {
       total: 0,
-      tracked: 0,
-      untracked: 0,
-      eligibleForTracking: 0,
-      ineligibleForTracking: 0,
       eligibleForEnrichment: 0,
       ineligibleForEnrichment: 0,
-      uniqueCompanies: new Map<string, boolean>()
     });
-
-    // Calculate company-level tracking counts
-    const companyStates = Array.from(states.uniqueCompanies.values());
-    const trackedCompanies = companyStates.filter(isTracked => isTracked).length;
-    const untrackedCompanies = companyStates.filter(isTracked => !isTracked).length;
 
     return {
       totalSelected: states.total,
-      trackedCount: states.tracked,
-      untrackedCount: states.untracked,
-      eligibleForTrackingCount: states.eligibleForTracking,
-      ineligibleForTrackingCount: states.ineligibleForTracking,
-      uniqueCompanyCount: states.uniqueCompanies.size,
-      trackedCompanyCount: trackedCompanies,
-      untrackedCompanyCount: untrackedCompanies,
-      hasTracked: states.tracked > 0,
-      hasUntracked: states.untracked > 0,
-      hasEligibleForTracking: states.eligibleForTracking > 0,
-      allTracked: states.eligibleForTracking > 0 && states.tracked === states.eligibleForTracking,
-      allUntracked: states.eligibleForTracking > 0 && states.untracked === states.eligibleForTracking,
-      trackingIsMixed: states.tracked > 0 && states.untracked > 0,
       eligibleCount: states.eligibleForEnrichment,
       ineligibleCount: states.ineligibleForEnrichment,
       hasEligible: states.eligibleForEnrichment > 0,
@@ -306,24 +268,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     };
   }, [selectedContacts]);
 
-  const getTrackingButtonText = () => {
-    if (contactStates.totalSelected === 0) return "Contact Tracking";
-    if (!contactStates.hasEligibleForTracking) {
-      return `Contact Tracking (${contactStates.ineligibleForTrackingCount} without company)`;
-    }
 
-    const companyText = contactStates.uniqueCompanyCount === 1 ? "company" : "companies";
-
-    if (contactStates.allTracked) {
-      return `Disable Tracking (${contactStates.trackedCompanyCount} ${companyText})`;
-    } else if (contactStates.allUntracked) {
-      return `Enable Tracking (${contactStates.untrackedCompanyCount} ${companyText})`;
-    } else if (contactStates.trackingIsMixed) {
-      return `Toggle Tracking (${contactStates.untrackedCompanyCount} enable, ${contactStates.trackedCompanyCount} disable)`;
-    }
-
-    return "Contact Tracking";
-  };
 
   const getEnrichmentButtonText = () => {
     if (contactStates.totalSelected === 0) return "Complete Contact Enrichment";
@@ -340,10 +285,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
   const getOutreachButtonText = () => {
     if (contactStates.totalSelected === 0) return "Generate Outreach";
-    if (!contactStates.hasEligibleForTracking) {
-      return `Generate Outreach (${contactStates.ineligibleForTrackingCount} ineligible)`;
-    }
-    return `Generate Outreach (${contactStates.eligibleForTrackingCount})`;
+    return `Generate Outreach (${contactStates.totalSelected})`;
   };
 
   // Contact selection handlers
@@ -464,54 +406,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     }
   };
 
-  const handleTrackingToggle = async () => {
-    if (selectedContacts.size === 0) {
-      toast.error("No contacts selected for tracking");
-      return;
-    }
 
-    const selectedContactsArray = Array.from(selectedContacts.entries());
-
-    // Extract unique company IDs from selected contacts
-    const uniqueCompanyIds = new Set<string>();
-    selectedContactsArray.forEach(([, data]) => {
-      if (data.company_id) {
-        uniqueCompanyIds.add(data.company_id);
-      }
-    });
-
-    if (uniqueCompanyIds.size === 0) {
-      toast.error("Selected contacts do not have companies. Only contacts with companies can be tracked.");
-      return;
-    }
-
-    try {
-      setEnrichmentLoading(true);
-      const response = await axios.post("/api/contacts/tracking", {
-        company_ids: Array.from(uniqueCompanyIds),
-        action: contactStates.trackingIsMixed ? "toggle" : (contactStates.allTracked ? "disable" : "enable")
-      });
-
-      if (response.data.success) {
-        toast.success(response.data.message);
-        fetchDashboardData();
-        setSelectedContacts(new Map());
-      } else {
-        toast.error(response.data.message || "Tracking update failed");
-      }
-    } catch (error) {
-      console.error("Tracking update failed:", error);
-
-      if (axios.isAxiosError(error) && error.response?.data) {
-        const errorData = error.response.data;
-        toast.error(errorData.message || "Tracking update failed");
-      } else {
-        toast.error("Network error. Please try again.");
-      }
-    } finally {
-      setEnrichmentLoading(false);
-    }
-  };
 
   const handleExportToCSV = async () => {
     if (selectedContacts.size === 0) {
@@ -656,7 +551,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       locationType !== "country" ||
       searchTerm !== "" ||
       sortBy !== "name" ||
-      sortOrder !== "asc"
+      sortOrder !== "desc"
     );
   };
   // Show error state if there's an error
@@ -739,11 +634,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                       Country
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onSelect={() => handleLocationTypeChange("state")}
-                    >
-                      State
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
                       onSelect={() => handleLocationTypeChange("city")}
                     >
                       City
@@ -752,20 +642,24 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </DropdownMenu>
               )}
 
-              {/* Sort Controls - Fixed to Name only with sort order toggle */}
+              {/* Sort Controls - Temperature Priority */}
               <Button
                 variant="outline"
                 size="sm"
                 className="gap-2 text-sm"
                 onClick={handleSortOrderToggle}
               >
-                {sortOrder === "asc" ? (
-                  <SortAsc className="h-4 w-4" />
-                ) : (
+                {sortOrder === "desc" ? (
                   <SortDesc className="h-4 w-4" />
+                ) : (
+                  <SortAsc className="h-4 w-4" />
                 )}
-                <span className="hidden sm:inline">Sort:</span>
-                <span>Name</span>
+                <span className="hidden sm:inline">
+                  {sortOrder === "desc" ? "Hot First" : "Cold First"}
+                </span>
+                <span className="sm:hidden">
+                  {sortOrder === "desc" ? "🔥" : "🔵"}
+                </span>
               </Button>
 
               {/* Search Input with Button */}
@@ -908,29 +802,12 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                       {getEnrichmentButtonText()}
                     </DropdownMenuItem>
                   )}
-                  {contactStates.hasEligibleForTracking && (
-                    <>
-                      <DropdownMenuItem
-                        onSelect={() => handleEnrichmentAction("outreach_enrichment")}
-                      >
-                        {getOutreachButtonText()}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => handleTrackingToggle()}
-                      >
-                        {getTrackingButtonText()}
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {!contactStates.hasEligibleForTracking && selectedContacts.size > 0 && (
-                    <>
-                      <DropdownMenuItem disabled>
-                        {getOutreachButtonText()}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled>
-                        {getTrackingButtonText()}
-                      </DropdownMenuItem>
-                    </>
+                  {selectedContacts.size > 0 && (
+                    <DropdownMenuItem
+                      onSelect={() => handleEnrichmentAction("outreach_enrichment")}
+                    >
+                      {getOutreachButtonText()}
+                    </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>

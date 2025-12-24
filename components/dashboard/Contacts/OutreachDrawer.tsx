@@ -24,14 +24,13 @@ import { MessageSquare, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const outreachSchema = z.object({
-    tonality: z.enum(["AI Decided","casual", "professional", "formal", "friendly", "concise", "enthusiastic"]),
+    tonality: z.enum(["AI Decided", "casual", "professional", "formal", "friendly", "concise", "enthusiastic"]),
     personalization: z.string().trim().max(1000, "Personalization text must be less than 1000 characters").optional(),
 });
 
 type OutreachFormData = z.infer<typeof outreachSchema>;
 
 interface ContactValidationData {
-    isTracked: boolean;
     primaryAnalysisCompleted: boolean;
     primaryAnalysisRequested: boolean;
     full_name: string;

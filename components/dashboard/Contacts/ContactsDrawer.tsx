@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Building, Clock, Languages, Instagram } from "lucide-react"
+import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Building, Clock, Languages, Instagram, User } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { parseISO, format } from "date-fns"
 import axios from "axios"
@@ -19,9 +19,9 @@ import { DashboardContact } from "@/app/api/contacts/route"
 import { DrawerContact } from "@/app/api/contacts/[id]/route"
 import { Badge } from "@/components/ui/badge"
 import { WhyReachOutSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
-import { SignalState } from "../Signal-state"
+import { IntentSignalsSection } from "./IntentSignalsSection"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
-import { getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
+
 
 
 interface DrawerDemoProps {
@@ -31,8 +31,8 @@ interface DrawerDemoProps {
   selectedContact: DashboardContact;
 }
 const customDrawerStyles = {
-  width: '50vw',
-  maxWidth: '55vw'
+  width: '60vw',
+  maxWidth: '65vw'
 };
 
 export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }: DrawerDemoProps) {
@@ -100,7 +100,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
       <DrawerContent style={customDrawerStyles}>
 
         <div className="mx-auto w-full h-screen overflow-y-auto">
-          <DrawerHeader className="sticky top-0 bg-white z-10 border-b">
+          <DrawerHeader className="sticky top-0 bg-white z-[60] border-b">
             <DrawerTitle>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -137,10 +137,10 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-gray-200 bg-gray-50/50">
                         <div
                           className={`w-1.5 h-1.5 rounded-full ${drawerContact.temperature === 'hot'
-                              ? 'bg-red-500'
-                              : drawerContact.temperature === 'warm'
-                                ? 'bg-orange-400'
-                                : 'bg-blue-400'
+                            ? 'bg-red-500'
+                            : drawerContact.temperature === 'warm'
+                              ? 'bg-orange-400'
+                              : 'bg-blue-400'
                             }`}
                         />
                         <span className="text-xs text-gray-600 font-medium">
@@ -235,31 +235,21 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
 
           ) : (
             <div className="px-6 py-2 space-y-3">
+              {/* Intent Signals - PRIMARY FOCUS */}
               {drawerContact?.signals && drawerContact.signals.length > 0 && (
                 <>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Badge className={getSectionHeadingBadgeColor('social_intents')}>
-                        Social Intents
-                      </Badge>
-                    </div>
-                    <SignalState
-                      signals={drawerContact.signals}
-                      contactId={drawerContact.id || selectedContact.id}
-                      showTooltips={true}
-                      detailed={true}
-                      className="gap-2"
-                    />
-                  </div>
+                  <IntentSignalsSection signals={drawerContact.signals} />
                   <Separator className="my-4" />
                 </>
               )}
+
               <div className="flex gap-4">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Badge className={getSectionHeadingBadgeColor('personal_information')}>
-                      Personal Information
-                    </Badge>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                      <User className="h-3.5 w-3.5" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900">Personal Information</h3>
                   </div>
 
                   {/* Two-column layout for personal information */}
@@ -269,9 +259,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                       <div className="flex items-center gap-3 text-sm text-gray-600">
                         <MapPin className="h-4 w-4" />
                         <span>
-                          {[drawerContact?.city || selectedContact.city, drawerContact?.state || selectedContact.state]
-                            .filter(Boolean)
-                            .join(", ") || "No location provided"}
+                          {drawerContact?.city || selectedContact.city || "No location provided"}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-600">
