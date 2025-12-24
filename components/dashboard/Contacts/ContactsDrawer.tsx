@@ -31,8 +31,8 @@ interface DrawerDemoProps {
   selectedContact: DashboardContact;
 }
 const customDrawerStyles = {
-  width: '60vw',
-  maxWidth: '65vw'
+  width: '65vw',
+  maxWidth: '70vw'
 };
 
 export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }: DrawerDemoProps) {
@@ -166,16 +166,6 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                         <span className="text-xs text-green-700 font-medium">
                           Analyzed
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Tracking Status */}
-                    {drawerContact.istracked && (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-purple-200 bg-purple-50/50">
-                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                        <span className="text-xs text-purple-700 font-medium">
-                          Tracked
                         </span>
                       </div>
                     )}
@@ -368,21 +358,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                     </div>
                   </div>
 
-                  {/* Topics of Interest - Full width below the columns */}
-                  {drawerContact?.topics && drawerContact.topics.length > 0 && (
-                    <div className="space-y-2 mt-4">
-                      <h4 className="text-sm font-semibold text-gray-600">
-                        Topics of Interest
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {drawerContact.topics.map((topic: string, idx: number) => (
-                          <Badge key={idx} className="w-fit" variant="outline">
-                            {topic}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               </div>
               {/* Why Reach Out Section - Standalone */}
@@ -404,7 +380,6 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                   <Separator className="my-5" />
                   <SocialIntelligenceSection
                     aiAnalysis={drawerContact.ai_analysis}
-                    nudgesData={drawerContact?.nudges?.[0]}
                   />
                 </>
               )}

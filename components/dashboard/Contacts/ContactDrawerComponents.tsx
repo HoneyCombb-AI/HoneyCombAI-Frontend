@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { DrawerAIAnalysis, DrawerContactNudge, DrawerSocialActivity } from "@/app/api/contacts/[id]/route"
+import { DrawerAIAnalysis, DrawerSocialActivity } from "@/app/api/contacts/[id]/route"
 import { sentenceCase } from "sentence-case"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
@@ -240,45 +240,7 @@ const FinalAssessmentContent = React.memo(({ text, fontSizeClass }: FinalAssessm
 })
 FinalAssessmentContent.displayName = 'FinalAssessmentContent'
 
-interface NudgesContentProps {
-  nudges: string[]
-  fontSizeClass: string
-}
 
-const NudgesContent = React.memo(({ nudges, fontSizeClass }: NudgesContentProps) => {
-  const processedNudges = React.useMemo(
-    () => nudges.map(nudge => {
-      const colonIndex = nudge.indexOf(':')
-      return {
-        text: nudge,
-        colonIndex,
-        hasColon: colonIndex !== -1
-      }
-    }),
-    [nudges]
-  )
-
-  return (
-    <ul className="space-y-2 pt-2">
-      {processedNudges.map((nudge, index) => (
-        <li key={index} className={`flex items-start gap-2 text-black leading-relaxed ${fontSizeClass}`}>
-          <span className="text-blue-600 mt-2 text-xs">•</span>
-          <span>
-            {nudge.hasColon ? (
-              <>
-                <span className="font-semibold">{nudge.text.slice(0, nudge.colonIndex + 1)}</span>
-                {nudge.text.slice(nudge.colonIndex + 1)}
-              </>
-            ) : (
-              nudge.text
-            )}
-          </span>
-        </li>
-      ))}
-    </ul>
-  )
-})
-NudgesContent.displayName = 'NudgesContent'
 
 interface StrategicRecommendationsContentProps {
   recommendations: string[] | null
@@ -338,9 +300,8 @@ const StrategicRecommendationsContent = React.memo(({
       {processedRecommendations.map((item, i) => (
         <li
           key={i}
-          className={`flex items-start gap-2 transform transition-all duration-300 ${fontSizeClass} ${
-            isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-100'
-          }`}
+          className={`flex items-start gap-2 transform transition-all duration-300 ${fontSizeClass} ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-100'
+            }`}
           style={{
             transitionDelay: isLoaded ? `${i * 100}ms` : '0ms'
           }}
@@ -369,10 +330,9 @@ StrategicRecommendationsContent.displayName = 'StrategicRecommendationsContent'
 
 interface SocialIntelligenceSectionProps {
   aiAnalysis: DrawerAIAnalysis[]
-  nudgesData?: DrawerContactNudge
 }
 
-export function SocialIntelligenceSection({ aiAnalysis, nudgesData }: SocialIntelligenceSectionProps) {
+export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSectionProps) {
   const { getFontSizeClass } = useFontSize()
   const [loadingStates, setLoadingStates] = React.useState<{ [key: string]: boolean }>({})
   const [loadedStates, setLoadedStates] = React.useState<{ [key: string]: boolean }>({})
@@ -385,8 +345,7 @@ export function SocialIntelligenceSection({ aiAnalysis, nudgesData }: SocialInte
   React.useEffect(() => {
     if (aiAnalysis?.length > 0) {
       const initialOpen = aiAnalysis.flatMap((_, index) => [
-        `insights-${index}`,
-        `social-nudges-${index}`
+        `insights-${index}`
       ])
       setOpenAccordions(initialOpen)
     }
@@ -536,26 +495,7 @@ export function SocialIntelligenceSection({ aiAnalysis, nudgesData }: SocialInte
               </AccordionItem>
             )}
 
-            {/* Social Nudges */}
-            {nudgesData?.nudges && nudgesData.nudges.length > 0 && (
-              <AccordionItem value={`social-nudges-${index}`}>
-                <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  <AccordionHeader
-                    title="Social Nudges"
-                    sectionKey="social_nudges"
-                    onCopy={(e) => {
-                      e.stopPropagation()
-                      if (nudgesData?.nudges) {
-                        copyToClipboard(nudgesData.nudges.join('\n'), 'Social Nudges')
-                      }
-                    }}
-                  />
-                </AccordionTrigger>
-                <AccordionContent>
-                  {nudgesData.nudges && <NudgesContent nudges={nudgesData.nudges} fontSizeClass={fontSizeClass} />}
-                </AccordionContent>
-              </AccordionItem>
-            )}
+
 
             {/* Final Assessment */}
             {analysis.final_assessment && (

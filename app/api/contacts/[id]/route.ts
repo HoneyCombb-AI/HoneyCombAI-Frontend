@@ -26,11 +26,7 @@ export interface DrawerContactSignal {
   is_custom: boolean;
 }
 
-export interface DrawerContactNudge {
-  id: string;
-  nudges: string[] | null;
-  created_at: string;
-}
+
 
 export interface DrawerAIAnalysis {
   id: string;
@@ -80,13 +76,12 @@ export interface DrawerContact {
   instagram_handle: string | null;
   languages: string[] | null;
   updated_at: string;
-  istracked: boolean;
+
   primary_analysis_completed: boolean;
   primary_analysis_requested: boolean;
   temperature: 'hot' | 'warm' | 'cold' | null;
   signals: DrawerContactSignal[];
-  nudges: DrawerContactNudge[];
-  topics: string[];
+
   ai_analysis: DrawerAIAnalysis[];
   social_activity: DrawerSocialActivity | null;
 }
@@ -105,7 +100,7 @@ export async function GET(
     }
 
     const supabase = await createClient();
-    
+
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -156,8 +151,7 @@ export async function GET(
     const formattedContact: DrawerContact = {
       ...contact,
       signals: contact.signals || [],
-      nudges: contact.nudges || [],
-      topics: contact.topics || [],
+
       ai_analysis: contact.ai_analysis || [],
       social_activity: contact.social_activity || null
     };
