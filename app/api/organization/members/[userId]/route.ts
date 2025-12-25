@@ -14,7 +14,7 @@ interface MembershipWithOrganization {
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {

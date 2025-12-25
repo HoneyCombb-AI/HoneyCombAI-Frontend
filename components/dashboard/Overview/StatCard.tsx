@@ -12,7 +12,7 @@ interface StatCardProps {
     trend?: "up" | "down" | "neutral";
 }
 
-export function StatCard({ title, value, icon: Icon, description, className, trend }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, description, className, trend: _trend }: StatCardProps) {
     // Determine if value is a number or a string that looks like a number percentage
     const isNumber = typeof value === 'number';
     const numValue = isNumber ? value as number : 0;

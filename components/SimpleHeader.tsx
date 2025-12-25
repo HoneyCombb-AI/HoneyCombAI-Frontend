@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import React, { JSX } from "react";
+import { JSX } from "react";
 import Link from "next/link";
 
 interface SimpleHeaderProps {

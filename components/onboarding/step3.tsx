@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { UseFormRegister, FieldErrors } from "react-hook-form"
 import { Lightbulb } from "lucide-react"
 import { motion } from "motion/react"

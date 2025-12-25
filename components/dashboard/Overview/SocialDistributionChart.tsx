@@ -53,7 +53,7 @@ export function SocialDistributionChart({ title, data, type = "list", colors = D
                         dataKey="value"
                         stroke="none"
                     >
-                        {data.map((entry, index) => (
+                        {data.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                         ))}
                     </Pie>

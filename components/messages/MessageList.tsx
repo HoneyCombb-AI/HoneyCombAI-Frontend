@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock } from "lucide-react";
-import { getSignalBadgeColor } from '@/lib/ContactUtils';
 import Image from 'next/image';
 
 export interface OutreachMessage {
