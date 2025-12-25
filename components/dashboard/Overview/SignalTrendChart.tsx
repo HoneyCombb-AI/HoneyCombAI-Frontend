@@ -60,7 +60,8 @@ export function SignalTrendChart({ data }: SignalTrendChartProps) {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} strokeOpacity={0.1} />
                                 <XAxis dataKey="date" hide />
-                                <YAxis hide />
+                                <YAxis yAxisId="left" hide />
+                                <YAxis yAxisId="right" hide />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', borderRadius: '8px' }}
                                     itemStyle={{ color: 'var(--foreground)' }}
@@ -73,6 +74,7 @@ export function SignalTrendChart({ data }: SignalTrendChartProps) {
                                     stroke="#8884d8"
                                     fillOpacity={1}
                                     fill="url(#colorCustom)"
+                                    yAxisId="left"
                                 />
                                 <Area
                                     type="monotone"
@@ -81,6 +83,7 @@ export function SignalTrendChart({ data }: SignalTrendChartProps) {
                                     stroke="#82ca9d"
                                     fillOpacity={1}
                                     fill="url(#colorSystem)"
+                                    yAxisId="right"
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
