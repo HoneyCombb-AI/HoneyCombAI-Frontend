@@ -114,7 +114,8 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   );
   const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
   const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
-  const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
   const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
@@ -241,50 +242,8 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     setSelectedCompanies(new Map());
   };
 
-  // Optimized company states calculation using useMemo
-  const companyStates = useMemo(() => {
-    const selectedCompaniesArray = Array.from(selectedCompanies.entries());
 
-    const states = selectedCompaniesArray.reduce((acc, [, data]) => {
-      acc.total++;
 
-      // Company enrichment eligibility states
-      if (!data.company_analysis_completed && !data.company_analysis_requested) {
-        acc.eligibleForCompanyEnrichment++;
-      } else {
-        acc.ineligibleForCompanyEnrichment++;
-      }
-
-      // Tracking states
-      if (data.istracked) {
-        acc.tracked++;
-      } else {
-        acc.untracked++;
-      }
-
-      return acc;
-    }, {
-      total: 0,
-      eligibleForCompanyEnrichment: 0,
-      ineligibleForCompanyEnrichment: 0,
-      tracked: 0,
-      untracked: 0
-    });
-
-    return {
-      // Basic counts
-      totalSelected: states.total,
-
-      // Company enrichment states
-      eligibleCompanyEnrichmentCount: states.eligibleForCompanyEnrichment,
-      ineligibleCompanyEnrichmentCount: states.ineligibleForCompanyEnrichment,
-      hasEligibleForCompanyEnrichment: states.eligibleForCompanyEnrichment > 0,
-
-      // Tracking states
-      trackedCount: states.tracked,
-      untrackedCount: states.untracked,
-    };
-  }, [selectedCompanies]);
 
   // Company selection handlers
   const handleCompanySelect = (companyId: string, companyData: CompanyValidationData) => {
@@ -316,70 +275,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     });
   };
 
-  const handleEnrichmentAction = async (type: "company_enrichment") => {
-    if (selectedCompanies.size === 0) {
-      toast.error("No companies selected for enrichment");
-      return;
-    }
 
-    // Get eligible company IDs based on enrichment type
-    const selectedCompaniesArray = Array.from(selectedCompanies.entries());
-    const eligibleCompanyIds = selectedCompaniesArray
-      .filter(([, data]) => !data.company_analysis_completed && !data.company_analysis_requested)
-      .map(([id]) => id);
-
-    if (eligibleCompanyIds.length === 0) {
-      toast.error("No eligible companies selected for enrichment");
-      return;
-    }
-
-    try {
-      setEnrichmentLoading(true);
-
-      const response = await axios.post("/api/companies/enrichment", {
-        entity_ids: eligibleCompanyIds,
-        entity_type: "company_id",
-        task_type: type
-      });
-
-      if (response.data.success) {
-        toast.success(
-          `${response.data.message}${response.data.tokens_used ? ` (${response.data.tokens_used} tokens used)` : ""
-          }`
-        );
-
-        // Clear selected companies after successful enrichment
-        setSelectedCompanies(new Map());
-        fetchDashboardData()
-        // Log request ID for tracking if available
-        if (response.data.request_id) {
-          console.log("Enrichment Request ID:", response.data.request_id);
-        }
-      } else {
-        // Handle API success:false responses
-        toast.error(response.data.message || "Enrichment request failed");
-      }
-    } catch (error) {
-      console.error("Enrichment request failed:", error);
-
-      if (axios.isAxiosError(error) && error.response?.data) {
-        const errorData = error.response.data;
-
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          // Show specific error messages
-          errorData.errors.forEach((err: { message?: string }) => {
-            toast.error(err.message || "Unknown error occurred");
-          });
-        } else {
-          toast.error(errorData.message || "Enrichment request failed");
-        }
-      } else {
-        toast.error("Network error. Please try again.");
-      }
-    } finally {
-      setEnrichmentLoading(false);
-    }
-  };
 
   const handleExportToCSV = async () => {
     if (selectedCompanies.size === 0) {
@@ -482,7 +378,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     }
 
     try {
-      setEnrichmentLoading(true);
+      setDeleteLoading(true);
 
       const response = await axios.post('/api/companies/delete', {
         company_ids: selectedCompanyIds
@@ -516,43 +412,11 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         toast.error("Network error. Please try again.");
       }
     } finally {
-      setEnrichmentLoading(false);
+      setDeleteLoading(false);
     }
   };
 
-  const handleTrackingToggle = async () => {
-    if (selectedCompanies.size === 0) {
-      toast.error("No companies selected for tracking update");
-      return;
-    }
 
-    try {
-      setEnrichmentLoading(true);
-      const selectedCompaniesArray = Array.from(selectedCompanies.entries());
-
-      const response = await axios.post("/api/contacts/tracking", {
-        company_ids: selectedCompaniesArray.map(([id]) => id),
-        action: "toggle"
-      });
-
-      if (response.data.success) {
-        toast.success(response.data.message || "Successfully updated tracking status");
-        setSelectedCompanies(new Map());
-        fetchDashboardData();
-      } else {
-        toast.error(response.data.message || "Failed to update tracking status");
-      }
-    } catch (error) {
-      console.error('Tracking update failed:', error);
-      if (axios.isAxiosError(error) && error.response?.data) {
-        toast.error(error.response.data.message || "Failed to update tracking status");
-      } else {
-        toast.error("Network error. Please try again.");
-      }
-    } finally {
-      setEnrichmentLoading(false);
-    }
-  };
 
   // Check if any filters are applied
   const hasFiltersApplied = () => {
@@ -786,49 +650,14 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </span>
               </Button>
 
-              {/* Add Enrichment Button */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild >
-                  <Button
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium h-9"
-                    disabled={enrichmentLoading}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">
-                      {enrichmentLoading ? "Processing..." : "Add enrichment"}
-                    </span>
-                    <span className="sm:hidden">
-                      {enrichmentLoading ? "Processing..." : "Enrich"}
-                    </span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {companyStates.hasEligibleForCompanyEnrichment && (
-                    <DropdownMenuItem
-                      onSelect={() => handleEnrichmentAction("company_enrichment")}
-                    >
-                      Company Enrichment ({companyStates.eligibleCompanyEnrichmentCount})
-                    </DropdownMenuItem>
-                  )}
-                  {!companyStates.hasEligibleForCompanyEnrichment && selectedCompanies.size > 0 && (
-                    <DropdownMenuItem disabled>
-                      Company Enrichment ({companyStates.ineligibleCompanyEnrichmentCount} ineligible)
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onSelect={handleTrackingToggle}>
-                    Toggle Tracking ({[companyStates.trackedCount > 0 ? `${companyStates.trackedCount} to disable` : null, companyStates.untrackedCount > 0 ? `${companyStates.untrackedCount} to enable` : null].filter(Boolean).join(', ')})
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+
 
               {/* Delete Button */}
               <Button
                 size="sm"
                 variant="destructive"
                 className="gap-2 text-sm h-9"
-                disabled={enrichmentLoading}
+                disabled={deleteLoading}
                 onClick={handleDeleteCompanies}
               >
                 <Trash2 className="h-4 w-4" />

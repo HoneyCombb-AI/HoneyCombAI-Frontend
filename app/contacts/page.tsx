@@ -16,7 +16,6 @@ import {
 import {
   Building2,
   ChevronDown,
-  Plus,
   Search,
   MapPin,
   SortAsc,
@@ -116,7 +115,8 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
   const [outreachDrawerOpen, setOutreachDrawerOpen] = useState(false);
   const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
-  const [enrichmentLoading, setEnrichmentLoading] = useState<boolean>(false);
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
   const displayData = isJoyrideMode ? SAMPLE_CONTACT_DATA : dashboardState.data;
@@ -241,52 +241,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     setSelectedContacts(new Map());
   };
 
-  // Optimized contact states calculation using useMemo
-  const contactStates = useMemo(() => {
-    const selectedContactsArray = Array.from(selectedContacts.entries());
-
-    const states = selectedContactsArray.reduce((acc, [, data]) => {
-      acc.total++;
-      if (!data.primaryAnalysisCompleted && !data.primaryAnalysisRequested) acc.eligibleForEnrichment++;
-      else acc.ineligibleForEnrichment++;
-      return acc;
-    }, {
-      total: 0,
-      eligibleForEnrichment: 0,
-      ineligibleForEnrichment: 0,
-    });
-
-    return {
-      totalSelected: states.total,
-      eligibleCount: states.eligibleForEnrichment,
-      ineligibleCount: states.ineligibleForEnrichment,
-      hasEligible: states.eligibleForEnrichment > 0,
-      hasIneligible: states.ineligibleForEnrichment > 0,
-      allEligible: states.total > 0 && states.eligibleForEnrichment === states.total,
-      allIneligible: states.total > 0 && states.ineligibleForEnrichment === states.total,
-      enrichmentIsMixed: states.eligibleForEnrichment > 0 && states.ineligibleForEnrichment > 0
-    };
-  }, [selectedContacts]);
-
-
-
-  const getEnrichmentButtonText = () => {
-    if (contactStates.totalSelected === 0) return "Complete Contact Enrichment";
-
-    if (contactStates.hasEligible) {
-      if (contactStates.enrichmentIsMixed) {
-        return `Complete Contact Enrichment (${contactStates.eligibleCount} eligible)`;
-      } else {
-        return `Complete Contact Enrichment (${contactStates.eligibleCount})`;
-      }
-    }
-    return "Complete Contact Enrichment";
-  };
-
-  const getOutreachButtonText = () => {
-    if (contactStates.totalSelected === 0) return "Generate Outreach";
-    return `Generate Outreach (${contactStates.totalSelected})`;
-  };
 
   // Contact selection handlers
   const handleContactSelect = (contactId: string, contactData: ContactValidationData) => {
@@ -316,94 +270,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       }
       return newMap;
     });
-  };
-
-  const handleEnrichmentAction = async (
-    type: "complete_contact_workflow" | "outreach_enrichment"
-  ) => {
-    if (selectedContacts.size === 0) {
-      toast.error("No contacts selected for enrichment");
-      return;
-    }
-
-    // Get eligible contact IDs based on action type
-    const selectedContactsArray = Array.from(selectedContacts.entries());
-    let eligibleContactIds: string[];
-
-    if (type === "outreach_enrichment") {
-      // For outreach generation, only contacts with completed primary analysis
-      eligibleContactIds = selectedContactsArray
-        .filter(([, data]) => data.primaryAnalysisCompleted)
-        .map(([id]) => id);
-
-      if (eligibleContactIds.length === 0) {
-        toast.error("No eligible contacts selected for outreach generation");
-        return;
-      }
-
-      // Open the outreach drawer instead of directly calling the API
-      setOutreachDrawerOpen(true);
-      return;
-    } else {
-      // For complete contact workflow, contacts without completed/requested primary analysis
-      eligibleContactIds = selectedContactsArray
-        .filter(([, data]) => !data.primaryAnalysisCompleted && !data.primaryAnalysisRequested)
-        .map(([id]) => id);
-
-      if (eligibleContactIds.length === 0) {
-        toast.error("No eligible contacts selected for enrichment");
-        return;
-      }
-    }
-
-    try {
-      setEnrichmentLoading(true);
-
-      const response = await axios.post("/api/contacts/enrichment", {
-        entity_ids: eligibleContactIds,
-        entity_type: "contact_id",
-        task_type: type
-      });
-
-      if (response.data.success) {
-        toast.success(`${response.data.message}${response.data.tokens_used ? `. This will consume ${response.data.tokens_used} tokens upon completion` : ""}`);
-        setSelectedContacts(new Map());
-
-        if (response.data.request_id) {
-          const requestData = {
-            request_id: response.data.request_id,
-            timestamp: new Date().toISOString(),
-            task_type: type,
-            contact_count: eligibleContactIds.length,
-            tokens_allocated: response.data.tokens_used || 0
-          };
-          const existingRequests = JSON.parse(localStorage.getItem('enrichmentRequests') || '[]');
-          existingRequests.push(requestData);
-
-          localStorage.setItem('enrichmentRequests', JSON.stringify(existingRequests));
-          fetchDashboardData()
-        }
-      } else {
-        toast.error(response.data.message || "Enrichment request failed");
-      }
-    } catch (error) {
-      console.error("Enrichment request failed:", error);
-
-      if (axios.isAxiosError(error) && error.response?.data) {
-        const errorData = error.response.data;
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          errorData.errors.forEach((err: { message?: string }) => {
-            toast.error(err.message || "Unknown error occurred");
-          });
-        } else {
-          toast.error(errorData.message || "Enrichment request failed");
-        }
-      } else {
-        toast.error("Network error. Please try again.");
-      }
-    } finally {
-      setEnrichmentLoading(false);
-    }
   };
 
 
@@ -506,7 +372,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     }
 
     try {
-      setEnrichmentLoading(true);
+      setDeleteLoading(true);
 
       const response = await axios.post('/api/contacts/delete', {
         contact_ids: selectedContactIds
@@ -540,7 +406,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         toast.error("Network error. Please try again.");
       }
     } finally {
-      setEnrichmentLoading(false);
+      setDeleteLoading(false);
     }
   };
 
@@ -776,48 +642,14 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </span>
               </Button>
 
-              {/* Add Enrichment Button */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild >
-                  <Button
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700 text-white gap-2 font-medium h-9"
-                    disabled={enrichmentLoading}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">
-                      {enrichmentLoading ? "Processing..." : "Add enrichment"}
-                    </span>
-                    <span className="sm:hidden">
-                      {enrichmentLoading ? "Processing..." : "Enrich"}
-                    </span>
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {contactStates.hasEligible && (
-                    <DropdownMenuItem
-                      onSelect={() => handleEnrichmentAction("complete_contact_workflow")}
-                    >
-                      {getEnrichmentButtonText()}
-                    </DropdownMenuItem>
-                  )}
-                  {selectedContacts.size > 0 && (
-                    <DropdownMenuItem
-                      onSelect={() => handleEnrichmentAction("outreach_enrichment")}
-                    >
-                      {getOutreachButtonText()}
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+
 
               {/* Delete Button */}
               <Button
                 size="sm"
                 variant="destructive"
                 className="gap-2 text-sm h-9"
-                disabled={enrichmentLoading}
+                disabled={deleteLoading}
                 onClick={handleDeleteContacts}
               >
                 <Trash2 className="h-4 w-4" />
