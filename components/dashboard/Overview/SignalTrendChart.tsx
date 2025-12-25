@@ -64,7 +64,7 @@ export function SignalTrendChart({ data }: SignalTrendChartProps) {
                                 <Tooltip
                                     contentStyle={{ backgroundColor: 'var(--background)', borderColor: 'var(--border)', borderRadius: '8px' }}
                                     itemStyle={{ color: 'var(--foreground)' }}
-                                    labelFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    labelStyle={{ display: 'none' }}
                                 />
                                 <Area
                                     type="monotone"

@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useEffect, useState } from "react";
 
 interface EngagementStyle {
     name: string;
@@ -13,8 +14,14 @@ interface EngagementStyleChartProps {
 }
 
 export function EngagementStyleChart({ data }: EngagementStyleChartProps) {
+    const [animated, setAnimated] = useState(false);
     const hasData = data && data.length > 0 && data.some(item => item.value > 0);
     const totalValue = hasData ? data.reduce((sum, item) => sum + item.value, 0) : 0;
+
+    useEffect(() => {
+        const timer = setTimeout(() => setAnimated(true), 100);
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
         <Card className="col-span-2 border-none bg-transparent shadow-none">
@@ -54,9 +61,16 @@ export function EngagementStyleChart({ data }: EngagementStyleChartProps) {
                                     <div key={index} className="space-y-1">
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="text-muted-foreground">{item.name}</span>
-                                            <span className="font-medium">{item.value}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium">{item.value}</span>
+                                                <span className="text-xs text-muted-foreground">({percentage.toFixed(0)}%)</span>
+                                            </div>
                                         </div>
-                                        <Progress value={percentage} className="h-2" />
+                                        <Progress
+                                            value={animated ? percentage : 0}
+                                            className="h-2 transition-all duration-1000 ease-out"
+                                            indicatorClassName="bg-primary/80 transition-all duration-1000 ease-out"
+                                        />
                                     </div>
                                 );
                             })}

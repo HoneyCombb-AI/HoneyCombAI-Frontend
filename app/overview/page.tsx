@@ -119,7 +119,7 @@ export default async function OverviewPage() {
                 />
 
                 <SocialDistributionChart
-                    title="Trend Direction"
+                    title="Social Trend Direction"
                     data={socialMetrics.trend_direction}
                     type="bar"
                     colors={['#10b981', '#ef4444', '#6b7280']} // Green, Red, Gray
