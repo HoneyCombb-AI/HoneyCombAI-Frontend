@@ -718,7 +718,15 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
 
   // Memoize formatted date
   const formattedDate = React.useMemo(
-    () => format(parseISO(social_activity.updated_at), "PPP"),
+    () => {
+      if (!social_activity.updated_at) return "N/A"
+      try {
+        return format(parseISO(social_activity.updated_at), "PPP")
+      } catch (error) {
+        console.error("Error formatting date:", error)
+        return "Invalid Date"
+      }
+    },
     [social_activity.updated_at]
   )
 

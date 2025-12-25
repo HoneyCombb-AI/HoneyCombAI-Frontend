@@ -12,6 +12,7 @@ import {
   Building2,
   Network,
   SendHorizontal,
+  LayoutDashboard,
 } from "lucide-react";
 
 import {
@@ -47,6 +48,12 @@ import { toast } from "sonner";
 
 // Menu items
 const items = [
+  {
+    title: "Overview",
+    icon: LayoutDashboard, // Using LayoutDashboard
+    url: "/overview",
+    hasChevron: false,
+  },
   {
     title: "Contacts",
     icon: Users,
@@ -87,7 +94,7 @@ const items = [
 
 export function AppSidebar() {
   const { user, signOut } = useAuth();
-  const { unreadCount } = useNotifications(); 
+  const { unreadCount } = useNotifications();
   const pathname = usePathname();
   const router = useRouter();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -99,12 +106,12 @@ export function AppSidebar() {
   const handleSignOut = async () => {
     router.replace("/");
     signOut()
-    .then(() => {
-      toast.success("Signed out successfully");
-    })
-    .catch(() => {
-      toast.error("Sign out failed");
-    });
+      .then(() => {
+        toast.success("Signed out successfully");
+      })
+      .catch(() => {
+        toast.error("Sign out failed");
+      });
   };
 
   // Get user display name and email
