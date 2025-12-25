@@ -26,43 +26,56 @@ export interface DrawerContactSignal {
   is_custom: boolean;
 }
 
-export interface DrawerContactNudge {
-  id: string;
-  nudges: string[] | null;
-  created_at: string;
-}
+
 
 export interface DrawerAIAnalysis {
   id: string;
-  account_overview: { summary: string; key_details: string[] } | null;
-  contact_insights: { summary: string; detailed_insights: string[] } | null;
-  why_reach_out: Record<string, string | string[]> | null;
-  final_assessment: string | null;
-  strategic_recommendations: string[] | null;
+  created_at: string;
   confidence_score: number | null;
   confidence_reasoning: string | null;
-  created_at: string;
+
+  // Account Overview
+  role: string | null;
+  recent_developments: string[] | string | null; // Can be stringified JSON
+  strategic_priorities: string[] | string | null; // Can be stringified JSON
+  network: string | null;
+
+  // Contact Insights
+  contact_insights_summary: string | null;
+  professional_interests: string | null;
+  communication_style: string | null;
+  decision_indicators: string | null;
+  motivations_triggers: string | null;
+  influence_level: string | null;
+
+  // Why Reach Out
+  buying_signals: string | null;
+  engagement_hooks: string | null;
+  timing_relevance: string | null;
+  account_relevance: string | null;
+  current_priorities: string | null;
+  explicit_pain_points: string | null;
+
+  // Legacy fields (kept optional to avoid breaking if referenced elsewhere strictly, though we should remove use)
+  messaging_tone?: string | null;
+  themes_to_use?: string | null;
 }
 
 export interface DrawerSocialActivity {
   activity_level: string;
-  activity_score: number;
-  engagement_score: number;
-  most_used_platform_by_time: string | null;
-  most_engaged_platform: string | null;
-  instagram_time_minutes: number;
-  linkedin_time_minutes: number;
-  twitter_time_minutes: number;
-  instagram_engagement_score: number;
-  linkedin_engagement_score: number;
-  twitter_engagement_score: number;
-  instagram_posts_per_day: number;
-  linkedin_posts_per_day: number;
-  twitter_posts_per_day: number;
-  instagram_best_time: string | null;
-  linkedin_best_time: string | null;
-  twitter_best_time: string | null;
-  updated_at: string;
+  engagement_style: string;
+  consistency: string;
+  trend_direction: string;
+  trend_change_percent: number;
+  primary_active_days: string[] | string; // Handle potential JSON parsing differences
+  best_time_window_utc: string;
+  total_actions: number;
+  avg_weekly_actions: number;
+  outward_inward_ratio: number;
+  weekend_activity_ratio: number;
+  consistency_score: number;
+  heatmap: Record<string, Record<string, number>>;
+  forecasted_at: string;
 }
 
 export interface DrawerContact {
@@ -80,18 +93,17 @@ export interface DrawerContact {
   instagram_handle: string | null;
   languages: string[] | null;
   updated_at: string;
-  istracked: boolean;
+
   primary_analysis_completed: boolean;
   primary_analysis_requested: boolean;
   temperature: 'hot' | 'warm' | 'cold' | null;
   signals: DrawerContactSignal[];
-  nudges: DrawerContactNudge[];
-  topics: string[];
+
   ai_analysis: DrawerAIAnalysis[];
   social_activity: DrawerSocialActivity | null;
 }
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -105,7 +117,7 @@ export async function GET(
     }
 
     const supabase = await createClient();
-    
+
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -156,8 +168,7 @@ export async function GET(
     const formattedContact: DrawerContact = {
       ...contact,
       signals: contact.signals || [],
-      nudges: contact.nudges || [],
-      topics: contact.topics || [],
+
       ai_analysis: contact.ai_analysis || [],
       social_activity: contact.social_activity || null
     };

@@ -1,6 +1,5 @@
 "use client";
 import React, { Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -115,8 +114,6 @@ const OutlookLogo = () => (
 );
 
 const IntegrationContent: React.FC = () => {
-  const searchParams = useSearchParams();
-  const router = useRouter();
   const [isConnected, setIsConnected] = React.useState(false);
   const [connectedEmail, setConnectedEmail] = React.useState<string | null>(
     null

@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: Request) {
+export async function GET(_req: NextRequest) {
     try {
-        const { searchParams } = new URL(req.url);
         // You can pass 'force_login=true' if you want to force prompt="select_account" or "login"
         // For now, we'll just stick to standard flow.
 

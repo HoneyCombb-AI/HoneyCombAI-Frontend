@@ -45,14 +45,13 @@ export interface DashboardContact {
   full_name: string;
   title: string | null;
   city: string | null;
-  state: string | null;
-  isTracked : boolean;
-  primaryAnalysisCompleted : boolean;
-  primaryAnalysisRequested : boolean;
-  hasNotes : boolean;
-  temperature: 'hot' | 'warm' | 'cold' | null;
   country: string | null;
   profile_picture: string | null;
+  temperature: 'hot' | 'warm' | 'cold' | null;
+  contact_sort_score: number | null;
+  primaryAnalysisCompleted: boolean;
+  primaryAnalysisRequested: boolean;
+  hasNotes: boolean;
   company: MinimalCompany | null;
   signals: ContactSignal[];
   tags: ContactTag[];
@@ -69,7 +68,7 @@ export interface PaginationInfo {
 }
 
 export interface CompanyGroupResponse {
-  companies: Array<MinimalCompany & { 
+  companies: Array<MinimalCompany & {
     contacts: DashboardContact[];
     contactCount: number;
   }>;
@@ -119,16 +118,16 @@ function getPaginationInfo(page: number, limit: number, total: number): Paginati
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    
+
     // Parse query parameters
-    const groupBy = searchParams.get('groupBy') || 'company'; 
-    const locationType = searchParams.get('locationType') || 'country'; 
+    const groupBy = searchParams.get('groupBy') || 'company';
+    const locationType = searchParams.get('locationType') || 'country';
     const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const sortBy = searchParams.get('sortBy') || 'name';
-    const sortOrder = searchParams.get('sortOrder') || 'asc'; 
-    
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
+
     // Validate pagination parameters
     if (page < 1 || limit < 1 || limit > 100) {
       return NextResponse.json(
@@ -138,7 +137,7 @@ export async function GET(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    
+
     // If search is provided, handle search functionality
     if (search.trim()) {
       return handleSearch(supabase, search, page, limit, sortBy, sortOrder);

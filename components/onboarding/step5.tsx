@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { CheckCircle } from "lucide-react"
 import { motion } from "motion/react"
 

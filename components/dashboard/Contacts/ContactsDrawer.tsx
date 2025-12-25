@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Building, Clock, Languages, Instagram } from "lucide-react"
+import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Building, Clock, Languages, Instagram, User } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { parseISO, format } from "date-fns"
 import axios from "axios"
@@ -18,10 +18,10 @@ import {
 import { DashboardContact } from "@/app/api/contacts/route"
 import { DrawerContact } from "@/app/api/contacts/[id]/route"
 import { Badge } from "@/components/ui/badge"
-import { WhyReachOutSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
-import { SignalState } from "../Signal-state"
+import { WhyReachOutStandalone, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
+import { IntentSignalsSection } from "./IntentSignalsSection"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
-import { getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
+
 
 
 interface DrawerDemoProps {
@@ -31,8 +31,8 @@ interface DrawerDemoProps {
   selectedContact: DashboardContact;
 }
 const customDrawerStyles = {
-  width: '50vw',
-  maxWidth: '55vw'
+  width: '65vw',
+  maxWidth: '70vw'
 };
 
 export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }: DrawerDemoProps) {
@@ -100,7 +100,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
       <DrawerContent style={customDrawerStyles}>
 
         <div className="mx-auto w-full h-screen overflow-y-auto">
-          <DrawerHeader className="sticky top-0 bg-white z-10 border-b">
+          <DrawerHeader className="sticky top-0 bg-white z-[60] border-b">
             <DrawerTitle>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -137,10 +137,10 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-gray-200 bg-gray-50/50">
                         <div
                           className={`w-1.5 h-1.5 rounded-full ${drawerContact.temperature === 'hot'
-                              ? 'bg-red-500'
-                              : drawerContact.temperature === 'warm'
-                                ? 'bg-orange-400'
-                                : 'bg-blue-400'
+                            ? 'bg-red-500'
+                            : drawerContact.temperature === 'warm'
+                              ? 'bg-orange-400'
+                              : 'bg-blue-400'
                             }`}
                         />
                         <span className="text-xs text-gray-600 font-medium">
@@ -169,25 +169,15 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                         </span>
                       </div>
                     )}
-
-                    {/* Tracking Status */}
-                    {drawerContact.istracked && (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-purple-200 bg-purple-50/50">
-                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                        <span className="text-xs text-purple-700 font-medium">
-                          Tracked
-                        </span>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
             </DrawerTitle>
             <div className="text-muted-foreground text-sm">
               <div className="flex w-full justify-between items-center">
-                <div className="flex items-center gap-2">
+                <div className="flex items-end">
                   <div
-                    className="text-md font-semibold text-gray-600"
+                    className="text-md font-semibold text-gray-600 line-clamp-2 max-w-[60%]"
                     title={selectedContact.title || "No title"}
                   >
                     {selectedContact.title || ""}
@@ -200,33 +190,6 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                     </>
                   )}
                 </div>
-
-                {/* Company Redirect */}
-                {selectedContact.company && (
-                  <div className="cursor-pointer" onClick={() => window.open(`/dashboard/companies/${selectedContact.company_id}`, '_blank')} >
-                    <div className="w-8 h-8 rounded relative overflow-hidden flex-shrink-0">
-                      {selectedContact.company?.logo_url ? (
-                        <Image
-                          src={selectedContact.company.logo_url}
-                          alt="Company logo"
-                          fill
-                          sizes="120px"
-                          quality={100}
-                          className="object-cover rounded-full"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            const fallback = e.currentTarget.parentElement?.nextElementSibling as HTMLElement;
-                            if (fallback) fallback.style.display = 'flex';
-                          }}
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded bg-white border border-gray-200 flex items-center justify-center font-semibold">
-                          {selectedContact.company?.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </DrawerHeader>
@@ -235,31 +198,21 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
 
           ) : (
             <div className="px-6 py-2 space-y-3">
+              {/* Intent Signals - PRIMARY FOCUS */}
               {drawerContact?.signals && drawerContact.signals.length > 0 && (
                 <>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Badge className={getSectionHeadingBadgeColor('social_intents')}>
-                        Social Intents
-                      </Badge>
-                    </div>
-                    <SignalState
-                      signals={drawerContact.signals}
-                      contactId={drawerContact.id || selectedContact.id}
-                      showTooltips={true}
-                      detailed={true}
-                      className="gap-2"
-                    />
-                  </div>
+                  <IntentSignalsSection signals={drawerContact.signals} />
                   <Separator className="my-4" />
                 </>
               )}
+
               <div className="flex gap-4">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Badge className={getSectionHeadingBadgeColor('personal_information')}>
-                      Personal Information
-                    </Badge>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                      <User className="h-3.5 w-3.5" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900">Personal Information</h3>
                   </div>
 
                   {/* Two-column layout for personal information */}
@@ -269,9 +222,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                       <div className="flex items-center gap-3 text-sm text-gray-600">
                         <MapPin className="h-4 w-4" />
                         <span>
-                          {[drawerContact?.city || selectedContact.city, drawerContact?.state || selectedContact.state]
-                            .filter(Boolean)
-                            .join(", ") || "No location provided"}
+                          {drawerContact?.city || selectedContact.city || "No location provided"}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-gray-600">
@@ -380,28 +331,14 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                     </div>
                   </div>
 
-                  {/* Topics of Interest - Full width below the columns */}
-                  {drawerContact?.topics && drawerContact.topics.length > 0 && (
-                    <div className="space-y-2 mt-4">
-                      <h4 className="text-sm font-semibold text-gray-600">
-                        Topics of Interest
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {drawerContact.topics.map((topic: string, idx: number) => (
-                          <Badge key={idx} className="w-fit" variant="outline">
-                            {topic}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+
                 </div>
               </div>
               {/* Why Reach Out Section - Standalone */}
-              {drawerContact?.ai_analysis?.[0]?.why_reach_out && (
+              {drawerContact?.ai_analysis?.[0] && (
                 <>
                   <Separator className="my-5" />
-                  <WhyReachOutSection whyReachOutData={drawerContact.ai_analysis[0].why_reach_out} />
+                  <WhyReachOutStandalone analysis={drawerContact.ai_analysis[0]} />
                 </>
               )}
 
@@ -416,7 +353,6 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                   <Separator className="my-5" />
                   <SocialIntelligenceSection
                     aiAnalysis={drawerContact.ai_analysis}
-                    nudgesData={drawerContact?.nudges?.[0]}
                   />
                 </>
               )}
