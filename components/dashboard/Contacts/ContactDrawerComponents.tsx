@@ -526,7 +526,7 @@ export function SocialActivitySection({ social_activity }: SocialActivitySection
         <div className="grid grid-cols-3 gap-3">
           <div className="p-2 bg-white rounded border flex flex-col items-center justify-center text-center gap-1">
             <Clock className="w-4 h-4 text-blue-500 mb-1" />
-            <span className={`text-gray-500 uppercase tracking-wider font-medium ${fontSizeClass === 'text-lg' ? 'text-xs' : 'text-[10px]'}`}>Best Time</span>
+            <span className={`text-gray-500 uppercase tracking-wider font-medium ${fontSizeClass === 'text-lg' ? 'text-xs' : 'text-[10px]'}`}>Best Time (UTC)</span>
             <span className={`font-semibold ${fontSizeClass}`}>{social_activity.best_time_window_utc || "N/A"}</span>
           </div>
           <div className="p-2 bg-white rounded border flex flex-col items-center justify-center text-center gap-1">
