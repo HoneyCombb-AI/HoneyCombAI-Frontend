@@ -99,7 +99,7 @@ export function SocialDistributionChart({ title, data, type = "list", colors = D
     );
 
     return (
-        <Card className="col-span-1 border-none bg-transparent shadow-none h-full flex flex-col">
+        <Card className="col-span-1 border-none bg-transparent shadow-none h-full flex flex-col w-full">
             <CardHeader className="pl-0 pb-2">
                 <CardTitle className="text-sm font-semibold">{title}</CardTitle>
             </CardHeader>
