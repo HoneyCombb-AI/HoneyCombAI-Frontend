@@ -19,7 +19,8 @@ export function StatCard({ title, value, icon: Icon, description, className, tre
 
     // Check for percentage string like "85%"
     const isPercentage = typeof value === 'string' && value.endsWith('%');
-    const percentageValue = isPercentage ? parseInt(value as string) : 0;
+    const parsed = isPercentage ? parseInt(value as string, 10) : NaN;
+    const percentageValue = !isNaN(parsed) ? parsed : 0;
 
     return (
         <Card className={cn("overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:bg-accent/5 transition-colors", className)}>

@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { DrawerAIAnalysis, DrawerSocialActivity } from "@/app/api/contacts/[id]/route"
 import { Separator } from "@/components/ui/separator"
 import { parseISO, format } from "date-fns"
-import {  TrendingUp, TrendingDown, Activity, Zap, BarChart3, Clock, Calendar, Target } from "lucide-react"
+import { TrendingUp, TrendingDown, Activity, Zap, BarChart3, Clock, Calendar, Target, LucideIcon } from "lucide-react"
 import { Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -171,10 +171,7 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
 // WHY REACH OUT SECTION (STANDALONE) -- REWRITTEN FOR NEW FLAT DATA
 // ============================================================================
 
-export function WhyReachOutSection({ whyReachOutData: _whyReachOutData }: { whyReachOutData: any }) {
-  // Legacy component stub
-  return null;
-}
+
 
 export function WhyReachOutStandalone({ analysis }: { analysis: DrawerAIAnalysis }) {
   const { getFontSizeClass } = useFontSize()
@@ -213,7 +210,8 @@ Explicit Pain Points: ${analysis.explicit_pain_points || '-'}
           className="h-6 w-6 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded-full"
           onClick={() => {
             navigator.clipboard.writeText(copyText)
-            toast.success("Why Reach Out section copied")
+            .then(() => toast.success("Why Reach Out section copied"))
+            .catch(() => toast.error("Failed to copy to clipboard"))
           }}
         >
           <Copy className="h-3.5 w-3.5" />
@@ -337,7 +335,7 @@ const MetricCard = ({ label, value, subtext, icon: Icon, trend, trendValue, font
   label: string,
   value: string | number,
   subtext?: string,
-  icon: any,
+  icon: LucideIcon,
   trend?: 'up' | 'down' | 'neutral',
   trendValue?: string,
   fontSizeClass?: string

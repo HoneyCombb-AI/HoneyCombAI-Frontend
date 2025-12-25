@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, Zap, TrendingUp, Users, DollarSign, Bot, Globe, MessageSquare, ThumbsUp, Share2, FileText } from "lucide-react"
+import { ExternalLink, Zap, TrendingUp, Users, DollarSign, Bot, Globe, MessageSquare, ThumbsUp, Share2, FileText, LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import * as chrono from 'chrono-node'
 import { DrawerContactSignal } from "@/app/api/contacts/[id]/route"
@@ -23,7 +23,7 @@ interface ProcessedSignal {
     recencyCategory: 'veryRecent' | 'recent' | 'other'
     timeAgo: string
     sources: SourceItem[]
-    icon: any
+    icon: LucideIcon
 }
 
 // Simple sentence case helper
@@ -73,7 +73,7 @@ const getTimeAgo = (sourceDate: string | null | undefined): string => {
     if (diffHours < 24) return `${diffHours}h`
     if (diffDays < 7) return `${diffDays}d`
     if (diffDays < 30) return `${Math.floor(diffDays / 7)}w`
-    if (diffMonths < 12) return `${Math.floor(diffMonths / 12)}mo`
+    if (diffMonths < 12) return `${diffMonths}mo`
     return `${Math.floor(diffMonths / 12)}y`
 }
 
@@ -88,7 +88,7 @@ const getSourceIcon = (activityType?: string) => {
     }
 }
 
-const parseSources = (source: any): SourceItem[] => {
+const parseSources = (source: string | SourceItem | SourceItem[] | null | undefined): SourceItem[] => {
     if (!source) return []
     try {
         if (Array.isArray(source)) return source
