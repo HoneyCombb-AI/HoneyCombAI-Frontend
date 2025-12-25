@@ -115,7 +115,7 @@ const ContactRow = memo<{
               {contact.full_name || "Unknown"}
             </div>
             {contact.title && (
-              <div className="text-xs text-gray-500 mt-0.5" title={contact.title}>
+              <div className="text-xs text-gray-500 mt-0.5 line-clamp-2" title={contact.title}>
                 {contact.title}
               </div>
             )}
