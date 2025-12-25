@@ -145,7 +145,7 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                     <div className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border shadow-sm transition-colors",
+                        "flex h-5 w-7 shrink-0 items-center justify-center rounded-lg border shadow-sm transition-colors",
                         isCustom
                             ? "bg-amber-50 border-amber-100 text-amber-600"
                             : "bg-gray-50 border-gray-100 text-gray-500 group-hover:text-blue-600 group-hover:bg-blue-50 group-hover:border-blue-100"
