@@ -18,7 +18,7 @@ import {
 import { DashboardContact } from "@/app/api/contacts/route"
 import { DrawerContact } from "@/app/api/contacts/[id]/route"
 import { Badge } from "@/components/ui/badge"
-import { WhyReachOutSection, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
+import { WhyReachOutStandalone, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
 import { IntentSignalsSection } from "./IntentSignalsSection"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
 
@@ -362,10 +362,10 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                 </div>
               </div>
               {/* Why Reach Out Section - Standalone */}
-              {drawerContact?.ai_analysis?.[0]?.why_reach_out && (
+              {drawerContact?.ai_analysis?.[0] && (
                 <>
                   <Separator className="my-5" />
-                  <WhyReachOutSection whyReachOutData={drawerContact.ai_analysis[0].why_reach_out} />
+                  <WhyReachOutStandalone analysis={drawerContact.ai_analysis[0]} />
                 </>
               )}
 

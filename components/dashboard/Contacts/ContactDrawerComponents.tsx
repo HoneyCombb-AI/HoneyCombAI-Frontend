@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatTimeSpent, getActivityLevelBadgeColor, getSectionHeadingBadgeColor } from "@/lib/ContactUtils"
 import { parseISO, format } from "date-fns"
 import { cn } from "@/lib/utils"
-import { Instagram, LinkedinIcon, Twitter } from "lucide-react"
+import { Instagram, LinkedinIcon, Twitter, TrendingUp, TrendingDown, Activity, Zap, BarChart3, Clock, Calendar, Target } from "lucide-react"
 import { Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
@@ -118,214 +118,72 @@ const CopyButton = React.memo(({ onClick }: CopyButtonProps) => (
 ))
 CopyButton.displayName = 'CopyButton'
 
-interface AccordionHeaderProps {
-  title: string
-  sectionKey: string
-  onCopy: (e: React.MouseEvent) => void
+
+
+const safeparseList = (data: string | string[] | null): string[] => {
+  if (!data) return []
+  if (Array.isArray(data)) return data
+  try {
+    const parsed = JSON.parse(data)
+    if (Array.isArray(parsed)) return parsed
+    return [data]
+  } catch {
+    return [data]
+  }
 }
 
-const AccordionHeader = React.memo(({ title, sectionKey, onCopy }: AccordionHeaderProps) => (
-  <div className="flex items-center justify-between w-full">
-    <Badge className={getSectionHeadingBadgeColor(sectionKey)}>
-      {title}
-    </Badge>
-    <CopyButton onClick={onCopy} />
-  </div>
-))
-AccordionHeader.displayName = 'AccordionHeader'
+const DetailRow = ({ label, value, className = "" }: { label: string, value: string | null, className?: string }) => {
+  if (!value) return null
 
-interface AccountOverviewContentProps {
-  overview: { summary: string; key_details: string[] } | null
-  fontSizeClass: string
-}
-
-const AccountOverviewContent = React.memo(({ overview, fontSizeClass }: AccountOverviewContentProps) => {
-  const parsedDetails = React.useMemo(
-    () => (overview?.key_details || []).map(item => parseColonItem(item)),
-    [overview?.key_details]
-  )
-
-  if (!overview) return null
-
-  return (
-    <div className={`pt-2 space-y-3 text-black leading-relaxed ${fontSizeClass}`}>
-      {overview.summary && <p>{overview.summary}</p>}
-
-      {parsedDetails.length > 0 && (
-        <ul className="space-y-2">
-          {parsedDetails.map((item, idx) => (
-            <li key={idx} className="leading-relaxed">
-              {item.label && <span className="font-semibold text-gray-800">{item.label}: </span>}
-              <span>{item.value}</span>
+  const renderContent = () => {
+    // Handle bullet points (common in LLM output)
+    if (value.includes('•')) {
+      const items = value.split('•').map(s => s.trim()).filter(s => s.length > 0)
+      return (
+        <ul className="space-y-2 mt-1">
+          {items.map((item, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <span className="text-blue-500 mt-1.5 text-[6px] shrink-0">●</span>
+              <span>{item}</span>
             </li>
           ))}
         </ul>
-      )}
-    </div>
-  )
-})
-AccountOverviewContent.displayName = 'AccountOverviewContent'
-
-interface ContactInsightsContentProps {
-  insights: { summary: string; detailed_insights: string[] } | null
-  fontSizeClass: string
-}
-
-const ContactInsightsContent = React.memo(({ insights, fontSizeClass }: ContactInsightsContentProps) => {
-  const parsedInsights = React.useMemo(
-    () => (insights?.detailed_insights || []).map(item => parseColonItem(item)),
-    [insights?.detailed_insights]
-  )
-
-  if (!insights) return null
-
-  return (
-    <div className={`pt-2 space-y-3 ${fontSizeClass}`}>
-      {insights.summary && <p className="text-black leading-relaxed">{insights.summary}</p>}
-
-      {parsedInsights.length > 0 && (
-        <ul className="space-y-2">
-          {parsedInsights.map((item, i) => (
-            <li key={i} className="text-black leading-relaxed">
-              {item.label && <span className="font-semibold text-gray-800">{item.label}: </span>}
-              <span>{item.value}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-})
-ContactInsightsContent.displayName = 'ContactInsightsContent'
-
-interface WhyReachOutContentProps {
-  whyReachOut: Record<string, string | string[]> | null
-  fontSizeClass: string
-}
-
-const WhyReachOutContent = React.memo(({ whyReachOut, fontSizeClass }: WhyReachOutContentProps) => {
-  const entries = React.useMemo(() => parseWhyReachOutEntries(whyReachOut), [whyReachOut])
-
-  return (
-    <div className={`pt-2 space-y-4 ${fontSizeClass}`}>
-      {entries.map((entry, i) => (
-        <div key={i} className="flex flex-col gap-2">
-          <span className="text-sm font-semibold text-gray-800">{entry.key}</span>
-          <ul className="space-y-1 pl-1">
-            {entry.values.map((value, j) => (
-              <li key={j} className="text-black leading-relaxed flex items-start gap-2">
-                {entry.values.length > 1 && <span className="text-blue-600 text-xs mt-1">•</span>}
-                <span className={entry.values.length === 1 ? '' : 'flex-1'}>{value}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  )
-})
-WhyReachOutContent.displayName = 'WhyReachOutContent'
-
-interface FinalAssessmentContentProps {
-  text: string
-  fontSizeClass: string
-}
-
-const FinalAssessmentContent = React.memo(({ text, fontSizeClass }: FinalAssessmentContentProps) => {
-  return (
-    <div className={`pt-2 ${fontSizeClass}`}>
-      <p className="text-black leading-relaxed">{text}</p>
-    </div>
-  )
-})
-FinalAssessmentContent.displayName = 'FinalAssessmentContent'
-
-
-
-interface StrategicRecommendationsContentProps {
-  recommendations: string[] | null
-  fontSizeClass: string
-  isLoading: boolean
-  isLoaded: boolean
-}
-
-const StrategicRecommendationsContent = React.memo(({
-  recommendations,
-  fontSizeClass,
-  isLoading,
-  isLoaded
-}: StrategicRecommendationsContentProps) => {
-  const processedRecommendations = React.useMemo(
-    () => (recommendations || []).map(item => {
-      const colonIndex = item.indexOf(':')
-      return {
-        text: item,
-        colonIndex,
-        hasColon: colonIndex !== -1
-      }
-    }),
-    [recommendations]
-  )
-
-  if (isLoading) {
-    return (
-      <div className="space-y-3 pt-2">
-        <div className="flex items-center gap-2 text-sm text-blue-600">
-          <div className="flex gap-1">
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-          </div>
-          <span className="font-medium">AI is analyzing strategic recommendations...</span>
-        </div>
-        {(recommendations || []).map((_, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-2 animate-pulse"
-            style={{ animationDelay: `${i * 200}ms` }}
-          >
-            <div className="w-1 h-1 bg-gray-300 rounded-full mt-3 flex-shrink-0"></div>
-            <div className="flex-1 space-y-2">
-              <div className="h-3 bg-gray-200 rounded w-full"></div>
-              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    )
+      )
+    }
+    // Handle newlines
+    if (value.includes('\n')) {
+      return <div className="whitespace-pre-wrap">{value}</div>
+    }
+    return value
   }
 
   return (
-    <ul className="space-y-3 pt-2 transition-opacity duration-500 opacity-100">
-      {processedRecommendations.map((item, i) => (
-        <li
-          key={i}
-          className={`flex items-start gap-2 transform transition-all duration-300 ${fontSizeClass} ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-100'
-            }`}
-          style={{
-            transitionDelay: isLoaded ? `${i * 100}ms` : '0ms'
-          }}
-        >
-          <span className="text-blue-600 text-xs mt-1">•</span>
-          <span className="text-black leading-relaxed flex-1">
-            {item.hasColon ? (
-              <>
-                <span className="font-semibold">{item.text.slice(0, item.colonIndex + 1)}</span>
-                {item.text.slice(item.colonIndex + 1)}
-              </>
-            ) : (
-              item.text
-            )}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className={`text-sm ${className}`}>
+      <span className="font-semibold text-gray-700 block mb-0.5">{label}</span>
+      <span className={`text-gray-600 leading-relaxed text-sm block ${className}`}>{renderContent()}</span>
+    </div>
   )
-})
-StrategicRecommendationsContent.displayName = 'StrategicRecommendationsContent'
+}
+
+const ListSection = ({ label, items, className = "" }: { label: string, items: string[], className?: string }) => {
+  if (!items || items.length === 0) return null
+  return (
+    <div className={`space-y-1.5 ${className}`}>
+      <span className="font-semibold text-gray-700 text-sm block">{label}</span>
+      <ul className="list-disc list-outside ml-4 space-y-1">
+        {items.map((item, idx) => (
+          <li key={idx} className={`text-sm text-gray-600 leading-relaxed pl-1 ${className}`}>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 
 // ============================================================================
-// MAIN COMPONENT
+// SOCIAL INTELLIGENCE SECTION
 // ============================================================================
 
 interface SocialIntelligenceSectionProps {
@@ -334,246 +192,113 @@ interface SocialIntelligenceSectionProps {
 
 export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSectionProps) {
   const { getFontSizeClass } = useFontSize()
-  const [loadingStates, setLoadingStates] = React.useState<{ [key: string]: boolean }>({})
-  const [loadedStates, setLoadedStates] = React.useState<{ [key: string]: boolean }>({})
-  const [openAccordions, setOpenAccordions] = React.useState<string[]>([])
-  const accordionRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({})
-
   const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass])
 
-  // Initialize open accordions on mount
-  React.useEffect(() => {
-    if (aiAnalysis?.length > 0) {
-      const initialOpen = aiAnalysis.flatMap((_, index) => [
-        `insights-${index}`
-      ])
-      setOpenAccordions(initialOpen)
-    }
-  }, [aiAnalysis])
+  const [openAccordions, setOpenAccordions] = React.useState<string[]>([])
+  const analysis = aiAnalysis?.[0]
 
-  const handleAccordionChange = React.useCallback((values: string[]) => {
-    setOpenAccordions(prev => {
-      // Check if Strategic Recommendations is being opened
-      const strategicRecommendationsOpened = values.some(value =>
-        value.startsWith('recommendations-') && !prev.includes(value)
-      )
+  if (!analysis) return null
 
-      if (strategicRecommendationsOpened) {
-        // Close all other accordions and keep only Strategic Recommendations
-        const strategicValues = values.filter(value => value.startsWith('recommendations-'))
+  // -- Parse Complex Fields --
+  const recentDevelopments = safeparseList(analysis.recent_developments)
+  const strategicPriorities = safeparseList(analysis.strategic_priorities)
 
-        // Handle loading states for recommendations
-        strategicValues.forEach(value => {
-          if (!loadedStates[value] && !loadingStates[value]) {
-            setTimeout(() => {
-              const element = accordionRefs.current[value]
-              if (element) {
-                element.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'end',
-                  inline: 'nearest'
-                })
-              }
-            }, 100)
-
-            setLoadingStates(prevLoading => ({ ...prevLoading, [value]: true }))
-
-            setTimeout(() => {
-              setLoadingStates(prevLoading => ({ ...prevLoading, [value]: false }))
-              setLoadedStates(prevLoaded => ({ ...prevLoaded, [value]: true }))
-            }, 2500)
-          }
-        })
-
-        return strategicValues
-      }
-
-      // Normal accordion behavior
-      // Handle loading states for newly opened recommendations
-      values.forEach(value => {
-        if (value.startsWith('recommendations-') && !loadedStates[value] && !loadingStates[value]) {
-          setTimeout(() => {
-            const element = accordionRefs.current[value]
-            if (element) {
-              element.scrollIntoView({
-                behavior: 'smooth',
-                block: 'end',
-                inline: 'nearest'
-              })
-            }
-          }, 100)
-
-          setLoadingStates(prevLoading => ({ ...prevLoading, [value]: true }))
-
-          setTimeout(() => {
-            setLoadingStates(prevLoading => ({ ...prevLoading, [value]: false }))
-            setLoadedStates(prevLoaded => ({ ...prevLoaded, [value]: true }))
-          }, 2500)
-        }
-      })
-
-      return values
-    })
-  }, [loadedStates, loadingStates])
-
-  const handleCopy = React.useCallback((content: string[], section: string) => {
-    copyToClipboard(content.join('\n'), section)
-  }, [])
-
-  if (!aiAnalysis?.length) {
-    return null
-  }
+  // -- Data Grouping --
+  const accountOverviewHasData = analysis.role || recentDevelopments.length > 0 || strategicPriorities.length > 0 || analysis.network
+  const insightsHasData = analysis.contact_insights_summary || analysis.professional_interests || analysis.communication_style || analysis.decision_indicators || analysis.motivations_triggers || analysis.influence_level
 
   return (
-    <div className="space-y-4">
-      {aiAnalysis.map((analysis, index) => (
-        <div key={index} className="space-y-4">
-          {/* Header with tooltip */}
-          <div className="flex items-center justify-between">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge className={`${getSectionHeadingBadgeColor('social_intelligence')} cursor-help`}>
-                  Social Intelligence
-                </Badge>
-              </TooltipTrigger>
-              {analysis.confidence_reasoning && (
-                <TooltipContent className="max-w-md">
-                  <p className="text-sm py-1">{sentenceCase(analysis.confidence_reasoning)}</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </div>
+    <div className={`space-y-4 ${fontSizeClass}`}>
+      <div className="flex items-center justify-between">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge className={`${getSectionHeadingBadgeColor('social_intelligence')} cursor-help`}>
+              Social Intelligence
+            </Badge>
+          </TooltipTrigger>
+          {analysis.confidence_reasoning && (
+            <TooltipContent className="max-w-md">
+              <p className="text-sm py-1">{analysis.confidence_reasoning}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+        {analysis.confidence_score && (
+          <Badge variant="outline" className="text-xs">
+            {Number(analysis.confidence_score) * 100}% Confidence
+          </Badge>
+        )}
+      </div>
 
-          {/* Accordion for all sections */}
-          <Accordion
-            type="multiple"
-            className="w-full"
-            value={openAccordions}
-            onValueChange={handleAccordionChange}
-          >
-            {/* Account Overview */}
-            {analysis.account_overview && (
-              <AccordionItem value={`overview-${index}`}>
-                <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  <AccordionHeader
-                    title="Account Overview"
-                    sectionKey="account_overview"
-                    onCopy={(e) => {
-                      e.stopPropagation()
-                      const overview = analysis.account_overview
-                      if (!overview) return
-                      const text = `${overview.summary}\n\n${overview.key_details.join('\n')}`
-                      copyToClipboard(text, 'Account Overview')
-                    }}
-                  />
-                </AccordionTrigger>
-                <AccordionContent>
-                  <AccountOverviewContent overview={analysis.account_overview} fontSizeClass={fontSizeClass} />
-                </AccordionContent>
-              </AccordionItem>
-            )}
+      <Accordion type="single" collapsible className="w-full" onValueChange={(val) => setOpenAccordions(val ? [val] : [])}>
 
-            {/* Contact Insights */}
-            {analysis.contact_insights && (
-              <AccordionItem value={`insights-${index}`}>
-                <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  <AccordionHeader
-                    title="Contact Insights"
-                    sectionKey="contact_insights"
-                    onCopy={(e) => {
-                      e.stopPropagation()
-                      const insights = analysis.contact_insights
-                      if (!insights) return
-                      const text = `${insights.summary}\n\n${insights.detailed_insights.join('\n')}`
-                      copyToClipboard(text, 'Contact Insights')
-                    }}
-                  />
-                </AccordionTrigger>
-                <AccordionContent>
-                  <ContactInsightsContent insights={analysis.contact_insights} fontSizeClass={fontSizeClass} />
-                </AccordionContent>
-              </AccordionItem>
-            )}
+        {/* 1. Account Overview */}
+        {accountOverviewHasData && (
+          <AccordionItem value="account_overview">
+            <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline py-3">
+              Account Overview
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 space-y-4">
+              <DetailRow label="Role Context" value={analysis.role} className={fontSizeClass} />
+              <ListSection label="Recent Developments" items={recentDevelopments} className={fontSizeClass} />
+              <ListSection label="Strategic Priorities" items={strategicPriorities} className={fontSizeClass} />
+              <DetailRow label="Network & Influence" value={analysis.network} className={fontSizeClass} />
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
-
-
-            {/* Final Assessment */}
-            {analysis.final_assessment && (
-              <AccordionItem value={`final-assessment-${index}`}>
-                <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  <AccordionHeader
-                    title="Final Assessment"
-                    sectionKey="final_assessment"
-                    onCopy={(e) => {
-                      e.stopPropagation()
-                      copyToClipboard(analysis.final_assessment ?? '', 'Final Assessment')
-                    }}
-                  />
-                </AccordionTrigger>
-                <AccordionContent>
-                  <FinalAssessmentContent text={analysis.final_assessment} fontSizeClass={fontSizeClass} />
-                </AccordionContent>
-              </AccordionItem>
-            )}
-
-            {/* Strategic Recommendations */}
-            {analysis.strategic_recommendations && analysis.strategic_recommendations.length > 0 && (
-              <AccordionItem
-                value={`recommendations-${index}`}
-                ref={(el) => { accordionRefs.current[`recommendations-${index}`] = el }}
-              >
-                <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline">
-                  <AccordionHeader
-                    title="Strategic Recommendations"
-                    sectionKey="strategic_recommendations"
-                    onCopy={(e) => {
-                      e.stopPropagation()
-                      handleCopy(analysis.strategic_recommendations ?? [], 'Strategic Recommendations')
-                    }}
-                  />
-                </AccordionTrigger>
-                <AccordionContent>
-                  <StrategicRecommendationsContent
-                    recommendations={analysis.strategic_recommendations}
-                    fontSizeClass={fontSizeClass}
-                    isLoading={loadingStates[`recommendations-${index}`] ?? false}
-                    isLoaded={loadedStates[`recommendations-${index}`] ?? false}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            )}
-          </Accordion>
-        </div>
-      ))}
+        {/* 2. Contact Insights */}
+        {insightsHasData && (
+          <AccordionItem value="contact_insights">
+            <AccordionTrigger className="text-sm font-bold text-gray-800 hover:no-underline py-3">
+              Contact Insights
+            </AccordionTrigger>
+            <AccordionContent className="pt-2 space-y-4">
+              <DetailRow label="Summary" value={analysis.contact_insights_summary} className={`italic bg-gray-50 p-3 rounded border border-gray-100 ${fontSizeClass}`} />
+              <div className="grid grid-cols-1 gap-4">
+                <DetailRow label="Professional Interests" value={analysis.professional_interests} className={fontSizeClass} />
+                <DetailRow label="Communication Style" value={analysis.communication_style} className={fontSizeClass} />
+                <DetailRow label="Decision Indicators" value={analysis.decision_indicators} className={fontSizeClass} />
+                <DetailRow label="Motivations & Triggers" value={analysis.motivations_triggers} className={fontSizeClass} />
+                <DetailRow label="Influence Level" value={analysis.influence_level} className={fontSizeClass} />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
     </div>
   )
 }
 
 // ============================================================================
-// WHY REACH OUT SECTION (STANDALONE)
+// WHY REACH OUT SECTION (STANDALONE) -- REWRITTEN FOR NEW FLAT DATA
 // ============================================================================
 
-interface WhyReachOutSectionProps {
-  whyReachOutData: Record<string, WhyReachOutValue>
+export function WhyReachOutSection({ whyReachOutData }: { whyReachOutData: any }) {
+  // Legacy component stub
+  return null;
 }
 
-export function WhyReachOutSection({ whyReachOutData }: WhyReachOutSectionProps) {
+export function WhyReachOutStandalone({ analysis }: { analysis: DrawerAIAnalysis }) {
   const { getFontSizeClass } = useFontSize()
   const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass])
 
-  const entries = React.useMemo(() => parseWhyReachOutEntries(whyReachOutData), [whyReachOutData])
-  const flattenedData = React.useMemo(() => flattenWhyReachOut(whyReachOutData), [whyReachOutData])
+  if (!analysis) return null
 
-  const handleCopy = React.useCallback(() => {
-    copyToClipboard(flattenedData, 'Why Reach Out')
-  }, [flattenedData])
+  const hasData = analysis.buying_signals || analysis.engagement_hooks || analysis.timing_relevance || analysis.account_relevance || analysis.current_priorities || analysis.explicit_pain_points
+  if (!hasData) return null
 
-  if (!whyReachOutData) {
-    return null
-  }
+  const copyText = `
+Why Reach Out Summary:
+Buying Signals: ${analysis.buying_signals || '-'}
+Engagement Hooks: ${analysis.engagement_hooks || '-'}
+Timing Relevance: ${analysis.timing_relevance || '-'}
+Account Relevance: ${analysis.account_relevance || '-'}
+Current Priorities: ${analysis.current_priorities || '-'}
+Explicit Pain Points: ${analysis.explicit_pain_points || '-'}
+    `.trim()
 
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 ${fontSizeClass}`}>
       <div className="flex items-center justify-between">
         <Badge className={getSectionHeadingBadgeColor('why_reach_out')}>
           Why Reach Out
@@ -582,25 +307,28 @@ export function WhyReachOutSection({ whyReachOutData }: WhyReachOutSectionProps)
           variant="ghost"
           size="sm"
           className="h-4 w-4 p-0 hover:bg-white hover:text-amber-500 cursor-pointer"
-          onClick={handleCopy}
+          onClick={() => {
+            navigator.clipboard.writeText(copyText)
+            toast.success("Why Reach Out section copied")
+          }}
         >
           <Copy className="h-4 w-4" />
         </Button>
       </div>
-      <div className={`space-y-4 ${fontSizeClass}`}>
-        {entries.map((entry, i) => (
-          <div key={i} className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-gray-800">{entry.key}</span>
-            <ul className="space-y-1 pl-1">
-              {entry.values.map((value, j) => (
-                <li key={j} className="text-black leading-relaxed flex items-start gap-2">
-                  {entry.values.length > 1 && <span className="text-blue-600 text-xs mt-1">•</span>}
-                  <span className={entry.values.length === 1 ? '' : 'flex-1'}>{value}</span>
-                </li>
-              ))}
-            </ul>
+
+      <div className="space-y-4 pt-1">
+        <DetailRow label="Buying Signals" value={analysis.buying_signals} className={fontSizeClass} />
+        <DetailRow label="Engagement Hooks" value={analysis.engagement_hooks} className={fontSizeClass} />
+
+        <div className="grid grid-cols-1 gap-4 pt-2">
+          <div className="bg-blue-50/50 p-3 rounded-md border border-blue-100 space-y-3">
+            <DetailRow label="Timing Relevance" value={analysis.timing_relevance} className={fontSizeClass} />
+            <DetailRow label="Account Relevance" value={analysis.account_relevance} className={fontSizeClass} />
           </div>
-        ))}
+
+          <DetailRow label="Current Priorities" value={analysis.current_priorities} className={fontSizeClass} />
+          <DetailRow label="Explicit Pain Points" value={analysis.explicit_pain_points} className={fontSizeClass} />
+        </div>
       </div>
     </div>
   )
@@ -614,220 +342,215 @@ interface SocialActivitySectionProps {
   social_activity: DrawerSocialActivity
 }
 
-interface PlatformData {
-  platform: string
-  time: number
-  posts: number
-  icon: React.ComponentType<{ className?: string }>
+// ----------------------------------------------------------------------------
+// Heatmap Component
+// ----------------------------------------------------------------------------
+
+interface HeatmapProps {
+  data: Record<string, Record<string, number>>
 }
 
+const ActivityHeatmap = React.memo(({ data }: HeatmapProps) => {
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  const hours = Array.from({ length: 24 }, (_, i) => i)
 
-const PlatformRow = React.memo(({
-  icon: IconComponent,
-  platform,
-  value,
-  fontSizeClass
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  platform: string
-  value: string | number
-  fontSizeClass: string
-}) => (
-  <div className={`flex items-center ${fontSizeClass}`}>
-    <IconComponent className="h-4 w-4 text-gray-500 mr-2" />
-    <span className="text-gray-700 mr-3">{platform}</span>
-    <span className="font-medium">{value}</span>
-  </div>
-))
-PlatformRow.displayName = 'PlatformRow'
+  // Find max value for normalization
+  const maxValue = React.useMemo(() => {
+    let max = 0
+    Object.values(data).forEach(dayHours => {
+      Object.values(dayHours).forEach(val => {
+        if (Number(val) > max) max = Number(val)
+      })
+    })
+    return max || 1 // Avoid division by zero
+  }, [data])
 
-const ApproachTimeRow = React.memo(({
-  icon: IconComponent,
-  platform,
-  time,
-  fontSizeClass
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  platform: string
-  time: string | null
-  fontSizeClass: string
-}) => (
-  <div className={`flex items-center justify-between ${fontSizeClass}`}>
-    <div className="flex items-center gap-2">
-      <IconComponent className="h-4 w-4 text-blue-600" />
-      <span className="text-blue-700">{platform}</span>
+  const getColor = (value: number) => {
+    if (value === 0) return 'bg-gray-100'
+    const intensity = Math.ceil((value / maxValue) * 4) // 4 levels of intensity
+    switch (intensity) {
+      case 1: return 'bg-indigo-200'
+      case 2: return 'bg-indigo-300'
+      case 3: return 'bg-indigo-500'
+      case 4: return 'bg-indigo-700'
+      default: return 'bg-indigo-100'
+    }
+  }
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-[500px] text-xs">
+        {/* Hours Header */}
+        <div className="flex mb-1">
+          <div className="w-16 font-medium text-gray-400"></div>
+          {hours.map(h => (
+            <div key={h} className="flex-1 text-center text-[10px] text-gray-400">
+              {h % 6 === 0 ? h : ''}
+              {/* Show label every 6 hours */}
+            </div>
+          ))}
+        </div>
+
+        {days.map(day => {
+          const dayData = data[day] || {}
+          return (
+            <div key={day} className="flex items-center mb-1 gap-0.5">
+              <div className="w-16 text-[10px] font-medium text-gray-500 text-right pr-2">{day.slice(0, 3)}</div>
+              {hours.map(h => (
+                <div
+                  key={h}
+                  className={`flex-1 h-3 rounded-sm ${getColor(Number(dayData[String(h)] || 0))}`}
+                  title={`${day} ${h}:00 - ${Number(dayData[String(h)] || 0)} actions`}
+                />
+              ))}
+            </div>
+          )
+        })}
+
+        {/* Legend */}
+        <div className="flex items-center justify-end gap-2 mt-2 text-[10px] text-gray-400">
+          <span>Less</span>
+          <div className="flex gap-1">
+            <div className="w-3 h-3 rounded-sm bg-gray-100"></div>
+            <div className="w-3 h-3 rounded-sm bg-indigo-200"></div>
+            <div className="w-3 h-3 rounded-sm bg-indigo-500"></div>
+            <div className="w-3 h-3 rounded-sm bg-indigo-700"></div>
+          </div>
+          <span>More</span>
+        </div>
+      </div>
     </div>
-    <span className="font-semibold text-blue-800">{time}</span>
+  )
+})
+ActivityHeatmap.displayName = 'ActivityHeatmap'
+
+
+// ----------------------------------------------------------------------------
+// Metric Card Component
+// ----------------------------------------------------------------------------
+
+const MetricCard = ({ label, value, subtext, icon: Icon, trend, trendValue }: {
+  label: string,
+  value: string | number,
+  subtext?: string,
+  icon: any,
+  trend?: 'up' | 'down' | 'neutral',
+  trendValue?: string
+}) => (
+  <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 flex flex-col gap-1">
+    <div className="flex items-center justify-between text-gray-500 text-xs font-medium">
+      <span className="flex items-center gap-1.5">
+        <Icon className="w-3.5 h-3.5" />
+        {label}
+      </span>
+      {trend && (
+        <span className={`flex items-center text-[10px] ${trend === 'up' ? 'text-green-600' : trend === 'down' ? 'text-red-500' : 'text-gray-400'}`}>
+          {trend === 'up' ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
+          {trendValue}
+        </span>
+      )}
+    </div>
+    <div className="text-lg font-semibold text-gray-900 mt-1">{value}</div>
+    {subtext && <div className="text-[10px] text-gray-400">{subtext}</div>}
   </div>
-))
-ApproachTimeRow.displayName = 'ApproachTimeRow'
+)
 
 export function SocialActivitySection({ social_activity }: SocialActivitySectionProps) {
   const { getFontSizeClass } = useFontSize()
-  const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass])
+  // const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass])
 
-  // Memoize platform data
-  const allPlatforms = React.useMemo<PlatformData[]>(() => {
-    return [
-      {
-        platform: "LinkedIn",
-        time: social_activity.linkedin_time_minutes,
-        posts: social_activity.linkedin_posts_per_day,
-        icon: LinkedinIcon
-      },
-      {
-        platform: "Instagram",
-        time: social_activity.instagram_time_minutes,
-        posts: social_activity.instagram_posts_per_day,
-        icon: Instagram
-      },
-      {
-        platform: "Twitter",
-        time: social_activity.twitter_time_minutes,
-        posts: social_activity.twitter_posts_per_day,
-        icon: Twitter
-      }
-    ].filter(item => item.time > 0 || item.posts > 0)
-  }, [
-    social_activity.linkedin_time_minutes,
-    social_activity.linkedin_posts_per_day,
-    social_activity.instagram_time_minutes,
-    social_activity.instagram_posts_per_day,
-    social_activity.twitter_time_minutes,
-    social_activity.twitter_posts_per_day
-  ])
-
-  // Memoize approach times
-  const approachTimes = React.useMemo(() => {
-    return [
-      { platform: "LinkedIn", time: social_activity.linkedin_best_time, icon: LinkedinIcon },
-      { platform: "Instagram", time: social_activity.instagram_best_time, icon: Instagram },
-      { platform: "Twitter", time: social_activity.twitter_best_time, icon: Twitter }
-    ].filter(item => Boolean(item.time))
-  }, [
-    social_activity.linkedin_best_time,
-    social_activity.instagram_best_time,
-    social_activity.twitter_best_time
-  ])
-
-  // Memoize badge color
-  const badgeColor = React.useMemo(
-    () => getActivityLevelBadgeColor(social_activity.activity_score).replace('text-white', 'border-current'),
-    [social_activity.activity_score]
-  )
-
-  // Memoize formatted date
-  const formattedDate = React.useMemo(
-    () => {
-      if (!social_activity.updated_at) return "N/A"
+  // Parse Heatmap if string
+  const heatmapData = React.useMemo(() => {
+    if (typeof social_activity.heatmap === 'string') {
       try {
-        return format(parseISO(social_activity.updated_at), "PPP")
-      } catch (error) {
-        console.error("Error formatting date:", error)
-        return "Invalid Date"
+        return JSON.parse(social_activity.heatmap)
+      } catch (e) {
+        console.error("Failed to parse heatmap JSON", e)
+        return {}
       }
-    },
-    [social_activity.updated_at]
-  )
+    }
+    return social_activity.heatmap || {}
+  }, [social_activity.heatmap])
 
-  const hasPlatformOverview = social_activity.most_used_platform_by_time || social_activity.most_engaged_platform
+  // Parse Primary Active Days if string
+  const activeDays = React.useMemo(() => {
+    if (typeof social_activity.primary_active_days === 'string') {
+      try {
+        const parsed = JSON.parse(social_activity.primary_active_days)
+        return Array.isArray(parsed) ? parsed.join(", ") : parsed
+      } catch {
+        return social_activity.primary_active_days
+      }
+    }
+    return Array.isArray(social_activity.primary_active_days) ? social_activity.primary_active_days.join(", ") : ""
+  }, [social_activity.primary_active_days])
+
+
+  const trendIcon = social_activity.trend_direction === 'Increasing' ? 'up' : social_activity.trend_direction === 'Decreasing' ? 'down' : 'neutral'
 
   return (
     <>
       <Separator className="my-5" />
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <Badge className={getSectionHeadingBadgeColor('social_activity')}>
             Social Activity
           </Badge>
-          <Badge
-            variant="default"
-            className={cn("text-xs px-2 py-1 border", badgeColor)}
-          >
-            {social_activity.activity_level}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">
+              Updated {social_activity.forecasted_at ? format(parseISO(social_activity.forecasted_at), 'MMM d') : ''}
+            </span>
+          </div>
         </div>
 
-        {/* Platform Activity Overview - Visual */}
-        {hasPlatformOverview && (
-          <div className="flex flex-wrap gap-2">
-            {social_activity.most_used_platform_by_time && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border">
-                <span className="text-xs text-gray-600">Most active on</span>
-                <Badge variant="secondary" className="text-xs">
-                  {social_activity.most_used_platform_by_time}
-                </Badge>
-              </div>
-            )}
-            {social_activity.most_engaged_platform && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
-                <span className="text-xs text-blue-700">Most engaged on</span>
-                <Badge variant="default" className="text-xs bg-blue-600 text-white">
-                  {social_activity.most_engaged_platform}
-                </Badge>
-              </div>
-            )}
+        {/* Top Metrics Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          <MetricCard
+            label="Weekly Actions"
+            value={social_activity.total_actions}
+            subtext={`Avg ${social_activity.avg_weekly_actions}/week`}
+            icon={Activity}
+            trend={trendIcon}
+            trendValue={`${Math.abs(social_activity.trend_change_percent)}%`}
+          />
+          <MetricCard
+            label="Engagement Style"
+            value={social_activity.engagement_style}
+            subtext={`Consistency: ${social_activity.consistency}`}
+            icon={Zap}
+          />
+        </div>
+
+        {/* Secondary Metrics */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="p-2 bg-white rounded border flex flex-col items-center justify-center text-center gap-1">
+            <Clock className="w-4 h-4 text-blue-500 mb-1" />
+            <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Best Time</span>
+            <span className="text-xs font-semibold">{social_activity.best_time_window_utc || "N/A"}</span>
           </div>
-        )}
+          <div className="p-2 bg-white rounded border flex flex-col items-center justify-center text-center gap-1">
+            <Calendar className="w-4 h-4 text-purple-500 mb-1" />
+            <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Active Days</span>
+            <span className="text-xs font-semibold truncate w-full px-1" title={activeDays}>{activeDays || "N/A"}</span>
+          </div>
+          <div className="p-2 bg-white rounded border flex flex-col items-center justify-center text-center gap-1">
+            <Target className="w-4 h-4 text-green-500 mb-1" />
+            <span className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Focus</span>
+            <span className="text-xs font-semibold">
+              {social_activity.outward_inward_ratio > 1 ? "Outward" : "Inward"}
+            </span>
+          </div>
+        </div>
 
-        {/* Two-Column Layout for Time Spent and Posts */}
-        {allPlatforms.length > 0 && (
-          <div className="grid grid-cols-2 gap-6">
-            {/* Column 1: Average time spent per day */}
-            <div>
-              <p className="text-xs font-semibold text-gray-600 mb-2">Average time spent per day</p>
-              <div className="space-y-2">
-                {allPlatforms.map((item, idx) => (
-                  <PlatformRow
-                    key={idx}
-                    icon={item.icon}
-                    platform={item.platform}
-                    value={item.time > 0 ? formatTimeSpent(item.time) : '-'}
-                    fontSizeClass={fontSizeClass}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Column 2: Average posts per day */}
-            <div>
-              <p className="text-xs font-semibold text-gray-600 mb-2">Average posts per day</p>
-              <div className="space-y-2">
-                {allPlatforms.map((item, idx) => (
-                  <PlatformRow
-                    key={idx}
-                    icon={item.icon}
-                    platform={item.platform}
-                    value={item.posts > 0 ? item.posts : '-'}
-                    fontSizeClass={fontSizeClass}
-                  />
-                ))}
-              </div>
+        {/* Heatmap */}
+        <div className="border rounded-lg p-3 bg-white">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-xs font-semibold text-gray-700 flex items-center gap-2">
+              <BarChart3 className="w-3.5 h-3.5 text-gray-500" />
+              Activity Heatmap
             </div>
           </div>
-        )}
-
-        {/* Most Optimal Time to Approach */}
-        {approachTimes.length > 0 && (
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-xs font-semibold text-blue-800 mb-2">Most optimal time to approach</p>
-            <div className="space-y-1">
-              {approachTimes.map((item, idx) => (
-                <ApproachTimeRow
-                  key={idx}
-                  icon={item.icon}
-                  platform={item.platform}
-                  time={item.time}
-                  fontSizeClass={fontSizeClass}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Last Updated */}
-        <div className="text-xs text-gray-400 text-right">
-          Updated {formattedDate}
+          <ActivityHeatmap data={heatmapData} />
         </div>
       </div>
     </>
