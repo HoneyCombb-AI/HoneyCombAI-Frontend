@@ -212,7 +212,7 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
                                                 const SourceIcon = getSourceIcon(source.activity_type)
                                                 return source.source_url ? (
                                                     <TooltipProvider key={idx}>
-                                                        <Tooltip delayDuration={0}>
+                                                        <Tooltip delayDuration={300}>
                                                             <TooltipTrigger asChild>
                                                                 <a
                                                                     href={source.source_url}
