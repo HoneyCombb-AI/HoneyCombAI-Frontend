@@ -3,7 +3,7 @@ import { StatCard } from "@/components/dashboard/Overview/StatCard";
 import { SignalTrendChart } from "@/components/dashboard/Overview/SignalTrendChart";
 import { EngagementStyleChart } from "@/components/dashboard/Overview/EngagementStyleChart";
 import { SocialDistributionChart } from "@/components/dashboard/Overview/SocialDistributionChart";
-import { Activity, Flame, Users, Sun, MessageCircle } from "lucide-react";
+import { Activity, Flame, Users, Sun, MessageCircle, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import { DashboardData } from "@/app/api/overview/route";
 
 // Types matching the JSONB structure from RPC
@@ -30,12 +30,6 @@ export default async function OverviewPage() {
 
     const { stats, trends, socialMetrics } = data;
 
-    // Calculate Analysis Completion Rate
-    const totalAnalysis = stats.analysisMetrics.completed + stats.analysisMetrics.pending;
-    const completionRate = totalAnalysis > 0
-        ? Math.floor((stats.analysisMetrics.completed / totalAnalysis) * 100)
-        : 0;
-
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             {/* Zero State / Onboarding */}
@@ -60,7 +54,7 @@ export default async function OverviewPage() {
             )}
 
             {/* KPI Grid */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard
                     title="Total Contacts"
                     value={stats.totalContacts}
@@ -93,6 +87,27 @@ export default async function OverviewPage() {
                     icon={MessageCircle}
                     description="High engagement contacts"
                     className="bg-green-500/10 border-green-500/20"
+                />
+                <StatCard
+                    title="Processed"
+                    value={stats.analysisMetrics.completed}
+                    icon={CheckCircle2}
+                    description="Analysis completed"
+                    className="bg-emerald-500/10 border-emerald-500/20"
+                />
+                <StatCard
+                    title="Under Processing"
+                    value={stats.analysisMetrics.pending}
+                    icon={Clock}
+                    description="Analysis in progress"
+                    className="bg-blue-500/10 border-blue-500/20"
+                />
+                <StatCard
+                    title="Rising Stars"
+                    value={socialMetrics.momentum}
+                    icon={TrendingUp}
+                    description="Increasing activity trend"
+                    className="bg-purple-500/10 border-purple-500/20"
                 />
             </div>
 
