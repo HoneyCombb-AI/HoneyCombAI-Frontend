@@ -122,6 +122,8 @@ export async function GET(request: NextRequest) {
     let finalDestination = next;
     if (next === '/contacts') {
       finalDestination = isNewUser ? '/contacts?joyride=true' : '/contacts';
+    } else if (next === '/overview') {
+      finalDestination = '/overview';
     }
 
     // Determine redirect URL based on environment
