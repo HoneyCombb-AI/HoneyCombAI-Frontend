@@ -29,31 +29,27 @@ interface ContactExportData {
   contact_id: string;
   full_name: string;
   title: string | null;
-  email: string | null;
-  phone: string | null;
-  location: string;
-  linkedin_url: string | null;
-  twitter_handle: string | null;
-  instagram_handle: string | null;
   company_name: string | null;
-  company_industry: string | null;
-  company_website: string | null;
-  languages: string | null;
-  experience_summary: string | null;
-  certifications_summary: string | null;
-  projects_summary: string | null;
-  nudges: string | null;
-  nudges_date: Date | null;
-  signal_types: string | null;
-  signals_summary: string | null;
-  highest_confidence_signal: string | null;
+  linkedin_url: string | null;
   temperature: string | null;
-  when_to_reach_out: string | null;
-  account_overview: string | null;
-  contact_insights: string | null;
-  strategic_recommendations: string | null;
-  ai_confidence_reasoning: string | null;
-  created_at: Date;
+  tags: string | null;
+  signal_types: string | null;
+  buying_signals: string | null;
+  engagement_hooks: string | null;
+  explicit_pain_points: string | null;
+  current_priorities: string | null;
+  timing_relevance: string | null;
+  account_relevance: string | null;
+  role_context: string | null;
+  recent_developments: string | null;
+  strategic_priorities: string | null;
+  network_influence: string | null;
+  summary: string | null;
+  professional_interests: string | null;
+  communication_style: string | null;
+  decision_indicators: string | null;
+  motivation_triggers: string | null;
+  high_influence: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -130,7 +126,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      csvData = convertToCSV(data, getContactsHeaders());
+      // data already matches ContactExportData as per RPC definition
+      csvData = convertToCSV(data as unknown as ContactExportData[], getContactsHeaders());
       filename = `contacts_export_${new Date().toISOString().split('T')[0]}.csv`;
 
     } else {
@@ -164,7 +161,7 @@ function convertToCSV(data: CompanyExportData[] | ContactExportData[], headers: 
 
   const csvRows = [
     headers.join(','),
-    ...data.map(row => 
+    ...data.map(row =>
       headers.map(header => {
         const fieldName = header.toLowerCase().replace(/ /g, '_');
         const value = (row as unknown as Record<string, unknown>)[fieldName];
@@ -208,30 +205,26 @@ function getContactsHeaders(): string[] {
     'Contact ID',
     'Full Name',
     'Title',
-    'Email',
-    'Phone',
-    'Location',
-    'LinkedIn URL',
-    'Twitter Handle',
-    'Instagram Handle',
     'Company Name',
-    'Company Industry',
-    'Company Website',
-    'Languages',
-    'Experience Summary',
-    'Certifications Summary',
-    'Projects Summary',
-    'Nudges',
-    'Nudges Date',
-    'Signal Types',
-    'Signals Summary',
-    'Highest Confidence Signal',
+    'LinkedIn URL',
     'Temperature',
-    'When To Reach Out',
-    'Account Overview',
-    'Contact Insights',
-    'Strategic Recommendations',
-    'AI Confidence Reasoning',
-    'Created At'
+    'Tags',
+    'Signal Types',
+    'Buying Signals',
+    'Engagement Hooks',
+    'Explicit Pain Points',
+    'Current Priorities',
+    'Timing Relevance',
+    'Account Relevance',
+    'Role Context',
+    'Recent Developments',
+    'Strategic Priorities',
+    'Network Influence',
+    'Summary',
+    'Professional Interests',
+    'Communication Style',
+    'Decision Indicators',
+    'Motivation Triggers',
+    'High Influence'
   ];
 }
