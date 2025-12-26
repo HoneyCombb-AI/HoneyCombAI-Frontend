@@ -1,27 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { useAuth } from "@/lib/auth-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/loading";
-import { MessageList, type OutreachMessage } from "@/components/messages/MessageList";
+import { MessageList } from "@/components/messages/MessageList";
 import { MessageViewer } from "@/components/messages/MessageViewer";
-import { MessageFilters, type StatusFilter } from "@/components/messages/MessageFilters";
+import { MessageFilters } from "@/components/messages/MessageFilters";
 import { MessagePagination } from "@/components/messages/MessagePagination";
-
-interface MessagesResponse {
-  messages: OutreachMessage[];
-  total_count: number;
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
+import { type MessagesResponse, type StatusFilter } from "@/app/api/messages/route";
 
 export default function MessagesPage() {
   const { loading: authLoading } = useAuth();
@@ -44,21 +33,20 @@ export default function MessagesPage() {
   const fetchMessages = useCallback(async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: pageSize.toString(),
-        sortOrder,
-        status: statusFilter,
+
+      const response = await axios.get<MessagesResponse>("/api/messages", {
+        params: {
+          page: currentPage,
+          limit: pageSize,
+          sortOrder,
+          status: statusFilter,
+          search: search.trim() || undefined,
+          startDate: dateRange.start || undefined,
+          endDate: dateRange.end || undefined,
+        },
       });
 
-      if (search.trim()) params.set("search", search.trim());
-      if (dateRange.start) params.set("startDate", dateRange.start);
-      if (dateRange.end) params.set("endDate", dateRange.end);
-
-      const response = await fetch(`/api/messages?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch messages");
-
-      const result: MessagesResponse = await response.json();
+      const result = response.data;
       setData(result);
 
       // Auto-select first message if none selected
@@ -66,7 +54,11 @@ export default function MessagesPage() {
         setSelectedId(result.messages[0].id);
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load messages");
+      if (axios.isAxiosError(e)) {
+        setError(e.response?.data?.error || e.message);
+      } else {
+        setError(e instanceof Error ? e.message : "Failed to load messages");
+      }
     } finally {
       setLoading(false);
     }

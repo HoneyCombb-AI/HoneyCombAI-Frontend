@@ -24,7 +24,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.push('/contacts');
+        router.push('/overview');
       } else {
         setIsRedirecting(false);
       }
@@ -39,7 +39,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback?next=/contacts`,
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback?next=/overview`,
         },
       });
 

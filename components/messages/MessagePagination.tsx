@@ -9,15 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
-
-interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
+import { type PaginationInfo } from "@/app/api/messages/route";
 
 interface MessagePaginationProps {
   pagination: PaginationInfo;

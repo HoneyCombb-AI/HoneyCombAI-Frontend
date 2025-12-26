@@ -2,18 +2,9 @@
 
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock } from "lucide-react";
 import Image from 'next/image';
+import { OutreachMessage } from "@/app/api/messages/route";
 
-export interface OutreachMessage {
-  id: string;
-  full_name: string;
-  profile_picture: string | null;
-  outreach_message: string | null;
-  outreach_requested: boolean;
-  outreach_completed: boolean;
-  updated_at: string;
-}
 
 interface MessageListProps {
   messages: OutreachMessage[];
@@ -32,9 +23,11 @@ const MessageListItem = React.memo(({
 }) => {
   const [imageError, setImageError] = useState(false);
   const date = new Date(message.updated_at);
-  const snippet = message.outreach_message
-    ? message.outreach_message.replace(/\n/g, " ").slice(20, 50)
-    : "Generating message...";
+  const snippet = message.content
+    ? (message.content.length > 50
+      ? message.content.replace(/\n/g, " ").slice(0, 50) + "..."
+      : message.content.replace(/\n/g, " "))
+    : "";
   const optimizedPicture = message.profile_picture;
 
   const getInitials = (name: string) => {
@@ -42,19 +35,17 @@ const MessageListItem = React.memo(({
   };
 
   const getStatusBadge = () => {
-    if (message.outreach_completed) {
+    if (message.status === 'sent') {
       return (
-        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 text-xs">
-          <CheckCircle2 className="h-3 w-3 mr-1" />
-          Response Ready
+        <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-green-50 text-green-700 border-green-200">
+          Sent
         </Badge>
       );
     }
-    if (message.outreach_requested) {
+    if (message.status === 'draft') {
       return (
-        <Badge variant="default" className="bg-orange-100 text-orange-800 border-orange-200 text-xs">
-          <Clock className="h-3 w-3 mr-1" />
-          Generating
+        <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-yellow-50 text-yellow-700 border-yellow-200">
+          Draft
         </Badge>
       );
     }
@@ -95,7 +86,7 @@ const MessageListItem = React.memo(({
           </div>
 
           <p className="text-sm text-gray-600 line-clamp-2 mb-1">
-            {snippet}{message.outreach_message ? "..." : ""}
+            {snippet}
           </p>
 
           <div className="flex justify-end">

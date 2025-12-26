@@ -10,7 +10,6 @@ interface CreateContactRequest {
   email?: string;
   phone?: string;
   city?: string;
-  state?: string;
   country?: string;
   twitterProfile?: string;
   instagramProfile?: string;
@@ -34,7 +33,6 @@ interface CreateContactResponse {
     email?: string;
     phone?: string;
     city?: string;
-    state?: string;
     country?: string;
     twitter_handle?: string;
     instagram_handle?: string;
@@ -46,7 +44,7 @@ interface CreateContactResponse {
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -107,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     // Parse request body
     const body: CreateContactRequest = await req.json();
-    
+
     // Validate required fields
     if (!body.fullName?.trim() || !body.title?.trim()) {
       return NextResponse.json(
@@ -162,13 +160,12 @@ export async function POST(req: NextRequest) {
     // Prepare data for insertion
     const contactData = {
       full_name: body.fullName.trim(),
-      title: body.title.trim(),
+      headline: body.title.trim(),
       company_id: body.companyId === 'no-company' || !body.companyId ? null : body.companyId,
       linkedin_url: body.linkedinUrl?.trim() || null,
       email: body.email?.trim() || null,
       phone: body.phone?.trim() || null,
       city: body.city?.trim() || null,
-      state: body.state?.trim() || null,
       country: body.country?.trim() || null,
       twitter_handle: body.twitterProfile?.trim() ? extractTwitterHandle(body.twitterProfile.trim()) : null,
       instagram_handle: body.instagramProfile?.trim() ? extractInstagramHandle(body.instagramProfile.trim()) : null,
@@ -186,7 +183,7 @@ export async function POST(req: NextRequest) {
 
     if (insertError) {
       console.error('Error inserting contact:', insertError);
-      
+
       // Handle specific errors
       if (insertError.code === '23505') {
         if (insertError.message.includes('linkedin_url')) {
@@ -196,7 +193,7 @@ export async function POST(req: NextRequest) {
           );
         }
       }
-      
+
       return NextResponse.json(
         { success: false, error: 'Failed to create contact' },
         { status: 500 }
@@ -208,13 +205,12 @@ export async function POST(req: NextRequest) {
       contact: {
         id: contact.id,
         full_name: contact.full_name,
-        title: contact.title,
+        title: contact.headline,
         company_id: contact.company_id,
         linkedin_url: contact.linkedin_url,
         email: contact.email,
         phone: contact.phone,
         city: contact.city,
-        state: contact.state,
         country: contact.country,
         twitter_handle: contact.twitter_handle,
         instagram_handle: contact.instagram_handle,

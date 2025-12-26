@@ -26,7 +26,6 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Download,
   Trash2,
   Tag,
 } from "lucide-react";
@@ -115,8 +114,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
   const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
-
-  const [exportLoading, setExportLoading] = useState<boolean>(false);
 
   const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
 
@@ -275,68 +272,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     });
   };
 
-
-
-  const handleExportToCSV = async () => {
-    if (selectedCompanies.size === 0) {
-      toast.error("No companies selected for export");
-      return;
-    }
-
-    const selectedCompanyIds = Array.from(selectedCompanies.keys());
-
-    try {
-      setExportLoading(true);
-
-      const response = await axios.post('/api/csv-export', {
-        type: 'companies',
-        ids: selectedCompanyIds
-      }, {
-        responseType: 'blob'
-      });
-
-      // Get the filename from the response headers
-      const contentDisposition = response.headers['content-disposition'];
-      const filename = contentDisposition
-        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
-        : `companies_export_${new Date().toISOString().split('T')[0]}.csv`;
-
-      // Create blob and download
-      const blob = new Blob([response.data], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast.success(`Exported ${selectedCompanyIds.length} companies successfully`);
-
-    } catch (error) {
-      console.error('Export failed:', error);
-
-      if (axios.isAxiosError(error) && error.response) {
-        const status = error.response.status;
-
-        if (status === 429) {
-          toast.error("Rate limit exceeded. Please wait before exporting more data.");
-        } else if (status === 401) {
-          toast.error("Unauthorized. Please log in again.");
-        } else if (status >= 500) {
-          toast.error("Server error. Please try again later.");
-        } else {
-          toast.error("Export failed. Please try again.");
-        }
-      } else {
-        toast.error("Network error. Please try again.");
-      }
-    } finally {
-      setExportLoading(false);
-    }
-  };
 
   const handleDeleteCompanies = async () => {
     if (selectedCompanies.size === 0) {
@@ -632,25 +567,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 <span className="hidden sm:inline">Manage Tags</span>
                 <span className="sm:hidden">Tags</span>
               </Button>
-
-              {/* Export to CSV Button */}
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2 text-sm h-9"
-                disabled={exportLoading}
-                onClick={handleExportToCSV}
-              >
-                <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {exportLoading ? "Exporting..." : "Export to CSV"}
-                </span>
-                <span className="sm:hidden">
-                  {exportLoading ? "Exporting..." : "Export"}
-                </span>
-              </Button>
-
-
 
               {/* Delete Button */}
               <Button

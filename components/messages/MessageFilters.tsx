@@ -11,8 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, ArrowUpDown, Filter, X } from "lucide-react";
-
-export type StatusFilter = "all" | "requested" | "completed";
+import { type StatusFilter } from "@/app/api/messages/route";
 
 interface MessageFiltersProps {
   search: string;
@@ -77,7 +76,7 @@ export const MessageFilters = React.memo(({
         <SelectContent>
           <SelectItem value="all">All Messages</SelectItem>
           <SelectItem value="completed">Response Ready</SelectItem>
-          <SelectItem value="requested">Generating</SelectItem>
+          <SelectItem value="pending">Generating</SelectItem>
         </SelectContent>
       </Select>
 
