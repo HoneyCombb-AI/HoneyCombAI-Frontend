@@ -3,11 +3,8 @@
 import React, { useMemo, useCallback, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Calendar, Mail, CheckCircle2, Clock, Linkedin, Twitter, Facebook, Instagram, Send, Copy } from "lucide-react";
+import { Mail, Clock } from "lucide-react";
 import Image from 'next/image';
-import { parseBracketedText } from "./MessageUtil";
 import { useFontSize } from "@/lib/font-size-context";
 import { toast } from "sonner";
 import { OutreachMessage } from "@/app/api/messages/route";
@@ -19,23 +16,10 @@ interface MessageViewerProps {
   message: OutreachMessage | null;
 }
 
-const ICON_CLASS = "h-5 w-5";
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  linkedin: Linkedin,
-  email: Mail,
-  twitter: Twitter,
-  facebook: Facebook,
-  instagram: Instagram,
-  outreach: Send,
-};
-
-const getIconForSection = (iconType: string) => {
-  const IconComponent = ICON_MAP[iconType.toLowerCase()] || Mail;
-  return <IconComponent className={ICON_CLASS} />;
-};
-
 export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
   /* eslint-disable react-hooks/exhaustive-deps */
+  const { getFontSizeClass } = useFontSize();
+  const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass]);
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -76,7 +60,7 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-8">
         <Mail className="h-16 w-16 text-gray-300 mb-4" />
-        <p className="text-sm text-muted-foreground">
+        <p className={`${fontSizeClass} text-muted-foreground`}>
           Select a conversation to view details
         </p>
       </div>
@@ -158,7 +142,7 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
 
                   <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                     <div
-                      className={`px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap shadow-sm ${isMe
+                      className={`px-4 py-3 rounded-2xl whitespace-pre-wrap shadow-sm ${fontSizeClass} ${isMe
                         ? 'bg-blue-600 text-white rounded-tr-sm'
                         : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
                         }`}
@@ -175,7 +159,7 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
           })
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <p className="text-sm">No messages yet</p>
+            <p className={fontSizeClass}>No messages yet</p>
           </div>
         )}
       </div>

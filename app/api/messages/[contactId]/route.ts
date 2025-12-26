@@ -17,7 +17,7 @@ export interface ConversationMessage {
 }
 
 export async function GET(
-    request: Request,
+    _request: Request,
     props: { params: Promise<{ contactId: string }> }
 ) {
     try {

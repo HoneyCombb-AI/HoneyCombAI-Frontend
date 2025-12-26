@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import axios from "axios"
-import { Building2, User, Briefcase, Mail, Phone, LinkedinIcon, Twitter, Instagram, Globe, Map } from "lucide-react"
+import { Building2, User, Briefcase, Mail, Phone, LinkedinIcon, Twitter, Instagram, Globe } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
