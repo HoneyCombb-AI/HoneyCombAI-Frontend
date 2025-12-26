@@ -23,7 +23,6 @@ const OPTIONAL_HEADERS = [
   'email',
   'phone',
   'city',
-  'state',
   'country',
   'company_linkedin_url',
   'company_industry',
@@ -105,7 +104,6 @@ interface CSVContactData {
   email?: string;
   phone?: string;
   city?: string;
-  state?: string;
   country?: string;
   company_linkedin_url?: string;
   company_industry?: string;
@@ -140,7 +138,7 @@ interface BulkImportResponse {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
+
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -153,12 +151,12 @@ export async function POST(request: NextRequest) {
     // Parse form data to get CSV file
     const formData = await request.formData();
     const file = formData.get('csv') as File;
-    
+
     if (!file) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'No CSV file provided' 
+          error: 'No CSV file provided'
         } as BulkImportResponse,
         { status: 400 }
       );
@@ -167,9 +165,9 @@ export async function POST(request: NextRequest) {
     // Validate file type
     if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Invalid file type. Please upload a CSV file.' 
+          error: 'Invalid file type. Please upload a CSV file.'
         } as BulkImportResponse,
         { status: 400 }
       );
@@ -177,12 +175,12 @@ export async function POST(request: NextRequest) {
 
     // Read and parse CSV
     const csvText = await file.text();
-    
+
     if (!csvText.trim()) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'CSV file is empty' 
+          error: 'CSV file is empty'
         } as BulkImportResponse,
         { status: 400 }
       );
@@ -199,7 +197,7 @@ export async function POST(request: NextRequest) {
 
     if (parseResult.errors.length > 0) {
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: 'CSV parsing failed',
           details: parseResult.errors.map(err => err.message).join(', ')
@@ -254,9 +252,9 @@ export async function POST(request: NextRequest) {
     // Validate we have data rows
     if (!parseResult.data || parseResult.data.length === 0) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'CSV file contains no data rows' 
+          error: 'CSV file contains no data rows'
         } as BulkImportResponse,
         { status: 400 }
       );
@@ -288,9 +286,9 @@ export async function POST(request: NextRequest) {
     if (orgStatusError) {
       console.error('Error checking organization status:', orgStatusError);
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Failed to check organization status' 
+          error: 'Failed to check organization status'
         } as BulkImportResponse,
         { status: 500 }
       );
@@ -299,9 +297,9 @@ export async function POST(request: NextRequest) {
     // Check if user is part of an organization
     if (!orgStatus || !orgStatus.has_organization) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'You are not part of an organization. You need to create or join an organization first.' 
+          error: 'You are not part of an organization. You need to create or join an organization first.'
         } as BulkImportResponse,
         { status: 403 }
       );
@@ -352,10 +350,10 @@ export async function POST(request: NextRequest) {
     if (rpcError) {
       console.error('RPC Error:', rpcError);
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: 'Import failed during processing',
-          details: rpcError.message 
+          details: rpcError.message
         } as BulkImportResponse,
         { status: 500 }
       );
@@ -368,7 +366,7 @@ export async function POST(request: NextRequest) {
     console.error('Bulk import error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Server error during import',
         details: errorMessage

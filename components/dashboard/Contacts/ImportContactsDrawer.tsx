@@ -37,7 +37,6 @@ const CSV_HEADERS = [
   'email',
   'phone',
   'city',
-  'state',
   'country',
   'linkedin_url',
   'twitter_profile',
@@ -58,7 +57,6 @@ const SAMPLE_ROWS = [
     email: 'john@example.com',
     phone: '+1234567890',
     city: 'San Francisco',
-    state: 'CA',
     country: 'USA',
     linkedin_url: 'https://linkedin.com/in/johndoe',
     twitter_profile: 'https://twitter.com/johndoe',
@@ -77,7 +75,6 @@ const SAMPLE_ROWS = [
     email: 'jane@techco.com',
     phone: '+1987654321',
     city: 'New York',
-    state: 'NY',
     country: 'USA',
     linkedin_url: 'https://linkedin.com/in/janesmith',
     twitter_profile: '',
@@ -124,7 +121,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
 
     try {
       setIsUploading(true)
-      
+
       // Create FormData for file upload
       const formData = new FormData()
       formData.append('csv', selectedFile)
@@ -139,18 +136,18 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
       if (response.data.success) {
         // Show success message with summary
         const { total_processed, contacts_created, contacts_updated, companies_created, contacts_skipped } = response.data
-        
+
         let message = `Successfully processed ${total_processed} rows`
         const details = []
-        
+
         if (contacts_created > 0) details.push(`${contacts_created} contacts created`)
         if (contacts_updated > 0) details.push(`${contacts_updated} contacts updated`)
         if (companies_created > 0) details.push(`${companies_created} companies created`)
-        
+
         if (details.length > 0) {
           message += `: ${details.join(', ')}`
         }
-        
+
         if (contacts_skipped > 0) {
           toast.warning(`${message}. ${contacts_skipped} rows were skipped due to validation errors.`)
         } else {
@@ -167,7 +164,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
 
       if (axios.isAxiosError(error) && error.response) {
         const status = error.response.status
-        
+
         if (status === 429) {
           toast.error("Rate limit exceeded. Please wait before importing more data.")
         } else if (status === 401) {
@@ -237,27 +234,25 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
               Upload a CSV file to import multiple contacts at once.
             </p>
           </DrawerHeader>
-          
+
           <div className="flex-1 overflow-y-auto">
             <div className="px-6 py-4 space-y-6">
-              
+
               {/* File Upload Section */}
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-foreground">Upload CSV File</h3>
-                
+
                 <div className="space-y-4">
-                  <div 
-                    {...getRootProps()} 
-                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                      isDragActive 
-                        ? 'border-blue-400 bg-blue-50' 
+                  <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${isDragActive
+                        ? 'border-blue-400 bg-blue-50'
                         : 'border-gray-300 hover:border-gray-400'
-                    }`}
+                      }`}
                   >
                     <input {...getInputProps()} />
-                    <FileUp className={`mx-auto h-12 w-12 ${
-                      isDragActive ? 'text-blue-500' : 'text-gray-400'
-                    }`} />
+                    <FileUp className={`mx-auto h-12 w-12 ${isDragActive ? 'text-blue-500' : 'text-gray-400'
+                      }`} />
                     <div className="mt-4">
                       <span className="text-sm font-medium text-blue-600 hover:text-blue-500">
                         {isDragActive ? 'Drop the CSV file here' : 'Click to upload'}
@@ -330,11 +325,10 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                     <div className="space-y-1.5">
                       <code
                         onClick={() => copyHeader('full_name')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'full_name'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'full_name'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-red-300 text-red-900 hover:bg-red-100'
-                        }`}
+                          }`}
                       >
                         full_name
                       </code>
@@ -344,11 +338,10 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       <div className="text-xs text-red-800 ml-2 mb-2">At least ONE social media profile:</div>
                       <code
                         onClick={() => copyHeader('linkedin_url')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'linkedin_url'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'linkedin_url'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-red-300 text-red-900 hover:bg-red-100'
-                        }`}
+                          }`}
                       >
                         linkedin_url
                       </code>
@@ -357,11 +350,10 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       </p>
                       <code
                         onClick={() => copyHeader('twitter_profile')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'twitter_profile'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'twitter_profile'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-red-300 text-red-900 hover:bg-red-100'
-                        }`}
+                          }`}
                       >
                         twitter_profile
                       </code>
@@ -370,11 +362,10 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       </p>
                       <code
                         onClick={() => copyHeader('instagram_profile')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'instagram_profile'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'instagram_profile'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-red-300 text-red-900 hover:bg-red-100'
-                        }`}
+                          }`}
                       >
                         instagram_profile
                       </code>
@@ -393,61 +384,46 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                     <div className="space-y-1.5">
                       <code
                         onClick={() => copyHeader('title')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'title'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'title'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
-                        }`}
+                          }`}
                       >
                         title
                       </code>
                       <code
                         onClick={() => copyHeader('email')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'email'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'email'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
-                        }`}
+                          }`}
                       >
                         email
                       </code>
                       <code
                         onClick={() => copyHeader('phone')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'phone'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'phone'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
-                        }`}
+                          }`}
                       >
                         phone
                       </code>
                       <code
                         onClick={() => copyHeader('city')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'city'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'city'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
-                        }`}
+                          }`}
                       >
                         city
                       </code>
                       <code
-                        onClick={() => copyHeader('state')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'state'
-                            ? 'bg-green-100 border-green-300 text-green-900'
-                            : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
-                        }`}
-                      >
-                        state
-                      </code>
-                      <code
                         onClick={() => copyHeader('country')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'country'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'country'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-blue-300 text-blue-900 hover:bg-blue-100'
-                        }`}
+                          }`}
                       >
                         country
                       </code>
@@ -463,11 +439,10 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                     <div className="space-y-1.5">
                       <code
                         onClick={() => copyHeader('company_name')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'company_name'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'company_name'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-amber-300 text-amber-900 hover:bg-amber-100'
-                        }`}
+                          }`}
                       >
                         company_name
                       </code>
@@ -476,11 +451,10 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       </p>
                       <code
                         onClick={() => copyHeader('company_url')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'company_url'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'company_url'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-amber-300 text-amber-900 hover:bg-amber-100'
-                        }`}
+                          }`}
                       >
                         company_url
                       </code>
@@ -499,21 +473,19 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                     <div className="space-y-1.5">
                       <code
                         onClick={() => copyHeader('company_linkedin_url')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'company_linkedin_url'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'company_linkedin_url'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
-                        }`}
+                          }`}
                       >
                         company_linkedin_url
                       </code>
                       <code
                         onClick={() => copyHeader('company_industry')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'company_industry'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'company_industry'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
-                        }`}
+                          }`}
                       >
                         company_industry
                       </code>
@@ -522,31 +494,28 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                       </p>
                       <code
                         onClick={() => copyHeader('company_city')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'company_city'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'company_city'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
-                        }`}
+                          }`}
                       >
                         company_city
                       </code>
                       <code
                         onClick={() => copyHeader('company_state')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'company_state'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'company_state'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
-                        }`}
+                          }`}
                       >
                         company_state
                       </code>
                       <code
                         onClick={() => copyHeader('company_country')}
-                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${
-                          copiedHeader === 'company_country'
+                        className={`block text-xs px-2 py-1.5 rounded border cursor-pointer transition-colors ${copiedHeader === 'company_country'
                             ? 'bg-green-100 border-green-300 text-green-900'
                             : 'bg-white border-purple-300 text-purple-900 hover:bg-purple-100'
-                        }`}
+                          }`}
                       >
                         company_country
                       </code>
@@ -563,8 +532,8 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                 <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={!selectedFile || isUploading}
                   className="gap-2"
                 >
