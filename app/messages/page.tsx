@@ -5,23 +5,11 @@ import { useAuth } from "@/lib/auth-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/loading";
-import { MessageList, type OutreachMessage } from "@/components/messages/MessageList";
+import { MessageList } from "@/components/messages/MessageList";
 import { MessageViewer } from "@/components/messages/MessageViewer";
-import { MessageFilters, type StatusFilter } from "@/components/messages/MessageFilters";
+import { MessageFilters } from "@/components/messages/MessageFilters";
 import { MessagePagination } from "@/components/messages/MessagePagination";
-
-interface MessagesResponse {
-  messages: OutreachMessage[];
-  total_count: number;
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-}
+import { type MessagesResponse, type StatusFilter } from "@/app/api/messages/route";
 
 export default function MessagesPage() {
   const { loading: authLoading } = useAuth();

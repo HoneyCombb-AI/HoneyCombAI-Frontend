@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+export type StatusFilter = "all" | "pending" | "completed";
+
 export interface OutreachMessage {
   id: string;
+  contact_id: string;
   full_name: string;
   profile_picture: string | null;
-  outreach_message: string | null;
-  outreach_requested: boolean;
-  outreach_completed: boolean;
+  content: string | null;
+  status: string;
+  sender_type: string;
+  timestamp: string | null;
   updated_at: string;
 }
 

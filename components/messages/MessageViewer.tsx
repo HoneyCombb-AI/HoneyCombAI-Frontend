@@ -10,16 +10,10 @@ import Image from 'next/image';
 import { parseBracketedText } from "./MessageUtil";
 import { useFontSize } from "@/lib/font-size-context";
 import { toast } from "sonner";
+import { OutreachMessage } from "@/app/api/messages/route";
+import { ConversationMessage } from "@/app/api/messages/[contactId]/route";
+import axios from "axios";
 
-export interface OutreachMessage {
-  id: string;
-  full_name: string;
-  profile_picture: string | null;
-  outreach_message: string | null;
-  outreach_requested: boolean;
-  outreach_completed: boolean;
-  updated_at: string;
-}
 
 interface MessageViewerProps {
   message: OutreachMessage | null;
@@ -41,8 +35,33 @@ const getIconForSection = (iconType: string) => {
 };
 
 export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
-  const { getFontSizeClass } = useFontSize();
+  /* eslint-disable react-hooks/exhaustive-deps */
+  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [imageError, setImageError] = useState(false);
+
+  // Fetch conversation history when contact_id changes
+  React.useEffect(() => {
+    if (message?.contact_id) {
+      const fetchHistory = async () => {
+        setLoadingHistory(true);
+        try {
+          const res = await axios.get(`/api/messages/${message.contact_id}`);
+          if (res.data) {
+            setConversation(res.data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch conversation:", error);
+          toast.error("Failed to load conversation history");
+        } finally {
+          setLoadingHistory(false);
+        }
+      };
+      fetchHistory();
+    } else {
+      setConversation([]);
+    }
+  }, [message?.contact_id]);
 
   const optimizedPicture = useMemo(
     () => message?.profile_picture,
@@ -53,142 +72,121 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
     return name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase();
   }, []);
 
-  const formattedDate = useMemo(
-    () => message ? new Date(message.updated_at).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    }) : '',
-    [message?.updated_at]
-  );
-
-  const parsedSections = useMemo(
-    () => message && message.outreach_message ? parseBracketedText(message.outreach_message) : [],
-    [message?.outreach_message]
-  );
-
-  const statusBadge = useMemo(() => {
-    if (!message) return null;
-    if (message.outreach_completed) {
-      return (
-        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-          <CheckCircle2 className="h-3 w-3 mr-1" />
-          Response Ready
-        </Badge>
-      );
-    }
-    if (message.outreach_requested) {
-      return (
-        <Badge variant="default" className="bg-orange-100 text-orange-800 border-orange-200">
-          <Clock className="h-3 w-3 mr-1" />
-          Generating
-        </Badge>
-      );
-    }
-    return null;
-  }, [message?.outreach_completed, message?.outreach_requested]);
-
-  const handleCopySection = useCallback((content: string, sectionType: string) => {
-    navigator.clipboard.writeText(content).then(() => {
-      toast.success(`${sectionType} message copied to clipboard`);
-    }).catch(() => {
-      toast.error("Failed to copy message");
-    });
-  }, []);
-
   if (!message) {
     return (
       <div className="h-full flex flex-col items-center justify-center text-center p-8">
         <Mail className="h-16 w-16 text-gray-300 mb-4" />
         <p className="text-sm text-muted-foreground">
-          Select a message to view details
+          Select a conversation to view details
         </p>
       </div>
     );
   }
 
   return (
-    <Card className="bg-white border-gray-200">
-      <div className="px-6">
-        <div className="flex items-start gap-4 mb-4">
-          {optimizedPicture && !imageError ? (
-            <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
-              <Image
-                src={optimizedPicture}
-                alt={message.full_name}
-                fill
-                className="object-cover"
-                sizes="64px"
-                quality={100}
-                onError={() => setImageError(true)}
-              />
-            </div>
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xl font-medium">{getInitials(message.full_name)}</span>
-            </div>
-          )}
-
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold mb-2">{message.full_name}</h2>
-            <div className="flex items-center gap-3 flex-wrap">
-              {statusBadge}
-              <div className="flex items-center gap-1 text-sm text-gray-500">
-                <Calendar className="h-4 w-4" />
-                <span>{formattedDate}</span>
-              </div>
-            </div>
+    <Card className="bg-white border-gray-200 h-full flex flex-col shadow-none rounded-none border-0 md:border-l">
+      {/* Header */}
+      <div className="p-4 border-b flex items-center gap-4 bg-white">
+        {optimizedPicture && !imageError ? (
+          <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+              src={optimizedPicture}
+              alt={message.full_name}
+              fill
+              className="object-cover"
+              sizes="40px"
+              quality={100}
+              onError={() => setImageError(true)}
+            />
+          </div>
+        ) : (
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-xs font-medium">{getInitials(message.full_name)}</span>
+          </div>
+        )}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">{message.full_name}</h2>
+          <div className="flex items-center gap-2">
+            {/* Status Badge */}
+            {message.status === 'draft' && <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-yellow-50 text-yellow-700 border-yellow-200">Draft</Badge>}
+            {message.status === 'sent' && <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-green-50 text-green-700 border-green-200">Sent</Badge>}
           </div>
         </div>
+      </div>
 
-        <Separator className="my-4" />
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-gray-50/50">
+        {loadingHistory ? (
+          <div className="flex justify-center py-8">
+            <Clock className="h-5 w-5 text-gray-400 animate-pulse" />
+          </div>
+        ) : conversation.length > 0 ? (
+          conversation.map((msg) => {
+            // Logic: 'bot' means "Me" (System/User) -> Right Side
+            // Anything else means "Contact" -> Left Side
+            const isMe = msg.sender_type === 'bot' || msg.sender_type === 'user';
 
-        <div className="space-y-6">
-          {message.outreach_message ? (
-            parsedSections.length > 0 ? (
-              parsedSections.map((section, index) => (
-                <div key={index} className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {getIconForSection(section.icon)}
-                      <h3 className="text-lg font-semibold text-gray-900">{section.type}</h3>
+            return (
+              <div key={msg.id} className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div className={`flex max-w-[85%] gap-3 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+
+                  {/* Avatar for Contact (Left) */}
+                  {!isMe && (
+                    <div className="h-8 w-8 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden mt-1">
+                      {optimizedPicture ? (
+                        <Image src={optimizedPicture} alt="Contact" width={32} height={32} className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500">
+                          {getInitials(message.full_name)}
+                        </div>
+                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleCopySection(section.content, section.type)}
-                      className="h-8 w-8 p-0"
+                  )}
+
+                  {/* Avatar for User/Bot (Right) */}
+                  {isMe && (
+                    <div className="h-8 w-8 rounded-full bg-blue-100 flex-shrink-0 overflow-hidden mt-1" title={msg.sender_details?.full_name || 'Me'}>
+                      {msg.sender_details?.avatar_url ? (
+                        <Image src={msg.sender_details.avatar_url} alt="Me" width={32} height={32} className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-blue-600 bg-blue-50">
+                          Me
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                    <div
+                      className={`px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap shadow-sm ${isMe
+                        ? 'bg-blue-600 text-white rounded-tr-sm'
+                        : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
+                        }`}
                     >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="pl-7">
-                    <p className={`${getFontSizeClass()} text-black whitespace-pre-wrap leading-relaxed`}>{section.content}</p>
+                      {msg.content}
+                    </div>
+                    <span className="text-[10px] text-gray-400 mt-1.5 px-1 font-medium">
+                      {new Date(msg.created_at || msg.timestamp || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleCopySection(message.outreach_message!, "Message")}
-                  className="absolute top-0 right-0 h-8 w-8 p-0"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <pre className={`whitespace-pre-wrap ${getFontSizeClass()} leading-relaxed text-black font-sans pr-10`}>
-                  {message.outreach_message}
-                </pre>
               </div>
-            )
-          ) : (
-            <div className="flex flex-col items-center justify-center text-center p-8 text-gray-500">
-              <Clock className="h-12 w-12 mb-3 text-orange-400 animate-pulse" />
-              <p className="text-base font-medium">Generating outreach message...</p>
-              <p className="text-sm mt-2">This contact&apos;s personalized message is being created.</p>
-            </div>
-          )}
+            );
+          })
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <p className="text-sm">No messages yet</p>
+          </div>
+        )}
+      </div>
+
+      {/* Input Placeholder */}
+      <div className="p-4 border-t bg-white">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gray-50/50 z-10 flex items-center justify-center rounded-md border border-dashed border-gray-200">
+            <span className="text-xs text-gray-400 font-medium">Reply functionality coming soon</span>
+          </div>
+          <div className="h-10 w-full bg-gray-50 rounded-md"></div>
         </div>
       </div>
     </Card>
