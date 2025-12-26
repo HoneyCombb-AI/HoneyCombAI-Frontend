@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Clock } from "lucide-react";
@@ -17,7 +17,7 @@ interface MessageViewerProps {
 }
 
 export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
-  /* eslint-disable react-hooks/exhaustive-deps */
+
   const { getFontSizeClass } = useFontSize();
   const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass]);
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
@@ -25,23 +25,38 @@ export const MessageViewer = React.memo(({ message }: MessageViewerProps) => {
   const [imageError, setImageError] = useState(false);
 
   // Fetch conversation history when contact_id changes
-  React.useEffect(() => {
+
+  useEffect(() => {
     if (message?.contact_id) {
+      const controller = new AbortController();
+
       const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
-          const res = await axios.get(`/api/messages/${message.contact_id}`);
+          const res = await axios.get(`/api/messages/${message.contact_id}`, {
+            signal: controller.signal
+          });
           if (res.data) {
             setConversation(res.data);
           }
         } catch (error) {
+          if (axios.isCancel(error)) {
+            return;
+          }
           console.error("Failed to fetch conversation:", error);
           toast.error("Failed to load conversation history");
         } finally {
-          setLoadingHistory(false);
+          if (!controller.signal.aborted) {
+            setLoadingHistory(false);
+          }
         }
       };
+
       fetchHistory();
+
+      return () => {
+        controller.abort();
+      };
     } else {
       setConversation([]);
     }
