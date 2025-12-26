@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock } from "lucide-react";
 import Image from 'next/image';
 import { OutreachMessage } from "@/app/api/messages/route";
 
@@ -36,27 +35,17 @@ const MessageListItem = React.memo(({
   };
 
   const getStatusBadge = () => {
-    if (message.status === 'generated' || message.status === 'approved' || message.status === 'sent') {
+    if (message.status === 'sent') {
       return (
-        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 text-xs">
-          <CheckCircle2 className="h-3 w-3 mr-1" />
-          Response Ready
+        <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-green-50 text-green-700 border-green-200">
+          Sent
         </Badge>
       );
     }
     if (message.status === 'draft') {
       return (
-        <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-200 text-xs shadow-none hover:bg-yellow-100">
-          <Clock className="h-3 w-3 mr-1" />
+        <Badge variant="secondary" className="text-[10px] h-5 px-2 bg-yellow-50 text-yellow-700 border-yellow-200">
           Draft
-        </Badge>
-      );
-    }
-    if (message.status === 'processing') {
-      return (
-        <Badge variant="default" className="bg-orange-100 text-orange-800 border-orange-200 text-xs shadow-none">
-          <Clock className="h-3 w-3 mr-1 animate-pulse" />
-          Processing
         </Badge>
       );
     }
