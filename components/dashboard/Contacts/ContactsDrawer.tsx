@@ -143,9 +143,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                               : 'bg-blue-400'
                             }`}
                         />
-                        <span className="text-xs text-gray-600 font-medium">
+                        {/* <span className="text-xs text-gray-600 font-medium">
                           {drawerContact.temperature.charAt(0).toUpperCase() + drawerContact.temperature.slice(1)}
-                        </span>
+                        </span> */}
                       </div>
                     )}
 
