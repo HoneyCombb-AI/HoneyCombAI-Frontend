@@ -20,7 +20,7 @@ export async function DELETE() {
 
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
+
     if (userError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -116,6 +116,9 @@ export async function DELETE() {
       });
 
       if (deleteOrgWithCleanupError) {
+        if (deleteOrgWithCleanupError.message.includes('token_history_organization_id_fkey')) {
+          throw new Error('Cannot delete organization because there is associated history. Please contact support for assistance.');
+        }
         throw new Error(`Failed to delete organization: ${deleteOrgWithCleanupError.message}`);
       }
 

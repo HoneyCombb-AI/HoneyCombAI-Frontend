@@ -149,8 +149,8 @@ const ContactRow = memo<{
         </div>
       </td>
 
-      {/* Heat */}
-      <td
+      {/* Heat */}     
+      {/* <td
         className="px-2 py-3 w-[8%] cursor-pointer"
         onClick={() => onContactClick(contact)}
         data-testid={isFirstInGroup ? "sample-contact-heat" : undefined}
@@ -171,7 +171,7 @@ const ContactRow = memo<{
             <span className="text-sm text-gray-400">—</span>
           )}
         </div>
-      </td>
+      </td> */}
 
       {/* Tags */}
       <td
@@ -467,7 +467,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                       <th className="px-4 py-2 text-left font-medium w-[24%]">Name</th>
                       <th className="px-2 py-2 text-left font-medium w-[18%]">Company</th>
                       <th className="px-2 py-2 text-left font-medium w-[11%]">Location</th>
-                      <th className="px-2 py-2 text-center font-medium w-[8%]">Heat</th>
+                      {/* <th className="px-2 py-2 text-center font-medium w-[8%]">Heat</th> */}
                       <th className="px-2 py-2 text-left font-medium w-[7%]">Tags</th>
                       <th className="px-2 py-2 text-left font-medium w-[35%]">Signals</th>
                     </tr>

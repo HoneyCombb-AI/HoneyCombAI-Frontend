@@ -234,7 +234,7 @@ export function AppSidebar() {
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-medium leading-none">
+                  <p className="text-sm font-medium leading-none truncate">
                     {displayName}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">

@@ -50,10 +50,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch company details to check if they can be deleted
+    // Fetch company details to check if they exist
     const { data: companies, error: fetchError } = await supabase
       .from("companies")
-      .select("id, company_analysis_requested, company_analysis_completed, name")
+      .select("id, name")
       .in("id", company_ids);
 
     if (fetchError) {
@@ -71,27 +71,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Separate deletable and in-progress companies
-    const deletableCompanies = companies.filter(
-      (company) =>
-        !company.company_analysis_requested || company.company_analysis_completed
-    );
-    const inProgressCompanies = companies.filter(
-      (company) =>
-        company.company_analysis_requested && !company.company_analysis_completed
-    );
-
-    const deletableIds = deletableCompanies.map((c) => c.id);
-    const skippedIds = inProgressCompanies.map((c) => c.id);
-
+    const companyIdsToDelete = companies.map((c) => c.id);
     let deleted_count = 0;
 
-    // Delete companies that are not in-progress
-    if (deletableIds.length > 0) {
-      const { error: deleteError } = await supabase
+    if (companyIdsToDelete.length > 0) {
+      const { error: deleteError, count } = await supabase
         .from("companies")
-        .delete()
-        .in("id", deletableIds);
+        .delete({ count: 'exact' })
+        .in("id", companyIdsToDelete);
 
       if (deleteError) {
         console.error("Error deleting companies:", deleteError);
@@ -101,18 +88,15 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      deleted_count = deletableIds.length;
+      // If count is null, fallback to the length of ids we tried to delete
+      deleted_count = count ?? companyIdsToDelete.length;
     }
 
     return NextResponse.json({
       success: true,
       deleted_count,
-      skipped_count: skippedIds.length,
-      message: `Successfully deleted ${deleted_count} company(s)${
-        skippedIds.length > 0
-          ? `. ${skippedIds.length} company(s) are in-progress and were skipped`
-          : ""
-      }`,
+      skipped_count: 0,
+      message: `Successfully deleted ${deleted_count} company(s)`,
     });
   } catch (error) {
     console.error("Delete companies error:", error);
