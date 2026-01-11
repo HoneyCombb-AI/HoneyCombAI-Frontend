@@ -3,20 +3,34 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { createClient } from "@/lib/supabase/client";
-import { useState, useEffect } from "react";
-import { AlertCircle } from "lucide-react";
 import { Loading } from "@/components/loading";
+import { toast } from "sonner";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { SimpleHeader } from "@/components/SimpleHeader";
 import { useAuth } from "@/lib/auth-context";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 
 export default function LoginPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Separate loading states
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+
   const [isRedirecting, setIsRedirecting] = useState(true);
+
+  // State for email login
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   const supabase = createClient();
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -33,8 +47,7 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsGoogleLoading(true);
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -46,8 +59,38 @@ export default function LoginPage() {
       if (error) throw error;
     } catch (err: unknown) {
       console.error("Error logging in:", err);
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
-      setIsLoading(false);
+      toast.error(err instanceof Error ? err.message : "An unexpected error occurred");
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const validationResult = loginSchema.safeParse({ email, password });
+
+    if (!validationResult.success) {
+      toast.error(validationResult.error.errors[0].message);
+      return;
+    }
+
+    try {
+      setIsEmailLoading(true);
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      toast.success("Logged in successfully!");
+      router.push('/overview');
+    } catch (err: unknown) {
+      console.error("Error logging in:", err);
+      toast.error(err instanceof Error ? err.message : "An unexpected error occurred");
+    } finally {
+      setIsEmailLoading(false);
     }
   };
 
@@ -106,39 +149,66 @@ export default function LoginPage() {
               <h2 className="text-4xl font-black text-black mb-2">Welcome Back!</h2>
               <p className="text-sm font-medium text-gray-800 mb-6">Please enter login details below</p>
 
-              {error && (
-                <Alert variant="destructive" className="mb-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
               <form
-                onSubmit={(e) => e.preventDefault()}
+                onSubmit={handleEmailLogin}
                 className="space-y-4"
                 aria-label="Login form"
               >
                 <div className="grid gap-2">
                   <Label htmlFor="email" className="text-sm">Enter your email</Label>
-                  <Input id="email" type="email" placeholder="example@gmail.com" className="h-12" disabled />
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="example@gmail.com"
+                      className="h-12 pl-10"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isEmailLoading || isGoogleLoading}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="password" className="text-sm">Enter your password</Label>
-                  <Input id="password" type="password" placeholder="••••••••" className="h-12" disabled />
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="h-12 pl-10 pr-10"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isEmailLoading || isGoogleLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   <div className="flex justify-end">
                     <a href="#" className="text-sm underline">Forgot password?</a>
                   </div>
                 </div>
 
                 <div>
-                  <button
+                  <Button
                     type="submit"
-                    className="w-full h-12 rounded-md bg-gray-300 text-gray-500 text-sm font-medium cursor-not-allowed"
-                    disabled
+                    className="w-full h-12 rounded-md bg-slate-900 text-white hover:bg-slate-800 text-sm font-medium transition-all duration-300 hover:shadow-lg"
+                    disabled={isEmailLoading || isGoogleLoading}
                   >
-                    Email Login coming soon
-                  </button>
+                    {isEmailLoading ? "Logging in..." : "Log in"}
+                  </Button>
                 </div>
 
                 <div>
@@ -146,7 +216,7 @@ export default function LoginPage() {
                     variant="outline"
                     className="w-full h-12 flex items-center justify-center cursor-pointer bg-gray-50 text-black hover:bg-green-700 hover:text-white"
                     onClick={handleGoogleLogin}
-                    disabled={isLoading}
+                    disabled={isGoogleLoading || isEmailLoading}
                   >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden>
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -154,7 +224,7 @@ export default function LoginPage() {
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
-                    {isLoading ? (
+                    {isGoogleLoading ? (
                       <div className="flex items-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2" />
                         Signing in...
