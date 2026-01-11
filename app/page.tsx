@@ -70,9 +70,7 @@ export default function LoginPage() {
     const validationResult = loginSchema.safeParse({ email, password });
 
     if (!validationResult.success) {
-      validationResult.error.errors.forEach((err) => {
-        toast.error(err.message);
-      });
+      toast.error(validationResult.error.errors[0].message);
       return;
     }
 
@@ -91,6 +89,7 @@ export default function LoginPage() {
     } catch (err: unknown) {
       console.error("Error logging in:", err);
       toast.error(err instanceof Error ? err.message : "An unexpected error occurred");
+    } finally {
       setIsEmailLoading(false);
     }
   };
