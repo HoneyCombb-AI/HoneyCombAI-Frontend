@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ContactEmail } from "@/app/api/emails/route";
-import { Mail, Send, Inbox } from "lucide-react";
+import { Mail, Send, Inbox, Reply } from "lucide-react";
 import { Loading } from "@/components/loading";
+import { Button } from "@/components/ui/button";
+import { EmailComposer } from "./EmailComposer";
 import axios from "axios";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -33,6 +35,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
     const [messages, setMessages] = useState<ContactMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [replyToMessage, setReplyToMessage] = useState<ContactMessage | null>(null);
 
     const fetchMessages = useCallback(async (contactId: string) => {
         try {
@@ -61,6 +64,19 @@ export function EmailViewer({ email }: EmailViewerProps) {
         }
     }, [email?.id, fetchMessages]);
 
+
+
+    const handleReply = (message: ContactMessage) => {
+        setReplyToMessage(message);
+    };
+
+    const handleEmailSent = () => {
+        // Refresh messages after sending
+        if (email?.id) {
+            fetchMessages(email.id);
+        }
+    };
+
     if (!email) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center p-8">
@@ -73,22 +89,23 @@ export function EmailViewer({ email }: EmailViewerProps) {
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full relative">
             {/* Sleek Header */}
             <div className="flex-shrink-0 px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
-                <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                        {email.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                            {email.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-gray-900">{email.full_name}</h2>
+                            <p className="text-xs text-gray-500">{email.email}</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-lg font-semibold text-gray-900">{email.full_name}</h2>
-                        <p className="text-xs text-gray-500">{email.email}</p>
-                    </div>
+
                 </div>
             </div>
-
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+            <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 min-h-0">
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
                         <Loading />
@@ -103,7 +120,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
                         <p className="text-sm text-muted-foreground">No messages found</p>
                     </div>
                 ) : (
-                    <div className="space-y-4 max-w-4xl mx-auto">
+                    <div className="space-y-4 max-w-4xl mx-auto pb-4">
                         {messages.map((message) => {
                             const isSent = message.direction === 'outbound';
 
@@ -143,9 +160,22 @@ export function EmailViewer({ email }: EmailViewerProps) {
 
                                         {/* Message Footer */}
                                         <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-200">
-                                            <span>
-                                                {format(new Date(message.sent_at), "MMM d, h:mm a")}
-                                            </span>
+                                            <div className="flex items-center gap-4">
+                                                <span>
+                                                    {format(new Date(message.sent_at), "MMM d, h:mm a")}
+                                                </span>
+                                                {!isSent && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleReply(message)}
+                                                        className="h-6 px-2 text-xs"
+                                                    >
+                                                        <Reply className="h-3 w-3 mr-1" />
+                                                        Reply
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {message.replied_at && (
@@ -160,6 +190,14 @@ export function EmailViewer({ email }: EmailViewerProps) {
                     </div>
                 )}
             </div>
+
+            {/* Email Composer Embedded */}
+            <EmailComposer
+                contact={email}
+                replyToMessage={replyToMessage}
+                lastMessageSubject={messages.length > 0 ? messages[messages.length - 1].subject : undefined}
+                onSent={handleEmailSent}
+            />
         </div>
     );
 }
