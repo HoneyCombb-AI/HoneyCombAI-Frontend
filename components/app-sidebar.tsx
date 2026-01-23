@@ -13,6 +13,7 @@ import {
   Network,
   SendHorizontal,
   LayoutDashboard,
+  Mail,
 } from "lucide-react";
 
 import {
@@ -70,6 +71,12 @@ const items = [
     title: "Messages",
     icon: SendHorizontal,
     url: "/messages",
+    hasChevron: false,
+  },
+  {
+    title: "Emails",
+    icon: Mail,
+    url: "/emails",
     hasChevron: false,
   },
   {
