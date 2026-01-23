@@ -83,7 +83,7 @@ export async function GET(req: Request) {
 
         if (insertError) {
             console.error("Database insert error:", insertError);
-            return NextResponse.json({ error: "Failed to save account: " + insertError.message }, { status: 500 });
+            return NextResponse.redirect(new URL("/integration?error=connection_failed", req.url));
         }
 
         return NextResponse.redirect(new URL("/integration", req.url)); // Redirect back to integration page
