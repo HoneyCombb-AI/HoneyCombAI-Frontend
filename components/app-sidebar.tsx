@@ -238,7 +238,7 @@ export function AppSidebar() {
               <div className="flex items-center gap-3 w-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={avatarUrl} alt={displayName} />
-                  <AvatarFallback>{initials}</AvatarFallback>
+                  <AvatarFallback className="bg-white text-black">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 text-left">
                   <p className="text-sm font-medium leading-none truncate">
