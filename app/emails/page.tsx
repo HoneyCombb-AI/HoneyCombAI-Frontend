@@ -7,35 +7,66 @@ import { Loading } from "@/components/loading";
 import { EmailList } from "@/components/emails/EmailList";
 import { EmailViewer } from "@/components/emails/EmailViewer";
 import { EmailFilters } from "@/components/emails/EmailFilters";
-import { type EmailsResponse } from "@/app/api/emails/route";
+import { type EmailsResponse, type ContactEmail } from "@/app/api/emails/route";
 
 export default function EmailsPage() {
     const { loading: authLoading } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [data, setData] = useState<EmailsResponse | null>(null);
+
+    // Data State
+    const [emails, setEmails] = useState<ContactEmail[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(false);
 
-    // Filters
+    // Filter State
     const [search, setSearch] = useState("");
+    const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [page, setPage] = useState(1);
+    const LIMIT = 20;
 
-    const fetchEmails = useCallback(async () => {
+    // Debounce search so we don't spam API
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(search), 500);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    const fetchEmails = useCallback(async (isLoadMore = false) => {
         try {
-            setLoading(true);
+            if (isLoadMore) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
+            }
+
+            const currentPage = isLoadMore ? page + 1 : 1;
 
             const response = await axios.get<EmailsResponse>("/api/emails", {
                 params: {
-                    search: search.trim() || undefined,
+                    search: debouncedSearch.trim() || undefined,
+                    tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+                    page: currentPage,
+                    limit: LIMIT,
                 },
             });
 
             const result = response.data;
-            setData(result);
 
-            // Auto-select first email if none selected
-            if (result.emails.length > 0 && !selectedId) {
-                setSelectedId(result.emails[0].id);
+            if (isLoadMore) {
+                setEmails(prev => [...prev, ...result.emails]);
+                setPage(prev => prev + 1);
+            } else {
+                setEmails(result.emails);
+                setPage(1);
+                // Auto-select first email if none selected
+                if (result.emails.length > 0 && !selectedId) {
+                    setSelectedId(result.emails[0].id);
+                }
             }
+
+            setHasMore(result.hasMore);
         } catch (e: unknown) {
             if (axios.isAxiosError(e)) {
                 setError(e.response?.data?.error || e.message);
@@ -44,16 +75,23 @@ export default function EmailsPage() {
             }
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
-    }, [search]);
+    }, [debouncedSearch, selectedTags, page, selectedId]);
 
+    // Initial Load & Filter Change
     useEffect(() => {
         if (!authLoading) {
-            fetchEmails();
+            // Reset and fetch when filters change
+            fetchEmails(false);
         }
-    }, [authLoading, fetchEmails]);
+    }, [authLoading, debouncedSearch, selectedTags]); // Removing fetchEmails from dependency to avoid loop if not handled carefully, relying on stable fetchEmails or just these deps
 
-    const emails = useMemo(() => data?.emails || [], [data]);
+    const loadMore = () => {
+        if (!loadingMore && hasMore) {
+            fetchEmails(true);
+        }
+    };
 
     const selectedEmail = useMemo(
         () => emails.find((e) => e.id === selectedId) || null,
@@ -79,10 +117,12 @@ export default function EmailsPage() {
                 <EmailFilters
                     search={search}
                     onSearchChange={setSearch}
+                    selectedTags={selectedTags}
+                    onTagsChange={setSelectedTags}
                 />
             </div>
 
-            {authLoading || loading ? (
+            {authLoading || (loading && page === 1) ? (
                 <div className="flex-1 flex flex-col items-center justify-center">
                     <Loading />
                     <p className="text-sm text-muted-foreground mt-4">
@@ -97,6 +137,9 @@ export default function EmailsPage() {
                             emails={emails}
                             selectedId={selectedId}
                             onSelectEmail={handleSelectEmail}
+                            hasMore={hasMore}
+                            onLoadMore={loadMore}
+                            loadingMore={loadingMore}
                         />
                     </div>
 

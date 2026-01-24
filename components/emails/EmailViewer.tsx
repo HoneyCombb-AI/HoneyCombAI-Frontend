@@ -154,7 +154,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
 
                                         {/* Message Body */}
                                         <div
-                                            className="text-sm text-gray-700 leading-relaxed mb-3"
+                                            className="text-sm text-gray-700 leading-relaxed mb-3 break-words [&_img]:max-w-full overflow-hidden whitespace-pre-wrap"
                                             dangerouslySetInnerHTML={{ __html: message.body }}
                                         />
 

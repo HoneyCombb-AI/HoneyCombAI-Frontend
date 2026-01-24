@@ -34,14 +34,22 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get user's Gmail account ID
-        const { data: gmailAccount, error: gmailError } = await supabase
+        // Get user's Gmail or Outlook account ID (prefer Gmail)
+        const { data: gmailAccount } = await supabase
             .from('gmail_accounts')
             .select('id')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
-        if (gmailError || !gmailAccount) {
+        const { data: outlookAccount } = await supabase
+            .from('outlook_accounts')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        const accountId = gmailAccount?.id || outlookAccount?.id;
+
+        if (!accountId) {
             return NextResponse.json(
                 { detail: 'No available account to send email from.' },
                 { status: 400 }
@@ -54,7 +62,7 @@ export async function POST(
             {
                 subject: body.subject,
                 body: body.body,
-                account_id: gmailAccount.id,
+                account_id: accountId,
                 thread_id: body.thread_id,
                 reply_to_message_id: body.reply_to_message_id,
             },

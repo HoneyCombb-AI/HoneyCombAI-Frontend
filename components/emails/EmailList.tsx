@@ -2,16 +2,27 @@
 
 import { ContactEmail } from "@/app/api/emails/route";
 import { cn } from "@/lib/utils";
-import { Mail } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 interface EmailListProps {
     emails: ContactEmail[];
     selectedId: string | null;
     onSelectEmail: (id: string) => void;
+    hasMore: boolean;
+    onLoadMore: () => void;
+    loadingMore: boolean;
 }
 
-export function EmailList({ emails, selectedId, onSelectEmail }: EmailListProps) {
+export function EmailList({
+    emails,
+    selectedId,
+    onSelectEmail,
+    hasMore,
+    onLoadMore,
+    loadingMore
+}: EmailListProps) {
     if (emails.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-8 text-center h-full min-h-[400px]">
@@ -22,49 +33,91 @@ export function EmailList({ emails, selectedId, onSelectEmail }: EmailListProps)
     }
 
     return (
-        <div className="divide-y">
-            {emails.map((email) => {
-                const isSelected = email.id === selectedId;
-                const initials = email.full_name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2);
+        <div className="flex flex-col h-full">
+            <div className="divide-y">
+                {emails.map((email) => {
+                    const isSelected = email.id === selectedId;
+                    const initials = email.full_name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2);
 
-                return (
-                    <button
-                        key={email.id}
-                        onClick={() => onSelectEmail(email.id)}
-                        className={cn(
-                            "w-full p-4 text-left transition-colors hover:bg-gray-50",
-                            isSelected && "bg-blue-50 hover:bg-blue-50 border-l-4 border-blue-500"
-                        )}
-                    >
-                        <div className="flex items-start gap-3">
-                            <Avatar className="h-10 w-10 flex-shrink-0">
-                                <AvatarFallback>{initials}</AvatarFallback>
-                            </Avatar>
+                    return (
+                        <button
+                            key={email.id}
+                            onClick={() => onSelectEmail(email.id)}
+                            className={cn(
+                                "w-full p-4 text-left transition-colors hover:bg-gray-50 flex flex-col gap-2",
+                                isSelected && "bg-blue-50 hover:bg-blue-50 border-l-4 border-blue-500"
+                            )}
+                        >
+                            <div className="flex items-start gap-3 w-full">
+                                <Avatar className="h-10 w-10 flex-shrink-0">
+                                    <AvatarFallback>{initials}</AvatarFallback>
+                                </Avatar>
 
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                    <span className="font-medium truncate">
-                                        {email.full_name}
-                                    </span>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                        <span className="font-medium truncate text-sm text-gray-900">
+                                            {email.full_name}
+                                        </span>
+                                        {/* Tags - Top Right */}
+                                        {email.tags && email.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 justify-end max-w-[40%] shrink-0">
+                                                {email.tags.slice(0, 2).map((tag, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className="px-1.5 py-0.5 rounded-md text-[10px] bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1 font-medium whitespace-nowrap"
+                                                    >
+                                                        {tag.name}
+                                                    </div>
+                                                ))}
+                                                {email.tags.length > 2 && (
+                                                    <span className="text-[10px] text-muted-foreground self-center bg-gray-100 px-1.5 py-0.5 rounded-md border border-gray-200">
+                                                        +{email.tags.length - 2}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <p className="text-xs text-muted-foreground truncate mb-1">
+                                        {email.email}
+                                    </p>
+
+                                    <p className="text-xs text-muted-foreground truncate">
+                                        {email.company_name}
+                                    </p>
                                 </div>
-
-                                <p className="text-sm text-muted-foreground truncate mb-1">
-                                    {email.email}
-                                </p>
-
-                                <p className="text-xs text-muted-foreground truncate">
-                                    {email.company_name}
-                                </p>
                             </div>
-                        </div>
-                    </button>
-                );
-            })}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Load More Button */}
+            {hasMore && (
+                <div className="p-4 border-t flex justify-center">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onLoadMore}
+                        disabled={loadingMore}
+                        className="w-full text-muted-foreground"
+                    >
+                        {loadingMore ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Loading...
+                            </>
+                        ) : (
+                            "Load More"
+                        )}
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
