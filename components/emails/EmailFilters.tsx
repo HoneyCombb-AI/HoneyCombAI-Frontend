@@ -66,7 +66,7 @@ export function EmailFilters({
                         size="sm"
                         onClick={() => setIsOpen(!isOpen)}
                         className={cn(
-                            "h-9 border-dashed",
+                            "h-9 border-dashed cursor-pointer",
                             selectedTags.length > 0 && "bg-blue-50 border-blue-200 text-blue-700"
                         )}
                     >

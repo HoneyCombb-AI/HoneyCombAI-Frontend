@@ -49,7 +49,7 @@ export function EmailList({
                             key={email.id}
                             onClick={() => onSelectEmail(email.id)}
                             className={cn(
-                                "w-full p-4 text-left transition-colors hover:bg-gray-50 flex flex-col gap-2",
+                                "w-full p-4 text-left transition-colors hover:bg-gray-50 flex flex-col gap-2 cursor-pointer group",
                                 isSelected && "bg-blue-50 hover:bg-blue-50 border-l-4 border-blue-500"
                             )}
                         >
@@ -69,9 +69,13 @@ export function EmailList({
                                                 {email.tags.slice(0, 2).map((tag, i) => (
                                                     <div
                                                         key={i}
-                                                        className="px-1.5 py-0.5 rounded-md text-[10px] bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1 font-medium whitespace-nowrap"
+                                                        style={{
+                                                            borderColor: tag.color,
+                                                            color: tag.color
+                                                        }}
+                                                        className="px-1.5 py-0.5 rounded-md text-[10px] border bg-transparent flex items-center gap-1 font-medium whitespace-nowrap max-w-[60px] truncate"
                                                     >
-                                                        {tag.name}
+                                                        <span className="truncate">{tag.name}</span>
                                                     </div>
                                                 ))}
                                                 {email.tags.length > 2 && (

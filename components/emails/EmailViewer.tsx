@@ -9,23 +9,8 @@ import { EmailComposer } from "./EmailComposer";
 import axios from "axios";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { ContactMessage } from "@/app/api/emails/[contactId]/messages/route";
 
-interface ContactMessage {
-    id: string;
-    account_id: string;
-    status: string;
-    subject: string;
-    thread_id: string;
-    message_id: string;
-    click_count: number;
-    campaign_id: string;
-    contact_id: string;
-    sent_at: string;
-    direction: string;
-    body: string;
-    open_count: number;
-    replied_at: string | null;
-}
 
 interface EmailViewerProps {
     email: ContactEmail | null;
@@ -90,21 +75,6 @@ export function EmailViewer({ email }: EmailViewerProps) {
 
     return (
         <div className="flex flex-col h-full relative">
-            {/* Sleek Header */}
-            <div className="flex-shrink-0 px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                            {email.full_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
-                        </div>
-                        <div>
-                            <h2 className="text-lg font-semibold text-gray-900">{email.full_name}</h2>
-                            <p className="text-xs text-gray-500">{email.email}</p>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
             <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 min-h-0">
                 {loading ? (
                     <div className="flex items-center justify-center h-full">

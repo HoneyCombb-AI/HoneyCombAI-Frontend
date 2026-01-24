@@ -18,6 +18,8 @@ export interface ContactMessage {
     replied_at: string | null;
 }
 
+
+
 export interface MessagesResponse {
     messages: ContactMessage[];
     contact_id: string;
