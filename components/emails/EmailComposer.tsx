@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ContactEmail } from "@/app/api/emails/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "./RichTextEditor";
-import { Loader2, Sparkles, Send } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronUp, Loader2, Sparkles, Send } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ export function EmailComposer({
     const [body, setBody] = useState("");
     const [generating, setGenerating] = useState(false);
     const [sending, setSending] = useState(false);
+    const [isOpen, setIsOpen] = useState(true);
 
     const isReply = !!replyToMessage;
 
@@ -62,6 +64,10 @@ export function EmailComposer({
         setSubject("");
         setBody("");
     }, [contact?.id]);
+
+    useEffect(() => {
+        setIsOpen(true);
+    }, [contact?.id, replyToMessage?.id]);
 
 
     // Add signature to body
@@ -120,75 +126,100 @@ export function EmailComposer({
 
     const canSend = body.trim().length > 0 && !sending;
 
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    const scrollToBottom = () => {
-        if (containerRef.current) {
-            containerRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-        }
-    };
+    const subjectLabel = subject.trim() || (isReply ? "Reply draft" : "New message");
+    const bodyPreview = useMemo(() => {
+        const stripped = body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+        return stripped.length > 0 ? stripped : "";
+    }, [body]);
 
     if (!contact) return null;
 
     return (
-        <div
-            ref={containerRef}
-            className="border-t bg-white flex flex-col shadow-lg z-10 transition-all duration-200 shrink-0"
-            onFocus={scrollToBottom}
-        >
-            {/* Header / Subject Line */}
-            <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
-                <span className="text-sm font-medium text-gray-500 w-16">
-                    {isReply ? "Replying:" : "Subject:"}
-                </span>
-                <Input
-                    placeholder="Subject"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    className="flex-1 bg-transparent border-none focus-visible:ring-0 px-0 h-auto font-medium"
-                />
-            </div>
-
-            {/* Editor Area */}
-            <div className="p-4 bg-white">
-                <RichTextEditor
-                    value={body}
-                    onChange={setBody}
-                    placeholder="Write your message... (HoneyComb signature added automatically)"
-                />
-            </div>
-
-            {/* Action Bar */}
-            <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleGenerateDraft}
-                    disabled={generating || sending}
-                    className="border border-purple-200 text-purple-700 bg-white hover:bg-purple-50 hover:border-purple-300 hover:text-purple-800 cursor-pointer transition-all duration-200 focus:ring-1 focus:ring-purple-200 shadow-sm"
+        <div className="w-full border-t border-gray-200 bg-white/95 shadow-[0_-12px_30px_-20px_rgba(15,23,42,0.45)] backdrop-blur supports-[backdrop-filter]:bg-white/80">
+            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                <CollapsibleTrigger
+                    type="button"
+                    className="group flex w-full items-center justify-between gap-3 px-6 py-3 text-left transition-colors hover:bg-gray-50"
                 >
-                    {generating ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                        <Sparkles className="h-4 w-4 mr-2" />
-                    )}
-                    AI Generate
-                </Button>
-
-                {canSend && (
-                    <Button
-                        onClick={handleSend}
-                        className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm border border-transparent hover:border-blue-800 cursor-pointer transition-all duration-200 active:scale-95"
-                    >
-                        {sending ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                            <Send className="h-4 w-4 mr-2" />
+                    <div className="min-w-0">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                            {isReply ? "Reply" : "Compose"}
+                        </div>
+                        <div className="truncate text-sm font-medium text-gray-900">
+                            {subjectLabel}
+                        </div>
+                        {bodyPreview && (
+                            <div className="truncate text-xs text-gray-500">
+                                {bodyPreview}
+                            </div>
                         )}
-                        Send
-                    </Button>
-                )}
-            </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="hidden sm:inline">
+                            {isOpen ? "Collapse" : "Expand"}
+                        </span>
+                        <ChevronUp
+                            className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : "rotate-0"}`}
+                        />
+                    </div>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent className="border-t border-gray-200 bg-white max-h-[70vh] overflow-y-auto">
+                    {/* Header / Subject Line */}
+                    <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
+                        <span className="text-sm font-medium text-gray-500 w-16">
+                            {isReply ? "Replying:" : "Subject:"}
+                        </span>
+                        <Input
+                            placeholder="Subject"
+                            value={subject}
+                            onChange={(e) => setSubject(e.target.value)}
+                            className="flex-1 bg-transparent border-none focus-visible:ring-0 px-0 h-auto font-medium"
+                        />
+                    </div>
+
+                    {/* Editor Area */}
+                    <div className="p-4 bg-white">
+                        <RichTextEditor
+                            value={body}
+                            onChange={setBody}
+                            placeholder="Write your message... (HoneyComb signature added automatically)"
+                        />
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleGenerateDraft}
+                            disabled={generating || sending}
+                            className="border border-purple-200 text-purple-700 bg-white hover:bg-purple-50 hover:border-purple-300 hover:text-purple-800 cursor-pointer transition-all duration-200 focus:ring-1 focus:ring-purple-200 shadow-sm"
+                        >
+                            {generating ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4 mr-2" />
+                            )}
+                            AI Generate
+                        </Button>
+
+                        {canSend && (
+                            <Button
+                                onClick={handleSend}
+                                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm border border-transparent hover:border-blue-800 cursor-pointer transition-all duration-200 active:scale-95"
+                            >
+                                {sending ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Send className="h-4 w-4 mr-2" />
+                                )}
+                                Send
+                            </Button>
+                        )}
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
         </div>
     );
 }

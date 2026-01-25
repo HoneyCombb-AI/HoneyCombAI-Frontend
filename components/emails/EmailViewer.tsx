@@ -1,66 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { ContactEmail } from "@/app/api/emails/route";
 import { Mail, Send, Inbox, Reply } from "lucide-react";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
-import { EmailComposer } from "./EmailComposer";
-import axios from "axios";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ContactMessage } from "@/app/api/emails/[contactId]/messages/route";
 
-
 interface EmailViewerProps {
     email: ContactEmail | null;
+    messages: ContactMessage[];
+    loading: boolean;
+    error: string | null;
+    onReply: (message: ContactMessage) => void;
+    bottomInset?: number;
 }
 
-export function EmailViewer({ email }: EmailViewerProps) {
-    const [messages, setMessages] = useState<ContactMessage[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [replyToMessage, setReplyToMessage] = useState<ContactMessage | null>(null);
-
-    const fetchMessages = useCallback(async (contactId: string) => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const response = await axios.get(`/api/emails/${contactId}/messages`);
-            setMessages(response.data.messages || []);
-        } catch (e: unknown) {
-            if (axios.isAxiosError(e)) {
-                setError(e.response?.data?.error || e.message);
-            } else {
-                setError(e instanceof Error ? e.message : "Failed to load messages");
-            }
-            setMessages([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (email?.id) {
-            fetchMessages(email.id);
-        } else {
-            setMessages([]);
-        }
-    }, [email?.id, fetchMessages]);
-
-
-
-    const handleReply = (message: ContactMessage) => {
-        setReplyToMessage(message);
-    };
-
-    const handleEmailSent = () => {
-        // Refresh messages after sending
-        if (email?.id) {
-            fetchMessages(email.id);
-        }
-    };
+export function EmailViewer({
+    email,
+    messages,
+    loading,
+    error,
+    onReply,
+    bottomInset = 0,
+}: EmailViewerProps) {
 
     if (!email) {
         return (
@@ -74,8 +38,11 @@ export function EmailViewer({ email }: EmailViewerProps) {
     }
 
     return (
-        <div className="flex flex-col h-full relative">
-            <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 min-h-0">
+        <div className="flex flex-col h-full relative min-h-0">
+            <div
+                className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 min-h-0"
+                style={{ paddingBottom: bottomInset ? bottomInset + 24 : undefined }}
+            >
                 {loading ? (
                     <div className="flex items-center justify-center h-full">
                         <Loading />
@@ -138,7 +105,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => handleReply(message)}
+                                                        onClick={() => onReply(message)}
                                                         className="h-6 px-2 text-xs"
                                                     >
                                                         <Reply className="h-3 w-3 mr-1" />
@@ -160,14 +127,6 @@ export function EmailViewer({ email }: EmailViewerProps) {
                     </div>
                 )}
             </div>
-
-            {/* Email Composer Embedded */}
-            <EmailComposer
-                contact={email}
-                replyToMessage={replyToMessage}
-                lastMessageSubject={messages.length > 0 ? messages[messages.length - 1].subject : undefined}
-                onSent={handleEmailSent}
-            />
         </div>
     );
 }
