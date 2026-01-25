@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronUp, Loader2, Sparkles, Send } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { formatDistanceToNowStrict } from "date-fns";
 
 interface ContactMessage {
     id: string;
@@ -130,6 +131,19 @@ export function EmailComposer({
             toast.success("Draft generated successfully!");
         } catch (error) {
             console.error("Error generating draft:", error);
+
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status;
+                if (status === 429) {
+                    const resetTime = error.response?.data?.resetTime;
+                    const retryIn = resetTime
+                        ? formatDistanceToNowStrict(new Date(resetTime), { addSuffix: true })
+                        : "later";
+                    toast.error(`Rate limit exceeded. Try again ${retryIn}.`);
+                    return;
+                }
+            }
+
             toast.error("Failed to generate draft");
         } finally {
             setGenerating(false);
