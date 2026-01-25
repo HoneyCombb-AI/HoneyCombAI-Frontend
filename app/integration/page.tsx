@@ -1,5 +1,5 @@
 "use client";
-import React, { Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -115,38 +115,38 @@ const OutlookLogo = () => (
 );
 
 const IntegrationContent: React.FC = () => {
-  const [isConnected, setIsConnected] = React.useState(false);
-  const [connectedEmail, setConnectedEmail] = React.useState<string | null>(
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectedEmail, setConnectedEmail] = useState<string | null>(
     null
   );
   // Outlook State
-  const [isOutlookConnected, setIsOutlookConnected] = React.useState(false);
-  const [outlookConnectedEmail, setOutlookConnectedEmail] = React.useState<string | null>(
+  const [isOutlookConnected, setIsOutlookConnected] = useState(false);
+  const [outlookConnectedEmail, setOutlookConnectedEmail] = useState<string | null>(
     null
   );
 
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isDisconnecting, setIsDisconnecting] = React.useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // LinkedIn State
-  const [linkedInOpen, setLinkedInOpen] = React.useState(false);
-  const [linkedInEmail, setLinkedInEmail] = React.useState("");
-  const [linkedInPassword, setLinkedInPassword] = React.useState("");
-  const [linkedInLoading, setLinkedInLoading] = React.useState(false);
+  const [linkedInOpen, setLinkedInOpen] = useState(false);
+  const [linkedInEmail, setLinkedInEmail] = useState("");
+  const [linkedInPassword, setLinkedInPassword] = useState("");
+  const [linkedInLoading, setLinkedInLoading] = useState(false);
   // Controls whether the LinkedIn password field is masked ("password") or visible ("text").
   // UX + safety: defaults to masked and resets whenever the dialog closes or save completes.
   const [isLinkedInPasswordVisible, setIsLinkedInPasswordVisible] =
-    React.useState(false);
+    useState(false);
 
   // LinkedIn Status State
-  const [liStatus, setLiStatus] = React.useState<
+  const [liStatus, setLiStatus] = useState<
     "pending" | "connected" | "failed" | null
   >(null);
-  const [liConnectedEmail, setLiConnectedEmail] = React.useState<string | null>(
+  const [liConnectedEmail, setLiConnectedEmail] = useState<string | null>(
     null
   );
-  const [liError, setLiError] = React.useState<string | null>(null);
-  const [liFailedHover, setLiFailedHover] = React.useState(false);
+  const [liError, setLiError] = useState<string | null>(null);
+  const [liFailedHover, setLiFailedHover] = useState(false);
 
   const checkStatuses = async () => {
     try {
