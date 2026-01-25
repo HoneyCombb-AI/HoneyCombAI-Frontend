@@ -19,7 +19,7 @@ export async function POST(
 
         // Call remote mail server API to generate draft
         const response = await axios.post(
-            `${MAIL_SERVER_URL}/contacts/${contactId}/generate-draft`,
+            `${MAIL_SERVER_URL}/emails/contact/${contactId}/generate-draft`,
             {},
             {
                 auth: {

@@ -9,6 +9,8 @@ const MAIL_SERVER_PASSWORD = process.env.MAIL_SERVER_PASSWORD || '';
 export interface SendEmailRequest {
     subject: string;
     body: string;
+    account_id: string;
+    account_provider: "gmail" | "outlook";
     thread_id?: string;
     reply_to_message_id?: string;
 }
@@ -34,35 +36,43 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get user's Gmail or Outlook account ID (prefer Gmail)
-        const { data: gmailAccount } = await supabase
-            .from('gmail_accounts')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-        const { data: outlookAccount } = await supabase
-            .from('outlook_accounts')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-        const accountId = gmailAccount?.id || outlookAccount?.id;
-
-        if (!accountId) {
+        if (!body?.subject || !body?.body || !body?.account_id || !body?.account_provider) {
             return NextResponse.json(
-                { detail: 'No available account to send email from.' },
+                { detail: 'Missing required fields.' },
                 { status: 400 }
+            );
+        }
+
+        if (body.account_provider !== "gmail" && body.account_provider !== "outlook") {
+            return NextResponse.json(
+                { detail: 'Invalid account provider.' },
+                { status: 400 }
+            );
+        }
+
+        const accountTable = body.account_provider === "gmail" ? "gmail_accounts" : "outlook_accounts";
+        const { data: account, error: accountError } = await supabase
+            .from(accountTable)
+            .select('id')
+            .eq('id', body.account_id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (accountError || !account?.id) {
+            return NextResponse.json(
+                { detail: 'Invalid account for user.' },
+                { status: 403 }
             );
         }
 
         // Call remote mail server API to send email
         const response = await axios.post(
-            `${MAIL_SERVER_URL}/contacts/${contactId}/email`,
+            `${MAIL_SERVER_URL}/emails/contact/${contactId}/send`,
             {
                 subject: body.subject,
                 body: body.body,
-                account_id: accountId,
+                account_id: body.account_id,
+                account_provider: body.account_provider,
                 thread_id: body.thread_id,
                 reply_to_message_id: body.reply_to_message_id,
             },

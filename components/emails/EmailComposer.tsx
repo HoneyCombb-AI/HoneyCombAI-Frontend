@@ -40,6 +40,8 @@ export function EmailComposer({
     const [isOpen, setIsOpen] = useState(true);
     const [senderEmail, setSenderEmail] = useState<string | null>(null);
     const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
+    const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
+    const [senderFirstName, setSenderFirstName] = useState<string | null>(null);
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
 
@@ -83,16 +85,22 @@ export function EmailComposer({
     const loadSender = useCallback(async () => {
         try {
             const senderRes = await axios.get("/api/emails/sender");
-            if (senderRes.data?.isConnected && senderRes.data?.email) {
+            if (senderRes.data?.isConnected && senderRes.data?.email && senderRes.data?.account_id) {
                 setSenderEmail(senderRes.data.email);
                 setSenderProvider(senderRes.data.provider ?? null);
+                setSenderAccountId(senderRes.data.account_id);
+                setSenderFirstName(senderRes.data.first_name ?? null);
             } else {
                 setSenderEmail(null);
                 setSenderProvider(null);
+                setSenderAccountId(null);
+                setSenderFirstName(null);
             }
         } catch (error) {
             setSenderEmail(null);
             setSenderProvider(null);
+            setSenderAccountId(null);
+            setSenderFirstName(null);
         }
     }, []);
 
@@ -103,10 +111,10 @@ export function EmailComposer({
 
     // Add signature to body
     const addSignature = useCallback((content: string) => {
-        // Just "HoneyComb" in a para tag as requested
-        const signature = `<p>HoneyComb</p>`;
+        const rawName = senderFirstName?.replace(/[<>]/g, "") || "HoneyComb";
+        const signature = `<p>${rawName}</p>`;
         return content + signature;
-    }, []);
+    }, [senderFirstName]);
 
     // Generate AI draft
     const handleGenerateDraft = async () => {
@@ -137,7 +145,7 @@ export function EmailComposer({
     }, [body]);
     const hasSubject = subject.trim().length > 0;
     const hasBody = bodyText.length > 0;
-    const canSend = hasSubject && hasBody && !sending;
+    const canSend = hasSubject && hasBody && !!senderProvider && !!senderAccountId && !sending;
 
     const subjectLabel =
         subject.trim() ||
@@ -161,13 +169,15 @@ export function EmailComposer({
 
     // Send email
     const handleSend = async () => {
-        if (!contact || !hasSubject || !hasBody) return;
+        if (!contact || !hasSubject || !hasBody || !senderProvider || !senderAccountId) return;
 
         setSending(true);
         try {
             await axios.post(`/api/emails/${contact.id}/send`, {
                 subject,
                 body,
+                account_id: senderAccountId,
+                account_provider: senderProvider,
                 thread_id: replyToMessage?.thread_id,
                 reply_to_message_id: replyToMessage?.message_id,
             });
