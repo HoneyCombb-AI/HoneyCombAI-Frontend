@@ -22,6 +22,7 @@ interface EmailComposerProps {
     contact: ContactEmail | null;
     replyToMessage?: ContactMessage | null;
     lastMessageSubject?: string;
+    mode?: "compose" | "reply" | "followup";
     onSent: () => void;
 }
 
@@ -29,6 +30,7 @@ export function EmailComposer({
     contact,
     replyToMessage,
     lastMessageSubject,
+    mode = "compose",
     onSent,
 }: EmailComposerProps) {
     const [subject, setSubject] = useState("");
@@ -37,7 +39,8 @@ export function EmailComposer({
     const [sending, setSending] = useState(false);
     const [isOpen, setIsOpen] = useState(true);
 
-    const isReply = !!replyToMessage;
+    const resolvedMode = replyToMessage ? "reply" : mode;
+    const isReply = resolvedMode === "reply";
 
     // Auto-fill subject for replies
     // Auto-fill subject for replies
@@ -97,9 +100,40 @@ export function EmailComposer({
         }
     };
 
+    const bodyText = useMemo(() => {
+        return body
+            .replace(/<[^>]*>/g, " ")
+            .replace(/&nbsp;/gi, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    }, [body]);
+    const hasSubject = subject.trim().length > 0;
+    const hasBody = bodyText.length > 0;
+    const canSend = hasSubject && hasBody && !sending;
+
+    const subjectLabel =
+        subject.trim() ||
+        (resolvedMode === "reply"
+            ? "Reply draft"
+            : resolvedMode === "followup"
+                ? "Follow-up draft"
+                : "New message");
+    const triggerLabel =
+        resolvedMode === "reply"
+            ? "Reply"
+            : resolvedMode === "followup"
+                ? "Continuing"
+                : "Compose";
+    const subjectFieldLabel =
+        resolvedMode === "reply"
+            ? "Replying:"
+            : resolvedMode === "followup"
+                ? "Continuing:"
+                : "Subject:";
+
     // Send email
     const handleSend = async () => {
-        if (!contact || !body.trim()) return;
+        if (!contact || !hasSubject || !hasBody) return;
 
         setSending(true);
         try {
@@ -124,14 +158,6 @@ export function EmailComposer({
         }
     };
 
-    const canSend = body.trim().length > 0 && !sending;
-
-    const subjectLabel = subject.trim() || (isReply ? "Reply draft" : "New message");
-    const bodyPreview = useMemo(() => {
-        const stripped = body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-        return stripped.length > 0 ? stripped : "";
-    }, [body]);
-
     if (!contact) return null;
 
     return (
@@ -143,14 +169,11 @@ export function EmailComposer({
                 >
                     <div className="min-w-0">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                            {isReply ? "Reply" : "Compose"}
+                            {triggerLabel}
                         </div>
-                        <div className="truncate text-sm font-medium text-gray-900">
-                            {subjectLabel}
-                        </div>
-                        {bodyPreview && (
-                            <div className="truncate text-xs text-gray-500">
-                                {bodyPreview}
+                        {!isOpen && (
+                            <div className="truncate text-sm font-medium text-gray-900">
+                                {subjectLabel}
                             </div>
                         )}
                     </div>
@@ -167,8 +190,8 @@ export function EmailComposer({
                 <CollapsibleContent className="border-t border-gray-200 bg-white max-h-[70vh] overflow-y-auto">
                     {/* Header / Subject Line */}
                     <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
-                        <span className="text-sm font-medium text-gray-500 w-16">
-                            {isReply ? "Replying:" : "Subject:"}
+                        <span className="text-sm font-medium text-gray-500 w-20">
+                            {subjectFieldLabel}
                         </span>
                         <Input
                             placeholder="Subject"
@@ -183,7 +206,7 @@ export function EmailComposer({
                         <RichTextEditor
                             value={body}
                             onChange={setBody}
-                            placeholder="Write your message... (HoneyComb signature added automatically)"
+                            placeholder="Write your message..."
                         />
                     </div>
 
@@ -204,19 +227,18 @@ export function EmailComposer({
                             AI Generate
                         </Button>
 
-                        {canSend && (
-                            <Button
-                                onClick={handleSend}
-                                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm border border-transparent hover:border-blue-800 cursor-pointer transition-all duration-200 active:scale-95"
-                            >
-                                {sending ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Send className="h-4 w-4 mr-2" />
-                                )}
-                                Send
-                            </Button>
-                        )}
+                        <Button
+                            onClick={handleSend}
+                            disabled={!canSend}
+                            className="bg-slate-800 text-white hover:cursor-pointer shadow-sm border border-transparent hover:bg-green-800 hover:border-slate-950 transition-all duration-200 active:scale-95 disabled:bg-slate-300 disabled:text-slate-600 disabled:cursor-not-allowed disabled:hover:bg-slate-300"
+                        >
+                            {sending ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <Send className="h-4 w-4 mr-2" />
+                            )}
+                            Send
+                        </Button>
                     </div>
                 </CollapsibleContent>
             </Collapsible>

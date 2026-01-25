@@ -111,6 +111,11 @@ export default function EmailsPage() {
         [emails, selectedId]
     );
 
+    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    const isLastInbound = lastMessage ? lastMessage.direction !== "outbound" : false;
+    const activeReplyMessage = replyToMessage ?? (isLastInbound ? lastMessage : null);
+    const composerMode = activeReplyMessage ? "reply" : lastMessage ? "followup" : "compose";
+
     const handleSelectEmail = useCallback((id: string) => {
         setSelectedId(id);
     }, []);
@@ -245,8 +250,9 @@ export default function EmailsPage() {
                             >
                                 <EmailComposer
                                     contact={selectedEmail}
-                                    replyToMessage={replyToMessage}
-                                    lastMessageSubject={messages.length > 0 ? messages[messages.length - 1].subject : undefined}
+                                    replyToMessage={activeReplyMessage}
+                                    lastMessageSubject={lastMessage?.subject}
+                                    mode={composerMode}
                                     onSent={() => fetchMessages(selectedEmail.id)}
                                 />
                             </div>
