@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { ContactEmail } from "@/app/api/emails/route";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,39 +38,67 @@ export function EmailComposer({
     const [generating, setGenerating] = useState(false);
     const [sending, setSending] = useState(false);
     const [isOpen, setIsOpen] = useState(true);
+    const [senderEmail, setSenderEmail] = useState<string | null>(null);
+    const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
+    const prevContactIdRef = useRef<string | null>(null);
+    const prevReplyIdRef = useRef<string | null>(null);
 
     const resolvedMode = replyToMessage ? "reply" : mode;
     const isReply = resolvedMode === "reply";
 
-    // Auto-fill subject for replies
-    // Auto-fill subject for replies
-    useEffect(() => {
+    const defaultSubject = useMemo(() => {
         if (isReply && replyToMessage) {
-            const replySubject = replyToMessage.subject.startsWith("Re:")
+            return replyToMessage.subject.startsWith("Re:")
                 ? replyToMessage.subject
                 : `Re: ${replyToMessage.subject}`;
-            setSubject(replySubject);
-        } else if (lastMessageSubject) {
-            // Default to last message subject if available
-            const defaultSubject = lastMessageSubject.startsWith("Re:")
+        }
+        if (lastMessageSubject) {
+            return lastMessageSubject.startsWith("Re:")
                 ? lastMessageSubject
                 : `Re: ${lastMessageSubject}`;
-            setSubject(defaultSubject);
-        } else {
-            // If cleaning contact or fresh state
-            if (!subject && contact) setSubject("");
         }
-    }, [isReply, replyToMessage, lastMessageSubject, contact?.id]);
-
-    // Reset form when contact changes
-    useEffect(() => {
-        setSubject("");
-        setBody("");
-    }, [contact?.id]);
+        return "";
+    }, [isReply, replyToMessage?.subject, lastMessageSubject]);
 
     useEffect(() => {
-        setIsOpen(true);
-    }, [contact?.id, replyToMessage?.id]);
+        const contactId = contact?.id ?? null;
+        const replyId = replyToMessage?.id ?? null;
+        const contactChanged = prevContactIdRef.current !== contactId;
+        const replyChanged = prevReplyIdRef.current !== replyId;
+
+        if (contactChanged) {
+            setBody("");
+        }
+
+        setSubject(defaultSubject);
+
+        if (contactChanged || replyChanged) {
+            setIsOpen(true);
+        }
+
+        prevContactIdRef.current = contactId;
+        prevReplyIdRef.current = replyId;
+    }, [contact?.id, replyToMessage?.id, defaultSubject]);
+
+    const loadSender = useCallback(async () => {
+        try {
+            const senderRes = await axios.get("/api/emails/sender");
+            if (senderRes.data?.isConnected && senderRes.data?.email) {
+                setSenderEmail(senderRes.data.email);
+                setSenderProvider(senderRes.data.provider ?? null);
+            } else {
+                setSenderEmail(null);
+                setSenderProvider(null);
+            }
+        } catch (error) {
+            setSenderEmail(null);
+            setSenderProvider(null);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadSender();
+    }, [loadSender]);
 
 
     // Add signature to body
@@ -171,6 +199,12 @@ export function EmailComposer({
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                             {triggerLabel}
                         </div>
+                        {senderEmail && (
+                            <div className="text-xs text-gray-500">
+                                From: {senderEmail}
+                                {senderProvider ? ` (${senderProvider})` : ""}
+                            </div>
+                        )}
                         {!isOpen && (
                             <div className="truncate text-sm font-medium text-gray-900">
                                 {subjectLabel}
@@ -198,7 +232,7 @@ export function EmailComposer({
                                 placeholder="Subject"
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
-                                className="flex-1 bg-transparent border-none focus-visible:ring-0 px-0 h-auto font-medium"
+                                className="flex-1 bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 shadow-sm h-9 px-3 focus-visible:ring-2 focus-visible:ring-gray-200 focus-visible:border-gray-300"
                             />
                         </div>
 
