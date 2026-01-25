@@ -195,6 +195,11 @@ function ExternalHtmlPlugin({
 
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
     const lastEmittedRef = useRef<string>("");
+    const latestOnChangeRef = useRef(onChange);
+
+    useEffect(() => {
+        latestOnChangeRef.current = onChange;
+    }, [onChange]);
 
     const handleChange = useCallback(
         (editorState: EditorState, editor: LexicalEditor) => {
@@ -202,11 +207,11 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                 const html = $generateHtmlFromNodes(editor);
                 if (html !== lastEmittedRef.current) {
                     lastEmittedRef.current = html;
-                    onChange(html);
+                    latestOnChangeRef.current(html);
                 }
             });
         },
-        [onChange],
+        [],
     );
 
     return (

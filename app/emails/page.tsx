@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import axios from "axios";
 import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
@@ -186,9 +187,9 @@ export default function EmailsPage() {
         return () => observer.disconnect();
     }, [updateComposerRect]);
 
-    const composerStyle = composerRect.width
+    const composerStyle: CSSProperties = composerRect.width
         ? { left: composerRect.left, width: composerRect.width }
-        : { left: 0, width: "100%" };
+        : { left: 0, visibility: "hidden", pointerEvents: "none" };
 
     if (error) {
         return (

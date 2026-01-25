@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ContactMessage } from "@/app/api/emails/[contactId]/messages/route";
+import DOMPurify from "dompurify";
 
 interface EmailViewerProps {
     email: ContactEmail | null;
@@ -60,6 +61,7 @@ export function EmailViewer({
                     <div className="space-y-4 max-w-4xl mx-auto pb-4">
                         {messages.map((message) => {
                             const isSent = message.direction === 'outbound';
+                            const sanitizedBody = DOMPurify.sanitize(message.body || "");
 
                             return (
                                 <div
@@ -92,7 +94,7 @@ export function EmailViewer({
                                         {/* Message Body */}
                                         <div
                                             className="text-sm text-gray-700 leading-relaxed mb-3 break-words [&_img]:max-w-full overflow-hidden whitespace-pre-wrap"
-                                            dangerouslySetInnerHTML={{ __html: message.body }}
+                                            dangerouslySetInnerHTML={{ __html: sanitizedBody }}
                                         />
 
                                         {/* Message Footer */}

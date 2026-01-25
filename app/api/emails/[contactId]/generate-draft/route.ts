@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import axios from 'axios';
 
 const MAIL_SERVER_URL = process.env.MAIL_SERVER_URL || 'https://mail.honeycombai.in';
@@ -16,6 +17,14 @@ export async function POST(
 ) {
     try {
         const { contactId } = await params;
+
+        // Get authenticated user
+        const supabase = await createClient();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         // Call remote mail server API to generate draft
         const response = await axios.post(
@@ -39,7 +48,9 @@ export async function POST(
         if (axios.isAxiosError(error)) {
             // Even on error, the API returns a draft with error message
             if (error.response?.data) {
-                return NextResponse.json(error.response.data);
+                return NextResponse.json(error.response.data, {
+                    status: error.response?.status || 500,
+                });
             }
 
             return NextResponse.json(

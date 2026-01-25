@@ -164,7 +164,6 @@ const IntegrationContent: React.FC = () => {
         const data = await liRes.json();
         setLiStatus(data.status);
         setLiConnectedEmail(data.email);
-        setLiConnectedEmail(data.email);
         setLiError(data.error);
       }
 

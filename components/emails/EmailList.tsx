@@ -37,12 +37,18 @@ export function EmailList({
             <div className="divide-y">
                 {emails.map((email) => {
                     const isSelected = email.id === selectedId;
-                    const initials = email.full_name
+                    const nameInitials = (email.full_name || "")
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((part) => part.trim().charAt(0))
                         .join("")
+                        .replace(/[^a-zA-Z0-9]/g, "")
                         .toUpperCase()
                         .slice(0, 2);
+                    const fallbackInitials = (email.email || "")
+                        .replace(/[^a-zA-Z0-9]/g, "")
+                        .toUpperCase()
+                        .slice(0, 2);
+                    const initials = nameInitials || fallbackInitials || "?";
 
                     return (
                         <button
