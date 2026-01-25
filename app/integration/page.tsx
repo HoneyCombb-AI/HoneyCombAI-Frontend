@@ -1,5 +1,6 @@
 "use client";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -114,37 +115,38 @@ const OutlookLogo = () => (
 );
 
 const IntegrationContent: React.FC = () => {
-  const [isConnected, setIsConnected] = React.useState(false);
-  const [connectedEmail, setConnectedEmail] = React.useState<string | null>(
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectedEmail, setConnectedEmail] = useState<string | null>(
     null
   );
   // Outlook State
-  const [isOutlookConnected, setIsOutlookConnected] = React.useState(false);
-  const [outlookConnectedEmail, setOutlookConnectedEmail] = React.useState<string | null>(
+  const [isOutlookConnected, setIsOutlookConnected] = useState(false);
+  const [outlookConnectedEmail, setOutlookConnectedEmail] = useState<string | null>(
     null
   );
 
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // LinkedIn State
-  const [linkedInOpen, setLinkedInOpen] = React.useState(false);
-  const [linkedInEmail, setLinkedInEmail] = React.useState("");
-  const [linkedInPassword, setLinkedInPassword] = React.useState("");
-  const [linkedInLoading, setLinkedInLoading] = React.useState(false);
+  const [linkedInOpen, setLinkedInOpen] = useState(false);
+  const [linkedInEmail, setLinkedInEmail] = useState("");
+  const [linkedInPassword, setLinkedInPassword] = useState("");
+  const [linkedInLoading, setLinkedInLoading] = useState(false);
   // Controls whether the LinkedIn password field is masked ("password") or visible ("text").
   // UX + safety: defaults to masked and resets whenever the dialog closes or save completes.
   const [isLinkedInPasswordVisible, setIsLinkedInPasswordVisible] =
-    React.useState(false);
+    useState(false);
 
   // LinkedIn Status State
-  const [liStatus, setLiStatus] = React.useState<
+  const [liStatus, setLiStatus] = useState<
     "pending" | "connected" | "failed" | null
   >(null);
-  const [liConnectedEmail, setLiConnectedEmail] = React.useState<string | null>(
+  const [liConnectedEmail, setLiConnectedEmail] = useState<string | null>(
     null
   );
-  const [liError, setLiError] = React.useState<string | null>(null);
-  const [liFailedHover, setLiFailedHover] = React.useState(false);
+  const [liError, setLiError] = useState<string | null>(null);
+  const [liFailedHover, setLiFailedHover] = useState(false);
 
   const checkStatuses = async () => {
     try {
@@ -161,7 +163,6 @@ const IntegrationContent: React.FC = () => {
       if (liRes.ok) {
         const data = await liRes.json();
         setLiStatus(data.status);
-        setLiConnectedEmail(data.email);
         setLiConnectedEmail(data.email);
         setLiError(data.error);
       }
@@ -180,9 +181,95 @@ const IntegrationContent: React.FC = () => {
     }
   };
 
+  const handleGmailDisconnect = async () => {
+    setIsDisconnecting(true);
+    try {
+      const res = await fetch("/api/gmail/disconnect", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        toast.success("Gmail account disconnected successfully");
+        setIsConnected(false);
+        setConnectedEmail(null);
+      } else {
+        toast.error("Failed to disconnect Gmail account");
+      }
+    } catch (error) {
+      console.error("Error disconnecting Gmail:", error);
+      toast.error("An error occurred while disconnecting");
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
+  const handleOutlookDisconnect = async () => {
+    setIsDisconnecting(true);
+    try {
+      const res = await fetch("/api/outlook/disconnect", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        toast.success("Outlook account disconnected successfully");
+        setIsOutlookConnected(false);
+        setOutlookConnectedEmail(null);
+      } else {
+        toast.error("Failed to disconnect Outlook account");
+      }
+    } catch (error) {
+      console.error("Error disconnecting Outlook:", error);
+      toast.error("An error occurred while disconnecting");
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
   React.useEffect(() => {
     checkStatuses();
   }, []);
+
+  const searchParams = useSearchParams();
+
+  // Handle error/success states from OAuth callback redirects
+  useEffect(() => {
+    const error = searchParams.get("error");
+    const success = searchParams.get("success");
+
+    if (error) {
+      switch (error) {
+        case "connection_failed":
+          toast.error("Failed to connect account. Please try again.");
+          break;
+        case "outlook_auth_failed":
+        case "token_exchange_failed":
+        case "profile_fetch_failed":
+          toast.error("Authentication failed. Please try again.");
+          break;
+        case "unauthorized":
+          toast.error("You must be logged in to connect accounts.");
+          break;
+        case "db_error":
+        case "server_error":
+          toast.error("A server error occurred. Please try again later.");
+          break;
+        default:
+          toast.error("An error occurred during connection.");
+      }
+      // Clean up URL
+      window.history.replaceState({}, "", "/integration");
+    }
+
+    if (success === "outlook_connected") {
+      toast.success("Outlook account connected successfully!");
+      window.history.replaceState({}, "", "/integration");
+    }
+
+    if (success === "gmail_connected") {
+      toast.success("Gmail account connected successfully!");
+      window.history.replaceState({}, "", "/integration");
+    }
+  }, [searchParams]);
 
   const handleLinkedInSave = async () => {
     // Validate with Zod
@@ -346,10 +433,24 @@ const IntegrationContent: React.FC = () => {
                     : "Connect your Google account to enable email capabilities."}
                 </p>
                 {isConnected ? (
-                  <Button className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
-                    <Check className="mr-2 h-4 w-4" />
-                    Connected
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button className="flex-1 bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
+                      <Check className="mr-2 h-4 w-4" />
+                      Connected
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="bg-white hover:bg-red-50 text-red-600 border-red-200 hover:border-red-300 transition-all duration-200"
+                      onClick={handleGmailDisconnect}
+                      disabled={isDisconnecting}
+                    >
+                      {isDisconnecting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Disconnect"
+                      )}
+                    </Button>
+                  </div>
                 ) : (
                   <Button
                     variant="outline"
@@ -396,10 +497,24 @@ const IntegrationContent: React.FC = () => {
                     : "Connect your Outlook account to enable email capabilities."}
                 </p>
                 {isOutlookConnected ? (
-                  <Button className="w-full bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
-                    <Check className="mr-2 h-4 w-4" />
-                    Connected
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button className="flex-1 bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
+                      <Check className="mr-2 h-4 w-4" />
+                      Connected
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="bg-white hover:bg-red-50 text-red-600 border-red-200 hover:border-red-300 transition-all duration-200"
+                      onClick={handleOutlookDisconnect}
+                      disabled={isDisconnecting}
+                    >
+                      {isDisconnecting ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Disconnect"
+                      )}
+                    </Button>
+                  </div>
                 ) : (
                   <Button
                     variant="outline"

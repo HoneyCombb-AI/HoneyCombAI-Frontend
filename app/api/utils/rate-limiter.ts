@@ -160,6 +160,14 @@ export const rateLimiters = {
       keyPrefix: 'support_ip'
     }),
 
+  // AI draft generation
+  aiDraftPerUser: (userId: string) =>
+    RateLimiter.checkLimit(userId, {
+      limit: 5,
+      windowSeconds: 3600, // 1 hour
+      keyPrefix: 'ai_draft_user'
+    }),
+
   // Delete operations
   deletePerUser: (userId: string) =>
     RateLimiter.checkLimit(userId, {
