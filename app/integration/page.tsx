@@ -264,6 +264,11 @@ const IntegrationContent: React.FC = () => {
       toast.success("Outlook account connected successfully!");
       window.history.replaceState({}, "", "/integration");
     }
+
+    if (success === "gmail_connected") {
+      toast.success("Gmail account connected successfully!");
+      window.history.replaceState({}, "", "/integration");
+    }
   }, [searchParams]);
 
   const handleLinkedInSave = async () => {
