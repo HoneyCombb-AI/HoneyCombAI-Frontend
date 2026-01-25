@@ -182,63 +182,65 @@ export function EmailComposer({
                             {isOpen ? "Collapse" : "Expand"}
                         </span>
                         <ChevronUp
-                            className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : "rotate-0"}`}
+                            className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
                         />
                     </div>
                 </CollapsibleTrigger>
 
-                <CollapsibleContent className="border-t border-gray-200 bg-white max-h-[70vh] overflow-y-auto">
-                    {/* Header / Subject Line */}
-                    <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
-                        <span className="text-sm font-medium text-gray-500 w-20">
-                            {subjectFieldLabel}
-                        </span>
-                        <Input
-                            placeholder="Subject"
-                            value={subject}
-                            onChange={(e) => setSubject(e.target.value)}
-                            className="flex-1 bg-transparent border-none focus-visible:ring-0 px-0 h-auto font-medium"
-                        />
-                    </div>
+                <CollapsibleContent className="border-t border-gray-200 bg-white overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                    <div className="max-h-[70vh] overflow-y-auto overflow-x-hidden">
+                        {/* Header / Subject Line */}
+                        <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
+                            <span className="text-sm font-medium text-gray-500 w-20">
+                                {subjectFieldLabel}
+                            </span>
+                            <Input
+                                placeholder="Subject"
+                                value={subject}
+                                onChange={(e) => setSubject(e.target.value)}
+                                className="flex-1 bg-transparent border-none focus-visible:ring-0 px-0 h-auto font-medium"
+                            />
+                        </div>
 
-                    {/* Editor Area */}
-                    <div className="p-4 bg-white">
-                        <RichTextEditor
-                            value={body}
-                            onChange={setBody}
-                            placeholder="Write your message..."
-                        />
-                    </div>
+                        {/* Editor Area */}
+                        <div className="p-4 bg-white">
+                            <RichTextEditor
+                                value={body}
+                                onChange={setBody}
+                                placeholder="Write your message..."
+                            />
+                        </div>
 
-                    {/* Action Bar */}
-                    <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleGenerateDraft}
-                            disabled={generating || sending}
-                            className="border border-purple-200 text-purple-700 bg-white hover:bg-purple-50 hover:border-purple-300 hover:text-purple-800 cursor-pointer transition-all duration-200 focus:ring-1 focus:ring-purple-200 shadow-sm"
-                        >
-                            {generating ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                                <Sparkles className="h-4 w-4 mr-2" />
-                            )}
-                            AI Generate
-                        </Button>
+                        {/* Action Bar */}
+                        <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleGenerateDraft}
+                                disabled={generating || sending}
+                                className="border border-purple-200 text-purple-700 bg-white hover:bg-purple-50 hover:border-purple-300 hover:text-purple-800 cursor-pointer transition-all duration-200 focus:ring-1 focus:ring-purple-200 shadow-sm"
+                            >
+                                {generating ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Sparkles className="h-4 w-4 mr-2" />
+                                )}
+                                AI Generate
+                            </Button>
 
-                        <Button
-                            onClick={handleSend}
-                            disabled={!canSend}
-                            className="bg-slate-800 text-white hover:cursor-pointer shadow-sm border border-transparent hover:bg-green-800 hover:border-slate-950 transition-all duration-200 active:scale-95 disabled:bg-slate-300 disabled:text-slate-600 disabled:cursor-not-allowed disabled:hover:bg-slate-300"
-                        >
-                            {sending ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                                <Send className="h-4 w-4 mr-2" />
-                            )}
-                            Send
-                        </Button>
+                            <Button
+                                onClick={handleSend}
+                                disabled={!canSend}
+                                className="bg-slate-800 text-white hover:cursor-pointer shadow-sm border border-transparent hover:bg-green-800 hover:border-slate-950 transition-all duration-200 active:scale-95 disabled:bg-slate-300 disabled:text-slate-600 disabled:cursor-not-allowed disabled:hover:bg-slate-300"
+                            >
+                                {sending ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Send className="h-4 w-4 mr-2" />
+                                )}
+                                Send
+                            </Button>
+                        </div>
                     </div>
                 </CollapsibleContent>
             </Collapsible>

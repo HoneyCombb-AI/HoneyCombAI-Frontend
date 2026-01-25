@@ -2,7 +2,7 @@
 
 import { ContactEmail } from "@/app/api/emails/route";
 import { cn } from "@/lib/utils";
-import { Mail, Loader2 } from "lucide-react";
+import { Mail, Loader2, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
@@ -105,11 +105,11 @@ export function EmailList({
             {hasMore && (
                 <div className="p-4 border-t flex justify-center">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={onLoadMore}
                         disabled={loadingMore}
-                        className="w-full text-muted-foreground"
+                        className="w-full gap-2 text-sm font-medium border-dashed text-slate-700 hover:text-slate-900 hover:border-slate-300 hover:cursor-pointer"
                     >
                         {loadingMore ? (
                             <>
@@ -117,7 +117,10 @@ export function EmailList({
                                 Loading...
                             </>
                         ) : (
-                            "Load More"
+                            <>
+                                <ChevronDown className="h-4 w-4" />
+                                Load More
+                            </>
                         )}
                     </Button>
                 </div>
