@@ -72,7 +72,11 @@ export async function GET(req: Request) {
             token_type: tokens.token_type,
             messages_total: profile.messagesTotal,
             threads_total: profile.threadsTotal,
-            history_id: profile.historyId
+            history_id: profile.historyId,
+            is_connected: true,
+            disconnected_at: null,
+            revoked_at: null,
+            revocation_status: null,
         };
 
 

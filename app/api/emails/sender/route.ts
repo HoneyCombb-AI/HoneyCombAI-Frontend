@@ -25,11 +25,14 @@ export async function GET() {
         // Prefer Gmail if available, otherwise Outlook (mirrors send logic)
         const { data: gmailAccount } = await supabase
             .from("gmail_accounts")
-            .select("id, email")
+            .select("id, email, is_connected, access_token, refresh_token")
             .eq("user_id", user.id)
             .maybeSingle();
 
-        if (gmailAccount?.email && gmailAccount?.id) {
+        const gmailConnected = !!gmailAccount?.is_connected &&
+            (!!gmailAccount?.refresh_token || !!gmailAccount?.access_token);
+
+        if (gmailConnected && gmailAccount?.email && gmailAccount?.id) {
             return NextResponse.json({
                 isConnected: true,
                 email: gmailAccount.email,
@@ -41,11 +44,14 @@ export async function GET() {
 
         const { data: outlookAccount } = await supabase
             .from("outlook_accounts")
-            .select("id, email")
+            .select("id, email, is_connected, access_token, refresh_token")
             .eq("user_id", user.id)
             .maybeSingle();
 
-        if (outlookAccount?.email && outlookAccount?.id) {
+        const outlookConnected = !!outlookAccount?.is_connected &&
+            (!!outlookAccount?.refresh_token || !!outlookAccount?.access_token);
+
+        if (outlookConnected && outlookAccount?.email && outlookAccount?.id) {
             return NextResponse.json({
                 isConnected: true,
                 email: outlookAccount.email,

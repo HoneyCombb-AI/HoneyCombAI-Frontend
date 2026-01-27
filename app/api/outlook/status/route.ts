@@ -14,12 +14,17 @@ export async function GET() {
 
         const { data, error } = await supabase
             .from("outlook_accounts")
-            .select("email, created_at")
+            .select("email, created_at, is_connected, access_token, refresh_token")
             .eq("user_id", user.id)
             .single();
 
         if (error || !data) {
             // Not connected or error finding row
+            return NextResponse.json({ isConnected: false });
+        }
+
+        const hasToken = !!data.refresh_token || !!data.access_token;
+        if (!data.is_connected || !hasToken) {
             return NextResponse.json({ isConnected: false });
         }
 

@@ -76,6 +76,10 @@ export async function GET(req: Request) {
             refresh_token: tokens.refresh_token,
             token_expiry: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
             scope: tokens.scope,
+            is_connected: true,
+            disconnected_at: null,
+            revoked_at: null,
+            revocation_status: null,
 
             // New mapped fields
             outlook_id: profile.id,
