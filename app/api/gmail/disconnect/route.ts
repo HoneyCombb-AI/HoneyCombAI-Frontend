@@ -42,11 +42,17 @@ export async function POST() {
 
         if (tokenToRevoke) {
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
                 const revokeRes = await fetch("https://oauth2.googleapis.com/revoke", {
                     method: "POST",
                     headers: { "Content-Type": "application/x-www-form-urlencoded" },
                     body: new URLSearchParams({ token: tokenToRevoke }),
+                    signal: controller.signal,
                 });
+
+                clearTimeout(timeoutId);
 
                 if (revokeRes.ok) {
                     revocationStatus = "success";
@@ -55,6 +61,7 @@ export async function POST() {
                     revocationStatus = "failed";
                 }
             } catch (revokeError) {
+                // Covers aborts/timeouts and other fetch errors.
                 console.error("Gmail token revoke error:", revokeError);
                 revocationStatus = "failed";
             }
