@@ -15,10 +15,41 @@ export async function POST() {
             );
         }
 
-        // Delete the Outlook account for this user
+        const { data: account, error: accountError } = await supabase
+            .from("outlook_accounts")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (accountError) {
+            console.error("Error loading Outlook account:", accountError);
+            return NextResponse.json(
+                { error: "Failed to disconnect Outlook account" },
+                { status: 500 }
+            );
+        }
+
+        if (!account?.id) {
+            return NextResponse.json({
+                success: true,
+                message: "Outlook account already disconnected"
+            });
+        }
+
+        // Note: Microsoft Graph revokeSignInSessions is optional and not used here.
         const { error } = await supabase
             .from("outlook_accounts")
-            .delete()
+            .update({
+                access_token: null,
+                refresh_token: null,
+                token_expiry: null,
+                scope: null,
+                token_type: null,
+                is_connected: false,
+                disconnected_at: new Date().toISOString(),
+                revoked_at: null,
+                revocation_status: null,
+            })
             .eq("user_id", user.id);
 
         if (error) {

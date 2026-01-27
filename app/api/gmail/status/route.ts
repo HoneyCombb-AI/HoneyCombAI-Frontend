@@ -14,7 +14,7 @@ export async function GET() {
 
         const { data: accounts, error } = await supabase
             .from("gmail_accounts")
-            .select("email")
+            .select("email, is_connected, access_token, refresh_token")
             .eq("user_id", user.id)
             .limit(1);
 
@@ -25,9 +25,15 @@ export async function GET() {
         }
 
         if (accounts && accounts.length > 0) {
+            const account = accounts[0];
+            const hasToken = !!account.refresh_token || !!account.access_token;
+            if (!account.is_connected || !hasToken) {
+                return NextResponse.json({ isConnected: false, email: null });
+            }
+
             return NextResponse.json({
                 isConnected: true,
-                email: accounts[0].email
+                email: account.email
             });
         }
 

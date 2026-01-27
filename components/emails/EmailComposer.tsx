@@ -120,6 +120,10 @@ export function EmailComposer({
     // Generate AI draft
     const handleGenerateDraft = async () => {
         if (!contact) return;
+        if (!senderProvider || !senderAccountId) {
+            toast.error("Connect an email account to generate drafts.");
+            return;
+        }
 
         setGenerating(true);
         try {
@@ -134,6 +138,11 @@ export function EmailComposer({
 
             if (axios.isAxiosError(error)) {
                 const status = error.response?.status;
+                if (status === 403) {
+                    const detail = error.response?.data?.detail || "No connected email account.";
+                    toast.error(detail);
+                    return;
+                }
                 if (status === 429) {
                     const resetTime = error.response?.data?.resetTime;
                     const retryIn = resetTime

@@ -15,10 +15,64 @@ export async function POST() {
             );
         }
 
-        // Delete the Gmail account for this user
+        const { data: account, error: accountError } = await supabase
+            .from("gmail_accounts")
+            .select("id, refresh_token, access_token")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (accountError) {
+            console.error("Error loading Gmail account:", accountError);
+            return NextResponse.json(
+                { error: "Failed to disconnect Gmail account" },
+                { status: 500 }
+            );
+        }
+
+        if (!account?.id) {
+            return NextResponse.json({
+                success: true,
+                message: "Gmail account already disconnected"
+            });
+        }
+
+        let revocationStatus: string | null = null;
+        let revokedAt: string | null = null;
+        const tokenToRevoke = account.refresh_token || account.access_token;
+
+        if (tokenToRevoke) {
+            try {
+                const revokeRes = await fetch("https://oauth2.googleapis.com/revoke", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({ token: tokenToRevoke }),
+                });
+
+                if (revokeRes.ok) {
+                    revocationStatus = "success";
+                    revokedAt = new Date().toISOString();
+                } else {
+                    revocationStatus = "failed";
+                }
+            } catch (revokeError) {
+                console.error("Gmail token revoke error:", revokeError);
+                revocationStatus = "failed";
+            }
+        }
+
         const { error } = await supabase
             .from("gmail_accounts")
-            .delete()
+            .update({
+                access_token: null,
+                refresh_token: null,
+                token_expiry: null,
+                scope: null,
+                token_type: null,
+                is_connected: false,
+                disconnected_at: new Date().toISOString(),
+                revoked_at: revokedAt,
+                revocation_status: revocationStatus,
+            })
             .eq("user_id", user.id);
 
         if (error) {

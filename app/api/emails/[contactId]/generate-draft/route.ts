@@ -27,6 +27,37 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { data: gmailAccount } = await supabase
+            .from("gmail_accounts")
+            .select("id, is_connected, access_token, refresh_token")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        const gmailConnected = !!gmailAccount?.is_connected &&
+            (!!gmailAccount?.refresh_token || !!gmailAccount?.access_token);
+
+        let isConnected = gmailConnected;
+
+        if (!isConnected) {
+            const { data: outlookAccount } = await supabase
+                .from("outlook_accounts")
+                .select("id, is_connected, access_token, refresh_token")
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            const outlookConnected = !!outlookAccount?.is_connected &&
+                (!!outlookAccount?.refresh_token || !!outlookAccount?.access_token);
+
+            isConnected = outlookConnected;
+        }
+
+        if (!isConnected) {
+            return NextResponse.json(
+                { detail: "No connected email account." },
+                { status: 403 }
+            );
+        }
+
         const rateLimit = await rateLimiters.aiDraftPerUser(user.id);
         if (!rateLimit.allowed) {
             return NextResponse.json(

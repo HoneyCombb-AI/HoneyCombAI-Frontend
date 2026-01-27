@@ -53,7 +53,7 @@ export async function POST(
         const accountTable = body.account_provider === "gmail" ? "gmail_accounts" : "outlook_accounts";
         const { data: account, error: accountError } = await supabase
             .from(accountTable)
-            .select('id')
+            .select('id, is_connected, access_token, refresh_token')
             .eq('id', body.account_id)
             .eq('user_id', user.id)
             .maybeSingle();
@@ -61,6 +61,14 @@ export async function POST(
         if (accountError || !account?.id) {
             return NextResponse.json(
                 { detail: 'Invalid account for user.' },
+                { status: 403 }
+            );
+        }
+
+        const hasToken = !!account.refresh_token || !!account.access_token;
+        if (!account.is_connected || !hasToken) {
+            return NextResponse.json(
+                { detail: 'Account is disconnected.' },
                 { status: 403 }
             );
         }
