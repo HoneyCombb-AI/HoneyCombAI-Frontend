@@ -4,8 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 export interface TrackingEvent {
     id: string;
     event_type: string;
-    ip_address: string | null;
-    user_agent: string | null;
     clicked_url: string | null;
     created_at: string;
 }
@@ -128,7 +126,7 @@ export async function GET(
             .select(
                 'id, gmail_account_id, outlook_account_id, status, subject, thread_id, message_id, ' +
                 'campaign_id, contact_id, sent_at, direction, body, replied_at, ' +
-                'email_tracking_events(id, event_type, ip_address, user_agent, clicked_url, created_at)'
+                'email_tracking_events(id, event_type, clicked_url, created_at)'
             )
             .eq('contact_id', contactId)
             .order('sent_at', { ascending: true });

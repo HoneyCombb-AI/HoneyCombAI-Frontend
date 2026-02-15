@@ -51,9 +51,27 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const contacts = (data || []) as LinkedInContact[];
-    const total = contacts.length > 0 ? Number((contacts[0] as any).total_count) : 0;
-    const hasMore = (page * limit) < total;
+    const raw = (data || []) as Record<string, unknown>[];
+
+    // Extract total_count defensively from the first row, with NaN fallback
+    const rawTotal = raw.length > 0 ? Number(raw[0].total_count) : 0;
+    const total = Number.isFinite(rawTotal) ? rawTotal : 0;
+
+    // Sanitize: only pass through declared LinkedInContact fields
+    const contacts: LinkedInContact[] = raw.map((row) => ({
+      id: String(row.id ?? ''),
+      full_name: String(row.full_name ?? ''),
+      current_company: String(row.current_company ?? ''),
+      company_name: String(row.company_name ?? ''),
+      is_connected: Boolean(row.is_connected),
+      conversation_started: Boolean(row.conversation_started),
+      reply_received: Boolean(row.reply_received),
+      meeting_booked: Boolean(row.meeting_booked),
+      automation_enabled: Boolean(row.automation_enabled),
+      strategy: String(row.strategy ?? ''),
+    }));
+
+    const hasMore = Number.isFinite(total) && (page * limit) < total;
 
     const response: LinkedInContactsResponse = {
       contacts,

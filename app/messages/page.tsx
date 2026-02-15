@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
@@ -20,12 +20,19 @@ export default function LinkedInPage() {
 
   const [contacts, setContacts] = useState<LinkedInContact[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [messages, setMessages] = useState<LinkedInMessage[]>([]);
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const pageRef = useRef(1);
   const LIMIT = 20;
+
+  // Keep selectedIdRef in sync with selectedId state
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
 
   // Debounce search
   const [debouncedSearch, setDebouncedSearch] = useState(search);
@@ -36,13 +43,17 @@ export default function LinkedInPage() {
 
   const fetchContacts = useCallback(async (isLoadMore = false) => {
     try {
+      let currentPage: number;
+
       if (isLoadMore) {
+        currentPage = pageRef.current + 1;
+        pageRef.current = currentPage;
         setLoadingMore(true);
       } else {
+        currentPage = 1;
+        pageRef.current = 1;
         setLoading(true);
       }
-
-      const currentPage = isLoadMore ? page + 1 : 1;
 
       const response = await axios.get<LinkedInContactsResponse>("/api/messages", {
         params: {
@@ -56,11 +67,12 @@ export default function LinkedInPage() {
 
       if (isLoadMore) {
         setContacts(prev => [...prev, ...result.contacts]);
-        setPage(prev => prev + 1);
+        setPage(currentPage);
       } else {
         setContacts(result.contacts);
         setPage(1);
-        if (result.contacts.length > 0 && !selectedId) {
+        // Auto-select first contact only if nothing is currently selected
+        if (result.contacts.length > 0 && !selectedIdRef.current) {
           setSelectedId(result.contacts[0].id);
         }
       }
@@ -76,13 +88,13 @@ export default function LinkedInPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [debouncedSearch, page, selectedId]);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     if (!authLoading) {
       fetchContacts(false);
     }
-  }, [authLoading, debouncedSearch]);
+  }, [authLoading, fetchContacts]);
 
   const loadMore = () => {
     if (!loadingMore && hasMore) {
@@ -125,14 +137,6 @@ export default function LinkedInPage() {
     }
   }, [selectedContact?.id, fetchMessages]);
 
-  if (error) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-6">
-        <p className="text-sm text-red-600">{error}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
       {/* Search Bar */}
@@ -142,6 +146,28 @@ export default function LinkedInPage() {
           onSearchChange={setSearch}
         />
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border-b border-red-200 text-sm text-red-700">
+          <span>{error}</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setError(null); fetchContacts(false); }}
+              className="px-3 py-1 rounded-md bg-red-100 hover:bg-red-200 text-red-800 font-medium text-xs transition-colors"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => setError(null)}
+              className="p-1 rounded hover:bg-red-100 text-red-500 transition-colors"
+              aria-label="Dismiss error"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {authLoading || (loading && page === 1) ? (
         <div className="flex-1 flex flex-col items-center justify-center">

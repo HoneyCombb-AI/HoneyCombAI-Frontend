@@ -3,7 +3,7 @@
 import { LinkedInContact } from "@/app/api/messages/route";
 import { MessageSquare, Send, Inbox } from "lucide-react";
 import { Loading } from "@/components/loading";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { LinkedInMessage } from "@/app/api/messages/[contactId]/route";
 
@@ -52,7 +52,9 @@ export function MessageViewer({
           <div className="space-y-4 max-w-4xl mx-auto pb-4">
             {messages.map((message) => {
               const isOutbound = message.sender_type === 'bot';
-              const messageDate = message.created_at || message.timestamp;
+              const rawDate = message.created_at || message.timestamp;
+              const parsedDate = rawDate ? new Date(rawDate) : null;
+              const messageDate = parsedDate && isValid(parsedDate) ? parsedDate : null;
 
               return (
                 <div
@@ -104,7 +106,7 @@ export function MessageViewer({
                           : "text-gray-500 border-gray-200"
                       )}>
                         <span>
-                          {format(new Date(messageDate), "MMM d, h:mm a")}
+                          {format(messageDate, "MMM d, h:mm a")}
                         </span>
                       </div>
                     )}

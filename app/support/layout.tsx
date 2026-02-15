@@ -4,7 +4,6 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { AuthProvider } from "@/lib/auth-context";
 import Header from "@/components/dashboard/Header";
 import { SimpleHeader } from "@/components/SimpleHeader";
 import { Loading } from '@/components/loading';
@@ -20,19 +19,17 @@ function SupportLayoutContent({
     // Dashboard layout (when coming from sidebar/dashboard pages)
     if (layoutType === 'dashboard') {
         return (
-            <AuthProvider>
-                <SidebarProvider>
-                    <AppSidebar />
-                    <div className='flex-1'>
-                        <Header title="Support" />
-                        <main className="flex-1 flex items-center justify-center p-6 min-h-[calc(100vh-80px)] bg-gradient-to-br from-gray-50 to-gray-100">
-                            <div className="w-full max-w-md bg-white p-8 py-12 rounded-lg shadow-lg border border-gray-200">
-                                {children}
-                            </div>
-                        </main>
-                    </div>
-                </SidebarProvider>
-            </AuthProvider>
+            <SidebarProvider>
+                <AppSidebar />
+                <div className='flex-1'>
+                    <Header title="Support" />
+                    <main className="flex-1 flex items-center justify-center p-6 min-h-[calc(100vh-80px)] bg-gradient-to-br from-gray-50 to-gray-100">
+                        <div className="w-full max-w-md bg-white p-8 py-12 rounded-lg shadow-lg border border-gray-200">
+                            {children}
+                        </div>
+                    </main>
+                </div>
+            </SidebarProvider>
         );
     }
     return (
