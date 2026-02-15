@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+export interface TrackingEvent {
+    id: string;
+    event_type: string;
+    ip_address: string | null;
+    user_agent: string | null;
+    clicked_url: string | null;
+    created_at: string;
+}
+
 export interface ContactMessage {
     id: string;
     account_id: string;
@@ -8,14 +17,15 @@ export interface ContactMessage {
     subject: string;
     thread_id: string;
     message_id: string;
-    click_count: number;
     campaign_id: string;
     contact_id: string;
     sent_at: string;
     direction: string;
     body: string;
-    open_count: number;
     replied_at: string | null;
+    open_count: number;
+    click_count: number;
+    tracking_events: TrackingEvent[];
 }
 
 
@@ -39,14 +49,13 @@ type EmailLogRow = {
     subject: string | null;
     thread_id: string | null;
     message_id: string | null;
-    click_count: number | null;
     campaign_id: string | null;
     contact_id: string;
     sent_at: string;
     direction: string | null;
     body: string | null;
-    open_count: number | null;
     replied_at: string | null;
+    email_tracking_events: TrackingEvent[];
 };
 
 export async function GET(
@@ -118,7 +127,8 @@ export async function GET(
             .from('email_logs')
             .select(
                 'id, gmail_account_id, outlook_account_id, status, subject, thread_id, message_id, ' +
-                'click_count, campaign_id, contact_id, sent_at, direction, body, open_count, replied_at'
+                'campaign_id, contact_id, sent_at, direction, body, replied_at, ' +
+                'email_tracking_events(id, event_type, ip_address, user_agent, clicked_url, created_at)'
             )
             .eq('contact_id', contactId)
             .order('sent_at', { ascending: true });
@@ -131,22 +141,26 @@ export async function GET(
         }
 
         const logs = (emailLogs || []) as unknown as EmailLogRow[];
-        const messages: ContactMessage[] = logs.map((log) => ({
-            id: log.id,
-            account_id: log.gmail_account_id || log.outlook_account_id || '',
-            status: log.status || '',
-            subject: log.subject || '',
-            thread_id: log.thread_id || '',
-            message_id: log.message_id || '',
-            click_count: log.click_count || 0,
-            campaign_id: log.campaign_id || '',
-            contact_id: log.contact_id,
-            sent_at: log.sent_at,
-            direction: log.direction || 'outbound',
-            body: log.body || '',
-            open_count: log.open_count || 0,
-            replied_at: log.replied_at,
-        }));
+        const messages: ContactMessage[] = logs.map((log) => {
+            const events = log.email_tracking_events || [];
+            return {
+                id: log.id,
+                account_id: log.gmail_account_id || log.outlook_account_id || '',
+                status: log.status || '',
+                subject: log.subject || '',
+                thread_id: log.thread_id || '',
+                message_id: log.message_id || '',
+                campaign_id: log.campaign_id || '',
+                contact_id: log.contact_id,
+                sent_at: log.sent_at,
+                direction: log.direction || 'outbound',
+                body: log.body || '',
+                replied_at: log.replied_at,
+                open_count: events.filter(e => e.event_type === 'open').length,
+                click_count: events.filter(e => e.event_type === 'click').length,
+                tracking_events: events,
+            };
+        });
 
         const result: MessagesResponse = {
             messages,

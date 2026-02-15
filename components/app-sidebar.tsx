@@ -68,7 +68,7 @@ const items = [
     hasChevron: false,
   },
   {
-    title: "Messages",
+    title: "Linkedin",
     icon: SendHorizontal,
     url: "/messages",
     hasChevron: false,
