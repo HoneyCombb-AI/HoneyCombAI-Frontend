@@ -66,20 +66,20 @@ export function MessageViewer({
                     className={cn(
                       "max-w-[75%] rounded-2xl p-4 shadow-sm",
                       isOutbound
-                        ? "bg-blue-600 text-white"
+                        ? "bg-gray-100 border border-gray-200"
                         : "bg-white border border-gray-200"
                     )}
                   >
                     {/* Message Header */}
                     <div className="flex items-center gap-2 mb-2">
                       {isOutbound ? (
-                        <Send className="h-3.5 w-3.5 text-blue-200" />
+                        <Send className="h-3.5 w-3.5 text-gray-500" />
                       ) : (
                         <Inbox className="h-3.5 w-3.5 text-gray-500" />
                       )}
                       <span className={cn(
                         "text-xs font-medium",
-                        isOutbound ? "text-blue-200" : "text-gray-500"
+                        isOutbound ? "text-gray-500" : "text-gray-500"
                       )}>
                         {isOutbound ? 'AI Agent' : contact.full_name}
                       </span>
@@ -89,7 +89,7 @@ export function MessageViewer({
                     <div
                       className={cn(
                         "text-sm leading-relaxed break-words whitespace-pre-wrap",
-                        isOutbound ? "text-white" : "text-gray-700"
+                        isOutbound ? "text-gray-700" : "text-gray-700"
                       )}
                     >
                       {message.content}
@@ -100,7 +100,7 @@ export function MessageViewer({
                       <div className={cn(
                         "flex items-center text-xs pt-2 mt-2 border-t",
                         isOutbound
-                          ? "text-blue-200 border-blue-500/30"
+                          ? "text-gray-500 border-gray-200"
                           : "text-gray-500 border-gray-200"
                       )}>
                         <span>
