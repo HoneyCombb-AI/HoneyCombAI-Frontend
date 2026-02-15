@@ -38,7 +38,7 @@ export function EmailComposer({
     const [body, setBody] = useState("");
     const [generating, setGenerating] = useState(false);
     const [sending, setSending] = useState(false);
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
     const [senderEmail, setSenderEmail] = useState<string | null>(null);
     const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
     const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function EmailComposer({
 
         setSubject(defaultSubject);
 
-        if (contactChanged || replyChanged) {
+        if (replyChanged && replyId) {
             setIsOpen(true);
         }
 
