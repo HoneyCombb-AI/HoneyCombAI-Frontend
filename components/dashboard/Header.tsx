@@ -7,7 +7,7 @@ export type ActiveSection = "contacts" | "companies" | "support";
 
 
 interface HeaderProps {
-  title: "Overview" | "Contacts" | "Companies" | "Support" | "Organization" | "Messages" | "Emails";
+  title: "Overview" | "Contacts" | "Companies" | "Support" | "Organization" | "Messages" | "Emails" | "LinkedIn Messages";
 }
 
 const Header: React.FC<HeaderProps> = ({ title }) => {
