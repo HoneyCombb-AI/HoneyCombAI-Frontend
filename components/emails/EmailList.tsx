@@ -2,7 +2,7 @@
 
 import { ContactEmail } from "@/app/api/emails/route";
 import { cn } from "@/lib/utils";
-import { Mail, Loader2, ChevronDown } from "lucide-react";
+import { Mail, Loader2, ChevronDown, Clock, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
@@ -96,6 +96,24 @@ export function EmailList({
                                     <p className="text-xs text-muted-foreground truncate mb-1">
                                         {email.email}
                                     </p>
+
+                                    {email.email_account_name && (
+                                        <div className="flex items-center gap-1 mb-1">
+                                            <User className="h-3 w-3 text-gray-400" />
+                                            <span className="text-[10px] text-gray-500 truncate">
+                                                via {email.email_account_name}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        {email.draft_id && (
+                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-50 text-violet-800 border border-violet-300 animate-pulse">
+                                                <Clock className="h-3 w-3" />
+                                                Pending Draft
+                                            </span>
+                                        )}
+                                    </div>
 
                                     <p className="text-xs text-muted-foreground truncate">
                                         {email.company_name}

@@ -2,7 +2,7 @@
 
 import { LinkedInContact } from "@/app/api/messages/route";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Loader2, ChevronDown } from "lucide-react";
+import { MessageSquare, Loader2, ChevronDown, Clock, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
@@ -70,8 +70,23 @@ export function MessageList({
                     {contact.company_name || contact.current_company}
                   </p>
 
+                  {contact.linkedin_account_name && (
+                    <div className="flex items-center gap-1 mb-1">
+                      <User className="h-3 w-3 text-gray-400" />
+                      <span className="text-[10px] text-gray-500 truncate">
+                        via {contact.linkedin_account_name}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Status indicators */}
                   <div className="flex items-center gap-1.5 flex-wrap">
+                    {contact.task_id && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-50 text-violet-800 border border-violet-300 animate-pulse">
+                        <Clock className="h-3 w-3" />
+                        Pending {contact.task_type === "connect" ? "Connection" : "Reply"}
+                      </span>
+                    )}
                     {contact.is_connected && (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700 border border-green-200">
                         Connected

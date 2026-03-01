@@ -6,12 +6,14 @@ import { Loading } from "@/components/loading";
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { LinkedInMessage } from "@/app/api/messages/[contactId]/route";
+import { PendingTaskBanner } from "@/components/messages/PendingTaskBanner";
 
 interface MessageViewerProps {
   contact: LinkedInContact | null;
   messages: LinkedInMessage[];
   loading: boolean;
   error: string | null;
+  onTaskSave?: (taskId: string, updates: { draft_message?: string; connection_note?: string }) => Promise<void>;
 }
 
 export function MessageViewer({
@@ -19,6 +21,7 @@ export function MessageViewer({
   messages,
   loading,
   error,
+  onTaskSave,
 }: MessageViewerProps) {
 
   if (!contact) {
@@ -34,6 +37,13 @@ export function MessageViewer({
 
   return (
     <div className="flex flex-col h-full relative min-h-0">
+      {/* Pending Task Banner */}
+      {contact.task_id && onTaskSave && (
+        <div className="shrink-0">
+          <PendingTaskBanner contact={contact} onSave={onTaskSave} />
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 min-h-0">
         {loading ? (
           <div className="flex items-center justify-center h-full">

@@ -26,6 +26,7 @@ export default function EmailsPage() {
     const [hasMore, setHasMore] = useState(false);
     const [messages, setMessages] = useState<ContactMessage[]>([]);
     const [replyToMessage, setReplyToMessage] = useState<ContactMessage | null>(null);
+    const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
     const viewerRef = useRef<HTMLDivElement>(null);
     const composerRef = useRef<HTMLDivElement>(null);
     const [composerHeight, setComposerHeight] = useState(0);
@@ -101,6 +102,21 @@ export default function EmailsPage() {
         }
     }, [authLoading, debouncedSearch, selectedTags]); // Removing fetchEmails from dependency to avoid loop if not handled carefully, relying on stable fetchEmails or just these deps
 
+    // Fetch current user's sender account to check ownership
+    useEffect(() => {
+        const loadSender = async () => {
+            try {
+                const res = await axios.get("/api/emails/sender");
+                if (res.data?.isConnected && res.data?.account_id) {
+                    setSenderAccountId(res.data.account_id);
+                }
+            } catch {
+                setSenderAccountId(null);
+            }
+        };
+        loadSender();
+    }, []);
+
     const loadMore = () => {
         if (!loadingMore && hasMore) {
             fetchEmails(true);
@@ -146,6 +162,28 @@ export default function EmailsPage() {
             setMessages([]);
         }
     }, [selectedEmail?.id, fetchMessages]);
+
+    // Handle saving email draft edits
+    const handleDraftSave = useCallback(async (
+        draftId: string,
+        updates: { subject?: string; body?: string }
+    ) => {
+        if (!selectedEmail) return;
+        await axios.patch(`/api/emails/${selectedEmail.id}/draft`, {
+            draft_id: draftId,
+            ...updates,
+        });
+        // Update local state in-place
+        setEmails(prev => prev.map(e =>
+            e.id === selectedEmail.id
+                ? {
+                    ...e,
+                    draft_subject: updates.subject ?? e.draft_subject,
+                    draft_body: updates.body ?? e.draft_body,
+                }
+                : e
+        ));
+    }, [selectedEmail]);
 
     useEffect(() => {
         setReplyToMessage(null);
@@ -240,23 +278,31 @@ export default function EmailsPage() {
                             loading={messageLoading}
                             error={messageError}
                             onReply={setReplyToMessage}
+                            onDraftSave={handleDraftSave}
                             bottomInset={composerHeight}
                         />
 
                         {selectedEmail && (
-                            <div
-                                ref={composerRef}
-                                className="fixed bottom-0 z-50"
-                                style={composerStyle}
-                            >
-                                <EmailComposer
-                                    contact={selectedEmail}
-                                    replyToMessage={activeReplyMessage}
-                                    lastMessageSubject={lastMessage?.subject}
-                                    mode={composerMode}
-                                    onSent={() => fetchMessages(selectedEmail.id)}
-                                />
-                            </div>
+                            (() => {
+                                // Only show composer if this contact is handled by the current user's email account
+                                const isOwnAccount = !selectedEmail.email_account_id || selectedEmail.email_account_id === senderAccountId;
+                                if (!isOwnAccount) return null;
+                                return (
+                                    <div
+                                        ref={composerRef}
+                                        className="fixed bottom-0 z-50"
+                                        style={composerStyle}
+                                    >
+                                        <EmailComposer
+                                            contact={selectedEmail}
+                                            replyToMessage={activeReplyMessage}
+                                            lastMessageSubject={lastMessage?.subject}
+                                            mode={composerMode}
+                                            onSent={() => fetchMessages(selectedEmail.id)}
+                                        />
+                                    </div>
+                                );
+                            })()
                         )}
                     </div>
                 </div>

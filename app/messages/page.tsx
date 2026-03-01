@@ -137,10 +137,33 @@ export default function LinkedInPage() {
     }
   }, [selectedContact?.id, fetchMessages]);
 
+  const handleTaskSave = useCallback(async (
+    taskId: string,
+    updates: { draft_message?: string; connection_note?: string }
+  ) => {
+    if (!selectedContact) return;
+    await axios.patch(`/api/messages/${selectedContact.id}/task`, {
+      task_id: taskId,
+      ...updates,
+    });
+    // Update local state so the UI reflects the change immediately
+    setContacts(prev =>
+      prev.map(c =>
+        c.id === selectedContact.id
+          ? {
+            ...c,
+            ...(updates.draft_message !== undefined && { draft_message: updates.draft_message }),
+            ...(updates.connection_note !== undefined && { connection_note: updates.connection_note }),
+          }
+          : c
+      )
+    );
+  }, [selectedContact]);
+
   return (
     <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
       {/* Search Bar */}
-      <div className="flex-shrink-0 border-b bg-white shadow-sm">
+      <div className="shrink-0 border-b bg-white shadow-sm">
         <MessageFilters
           search={search}
           onSearchChange={setSearch}
@@ -149,7 +172,7 @@ export default function LinkedInPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border-b border-red-200 text-sm text-red-700">
+        <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border-b border-red-200 text-sm text-red-700">
           <span>{error}</span>
           <div className="flex items-center gap-2">
             <button
@@ -197,6 +220,7 @@ export default function LinkedInPage() {
               messages={messages}
               loading={messageLoading}
               error={messageError}
+              onTaskSave={handleTaskSave}
             />
           </div>
         </div>
