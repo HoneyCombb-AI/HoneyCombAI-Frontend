@@ -18,6 +18,9 @@ export type LinkedInContact = {
   draft_message: string | null;
   connection_note: string | null;
   scheduled_at: string | null;
+  // LinkedIn account ownership
+  linkedin_account_name: string | null;
+  linkedin_account_id: string | null;
 };
 
 export interface LinkedInContactsResponse {
@@ -80,6 +83,8 @@ export async function GET(req: NextRequest) {
       draft_message: row.draft_message ? String(row.draft_message) : null,
       connection_note: row.connection_note ? String(row.connection_note) : null,
       scheduled_at: row.scheduled_at ? String(row.scheduled_at) : null,
+      linkedin_account_name: row.linkedin_account_name ? String(row.linkedin_account_name) : null,
+      linkedin_account_id: row.linkedin_account_id ? String(row.linkedin_account_id) : null,
     }));
 
     const hasMore = Number.isFinite(total) && (page * limit) < total;

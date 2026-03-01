@@ -76,6 +76,14 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                                 <span className="text-xs text-amber-700">
                                     Scheduled: {formattedDate}
                                 </span>
+                                {contact.linkedin_account_name && (
+                                    <>
+                                        <span className="text-xs text-amber-500 mx-1">·</span>
+                                        <span className="text-xs text-amber-700">
+                                            via {contact.linkedin_account_name}
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>
