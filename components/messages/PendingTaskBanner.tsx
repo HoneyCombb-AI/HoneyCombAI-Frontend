@@ -54,32 +54,32 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
     };
 
     return (
-        <div className="border-b bg-amber-50 border-amber-200">
+        <div className="border-b bg-violet-50 border-violet-200">
             {/* Header Row */}
             <div className="flex items-center justify-between px-5 py-3">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-100 border border-amber-200">
-                        <TaskIcon className="h-4 w-4 text-amber-700" />
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-100 border border-violet-200">
+                        <TaskIcon className="h-4 w-4 text-violet-700" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-amber-900">
+                            <span className="text-sm font-semibold text-violet-900">
                                 Pending {taskLabel}
                             </span>
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-200 text-amber-800 uppercase tracking-wide">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-200 text-violet-800 uppercase tracking-wide">
                                 Draft
                             </span>
                         </div>
                         {formattedDate && (
                             <div className="flex items-center gap-1 mt-0.5">
-                                <Clock className="h-3 w-3 text-amber-600" />
-                                <span className="text-xs text-amber-700">
+                                <Clock className="h-3 w-3 text-violet-600" />
+                                <span className="text-xs text-violet-700">
                                     Scheduled: {formattedDate}
                                 </span>
                                 {contact.linkedin_account_name && (
                                     <>
-                                        <span className="text-xs text-amber-500 mx-1">·</span>
-                                        <span className="text-xs text-amber-700">
+                                        <span className="text-xs text-violet-500 mx-1">·</span>
+                                        <span className="text-xs text-violet-700">
                                             via {contact.linkedin_account_name}
                                         </span>
                                     </>
@@ -94,7 +94,7 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                         variant="outline"
                         size="sm"
                         onClick={() => setEditing(true)}
-                        className="gap-1.5 text-amber-800 border-amber-300 bg-amber-100 hover:bg-amber-200 hover:border-amber-400 cursor-pointer"
+                        className="gap-1.5 text-violet-800 border-violet-300 bg-violet-100 hover:bg-violet-200 hover:border-violet-400 cursor-pointer"
                     >
                         <Edit3 className="h-3.5 w-3.5" />
                         Edit Draft
@@ -109,14 +109,14 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                         <textarea
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
-                            className="w-full min-h-[100px] p-3 text-sm rounded-lg border border-amber-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400
-                         placeholder:text-amber-400 resize-y"
+                            className="w-full min-h-[100px] p-3 text-sm rounded-lg border border-violet-300 bg-white
+                         focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400
+                         placeholder:text-violet-400 resize-y"
                             placeholder={`Enter ${isConnectionTask ? "connection note" : "message"}...`}
                             autoFocus
                         />
                         {isConnectionTask && (
-                            <p className="text-xs text-amber-600">
+                            <p className="text-xs text-violet-600">
                                 {editValue.length}/300 characters (LinkedIn connection note limit)
                             </p>
                         )}
@@ -135,7 +135,7 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                                 size="sm"
                                 onClick={handleSave}
                                 disabled={saving || !editValue.trim()}
-                                className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white cursor-pointer"
+                                className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer"
                             >
                                 <Save className="h-3.5 w-3.5" />
                                 {saving ? "Saving..." : "Save Draft"}
@@ -143,9 +143,9 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                         </div>
                     </div>
                 ) : (
-                    <div className="text-sm text-amber-900 bg-amber-100/60 rounded-lg p-3 border border-amber-200/80 whitespace-pre-wrap">
+                    <div className="text-sm text-violet-900 bg-violet-100/60 rounded-lg p-3 border border-violet-200/80 whitespace-pre-wrap">
                         {draftContent || (
-                            <span className="text-amber-500 italic">No draft content yet</span>
+                            <span className="text-violet-500 italic">No draft content yet</span>
                         )}
                     </div>
                 )}

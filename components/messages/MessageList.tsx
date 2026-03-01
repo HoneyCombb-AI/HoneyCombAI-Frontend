@@ -82,7 +82,7 @@ export function MessageList({
                   {/* Status indicators */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {contact.task_id && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-300 animate-pulse">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-50 text-violet-800 border border-violet-300 animate-pulse">
                         <Clock className="h-3 w-3" />
                         Pending {contact.task_type === "connect" ? "Connection" : "Reply"}
                       </span>
