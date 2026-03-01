@@ -12,6 +12,15 @@ export type ContactEmail = {
     full_name: string;
     company_name: string;
     tags: { name: string; color: string }[];
+    // Pending draft fields
+    draft_id: string | null;
+    draft_subject: string | null;
+    draft_body: string | null;
+    draft_status: string | null;
+    draft_position: number | null;
+    // Email account ownership
+    email_account_name: string | null;
+    email_account_id: string | null;
 };
 
 export interface EmailsResponse {
@@ -76,8 +85,20 @@ export async function GET(req: NextRequest) {
         const total = emails.length > 0 ? Number((emails[0] as any).total_count) : 0;
         const hasMore = (page * limit) < total;
 
+        // Ensure all draft fields are present (in case RPC hasn't been updated yet)
+        const normalizedEmails = emails.map((e: any) => ({
+            ...e,
+            draft_id: e.draft_id ?? null,
+            draft_subject: e.draft_subject ?? null,
+            draft_body: e.draft_body ?? null,
+            draft_status: e.draft_status ?? null,
+            draft_position: e.draft_position ?? null,
+            email_account_name: e.email_account_name ?? null,
+            email_account_id: e.email_account_id ?? null,
+        }));
+
         const response: EmailsResponse = {
-            emails,
+            emails: normalizedEmails,
             total,
             page,
             limit,

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ContactMessage } from "@/app/api/emails/[contactId]/messages/route";
+import { PendingDraftBanner } from "./PendingDraftBanner";
 import DOMPurify from "dompurify";
 
 interface EmailViewerProps {
@@ -15,6 +16,7 @@ interface EmailViewerProps {
     loading: boolean;
     error: string | null;
     onReply: (message: ContactMessage) => void;
+    onDraftSave?: (draftId: string, updates: { subject?: string; body?: string }) => Promise<void>;
     bottomInset?: number;
 }
 
@@ -24,6 +26,7 @@ export function EmailViewer({
     loading,
     error,
     onReply,
+    onDraftSave,
     bottomInset = 0,
 }: EmailViewerProps) {
 
@@ -40,6 +43,13 @@ export function EmailViewer({
 
     return (
         <div className="flex flex-col h-full relative min-h-0">
+            {/* Pending Draft Banner */}
+            {email.draft_id && onDraftSave && (
+                <div className="shrink-0">
+                    <PendingDraftBanner contact={email} onSave={onDraftSave} />
+                </div>
+            )}
+
             <div
                 className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 min-h-0"
                 style={{ paddingBottom: bottomInset ? bottomInset + 24 : undefined }}
