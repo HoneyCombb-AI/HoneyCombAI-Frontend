@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { ContactEmail } from "@/app/api/emails/route";
 import { Edit3, Save, X, Mail, FileText, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,28 @@ import DOMPurify from "dompurify";
 interface PendingDraftBannerProps {
     contact: ContactEmail;
     onSave: (draftId: string, updates: { subject?: string; body?: string }) => Promise<void>;
+}
+
+/**
+ * Extract the inner content of <body> from a full HTML document.
+ * Returns { before, inner, after } so we can edit `inner` and reconstruct later.
+ * If there's no <body> tag, the entire string is treated as inner content.
+ */
+function splitHtmlBody(html: string): { before: string; inner: string; after: string } {
+    // Match <body ...> opening tag (case-insensitive, with optional attributes)
+    const bodyOpenMatch = html.match(/(<body[^>]*>)/i);
+    const bodyCloseMatch = html.match(/<\/body>/i);
+
+    if (bodyOpenMatch && bodyOpenMatch.index !== undefined && bodyCloseMatch && bodyCloseMatch.index !== undefined) {
+        const bodyOpenEnd = bodyOpenMatch.index + bodyOpenMatch[0].length;
+        const before = html.substring(0, bodyOpenEnd);
+        const inner = html.substring(bodyOpenEnd, bodyCloseMatch.index);
+        const after = html.substring(bodyCloseMatch.index);
+        return { before, inner, after };
+    }
+
+    // No <body> tag — entire string is the content
+    return { before: "", inner: html, after: "" };
 }
 
 export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps) {
@@ -22,13 +44,24 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
 
     if (!contact.draft_id) return null;
 
+    // Split the original HTML into wrapper + body content
+    const htmlParts = useMemo(() => splitHtmlBody(contact.draft_body || ""), [contact.draft_body]);
+
     const handleSave = async () => {
         if (!contact.draft_id) return;
         setSaving(true);
         try {
+            // Read the edited content from the contenteditable div
+            const editedInner = editorRef.current?.innerHTML ?? editBody;
+
+            // Reconstruct full HTML: wrapper + edited body + closing
+            const fullHtml = htmlParts.before
+                ? htmlParts.before + editedInner + htmlParts.after
+                : editedInner;
+
             await onSave(contact.draft_id, {
                 subject: editSubject,
-                body: editBody,
+                body: fullHtml,
             });
             setEditing(false);
         } catch {
@@ -47,10 +80,10 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
     const handleStartEdit = () => {
         setEditing(true);
         setIsOpen(true);
-        // Set the contenteditable content after React renders
+        // Only inject the BODY inner content into contenteditable (not the wrapper)
         requestAnimationFrame(() => {
             if (editorRef.current) {
-                editorRef.current.innerHTML = DOMPurify.sanitize(editBody);
+                editorRef.current.innerHTML = htmlParts.inner;
             }
         });
     };
@@ -150,18 +183,13 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                                     />
                                 </div>
 
-                                {/* Body - Contenteditable HTML Editor */}
+                                {/* Body - Contenteditable HTML Editor (only body content, no wrapper) */}
                                 <div>
                                     <label className="text-xs font-medium text-violet-700 mb-1 block">Body</label>
                                     <div
                                         ref={editorRef}
                                         contentEditable
                                         suppressContentEditableWarning
-                                        onInput={() => {
-                                            if (editorRef.current) {
-                                                setEditBody(editorRef.current.innerHTML);
-                                            }
-                                        }}
                                         className="w-full min-h-[150px] max-h-[40vh] overflow-y-auto p-3 text-sm rounded-lg border border-violet-300 bg-white
                                             focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400
                                             [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-blue-600 [&_a]:underline"
@@ -182,7 +210,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                                     <Button
                                         size="sm"
                                         onClick={handleSave}
-                                        disabled={saving || (!editSubject.trim() && !editBody.trim())}
+                                        disabled={saving}
                                         className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         <Save className="h-3.5 w-3.5" />
