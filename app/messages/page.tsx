@@ -137,6 +137,29 @@ export default function LinkedInPage() {
     }
   }, [selectedContact?.id, fetchMessages]);
 
+  const handleTaskSave = useCallback(async (
+    taskId: string,
+    updates: { draft_message?: string; connection_note?: string }
+  ) => {
+    if (!selectedContact) return;
+    await axios.patch(`/api/messages/${selectedContact.id}/task`, {
+      task_id: taskId,
+      ...updates,
+    });
+    // Update local state so the UI reflects the change immediately
+    setContacts(prev =>
+      prev.map(c =>
+        c.id === selectedContact.id
+          ? {
+            ...c,
+            ...(updates.draft_message !== undefined && { draft_message: updates.draft_message }),
+            ...(updates.connection_note !== undefined && { connection_note: updates.connection_note }),
+          }
+          : c
+      )
+    );
+  }, [selectedContact]);
+
   return (
     <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
       {/* Search Bar */}
@@ -197,6 +220,7 @@ export default function LinkedInPage() {
               messages={messages}
               loading={messageLoading}
               error={messageError}
+              onTaskSave={handleTaskSave}
             />
           </div>
         </div>

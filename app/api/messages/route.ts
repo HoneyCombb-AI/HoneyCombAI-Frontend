@@ -12,6 +12,12 @@ export type LinkedInContact = {
   meeting_booked: boolean;
   automation_enabled: boolean;
   strategy: string;
+  // Pending task fields (from get_linkedin_contacts RPC)
+  task_id: string | null;
+  task_type: string | null;
+  draft_message: string | null;
+  connection_note: string | null;
+  scheduled_at: string | null;
 };
 
 export interface LinkedInContactsResponse {
@@ -69,6 +75,11 @@ export async function GET(req: NextRequest) {
       meeting_booked: Boolean(row.meeting_booked),
       automation_enabled: Boolean(row.automation_enabled),
       strategy: String(row.strategy ?? ''),
+      task_id: row.task_id ? String(row.task_id) : null,
+      task_type: row.task_type ? String(row.task_type) : null,
+      draft_message: row.draft_message ? String(row.draft_message) : null,
+      connection_note: row.connection_note ? String(row.connection_note) : null,
+      scheduled_at: row.scheduled_at ? String(row.scheduled_at) : null,
     }));
 
     const hasMore = Number.isFinite(total) && (page * limit) < total;
