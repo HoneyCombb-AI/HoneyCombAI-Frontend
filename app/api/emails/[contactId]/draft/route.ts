@@ -28,12 +28,16 @@ export async function PATCH(
         }
 
         // Get user's organization
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('organization_id')
             .eq('id', user.id)
             .single();
 
+        if (profileError) {
+            console.error('Profile lookup error:', profileError);
+            return NextResponse.json({ error: 'Failed to load organization context' }, { status: 500 });
+        }
         if (!profile?.organization_id) {
             return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
         }
@@ -58,13 +62,20 @@ export async function PATCH(
         }
 
         // Verify the campaign belongs to the user's organization
-        const { data: campaign } = await supabase
+        const { data: campaign, error: campaignError } = await supabase
             .from('campaigns')
             .select('organization_id')
             .eq('id', existingDraft.campaign_id)
             .single();
 
-        if (!campaign || campaign.organization_id !== profile.organization_id) {
+        if (campaignError) {
+            console.error('Campaign lookup error:', campaignError);
+            return NextResponse.json({ error: 'Failed to validate campaign ownership' }, { status: 500 });
+        }
+        if (!campaign) {
+            return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+        }
+        if (campaign.organization_id !== profile.organization_id) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
@@ -85,6 +96,9 @@ export async function PATCH(
             .from('email_drafts')
             .update(updatePayload)
             .eq('id', draft_id)
+            .eq('contact_id', contactId)
+            .eq('status', 'pending')
+            .eq('campaign_id', existingDraft.campaign_id)
             .select('id, subject, body, status, position')
             .single();
 

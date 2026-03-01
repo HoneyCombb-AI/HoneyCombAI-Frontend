@@ -418,7 +418,7 @@ export function NotesDrawer({
                               </Button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word">
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap break-words">
                             {note.content}
                           </p>
                         </div>

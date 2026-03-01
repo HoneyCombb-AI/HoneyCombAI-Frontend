@@ -113,14 +113,14 @@ export default function OverviewPage() {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
                     <StatCard
                         title="LinkedIn Tasks Today"
-                        value={stats.tasksCompletedToday}
+                        value={stats.tasksCompletedToday ?? 0}
                         icon={Send}
                         description="Outreach actions completed today"
                         className="bg-sky-500/10 border-sky-500/20"
                     />
                     <StatCard
                         title="Emails Sent Today"
-                        value={stats.emailsSentToday}
+                        value={stats.emailsSentToday ?? 0}
                         icon={Mail}
                         description="Outbound emails sent today"
                         className="bg-indigo-500/10 border-indigo-500/20"

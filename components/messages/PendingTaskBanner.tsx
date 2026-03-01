@@ -109,6 +109,7 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                         <textarea
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
+                            maxLength={isConnectionTask ? 300 : undefined}
                             className="w-full min-h-[100px] p-3 text-sm rounded-lg border border-violet-300 bg-white
                          focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400
                          placeholder:text-violet-400 resize-y"

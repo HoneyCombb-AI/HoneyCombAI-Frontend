@@ -42,10 +42,10 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
     const [saving, setSaving] = useState(false);
     const editorRef = useRef<HTMLDivElement>(null);
 
-    if (!contact.draft_id) return null;
-
     // Split the original HTML into wrapper + body content
     const htmlParts = useMemo(() => splitHtmlBody(contact.draft_body || ""), [contact.draft_body]);
+
+    if (!contact.draft_id) return null;
 
     const handleSave = async () => {
         if (!contact.draft_id) return;
