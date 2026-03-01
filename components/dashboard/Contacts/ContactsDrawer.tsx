@@ -100,11 +100,11 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
       <DrawerContent style={customDrawerStyles}>
 
         <div className="mx-auto w-full h-screen overflow-y-auto">
-          <DrawerHeader className="sticky top-0 bg-white z-[60] border-b">
+          <DrawerHeader className="sticky top-0 bg-white z-60 border-b">
             <DrawerTitle>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
+                  <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 relative">
                     {shouldShowImage ? (
                       <Image
                         src={optimizedProfilePicture!}
@@ -116,7 +116,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                         onError={handleImageError}
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600
+                      <div className="w-full h-full bg-linear-to-br from-blue-500 to-purple-600
                       flex items-center justify-center text-white text-sm font-medium">
                         {getInitials(selectedContact.full_name)}
                       </div>

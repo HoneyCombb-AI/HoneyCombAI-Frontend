@@ -140,7 +140,7 @@ export default function LinkedInPage() {
   return (
     <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
       {/* Search Bar */}
-      <div className="flex-shrink-0 border-b bg-white shadow-sm">
+      <div className="shrink-0 border-b bg-white shadow-sm">
         <MessageFilters
           search={search}
           onSearchChange={setSearch}
@@ -149,7 +149,7 @@ export default function LinkedInPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border-b border-red-200 text-sm text-red-700">
+        <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border-b border-red-200 text-sm text-red-700">
           <span>{error}</span>
           <div className="flex items-center gap-2">
             <button
