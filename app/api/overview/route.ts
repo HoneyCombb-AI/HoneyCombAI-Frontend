@@ -13,6 +13,8 @@ export interface DashboardData {
             completed: number;
             pending: number;
         };
+        tasksCompletedToday: number;
+        emailsSentToday: number;
     };
     trends: {
         date: string;
@@ -47,13 +49,13 @@ export interface DashboardData {
 export async function GET() {
     const supabase = await createClient();
 
-     // Get the current user
+    // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+        return NextResponse.json(
+            { error: 'Unauthorized' },
+            { status: 401 }
+        );
     }
 
     const { data, error } = await supabase.rpc("get_dashboard_overview");
