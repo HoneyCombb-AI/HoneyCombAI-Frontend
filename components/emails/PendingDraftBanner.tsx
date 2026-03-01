@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ContactEmail } from "@/app/api/emails/route";
 import { Edit3, Save, X, Mail, FileText, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { RichTextEditor } from "./RichTextEditor";
 import DOMPurify from "dompurify";
 
 interface PendingDraftBannerProps {
@@ -19,6 +18,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
     const [editSubject, setEditSubject] = useState(contact.draft_subject || "");
     const [editBody, setEditBody] = useState(contact.draft_body || "");
     const [saving, setSaving] = useState(false);
+    const editorRef = useRef<HTMLDivElement>(null);
 
     if (!contact.draft_id) return null;
 
@@ -47,6 +47,12 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
     const handleStartEdit = () => {
         setEditing(true);
         setIsOpen(true);
+        // Set the contenteditable content after React renders
+        requestAnimationFrame(() => {
+            if (editorRef.current) {
+                editorRef.current.innerHTML = DOMPurify.sanitize(editBody);
+            }
+        });
     };
 
     const stepLabel = contact.draft_position
@@ -125,7 +131,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                 </div>
 
                 {/* Expanded Content */}
-                <CollapsibleContent className="border-t border-violet-200 bg-violet-50/30 overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                <CollapsibleContent className="border-t border-violet-200 bg-violet-50/30 overflow-hidden">
                     <div className="max-h-[50vh] overflow-y-auto">
                         {editing ? (
                             <div className="p-5 space-y-3">
@@ -144,13 +150,21 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                                     />
                                 </div>
 
-                                {/* Body - Rich Text Editor */}
+                                {/* Body - Contenteditable HTML Editor */}
                                 <div>
                                     <label className="text-xs font-medium text-violet-700 mb-1 block">Body</label>
-                                    <RichTextEditor
-                                        value={editBody}
-                                        onChange={setEditBody}
-                                        placeholder="Write your email body..."
+                                    <div
+                                        ref={editorRef}
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onInput={() => {
+                                            if (editorRef.current) {
+                                                setEditBody(editorRef.current.innerHTML);
+                                            }
+                                        }}
+                                        className="w-full min-h-[150px] max-h-[40vh] overflow-y-auto p-3 text-sm rounded-lg border border-violet-300 bg-white
+                                            focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400
+                                            [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-blue-600 [&_a]:underline"
                                     />
                                 </div>
 
@@ -169,10 +183,10 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                                         size="sm"
                                         onClick={handleSave}
                                         disabled={saving || (!editSubject.trim() && !editBody.trim())}
-                                        className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer"
+                                        className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer disabled:opacity-50"
                                     >
                                         <Save className="h-3.5 w-3.5" />
-                                        {saving ? "Saving..." : "Save Draft"}
+                                        Save Draft
                                     </Button>
                                 </div>
                             </div>
