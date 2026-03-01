@@ -46,7 +46,7 @@ export function EmailViewer({
             {/* Pending Draft Banner */}
             {email.draft_id && onDraftSave && (
                 <div className="shrink-0">
-                    <PendingDraftBanner contact={email} onSave={onDraftSave} />
+                    <PendingDraftBanner key={email.id} contact={email} onSave={onDraftSave} />
                 </div>
             )}
 

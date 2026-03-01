@@ -174,7 +174,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                                         size="sm"
                                         onClick={handleCancel}
                                         disabled={saving}
-                                        className="gap-1.5 text-gray-600 cursor-pointer"
+                                        className="gap-1.5 text-gray-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         <X className="h-3.5 w-3.5" />
                                         Cancel
@@ -183,7 +183,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                                         size="sm"
                                         onClick={handleSave}
                                         disabled={saving || (!editSubject.trim() && !editBody.trim())}
-                                        className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer disabled:opacity-50"
+                                        className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
                                         <Save className="h-3.5 w-3.5" />
                                         Save Draft
