@@ -114,7 +114,7 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditing(true)}
+                        onClick={() => { setEditValue(draftContent || ""); setEditing(true); }}
                         className="gap-1.5 text-violet-800 border-violet-300 bg-violet-100 hover:bg-violet-200 hover:border-violet-400 cursor-pointer"
                     >
                         <Edit3 className="h-3.5 w-3.5" />
