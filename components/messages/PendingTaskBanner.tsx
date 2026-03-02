@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LinkedInContact } from "@/app/api/messages/route";
-import { Clock, Edit3, Save, X, Link2, MessageSquareReply } from "lucide-react";
+import { Clock, Edit3, Save, X, Link2, MessageSquareReply, Eye, ThumbsUp, MessageCircle, RefreshCw, Send, SmilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, isValid } from "date-fns";
 
@@ -11,9 +11,29 @@ interface PendingTaskBannerProps {
     onSave: (taskId: string, updates: { draft_message?: string; connection_note?: string }) => Promise<void>;
 }
 
+// Task types that support editing draft content
+const EDITABLE_TASK_TYPES = ["connect_with_note", "message", "reply", "comment"] as const;
+type EditableTaskType = typeof EDITABLE_TASK_TYPES[number];
+
+const TASK_META: Record<string, { label: string; icon: typeof Link2 }> = {
+    connect: { label: "Connection Request", icon: Link2 },
+    connect_with_note: { label: "Connection Request", icon: Link2 },
+    message: { label: "Message", icon: Send },
+    reply: { label: "Message Reply", icon: MessageSquareReply },
+    comment: { label: "Comment", icon: MessageCircle },
+    like: { label: "Like", icon: ThumbsUp },
+    view: { label: "Profile View", icon: Eye },
+    reaction: { label: "Reaction", icon: SmilePlus },
+    check_status: { label: "Status Check", icon: RefreshCw },
+    check_reply: { label: "Reply Check", icon: RefreshCw },
+};
+
 export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
-    const isConnectionTask = contact.task_type === "connect";
-    const draftContent = isConnectionTask
+    const taskType = contact.task_type || "";
+    const isEditable = EDITABLE_TASK_TYPES.includes(taskType as EditableTaskType);
+    const isConnectionNoteTask = taskType === "connect_with_note";
+
+    const draftContent = isConnectionNoteTask
         ? contact.connection_note
         : contact.draft_message;
 
@@ -29,14 +49,15 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
             ? format(scheduledDate, "MMM d, yyyy 'at' h:mm a")
             : null;
 
-    const taskLabel = isConnectionTask ? "Connection Request" : "Message Reply";
-    const TaskIcon = isConnectionTask ? Link2 : MessageSquareReply;
+    const meta = TASK_META[taskType] || { label: taskType, icon: RefreshCw };
+    const taskLabel = meta.label;
+    const TaskIcon = meta.icon;
 
     const handleSave = async () => {
         if (!contact.task_id) return;
         setSaving(true);
         try {
-            const updates = isConnectionTask
+            const updates = isConnectionNoteTask
                 ? { connection_note: editValue }
                 : { draft_message: editValue };
             await onSave(contact.task_id, updates);
@@ -67,7 +88,7 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                                 Pending {taskLabel}
                             </span>
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-200 text-violet-800 uppercase tracking-wide">
-                                Draft
+                                {isEditable ? "Draft" : "Scheduled"}
                             </span>
                         </div>
                         {formattedDate && (
@@ -89,7 +110,7 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                     </div>
                 </div>
 
-                {!editing && (
+                {isEditable && !editing && (
                     <Button
                         variant="outline"
                         size="sm"
@@ -102,55 +123,57 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                 )}
             </div>
 
-            {/* Draft Content */}
-            <div className="px-5 pb-4">
-                {editing ? (
-                    <div className="space-y-3">
-                        <textarea
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            maxLength={isConnectionTask ? 300 : undefined}
-                            className="w-full min-h-[100px] p-3 text-sm rounded-lg border border-violet-300 bg-white
-                         focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400
-                         placeholder:text-violet-400 resize-y"
-                            placeholder={`Enter ${isConnectionTask ? "connection note" : "message"}...`}
-                            autoFocus
-                        />
-                        {isConnectionTask && (
-                            <p className="text-xs text-violet-600">
-                                {editValue.length}/300 characters (LinkedIn connection note limit)
-                            </p>
-                        )}
-                        <div className="flex items-center gap-2 justify-end">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCancel}
-                                disabled={saving}
-                                className="gap-1.5 text-gray-600 cursor-pointer"
-                            >
-                                <X className="h-3.5 w-3.5" />
-                                Cancel
-                            </Button>
-                            <Button
-                                size="sm"
-                                onClick={handleSave}
-                                disabled={saving || !editValue.trim()}
-                                className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer"
-                            >
-                                <Save className="h-3.5 w-3.5" />
-                                {saving ? "Saving..." : "Save Draft"}
-                            </Button>
+            {/* Draft Content — only shown for editable task types */}
+            {isEditable && (
+                <div className="px-5 pb-4">
+                    {editing ? (
+                        <div className="space-y-3">
+                            <textarea
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                maxLength={isConnectionNoteTask ? 300 : undefined}
+                                className="w-full min-h-[100px] p-3 text-sm rounded-lg border border-violet-300 bg-white
+                             focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400
+                             placeholder:text-violet-400 resize-y"
+                                placeholder={`Enter ${isConnectionNoteTask ? "connection note" : "message"}...`}
+                                autoFocus
+                            />
+                            {isConnectionNoteTask && (
+                                <p className="text-xs text-violet-600">
+                                    {editValue.length}/300 characters (LinkedIn connection note limit)
+                                </p>
+                            )}
+                            <div className="flex items-center gap-2 justify-end">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCancel}
+                                    disabled={saving}
+                                    className="gap-1.5 text-gray-600 cursor-pointer"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                    Cancel
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={handleSave}
+                                    disabled={saving || !editValue.trim()}
+                                    className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer"
+                                >
+                                    <Save className="h-3.5 w-3.5" />
+                                    {saving ? "Saving..." : "Save Draft"}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="text-sm text-violet-900 bg-violet-100/60 rounded-lg p-3 border border-violet-200/80 whitespace-pre-wrap">
-                        {draftContent || (
-                            <span className="text-violet-500 italic">No draft content yet</span>
-                        )}
-                    </div>
-                )}
-            </div>
+                    ) : (
+                        <div className="text-sm text-violet-900 bg-violet-100/60 rounded-lg p-3 border border-violet-200/80 whitespace-pre-wrap">
+                            {draftContent || (
+                                <span className="text-violet-500 italic">No draft content yet</span>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
