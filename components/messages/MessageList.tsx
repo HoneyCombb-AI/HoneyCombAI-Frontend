@@ -100,6 +100,16 @@ export function MessageList({
                         Pending {TASK_LABELS[contact.task_type || ""] || contact.task_type}
                       </span>
                     )}
+                    {contact.other_pending_tasks?.length > 0 && (
+                      contact.other_pending_tasks.map((task, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-600 border border-gray-200"
+                        >
+                          {TASK_LABELS[task.task_type] || task.task_type}
+                        </span>
+                      ))
+                    )}
                     {contact.is_connected && (
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700 border border-green-200">
                         Connected

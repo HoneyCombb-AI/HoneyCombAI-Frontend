@@ -21,6 +21,9 @@ export type LinkedInContact = {
   // LinkedIn account ownership
   linkedin_account_name: string | null;
   linkedin_account_id: string | null;
+  // Multiple pending tasks support
+  pending_task_count: number;
+  other_pending_tasks: { task_type: string; scheduled_at: string | null; task_id: string }[];
 };
 
 export interface LinkedInContactsResponse {
@@ -85,6 +88,8 @@ export async function GET(req: NextRequest) {
       scheduled_at: row.scheduled_at ? String(row.scheduled_at) : null,
       linkedin_account_name: row.linkedin_account_name ? String(row.linkedin_account_name) : null,
       linkedin_account_id: row.linkedin_account_id ? String(row.linkedin_account_id) : null,
+      pending_task_count: Number(row.pending_task_count) || 0,
+      other_pending_tasks: Array.isArray(row.other_pending_tasks) ? row.other_pending_tasks as { task_type: string; scheduled_at: string | null; task_id: string }[] : [],
     }));
 
     const hasMore = Number.isFinite(total) && (page * limit) < total;

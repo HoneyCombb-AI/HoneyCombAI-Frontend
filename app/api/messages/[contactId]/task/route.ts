@@ -27,31 +27,19 @@ export async function PATCH(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Resolve the user's LinkedIn account ID
-        const { data: linkedinAccount } = await supabase
-            .from('linkedin_accounts')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-        if (!linkedinAccount) {
-            return NextResponse.json({ error: 'No LinkedIn account found' }, { status: 404 });
-        }
-
-        // Verify the task belongs to this user's linkedin account, is PENDING, and matches the contact
         const { data: existingTask, error: fetchError } = await supabase
             .from('linkedin_tasks')
             .select('id, status, contact_id, user_id')
             .eq('id', task_id)
-            .single();
+            .maybeSingle();
 
-        if (fetchError || !existingTask) {
-            return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+        if (fetchError) {
+            console.error('Task lookup error:', fetchError.message);
+            return NextResponse.json({ error: 'Task lookup failed' }, { status: 500 });
         }
 
-        // linkedin_tasks.user_id stores the linkedin_account_id
-        if (existingTask.user_id !== linkedinAccount.id) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        if (!existingTask) {
+            return NextResponse.json({ error: 'Task not found' }, { status: 404 });
         }
 
         if (existingTask.contact_id !== contactId) {
