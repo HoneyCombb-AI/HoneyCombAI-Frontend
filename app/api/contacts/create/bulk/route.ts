@@ -54,6 +54,7 @@ const HEADER_ALIASES: Record<string, string> = {
   company_web_site: 'company_url',
   company_webpage: 'company_url',
   company_page: 'company_url',
+  company_domain: 'company_url',
 
   // Social header aliases
   linkedin_url: 'linkedin_url',
@@ -84,8 +85,50 @@ const HEADER_ALIASES: Record<string, string> = {
   surname: 'last_name',
   family_name: 'last_name',
 
-  // Optional field aliases
-  industry: 'company_industry'
+  // Email aliases
+  email: 'email',
+  email_address: 'email',
+  e_mail: 'email',
+  contact_email: 'email',
+  personal_email: 'email',
+  work_email: 'email',
+
+  // Title/position aliases
+  title: 'title',
+  job_title: 'title',
+  position: 'title',
+  role: 'title',
+  designation: 'title',
+
+  // Phone aliases
+  phone: 'phone',
+  phone_number: 'phone',
+  contact_phone: 'phone',
+  mobile: 'phone',
+  telephone: 'phone',
+
+  // Location aliases
+  city: 'city',
+  contact_city: 'city',
+  location: 'location',
+
+  country: 'country',
+  contact_country: 'country',
+
+  state: 'state',
+  contact_state: 'state',
+
+  // Company location aliases
+  company_city: 'company_city',
+  company_state: 'company_state',
+  company_country: 'company_country',
+  company_headquarters: 'company_headquarters',
+  company_address: 'company_address',
+
+  // Other optional field aliases
+  industry: 'company_industry',
+  company_industry: 'company_industry',
+  company_linkedin_url: 'company_linkedin_url',
 };
 
 interface CSVContactData {
@@ -104,12 +147,16 @@ interface CSVContactData {
   email?: string;
   phone?: string;
   city?: string;
+  state?: string;
   country?: string;
+  location?: string;
   company_linkedin_url?: string;
   company_industry?: string;
   company_city?: string;
   company_state?: string;
   company_country?: string;
+  company_headquarters?: string;
+  company_address?: string;
   first_name?: string;
   last_name?: string;
   [key: string]: string | undefined;
@@ -186,12 +233,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Track seen headers to handle duplicates (e.g. RetailIO CSV has both 'City' and 'city')
+    const seenHeaders = new Set<string>();
+
     const parseResult = Papa.parse(csvText, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => {
-        const normalized = header.trim().toLowerCase().replace(/\s+/g, '_');
-        return HEADER_ALIASES[normalized] ?? normalized;
+      transformHeader: (header: string, index: number) => {
+        // Reset tracking on first header (PapaParse may call transformHeader multiple times)
+        if (index === 0) {
+          seenHeaders.clear();
+        }
+
+        // Normalize: lowercase, replace whitespace AND hyphens with underscores
+        const normalized = header.trim().toLowerCase().replace(/[\s-]+/g, '_');
+        let mapped = HEADER_ALIASES[normalized] ?? normalized;
+
+        // Handle duplicate headers: if we've already seen this header name,
+        // prefix with 'company_' (the second occurrence is typically the company version)
+        if (seenHeaders.has(mapped)) {
+          if (!mapped.startsWith('company_')) {
+            mapped = `company_${mapped}`;
+          } else {
+            mapped = `${mapped}_2`;
+          }
+        }
+
+        seenHeaders.add(mapped);
+        return mapped;
       }
     });
 
@@ -264,10 +333,50 @@ export async function POST(request: NextRequest) {
       const firstName = contact.first_name?.trim();
       const lastName = contact.last_name?.trim();
 
+      // Derive full_name from first_name + last_name if not provided
       if ((!fullName || fullName.length === 0) && firstName && lastName) {
         contact.full_name = `${firstName} ${lastName}`.trim();
       } else if ((!fullName || fullName.length === 0) && (firstName || lastName)) {
         contact.full_name = [firstName, lastName].filter(Boolean).join(' ').trim();
+      }
+
+      // Derive first_name and last_name from full_name if not provided
+      if (contact.full_name && (!firstName || !lastName)) {
+        const nameParts = contact.full_name.trim().split(/\s+/);
+        if (nameParts.length >= 2) {
+          if (!contact.first_name || contact.first_name.trim() === '') {
+            contact.first_name = nameParts[0];
+          }
+          if (!contact.last_name || contact.last_name.trim() === '') {
+            contact.last_name = nameParts.slice(1).join(' ');
+          }
+        } else if (nameParts.length === 1) {
+          if (!contact.first_name || contact.first_name.trim() === '') {
+            contact.first_name = nameParts[0];
+          }
+        }
+      }
+
+      // Parse 'location' field into city + country (e.g. "Washington, District of Columbia, United States")
+      if (contact.location && contact.location.trim() !== '') {
+        const locationParts = contact.location.split(',').map(s => s.trim()).filter(Boolean);
+        if (locationParts.length >= 1 && (!contact.city || contact.city.trim() === '')) {
+          contact.city = locationParts[0];
+        }
+        if (locationParts.length >= 3 && (!contact.country || contact.country.trim() === '')) {
+          contact.country = locationParts[locationParts.length - 1];
+        }
+        if (locationParts.length >= 2 && (!contact.state || contact.state.trim() === '')) {
+          // If there are 3+ parts, the middle one(s) are the state
+          if (locationParts.length >= 3) {
+            contact.state = locationParts.slice(1, -1).join(', ');
+          }
+        }
+      }
+
+      // Ensure company_url has a protocol prefix if it looks like a bare domain
+      if (contact.company_url && !contact.company_url.startsWith('http')) {
+        contact.company_url = `http://${contact.company_url}`;
       }
 
       return contact;

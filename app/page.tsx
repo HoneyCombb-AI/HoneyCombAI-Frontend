@@ -96,10 +96,10 @@ export default function LoginPage() {
 
   if (loading || isRedirecting) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-amber-900 flex items-center justify-center">
         <div className="text-center">
           <Loading />
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold bg-linear-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent mb-2">
             Honeycomb AI
           </h1>
           <p className="text-slate-400 animate-pulse">Gathering your experience...</p>
@@ -112,7 +112,7 @@ export default function LoginPage() {
     <>
       <SimpleHeader currentPage="login" />
       <main className="h-[calc(100vh-80px)] grid grid-cols-1 md:grid-cols-2">
-        <div className="hidden md:flex flex-col justify-between bg-gradient-to-r from-amber-300 via-amber-200 to-yellow-100/90">
+        <div className="hidden md:flex flex-col justify-between bg-linear-to-r from-amber-300 via-amber-200 to-yellow-100/90">
           <div className="w-full flex-1 flex flex-col justify-center items-center px-16">
             <div className="max-w-2xl ml-12">
               <AnimatedLogo
