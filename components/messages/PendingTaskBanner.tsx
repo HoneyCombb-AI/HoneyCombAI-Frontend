@@ -5,6 +5,7 @@ import { LinkedInContact } from "@/app/api/messages/route";
 import { Clock, Edit3, Save, X, Link2, MessageSquareReply, Eye, ThumbsUp, MessageCircle, RefreshCw, Send, SmilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, isValid } from "date-fns";
+import { toast } from "sonner";
 
 interface PendingTaskBannerProps {
     contact: LinkedInContact;
@@ -61,9 +62,10 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                 ? { connection_note: editValue }
                 : { draft_message: editValue };
             await onSave(contact.task_id, updates);
+            toast.success("Draft saved — updated message will be sent.");
             setEditing(false);
         } catch {
-            // Error is handled by parent
+            toast.error("Failed to save draft. Please try again.");
         } finally {
             setSaving(false);
         }

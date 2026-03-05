@@ -6,6 +6,7 @@ import { Edit3, Save, X, Mail, FileText, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import DOMPurify from "dompurify";
+import { toast } from "sonner";
 
 interface PendingDraftBannerProps {
     contact: ContactEmail;
@@ -63,9 +64,10 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                 subject: editSubject,
                 body: fullHtml,
             });
+            toast.success("Draft saved — updated email will be sent.");
             setEditing(false);
         } catch {
-            // Error is handled by parent
+            toast.error("Failed to save draft. Please try again.");
         } finally {
             setSaving(false);
         }
