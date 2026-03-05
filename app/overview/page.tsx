@@ -17,6 +17,11 @@ import {
     TrendingUp,
     Send,
     Mail,
+    UserPlus,
+    Heart,
+    Linkedin,
+    MailPlus,
+    MessageSquare,
 } from "lucide-react";
 import { DashboardData } from "@/app/api/overview/route";
 import { Loading } from "@/components/loading";
@@ -107,10 +112,79 @@ export default function OverviewPage() {
             </section>
 
             {/* =========================
+          OUTREACH TOTALS
+      ========================= */}
+            <section>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                        title="Total Emails Sent"
+                        value={stats.totalEmailsSent ?? 0}
+                        icon={Mail}
+                        description="All-time outbound emails"
+                        className="bg-indigo-500/10 border-indigo-500/20"
+                    />
+                    <StatCard
+                        title="Total Follow-up Emails"
+                        value={stats.totalFollowUpEmailsSent ?? 0}
+                        icon={MailPlus}
+                        description="Follow-ups after initial email"
+                        className="bg-violet-500/10 border-violet-500/20"
+                    />
+                    <StatCard
+                        title="Total LinkedIn Done"
+                        value={
+                            (stats.linkedinConnectsSent ?? 0) +
+                            (stats.linkedinMessagesSent ?? 0) +
+                            (stats.linkedinEngagementDone ?? 0)
+                        }
+                        icon={Linkedin}
+                        description="Connects, messages & engagements"
+                        className="bg-blue-500/10 border-blue-500/20"
+                    />
+                    <StatCard
+                        title="Unique Contacts Engaged"
+                        value={stats.totalUniqueContactsEngaged ?? 0}
+                        icon={Users}
+                        description="Unique people reached via email or LinkedIn"
+                        className="bg-emerald-500/10 border-emerald-500/20"
+                    />
+                </div>
+            </section>
+
+            {/* =========================
+          LINKEDIN OUTREACH
+      ========================= */}
+            <section>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <StatCard
+                        title="LinkedIn Connects Sent"
+                        value={stats.linkedinConnectsSent ?? 0}
+                        icon={UserPlus}
+                        description="Connection requests sent"
+                        className="bg-blue-500/10 border-blue-500/20"
+                    />
+                    <StatCard
+                        title="LinkedIn Messages Sent"
+                        value={stats.linkedinMessagesSent ?? 0}
+                        icon={MessageSquare}
+                        description="Direct messages sent"
+                        className="bg-cyan-500/10 border-cyan-500/20"
+                    />
+                    <StatCard
+                        title="LinkedIn Engagement Done"
+                        value={stats.linkedinEngagementDone ?? 0}
+                        icon={Heart}
+                        description="Likes, comments & reactions"
+                        className="bg-pink-500/10 border-pink-500/20"
+                    />
+                </div>
+            </section>
+
+            {/* =========================
           TODAY'S ACTIVITY
       ========================= */}
             <section>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <StatCard
                         title="LinkedIn Tasks Today"
                         value={stats.tasksCompletedToday ?? 0}
@@ -124,6 +198,20 @@ export default function OverviewPage() {
                         icon={Mail}
                         description="Outbound emails sent today"
                         className="bg-indigo-500/10 border-indigo-500/20"
+                    />
+                    <StatCard
+                        title="Connects Today"
+                        value={stats.linkedinConnectsToday ?? 0}
+                        icon={UserPlus}
+                        description="Connection requests today"
+                        className="bg-blue-500/10 border-blue-500/20"
+                    />
+                    <StatCard
+                        title="Messages Today"
+                        value={stats.linkedinMessagesToday ?? 0}
+                        icon={MessageSquare}
+                        description="LinkedIn messages today"
+                        className="bg-cyan-500/10 border-cyan-500/20"
                     />
                 </div>
             </section>
