@@ -2,7 +2,7 @@
 
 import { useRef, useState, useMemo } from "react";
 import { ContactEmail } from "@/app/api/emails/route";
-import { Edit3, Save, X, Mail, FileText, ChevronDown } from "lucide-react";
+import { Edit3, Save, X, Mail, FileText, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import DOMPurify from "dompurify";
@@ -215,8 +215,11 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                                         disabled={saving}
                                         className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                     >
-                                        <Save className="h-3.5 w-3.5" />
-                                        Save Draft
+                                        {saving ? (
+                                            <><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving...</>
+                                        ) : (
+                                            <><Save className="h-3.5 w-3.5" />Save Draft</>
+                                        )}
                                     </Button>
                                 </div>
                             </div>
