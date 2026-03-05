@@ -15,6 +15,15 @@ export interface DashboardData {
         };
         tasksCompletedToday: number;
         emailsSentToday: number;
+        totalEmailsSent: number;
+        totalFollowUpEmailsSent: number;
+        linkedinConnectsSent: number;
+        linkedinMessagesSent: number;
+        linkedinEngagementDone: number;
+        linkedinConnectsToday: number;
+        linkedinEngagementsToday: number;
+        linkedinMessagesToday: number;
+        totalUniqueContactsEngaged: number;
     };
     trends: {
         date: string;

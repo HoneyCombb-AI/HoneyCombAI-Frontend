@@ -5,6 +5,7 @@ import { LinkedInContact } from "@/app/api/messages/route";
 import { Clock, Edit3, Save, X, Link2, MessageSquareReply, Eye, ThumbsUp, MessageCircle, RefreshCw, Send, SmilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, isValid } from "date-fns";
+import { toast } from "sonner";
 
 interface PendingTaskBannerProps {
     contact: LinkedInContact;
@@ -61,9 +62,10 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                 ? { connection_note: editValue }
                 : { draft_message: editValue };
             await onSave(contact.task_id, updates);
+            toast.success("Draft saved — updated message will be sent.");
             setEditing(false);
         } catch {
-            // Error is handled by parent
+            toast.error("Failed to save draft. Please try again.");
         } finally {
             setSaving(false);
         }
@@ -172,6 +174,28 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                             )}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Other Pending Tasks */}
+            {contact.other_pending_tasks?.length > 0 && (
+                <div className="px-5 pb-3 flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">
+                        Also pending:
+                    </span>
+                    {contact.other_pending_tasks.map((task, idx) => {
+                        const otherMeta = TASK_META[task.task_type] || { label: task.task_type, icon: RefreshCw };
+                        const OtherIcon = otherMeta.icon;
+                        return (
+                            <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200"
+                            >
+                                <OtherIcon className="h-2.5 w-2.5" />
+                                {otherMeta.label}
+                            </span>
+                        );
+                    })}
                 </div>
             )}
         </div>
