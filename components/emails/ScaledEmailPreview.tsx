@@ -3,34 +3,23 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 interface ScaledEmailPreviewProps {
-    /** Sanitized HTML string (already run through DOMPurify before being passed in). */
+    /** Sanitized HTML body content (run through DOMPurify before being passed in). */
     html: string;
 }
-
 const SCALE = 0.75;
 export const IFRAME_WIDTH = 660; // logical px — width of the iframe before scaling
-const INITIAL_HEIGHT = 500;      // fallback before onLoad fires
+const INITIAL_HEIGHT = 500;      // reasonable starting height before first measurement
 
-/**
- * Scaled visual width — exported so the message bubble can match it exactly.
- */
 export const PREVIEW_VISUAL_WIDTH = Math.round(IFRAME_WIDTH * SCALE);
-
-/**
- * Wrap the sanitized HTML in a minimal document.
- * We hide scrollbars visually but keep overflow visible so that
- * scrollHeight is measured correctly.
- */
 function wrapInDocument(html: string): string {
     return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8" />
 <style>
-  html { overflow: hidden; }
-  body { margin: 0; padding: 6px 8px; box-sizing: border-box; overflow: hidden; }
+  html, body { margin: 0; padding: 0; overflow: visible; }
+  body { padding: 6px 8px; box-sizing: border-box; }
   img { max-width: 100%; height: auto; }
-  /* Hide scrollbars in all browsers */
   ::-webkit-scrollbar { display: none; }
   * { scrollbar-width: none; }
 </style>
@@ -39,55 +28,83 @@ function wrapInDocument(html: string): string {
 </html>`;
 }
 
-/**
- * Renders an HTML email body inside a sandboxed, CSS-scaled <iframe>.
- * The outer wrapper auto-fits to the full scaled content height — no clipping,
- * no scrollbar, no expand/collapse.
- */
 export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
     const [contentHeight, setContentHeight] = useState(INITIAL_HEIGHT);
     const iframeRef = useRef<HTMLIFrameElement>(null);
+    const observersRef = useRef<{ ro?: ResizeObserver; mo?: MutationObserver }>({});
 
+    /** Measure the true content height from the iframe document. */
     const measureHeight = useCallback(() => {
-        // Defer one frame so the browser has finished painting before we read
-        // the content dimensions.
+        try {
+            const doc = iframeRef.current?.contentDocument;
+            if (!doc) return;
+
+            const h = Math.max(
+                doc.documentElement.scrollHeight,
+                doc.body?.scrollHeight ?? 0,
+                doc.body?.offsetHeight ?? 0,
+            );
+
+            if (h > 0) setContentHeight(h);
+        } catch {
+            // cross-origin guard
+        }
+    }, []);
+
+    const handleLoad = useCallback(() => {
+        observersRef.current.ro?.disconnect();
+        observersRef.current.mo?.disconnect();
+
         requestAnimationFrame(() => {
+            measureHeight();
+
             try {
-                const doc = iframeRef.current?.contentDocument;
-                if (!doc) return;
-                // Remove overflow:hidden temporarily to get the real scroll height
-                const html = doc.documentElement;
-                const body = doc.body;
-                const prevHtmlOverflow = html.style.overflow;
-                const prevBodyOverflow = body.style.overflow;
-                html.style.overflow = "visible";
-                body.style.overflow = "visible";
+                const body = iframeRef.current?.contentDocument?.body;
+                if (!body) return;
 
-                const h = Math.max(
-                    body.scrollHeight,
-                    body.offsetHeight,
-                    html.scrollHeight,
-                    html.offsetHeight,
-                );
+                // ResizeObserver — fires on any layout size change
+                const ro = new ResizeObserver(() => measureHeight());
+                ro.observe(body);
+                observersRef.current.ro = ro;
 
-                // Restore
-                html.style.overflow = prevHtmlOverflow;
-                body.style.overflow = prevBodyOverflow;
+                // MutationObserver — catches DOM changes
+                const mo = new MutationObserver(() => measureHeight());
+                mo.observe(body, { childList: true, subtree: true, attributes: true });
+                observersRef.current.mo = mo;
 
-                if (h > 0) setContentHeight(h);
+                // Watch images that haven't finished loading
+                body.querySelectorAll("img").forEach((img) => {
+                    if (!img.complete) {
+                        img.addEventListener("load", measureHeight, { once: true });
+                        img.addEventListener("error", measureHeight, { once: true });
+                    }
+                });
+
+                // Extra safety for fonts and external resources
+                setTimeout(measureHeight, 300);
+                setTimeout(measureHeight, 1000);
             } catch {
-                // sandboxed cross-origin guard
+                // cross-origin guard
             }
         });
-    }, []);
+    }, [measureHeight]);
 
     // Reset when email changes
     useEffect(() => {
         setContentHeight(INITIAL_HEIGHT);
     }, [html]);
 
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            observersRef.current.ro?.disconnect();
+            observersRef.current.mo?.disconnect();
+        };
+    }, []);
+
     const outerWidth = PREVIEW_VISUAL_WIDTH;
-    const outerHeight = Math.round(contentHeight * SCALE);
+    const outerHeight = Math.round(contentHeight * SCALE) + 15;
+    const iframeHeight = contentHeight + 40; // buffer so content isn't clipped during measurement
     const srcDoc = wrapInDocument(html);
 
     return (
@@ -105,15 +122,15 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
                 sandbox="allow-popups"
                 tabIndex={-1}
                 title="Email preview"
-                onLoad={measureHeight}
+                onLoad={handleLoad}
                 style={{
                     width: IFRAME_WIDTH,
-                    height: contentHeight + 40, // +40 px: safe margin so email footer isn't clipped
+                    height: iframeHeight,
                     border: "none",
                     display: "block",
                     transformOrigin: "top left",
                     transform: `scale(${SCALE})`,
-                    marginBottom: -(contentHeight + 40) * (1 - SCALE),
+                    marginBottom: -(iframeHeight) * (1 - SCALE),
                 }}
             />
         </div>

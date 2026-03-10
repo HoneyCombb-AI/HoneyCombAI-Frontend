@@ -102,7 +102,7 @@ export function EmailViewer({
                                                 <Inbox className="h-3.5 w-3.5 text-gray-500" />
                                             )}
                                             <span
-                                                className="text-xs font-medium text-gray-700 truncate min-w-0"
+                                                className="text-xs font-medium text-gray-900 truncate min-w-0"
                                                 title={message.subject ?? undefined}
                                             >
                                                 {message.subject}
