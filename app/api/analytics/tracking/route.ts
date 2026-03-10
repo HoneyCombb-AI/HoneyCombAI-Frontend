@@ -33,8 +33,10 @@ export async function GET(req: NextRequest) {
 
         // Parse query parameters
         const { searchParams } = new URL(req.url);
-        const limit = parseInt(searchParams.get('limit') || '20');
-        const page = parseInt(searchParams.get('page') || '1');
+        const rawLimit = Number.parseInt(searchParams.get('limit') ?? '20', 10);
+        const rawPage = Number.parseInt(searchParams.get('page') ?? '1', 10);
+        const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 20;
+        const page = Number.isFinite(rawPage) ? Math.max(rawPage, 1) : 1;
         const searchTerm = searchParams.get('search') || '';
 
         const offset = (page - 1) * limit;
