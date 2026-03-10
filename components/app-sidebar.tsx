@@ -14,6 +14,7 @@ import {
   SendHorizontal,
   LayoutDashboard,
   Mail,
+  Activity,
 } from "lucide-react";
 
 import {
@@ -77,6 +78,12 @@ const items = [
     title: "Emails",
     icon: Mail,
     url: "/emails",
+    hasChevron: false,
+  },
+  {
+    title: "Email Analytics",
+    icon: Activity,
+    url: "/analytics/emails",
     hasChevron: false,
   },
   {
