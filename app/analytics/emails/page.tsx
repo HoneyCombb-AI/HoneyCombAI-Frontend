@@ -184,7 +184,7 @@ export default function EmailAnalyticsPage() {
                                     return (
                                         <Card key={`${group.contact_id}-${group.subject}`} className="overflow-hidden flex flex-col shadow-xs border border-gray-200 bg-white">
                                             {/* Header Section: Left (Contact) / Right (Subject) */}
-                                            <div className="bg-white px-5 py-3 border-b border-gray-100 flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                            <div className="bg-gray-50/80 px-5 py-3 border-b border-gray-100 flex flex-col md:flex-row md:items-start justify-between gap-4">
 
                                                 {/* Top Left: Contact Info (No Avatar) */}
                                                 <div className="flex-1 min-w-0">
@@ -224,7 +224,7 @@ export default function EmailAnalyticsPage() {
                                                     {aggregatedActions.map((action, idx) => {
                                                         const isOpen = action.type === 'open';
                                                         return (
-                                                            <div key={idx} className="bg-white p-3 rounded-lg border border-gray-100 shadow-xs text-sm hover:border-gray-200 transition-colors">
+                                                            <div key={idx} className="bg-gray-50/50 p-3 rounded-lg border border-gray-100 shadow-xs text-sm hover:border-gray-200 hover:bg-white transition-colors">
                                                                 <div className="flex flex-col space-y-1.5 w-full">
                                                                     <div className="flex items-center gap-2">
                                                                         {isOpen ? (
@@ -237,7 +237,7 @@ export default function EmailAnalyticsPage() {
                                                                             </span>
                                                                         )}
 
-                                                                        <span className="text-gray-500 flex items-center gap-1 min-w-0">
+                                                                        <span className="text-gray-700 flex items-center gap-1 min-w-0 font-medium">
                                                                             <MapPin className="w-3.5 h-3.5 shrink-0" />
                                                                             <span className="truncate" title={action.location || 'Unknown Location'}>
                                                                                 {action.location || 'Unknown Location'}
@@ -251,13 +251,13 @@ export default function EmailAnalyticsPage() {
                                                                         </a>
                                                                     )}
 
-                                                                    <div className="flex border-t border-gray-50 pt-2 items-center gap-4 text-xs text-gray-400 mt-2">
+                                                                    <div className="flex border-t border-gray-100 pt-2 items-center gap-4 text-xs text-gray-600 mt-2 font-medium">
                                                                         <span className="flex items-center gap-1 shrink-0">
-                                                                            <CalendarClock className="w-3.5 h-3.5 opacity-70" />
+                                                                            <CalendarClock className="w-3.5 h-3.5" />
                                                                             {format(parseISO(action.last_time), "MMM d 'at' h:mm a")}
                                                                         </span>
                                                                         <span className="flex items-center gap-1 truncate">
-                                                                            <Globe className="w-3.5 h-3.5 opacity-70" />
+                                                                            <Globe className="w-3.5 h-3.5" />
                                                                             {action.ip || "Unknown IP"}
                                                                         </span>
                                                                     </div>

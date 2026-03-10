@@ -20,7 +20,7 @@ import {
     UserPlus,
     Heart,
     Linkedin,
-    MailPlus,
+    // MailPlus,
     MessageSquare,
 } from "lucide-react";
 import { DashboardData } from "@/app/api/overview/route";
@@ -123,13 +123,13 @@ export default function OverviewPage() {
                         description="All-time outbound emails"
                         className="bg-indigo-500/10 border-indigo-500/20"
                     />
-                    <StatCard
+                    {/* <StatCard
                         title="Total Follow-up Emails"
                         value={stats.totalFollowUpEmailsSent ?? 0}
                         icon={MailPlus}
                         description="Follow-ups after initial email"
                         className="bg-violet-500/10 border-violet-500/20"
-                    />
+                    /> */}
                     <StatCard
                         title="Total LinkedIn Done"
                         value={
