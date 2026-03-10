@@ -2,6 +2,7 @@
 
 import { ContactEmail, ContactMessage } from "@/types/emails";
 import { Mail, Send, Inbox, Reply } from "lucide-react";
+import { ScaledEmailPreview, PREVIEW_VISUAL_WIDTH } from "./ScaledEmailPreview";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -50,7 +51,7 @@ export function EmailViewer({
             )}
 
             <div
-                className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 min-h-0"
+                className="flex-1 overflow-y-auto bg-gray-50 px-3 py-3 min-h-0"
                 style={{ paddingBottom: bottomInset ? bottomInset + 24 : undefined }}
             >
                 {loading ? (
@@ -67,10 +68,13 @@ export function EmailViewer({
                         <p className="text-sm text-muted-foreground">No messages found</p>
                     </div>
                 ) : (
-                    <div className="space-y-4 max-w-4xl mx-auto pb-4">
+                    <div className="space-y-6 max-w-4xl mx-auto pb-4">
                         {messages.map((message) => {
                             const isSent = message.direction === 'outbound';
-                            const sanitizedBody = DOMPurify.sanitize(message.body || "");
+                            const rawBody = message.body || "";
+                            // Detect whether the body contains HTML markup
+                            const isHtml = /<[a-z][\s\S]*>/i.test(rawBody);
+                            const sanitizedBody = DOMPurify.sanitize(rawBody);
 
                             return (
                                 <div
@@ -82,29 +86,39 @@ export function EmailViewer({
                                 >
                                     <div
                                         className={cn(
-                                            "max-w-[75%] rounded-2xl p-4 shadow-sm",
+                                            "rounded-2xl p-3 shadow-sm",
+                                            isHtml ? "" : "w-fit max-w-[90%]",
                                             isSent
                                                 ? "bg-gray-100 border border-gray-200"
                                                 : "bg-white border border-gray-200"
                                         )}
+                                        style={isHtml ? { width: PREVIEW_VISUAL_WIDTH + 24 } : undefined}
                                     >
                                         {/* Message Header */}
-                                        <div className="flex items-center gap-2 mb-3">
+                                        <div className="flex items-center gap-2 mb-3 overflow-hidden min-w-0">
                                             {isSent ? (
                                                 <Send className="h-3.5 w-3.5 text-gray-500" />
                                             ) : (
                                                 <Inbox className="h-3.5 w-3.5 text-gray-500" />
                                             )}
-                                            <span className="text-sm font-semibold text-gray-900">
+                                            <span
+                                                className="text-xs font-medium text-gray-700 truncate min-w-0"
+                                                title={message.subject ?? undefined}
+                                            >
                                                 {message.subject}
                                             </span>
                                         </div>
 
                                         {/* Message Body */}
-                                        <div
-                                            className="text-sm text-gray-700 leading-relaxed mb-3 break-words [&_img]:max-w-full overflow-hidden whitespace-pre-wrap"
-                                            dangerouslySetInnerHTML={{ __html: sanitizedBody }}
-                                        />
+                                        <div className="mb-3 overflow-hidden">
+                                            {isHtml ? (
+                                                <ScaledEmailPreview html={sanitizedBody} />
+                                            ) : (
+                                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+                                                    {rawBody}
+                                                </p>
+                                            )}
+                                        </div>
 
                                         {/* Message Footer */}
                                         <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-200">
