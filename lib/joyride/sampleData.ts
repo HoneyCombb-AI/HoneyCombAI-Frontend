@@ -9,8 +9,6 @@ export const SAMPLE_COMPANY_DATA = {
       state: "Karnataka",
       country: "India",
       contact_count: 11,
-      company_analysis_completed: true,
-      company_analysis_requested: true,
       news_requested: true,
       tags: [
         {

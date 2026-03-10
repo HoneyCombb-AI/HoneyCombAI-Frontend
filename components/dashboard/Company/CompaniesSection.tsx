@@ -21,8 +21,6 @@ type DashboardResponse = CompanyListResponse | IndustryGroupResponse | LocationG
 
 // Company validation data interface
 interface CompanyValidationData {
-  company_analysis_completed: boolean;
-  company_analysis_requested: boolean;
   istracked: boolean;
   name: string;
 }
@@ -55,17 +53,13 @@ const CompanyRow = memo<{
   onCompanyClick: (company: DashboardCompany) => void;
   onNotesClick: (companyId: string, companyName: string) => void;
 }>(({ company, isSelected, onCompanySelect, onCompanyClick, onNotesClick }) => {
-  const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
-  const hasAnalysisCompleted = company.company_analysis_completed;
   const isTracked = company.istracked;
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default browser context menu
-    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
 
     onCompanySelect(company.id, {
-      company_analysis_completed: company.company_analysis_completed,
-      company_analysis_requested: company.company_analysis_requested,
       istracked: company.istracked,
       name: company.name
     });
@@ -81,8 +75,6 @@ const CompanyRow = memo<{
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => onCompanySelect(company.id, {
-            company_analysis_completed: company.company_analysis_completed,
-            company_analysis_requested: company.company_analysis_requested,
             istracked: company.istracked,
             name: company.name
           })}
@@ -98,9 +90,9 @@ const CompanyRow = memo<{
       >
         <div className="flex items-center gap-3">
           <RingState
-            green={hasAnalysisCompleted}
+            green={false}
             golden={isTracked}
-            requested={hasAnalysisRequested}
+            requested={false}
             profilePicture={company.logo_url}
             fullName={company.name}
           />
@@ -408,8 +400,6 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                             group.companies.map(company => ({
                               id: company.id,
                               data: {
-                                company_analysis_completed: company.company_analysis_completed,
-                                company_analysis_requested: company.company_analysis_requested,
                                 istracked: company.istracked,
                                 name: company.name
                               }

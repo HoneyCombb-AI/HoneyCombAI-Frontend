@@ -24,8 +24,6 @@ export interface DashboardCompany {
     state: string | null;
     country: string | null;
     contact_count: number;
-    company_analysis_completed: boolean;
-    company_analysis_requested: boolean;
     istracked: boolean;
     tags: CompanyTag[];
 }

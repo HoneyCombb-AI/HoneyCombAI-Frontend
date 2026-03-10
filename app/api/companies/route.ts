@@ -36,8 +36,6 @@ function formatCompanyFromRPC(company: {
   country: string | null;
   contact_count: number;
   tags?: CompanyTag[];
-  company_analysis_completed?: boolean;
-  company_analysis_requested?: boolean;
   istracked?: boolean;
 }): DashboardCompany {
   return {
@@ -49,8 +47,6 @@ function formatCompanyFromRPC(company: {
     state: company.state,
     country: company.country,
     contact_count: company.contact_count,
-    company_analysis_completed: company.company_analysis_completed || false,
-    company_analysis_requested: company.company_analysis_requested || false,
     istracked: company.istracked || false,
     tags: company.tags || []
   };
@@ -153,8 +149,6 @@ async function handleCompanyListing(
     country: string | null;
     contact_count: number;
     tags?: CompanyTag[];
-    company_analysis_completed?: boolean;
-    company_analysis_requested?: boolean;
     istracked?: boolean;
   }) => formatCompanyFromRPC(company));
 
@@ -203,8 +197,6 @@ async function handleSearch(
     country: string | null;
     contact_count: number;
     tags?: CompanyTag[];
-    company_analysis_completed?: boolean;
-    company_analysis_requested?: boolean;
     istracked?: boolean;
   }) => formatCompanyFromRPC(company));
 

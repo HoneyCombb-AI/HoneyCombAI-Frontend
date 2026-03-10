@@ -35,6 +35,12 @@ export default function ProfilePage() {
   const { fontSize, setFontSize } = useFontSize();
   const router = useRouter();
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [user, loading, router]);
+
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
@@ -43,12 +49,6 @@ export default function ProfilePage() {
       </div>
     )
   }
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    }
-  }, [user, loading, router]);
 
   if (!user) {
     return null;
