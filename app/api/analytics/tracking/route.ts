@@ -20,6 +20,8 @@ export interface PaginatedTrackingGroup {
     }[];
 }
 
+let locationCache = new Map<string, string>(); // In-memory cache
+
 export async function GET(req: NextRequest) {
     try {
         const supabase = await createClient();
@@ -50,35 +52,50 @@ export async function GET(req: NextRequest) {
 
         const rawGroups = groupedEvents || [];
         const totalCount = rawGroups.length > 0 ? Number(rawGroups[0].total_count) : 0;
-
-        // Extract all unique IPs from inside the aggregated raw_events
         const allIps = rawGroups.flatMap((group: any) =>
             (group.raw_events || []).map((e: any) => e.ip_address)
         ).filter(Boolean);
 
-        const uniqueIps = Array.from(new Set(allIps));
-
-        // Fetch locations for unique IPs
+        const uniqueIps = Array.from(new Set(allIps)) as string[];
         const locationMap: Record<string, string> = {};
 
-        await Promise.all(uniqueIps.map(async (ip) => {
+        const missingIps = uniqueIps.filter(ip => !locationCache.has(ip) && ip !== '127.0.0.1' && ip !== '::1');
+        if (uniqueIps.includes('127.0.0.1')) locationMap['127.0.0.1'] = 'Localhost';
+        if (uniqueIps.includes('::1')) locationMap['::1'] = 'Localhost';
+        if (missingIps.length > 0) {
             try {
-                if (ip === '127.0.0.1' || ip === '::1') {
-                    locationMap[ip as string] = 'Localhost';
-                    return;
+                const chunks = [];
+                for (let i = 0; i < missingIps.length; i += 100) {
+                    chunks.push(missingIps.slice(i, i + 100));
                 }
-                const res = await fetch(`https://get.geojs.io/v1/ip/geo/${ip}.json`, { signal: AbortSignal.timeout(3000) });
-                if (res.ok) {
-                    const data = await res.json();
-                    const parts = [data.city, data.region, data.country].filter(Boolean);
-                    if (parts.length > 0) {
-                        locationMap[ip as string] = parts.join(', ');
+                for (const chunk of chunks) {
+                    const res = await fetch('http://ip-api.com/batch', {
+                        method: 'POST',
+                        body: JSON.stringify(chunk),
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: AbortSignal.timeout(3000)
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        data.forEach((location: any) => {
+                            if (location.status === 'success') {
+                                const parts = [location.city, location.regionName, location.country].filter(Boolean);
+                                if (parts.length > 0) {
+                                    locationCache.set(location.query, parts.join(', '));
+                                }
+                            }
+                        });
                     }
                 }
             } catch (err) {
-                console.warn(`Failed to resolve IP location for ${ip}`, err);
+                console.warn(`Failed to resolve bulk IP locations from external service`);
             }
-        }));
+        }
+        uniqueIps.forEach(ip => {
+            if (locationCache.has(ip)) {
+                locationMap[ip] = locationCache.get(ip)!;
+            }
+        });
 
         // Attach location to the inner raw_events
         const formattedGroups: PaginatedTrackingGroup[] = rawGroups.map((group: any) => ({
