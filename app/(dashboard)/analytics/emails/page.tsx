@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { format, parseISO } from "date-fns";
 import { Eye, MousePointerClick, MapPin, Globe, LinkedinIcon, CalendarClock, Mail, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
-import { PaginatedTrackingGroup } from "@/app/api/analytics/tracking/route";
+import { PaginatedTrackingGroup } from "@/types/analytics";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

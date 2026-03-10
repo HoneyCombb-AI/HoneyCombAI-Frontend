@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
+import type { DrawerContact } from '@/types/contacts';
 
 /**
  * GET /api/contacts/[id] - Fetch detailed contact data for drawer
@@ -13,95 +14,6 @@ import { rateLimiters } from '@/app/api/utils/rate-limiter';
  * - AI analysis results
  * - Social activity metrics
  */
-
-// Detailed interfaces for drawer data
-export interface DrawerContactSignal {
-  id: string;
-  signal_type: string;
-  confidence_score: number;
-  description: string | null;
-  source: string | null;
-  source_date: string | null;
-  created_at: string;
-  is_custom: boolean;
-}
-
-
-
-export interface DrawerAIAnalysis {
-  id: string;
-  created_at: string;
-  confidence_score: number | null;
-  confidence_reasoning: string | null;
-
-  // Account Overview
-  role: string | null;
-  recent_developments: string[] | string | null; // Can be stringified JSON
-  strategic_priorities: string[] | string | null; // Can be stringified JSON
-  network: string | null;
-
-  // Contact Insights
-  contact_insights_summary: string | null;
-  professional_interests: string | null;
-  communication_style: string | null;
-  decision_indicators: string | null;
-  motivations_triggers: string | null;
-  influence_level: string | null;
-
-  // Why Reach Out
-  buying_signals: string | null;
-  engagement_hooks: string | null;
-  timing_relevance: string | null;
-  account_relevance: string | null;
-  current_priorities: string | null;
-  explicit_pain_points: string | null;
-
-  // Legacy fields (kept optional to avoid breaking if referenced elsewhere strictly, though we should remove use)
-  messaging_tone?: string | null;
-  themes_to_use?: string | null;
-}
-
-export interface DrawerSocialActivity {
-  activity_level: string;
-  engagement_style: string;
-  consistency: string;
-  trend_direction: string;
-  trend_change_percent: number;
-  primary_active_days: string[] | string; // Handle potential JSON parsing differences
-  best_time_window_utc: string;
-  total_actions: number;
-  avg_weekly_actions: number;
-  outward_inward_ratio: number;
-  weekend_activity_ratio: number;
-  consistency_score: number;
-  heatmap: Record<string, Record<string, number>>;
-  forecasted_at: string;
-}
-
-export interface DrawerContact {
-  id: string;
-  full_name: string;
-  title: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  profile_picture: string | null;
-  email: string | null;
-  phone: string | null;
-  linkedin_url: string | null;
-  twitter_handle: string | null;
-  instagram_handle: string | null;
-  languages: string[] | null;
-  updated_at: string;
-
-  primary_analysis_completed: boolean;
-  primary_analysis_requested: boolean;
-  temperature: 'hot' | 'warm' | 'cold' | null;
-  signals: DrawerContactSignal[];
-
-  ai_analysis: DrawerAIAnalysis[];
-  social_activity: DrawerSocialActivity | null;
-}
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { DrawerAIAnalysis, DrawerSocialActivity } from "@/app/api/contacts/[id]/route"
+import { DrawerAIAnalysis, DrawerSocialActivity } from "@/types/contacts"
 import { Separator } from "@/components/ui/separator"
 import { parseISO, format } from "date-fns"
 import { TrendingUp, TrendingDown, Activity, Zap, BarChart3, Clock, Calendar, Target, LucideIcon } from "lucide-react"
@@ -210,8 +210,8 @@ Explicit Pain Points: ${analysis.explicit_pain_points || '-'}
           className="h-6 w-6 p-0 hover:bg-white hover:text-amber-500 cursor-pointer rounded-full"
           onClick={() => {
             navigator.clipboard.writeText(copyText)
-            .then(() => toast.success("Why Reach Out section copied"))
-            .catch(() => toast.error("Failed to copy to clipboard"))
+              .then(() => toast.success("Why Reach Out section copied"))
+              .catch(() => toast.error("Failed to copy to clipboard"))
           }}
         >
           <Copy className="h-3.5 w-3.5" />

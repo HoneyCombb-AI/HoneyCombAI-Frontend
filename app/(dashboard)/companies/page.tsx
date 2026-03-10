@@ -37,10 +37,11 @@ import type {
   EmployeeSizeGroupResponse,
   SearchResponse,
   PaginationInfo,
-} from "@/app/api/companies/route";
+} from "@/types/companies";
 import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
 import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
+
 import { useTour } from "@/lib/joyride/useTour";
 
 // Component that uses useSearchParams wrapped in Suspense
@@ -55,8 +56,6 @@ export type SortBy = "name" | "created_at";
 export type SortOrder = "asc" | "desc";
 
 interface CompanyValidationData {
-  company_analysis_completed: boolean;
-  company_analysis_requested: boolean;
   istracked: boolean;
   name: string;
 }
@@ -282,32 +281,10 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     const selectedCompaniesArray = Array.from(selectedCompanies.entries());
     const selectedCompanyIds = selectedCompaniesArray.map(([id]) => id);
 
-    // Check for in-progress companies
-    const inProgressCompanies = selectedCompaniesArray.filter(
-      ([, data]) => data.company_analysis_requested && !data.company_analysis_completed
-    );
-    const deletableCompanies = selectedCompaniesArray.filter(
-      ([, data]) => !data.company_analysis_requested || data.company_analysis_completed
-    );
+    const confirmMessage = `Are you sure you want to delete ${selectedCompanyIds.length} company(s)?\n\n` +
+      `⚠️ WARNING: This will also delete all associated contacts.\n\n` +
+      `This action cannot be undone.`;
 
-    // Build confirmation message
-    let confirmMessage = '';
-    if (inProgressCompanies.length > 0 && deletableCompanies.length > 0) {
-      confirmMessage = `You have selected ${selectedCompanyIds.length} company(s).\n\n` +
-        `${deletableCompanies.length} company(s) will be deleted.\n` +
-        `${inProgressCompanies.length} company(s) are in-progress and cannot be deleted.\n\n` +
-        `⚠️ WARNING: Deleting companies will also delete all associated contacts.\n\n` +
-        `Do you want to proceed with deleting ${deletableCompanies.length} company(s)? This action cannot be undone.`;
-    } else if (inProgressCompanies.length > 0 && deletableCompanies.length === 0) {
-      toast.error(`All selected companies are in-progress and cannot be deleted.`);
-      return;
-    } else {
-      confirmMessage = `Are you sure you want to delete ${deletableCompanies.length} company(s)?\n\n` +
-        `⚠️ WARNING: This will also delete all associated contacts.\n\n` +
-        `This action cannot be undone.`;
-    }
-
-    // Confirm deletion
     if (!confirm(confirmMessage)) {
       return;
     }

@@ -2,15 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
 import axios from 'axios';
+import type { DraftResponse } from '@/types/emails';
 
 const MAIL_SERVER_URL = process.env.MAIL_SERVER_URL || 'https://mail.honeycombai.in';
 const MAIL_SERVER_USER = process.env.MAIL_SERVER_USER || '';
 const MAIL_SERVER_PASSWORD = process.env.MAIL_SERVER_PASSWORD || '';
-
-export interface DraftResponse {
-    subject: string;
-    body: string;
-}
 
 export async function POST(
     _req: NextRequest,

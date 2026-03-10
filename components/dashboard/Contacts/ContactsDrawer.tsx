@@ -15,8 +15,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
-import { DashboardContact } from "@/app/api/contacts/route"
-import { DrawerContact } from "@/app/api/contacts/[id]/route"
+import { DashboardContact, DrawerContact } from "@/types/contacts"
 import { Badge } from "@/components/ui/badge"
 import { WhyReachOutStandalone, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
 import { IntentSignalsSection } from "./IntentSignalsSection"

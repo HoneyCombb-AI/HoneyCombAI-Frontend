@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { CompanyListItem } from "@/app/api/companies/list/route"
+import type { CompanyListItem } from "@/types/companies"
 import { toast } from "sonner";
 import { AddCompanyDrawer } from "../Company/AddCompanyDrawer"
 

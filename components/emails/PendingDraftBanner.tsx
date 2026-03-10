@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useMemo } from "react";
-import { ContactEmail } from "@/app/api/emails/route";
+import { ContactEmail } from "@/types/emails";
 import { Edit3, Save, X, Mail, FileText, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

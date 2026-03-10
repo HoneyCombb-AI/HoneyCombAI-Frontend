@@ -4,14 +4,14 @@ import React, { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GroupByType } from '@/app/contacts/page';
+import { GroupByType } from '@/app/(dashboard)/contacts/page';
 import type {
   DashboardContact,
   CompanyGroupResponse,
   LocationGroupResponse,
   SearchResponse,
   TagGroupResponse
-} from '@/app/api/contacts/route';
+} from '@/types/contacts';
 import { ContactsDrawer } from './ContactsDrawer';
 import { NotesDrawer } from '../NotesDrawer';
 import { RingState } from '../Ring-state';
@@ -149,30 +149,6 @@ const ContactRow = memo<{
         </div>
       </td>
 
-      {/* Heat */}     
-      {/* <td
-        className="px-2 py-3 w-[8%] cursor-pointer"
-        onClick={() => onContactClick(contact)}
-        data-testid={isFirstInGroup ? "sample-contact-heat" : undefined}
-      >
-        <div className="flex justify-center">
-          {contact.temperature ? (
-            <span
-              className={`text-xs px-2 py-0.5 rounded ${contact.temperature === 'hot'
-                ? 'bg-red-50 text-red-700'
-                : contact.temperature === 'warm'
-                  ? 'bg-orange-50 text-orange-700'
-                  : 'bg-blue-50 text-blue-700'
-                }`}
-            >
-              {contact.temperature.charAt(0).toUpperCase() + contact.temperature.slice(1)}
-            </span>
-          ) : (
-            <span className="text-sm text-gray-400">—</span>
-          )}
-        </div>
-      </td> */}
-
       {/* Tags */}
       <td
         className="px-2 py-3 w-[7%] cursor-pointer"
@@ -280,7 +256,6 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
   // State for managing collapsed groups - ALL COLLAPSED BY DEFAULT
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [allCollapsed, setAllCollapsed] = useState(true);
 
   // Total contacts
   const totalContacts = useMemo(() =>
@@ -324,8 +299,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
   const toggleAllCollapse = useCallback(() => {
     setCollapsedGroups(new Set(groups.map(g => g.id)));
-    setAllCollapsed(true);
-  }, [allCollapsed, groups]);
+  }, [groups]);
 
   return (
     <div className="space-y-4">
@@ -467,7 +441,6 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                       <th className="px-4 py-2 text-left font-medium w-[24%]">Name</th>
                       <th className="px-2 py-2 text-left font-medium w-[18%]">Company</th>
                       <th className="px-2 py-2 text-left font-medium w-[11%]">Location</th>
-                      {/* <th className="px-2 py-2 text-center font-medium w-[8%]">Heat</th> */}
                       <th className="px-2 py-2 text-left font-medium w-[7%]">Tags</th>
                       <th className="px-2 py-2 text-left font-medium w-[35%]">Signals</th>
                     </tr>

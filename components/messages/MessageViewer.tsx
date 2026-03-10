@@ -1,11 +1,10 @@
 "use client";
 
-import { LinkedInContact } from "@/app/api/messages/route";
+import { LinkedInContact, LinkedInMessage } from "@/types/messages";
 import { MessageSquare, Send, Inbox } from "lucide-react";
 import { Loading } from "@/components/loading";
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
-import { LinkedInMessage } from "@/app/api/messages/[contactId]/route";
 import { PendingTaskBanner } from "@/components/messages/PendingTaskBanner";
 
 interface MessageViewerProps {

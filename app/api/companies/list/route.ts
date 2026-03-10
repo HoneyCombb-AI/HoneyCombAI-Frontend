@@ -2,15 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
-
-export interface CompanyListItem {
-  id: string;
-  name: string;
-}
-
-interface CompanyListResponse {
-  companies: CompanyListItem[];
-}
+import type { CompanyListItem } from '@/types/companies';
 
 interface OrganizationMember {
   organization_id: string;
@@ -19,7 +11,7 @@ interface OrganizationMember {
 export async function GET() {
   try {
     const supabase = await createClient();
-    
+
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -47,14 +39,14 @@ export async function GET() {
         }
       );
     }
-    
+
     // Fetch companies for the current user with proper security
     const { data: companies, error } = await supabase
       .from('companies')
       .select('id, name')
       .or(
         `user_id.eq.${user.id},` +
-        `organization_id.in.(${await getOrganizationIds(supabase)})`
+        `organization_id.in.(${await getOrganizationIds(supabase, user.id)})`
       )
       .order('name', { ascending: true });
 
@@ -66,7 +58,7 @@ export async function GET() {
       );
     }
 
-    const response: CompanyListResponse = {
+    const response: { companies: CompanyListItem[] } = {
       companies: companies || []
     };
 
@@ -83,15 +75,12 @@ export async function GET() {
 }
 
 // Helper function to get organization IDs for the current user
-async function getOrganizationIds(supabase: SupabaseClient): Promise<string> {
+async function getOrganizationIds(supabase: SupabaseClient, userId: string): Promise<string> {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return '';
-
     const { data: orgMembers } = await supabase
       .from('organization_members')
       .select('organization_id')
-      .eq('user_id', user.user.id);
+      .eq('user_id', userId);
 
     if (!orgMembers || orgMembers.length === 0) return '';
 

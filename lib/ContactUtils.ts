@@ -1,4 +1,4 @@
-import { ContactSignal } from "@/app/api/contacts/route";
+import { ContactSignal } from "@/types/contacts";
 
 
 const generateSignalColor = (signalText: string): string => {

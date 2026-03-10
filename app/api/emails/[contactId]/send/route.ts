@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import axios from 'axios';
+import type { SendEmailRequest, SendEmailResponse } from '@/types/emails';
 
 const MAIL_SERVER_URL = process.env.MAIL_SERVER_URL || 'https://mail.honeycombai.in';
 const MAIL_SERVER_USER = process.env.MAIL_SERVER_USER || '';
 const MAIL_SERVER_PASSWORD = process.env.MAIL_SERVER_PASSWORD || '';
-
-export interface SendEmailRequest {
-    subject: string;
-    body: string;
-    account_id: string;
-    account_provider: "gmail" | "outlook";
-    thread_id?: string;
-    reply_to_message_id?: string;
-}
-
-export interface SendEmailResponse {
-    status: string;
-    message_id: string;
-}
 
 export async function POST(
     req: NextRequest,

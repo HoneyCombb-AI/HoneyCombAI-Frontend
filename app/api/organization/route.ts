@@ -3,26 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
-export interface OrganizationMember {
-    id: string;
-    user_id: string;
-    joined_at: string;
-    full_name: string;
-    token_limit: number | null;
-    tokens_used: number;
-}
-
-export interface OrganizationData {
-    id: string;
-    name: string;
-    invite_code: string;
-    created_by: string;
-    created_at: string;
-    total_tokens: number;
-    members: OrganizationMember[];
-    memberCount: number;
-    isOwner: boolean;
-}
+import type { OrganizationData } from '@/types/organization';
 
 const createOrganizationSchema = z.object({
     name: z.string()
@@ -96,7 +77,7 @@ export async function POST(req: NextRequest) {
 
         // Get the current user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
+
 
         if (userError || !user) {
             return NextResponse.json(
@@ -108,14 +89,14 @@ export async function POST(req: NextRequest) {
         // Parse and validate request body
         const body = await req.json();
         const validationResult = createOrganizationSchema.safeParse(body);
-        
+
         if (!validationResult.success) {
             return NextResponse.json(
                 { error: validationResult.error.errors[0].message },
                 { status: 400 }
             );
         }
-        
+
         const { name } = validationResult.data;
 
         // Check if user is already part of an organization
@@ -136,7 +117,7 @@ export async function POST(req: NextRequest) {
         const inviteCode = nanoid(12);
 
         // Create organization
-        
+
         const { data: organization, error: orgError } = await supabase
             .from('organizations')
             .insert({
@@ -146,7 +127,7 @@ export async function POST(req: NextRequest) {
             })
             .select()
             .single();
-            
+
 
         if (orgError) {
             throw new Error(`Failed to create organization: ${orgError.message}`);
@@ -200,7 +181,7 @@ export async function PATCH(req: NextRequest) {
 
         // Get the current user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
+
         if (userError || !user) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
@@ -210,7 +191,7 @@ export async function PATCH(req: NextRequest) {
 
         // Get the request body to determine what to update
         const body = await req.json();
-        
+
         if (body.action !== 'refresh_invite_code') {
             return NextResponse.json(
                 { error: 'Invalid action. Only refresh_invite_code is supported.' },

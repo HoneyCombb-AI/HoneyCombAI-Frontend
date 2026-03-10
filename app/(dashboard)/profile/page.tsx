@@ -24,6 +24,7 @@ import {
   LogOut,
   Accessibility,
 } from "lucide-react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useFontSize, fontSizeLabels, FontSize } from "@/lib/font-size-context";
@@ -33,6 +34,12 @@ export default function ProfilePage() {
   const { user, loading, signOut } = useAuth();
   const { fontSize, setFontSize } = useFontSize();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [user, loading, router]);
 
   if (loading) {
     return (
@@ -44,8 +51,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    router.replace("/login");
-    return;
+    return null;
   }
 
   const displayName =
@@ -67,12 +73,12 @@ export default function ProfilePage() {
   const handleSignOut = async () => {
     router.replace("/");
     signOut()
-    .then(() => {
-      toast.success("Signed out successfully");
-    })
-    .catch(() => {
-      toast.error("Sign out failed");
-    });
+      .then(() => {
+        toast.success("Signed out successfully");
+      })
+      .catch(() => {
+        toast.error("Sign out failed");
+      });
   };
 
   return (

@@ -3,7 +3,7 @@ import React, { useState, useMemo, useCallback, memo } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { GroupByType } from '@/app/companies/page';
+import { GroupByType } from '@/app/(dashboard)/companies/page';
 import { CompaniesDrawer } from './CompaniesDrawer';
 import { NotesDrawer } from '../NotesDrawer';
 import { RingState } from '../Ring-state';
@@ -15,14 +15,12 @@ import type {
   LocationGroupResponse,
   EmployeeSizeGroupResponse,
   SearchResponse
-} from '@/app/api/companies/route';
+} from '@/types/companies';
 
 type DashboardResponse = CompanyListResponse | IndustryGroupResponse | LocationGroupResponse | EmployeeSizeGroupResponse | SearchResponse;
 
 // Company validation data interface
 interface CompanyValidationData {
-  company_analysis_completed: boolean;
-  company_analysis_requested: boolean;
   istracked: boolean;
   name: string;
 }
@@ -55,17 +53,13 @@ const CompanyRow = memo<{
   onCompanyClick: (company: DashboardCompany) => void;
   onNotesClick: (companyId: string, companyName: string) => void;
 }>(({ company, isSelected, onCompanySelect, onCompanyClick, onNotesClick }) => {
-  const hasAnalysisRequested = company.company_analysis_requested && !company.company_analysis_completed;
-  const hasAnalysisCompleted = company.company_analysis_completed;
   const isTracked = company.istracked;
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default browser context menu
-    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
 
     onCompanySelect(company.id, {
-      company_analysis_completed: company.company_analysis_completed,
-      company_analysis_requested: company.company_analysis_requested,
       istracked: company.istracked,
       name: company.name
     });
@@ -81,8 +75,6 @@ const CompanyRow = memo<{
         <Checkbox
           checked={isSelected}
           onCheckedChange={() => onCompanySelect(company.id, {
-            company_analysis_completed: company.company_analysis_completed,
-            company_analysis_requested: company.company_analysis_requested,
             istracked: company.istracked,
             name: company.name
           })}
@@ -98,9 +90,9 @@ const CompanyRow = memo<{
       >
         <div className="flex items-center gap-3">
           <RingState
-            green={hasAnalysisCompleted}
+            green={false}
             golden={isTracked}
-            requested={hasAnalysisRequested}
+            requested={false}
             profilePicture={company.logo_url}
             fullName={company.name}
           />
@@ -262,7 +254,6 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
   }, [groupBy, records]);
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [allCollapsed, setAllCollapsed] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<DashboardCompany | null>(null);
 
@@ -301,8 +292,7 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
 
   const toggleAllCollapse = useCallback(() => {
     setCollapsedGroups(new Set(groups.map(g => g.id)));
-    setAllCollapsed(true);
-  }, [allCollapsed, groups]);
+  }, [groups]);
 
   return (
     <div className="space-y-4">
@@ -408,8 +398,6 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
                             group.companies.map(company => ({
                               id: company.id,
                               data: {
-                                company_analysis_completed: company.company_analysis_completed,
-                                company_analysis_requested: company.company_analysis_requested,
                                 istracked: company.istracked,
                                 name: company.name
                               }

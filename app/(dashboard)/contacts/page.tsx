@@ -36,13 +36,14 @@ import type {
   SearchResponse,
   TagGroupResponse,
   PaginationInfo,
-} from "@/app/api/contacts/route";
+} from "@/types/contacts";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
 import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
+
 
 // Component that uses useSearchParams wrapped in Suspense
 function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean }) => React.ReactNode }) {
@@ -158,7 +159,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         const response = await axios.get(
           `/api/contacts?${queryParams.toString()}`
         );
-        console.log("API Response:", response.data);
 
         setDashboardState({
           data: response.data,

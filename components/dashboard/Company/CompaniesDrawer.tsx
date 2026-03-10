@@ -16,8 +16,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer"
-import { DashboardCompany } from "@/app/api/companies/route"
-import { DrawerCompany } from "@/app/api/companies/[id]/route"
+import { DashboardCompany, DrawerCompany } from "@/types/companies"
 import { Badge } from "@/components/ui/badge"
 import CompleteCompanySkeleton from "./CompanyDrawerSkeleton"
 

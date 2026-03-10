@@ -1,26 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export interface PaginatedTrackingGroup {
-    contact_id: string;
-    contact_name: string;
-    contact_email: string;
-    contact_linkedin: string | null;
-    subject: string;
-    sent_at: string | null;
-    total_activity: number;
-    latest_activity: string;
-    raw_events: {
-        event_id: string;
-        event_type: string;
-        ip_address: string;
-        clicked_url: string | null;
-        created_at: string;
-        location?: string | null;
-    }[];
-}
+import type { PaginatedTrackingGroup } from '@/types/analytics';
 
-let locationCache = new Map<string, string>(); // In-memory cache
+const locationCache = new Map<string, string>(); // In-memory cache
 
 export async function GET(req: NextRequest) {
     try {

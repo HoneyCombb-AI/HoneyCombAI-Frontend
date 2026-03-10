@@ -1,37 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-export interface TrackingEvent {
-    id: string;
-    event_type: string;
-    clicked_url: string | null;
-    created_at: string;
-}
-
-export interface ContactMessage {
-    id: string;
-    account_id: string;
-    status: string;
-    subject: string;
-    thread_id: string;
-    message_id: string;
-    campaign_id: string;
-    contact_id: string;
-    sent_at: string;
-    direction: string;
-    body: string;
-    replied_at: string | null;
-    open_count: number;
-    click_count: number;
-    tracking_events: TrackingEvent[];
-}
-
-
-
-export interface MessagesResponse {
-    messages: ContactMessage[];
-    contact_id: string;
-}
+import type { TrackingEvent, ContactMessage, MessagesResponse } from '@/types/emails';
 
 type ContactRow = {
     id: string;

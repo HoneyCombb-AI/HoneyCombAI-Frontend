@@ -1,20 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-export interface LinkedInMessage {
-    id: string;
-    content: string | null;
-    sender_type: string;
-    status: string;
-    created_at: string;
-    timestamp: string | null;
-    message_type: string;
-}
-
-export interface LinkedInConversationResponse {
-    messages: LinkedInMessage[];
-    contact_id: string;
-}
+import type { LinkedInMessage, LinkedInConversationResponse } from '@/types/messages';
 
 export async function GET(
     _req: NextRequest,

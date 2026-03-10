@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ContactEmail } from "@/app/api/emails/route";
+import { ContactEmail } from "@/types/emails";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "./RichTextEditor";
@@ -210,9 +210,11 @@ export function EmailComposer({
             // Clear form after send
             setSubject("");
             setBody("");
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error sending email:", error);
-            const errorMessage = error.response?.data?.detail || "Failed to send email";
+            const errorMessage = axios.isAxiosError(error)
+                ? error.response?.data?.detail || "Failed to send email"
+                : "Failed to send email";
             toast.error(errorMessage);
         } finally {
             setSending(false);

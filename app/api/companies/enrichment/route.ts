@@ -185,9 +185,7 @@ export async function POST(req: NextRequest) {
       if (backendResult.status === 'success') {
         let updateData = {};
 
-        if (body.task_type === 'company_enrichment') {
-          updateData = { company_analysis_requested: true };
-        } else if (body.task_type === 'news_enrichment') {
+        if (body.task_type === 'news_enrichment') {
           updateData = { news_requested: true };
         }
 

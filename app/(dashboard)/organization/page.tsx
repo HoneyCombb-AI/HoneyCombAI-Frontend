@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   Building2,
 } from "lucide-react";
-import { OrganizationData } from '../api/organization/route';
+import { OrganizationData } from '@/types/organization';
 import { CreateOrganizationDialog } from '@/components/organization/create-organization-dialog';
 import { JoinOrganizationDialog } from '@/components/organization/join-organization-dialog';
 import { OrganizationDetails } from '@/components/organization/organization-details';

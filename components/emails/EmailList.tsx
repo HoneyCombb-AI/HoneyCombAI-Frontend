@@ -1,6 +1,6 @@
 "use client";
 
-import { ContactEmail } from "@/app/api/emails/route";
+import { ContactEmail } from "@/types/emails";
 import { cn } from "@/lib/utils";
 import { Mail, Loader2, ChevronDown, Clock, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
