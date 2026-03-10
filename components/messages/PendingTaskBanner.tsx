@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LinkedInContact } from "@/types/messages";
-import { Clock, Edit3, Save, X, Link2, MessageSquareReply, Eye, ThumbsUp, MessageCircle, RefreshCw, Send, SmilePlus } from "lucide-react";
+import { Clock, Edit3, Save, X, Link2, MessageSquareReply, Eye, ThumbsUp, MessageCircle, RefreshCw, Send, SmilePlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, isValid } from "date-fns";
 import { toast } from "sonner";
@@ -160,10 +160,13 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                                     size="sm"
                                     onClick={handleSave}
                                     disabled={saving || !editValue.trim()}
-                                    className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer"
+                                    className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                    <Save className="h-3.5 w-3.5" />
-                                    {saving ? "Saving..." : "Save Draft"}
+                                    {saving ? (
+                                        <><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving...</>
+                                    ) : (
+                                        <><Save className="h-3.5 w-3.5" />Save Draft</>
+                                    )}
                                 </Button>
                             </div>
                         </div>
