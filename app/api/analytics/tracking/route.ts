@@ -37,6 +37,13 @@ export async function GET(req: NextRequest) {
 
         const rawGroups = groupedEvents || [];
         const totalCount = rawGroups.length > 0 ? Number(rawGroups[0].total_count) : 0;
+
+        // Extract org-level excluded locations from the RPC response (same value on every row)
+        const excludedLocations: string[] = rawGroups.length > 0
+            ? (rawGroups[0].excluded_locations || [])
+            : [];
+
+        // Collect all unique IPs for batch geo-resolution
         const allIps = rawGroups.flatMap((group: any) =>
             (group.raw_events || []).map((e: any) => e.ip_address)
         ).filter(Boolean);
@@ -47,6 +54,7 @@ export async function GET(req: NextRequest) {
         const missingIps = uniqueIps.filter(ip => !locationCache.has(ip) && ip !== '127.0.0.1' && ip !== '::1');
         if (uniqueIps.includes('127.0.0.1')) locationMap['127.0.0.1'] = 'Localhost';
         if (uniqueIps.includes('::1')) locationMap['::1'] = 'Localhost';
+
         if (missingIps.length > 0) {
             try {
                 const chunks = [];
@@ -76,27 +84,63 @@ export async function GET(req: NextRequest) {
                 console.warn(`Failed to resolve bulk IP locations from external service`);
             }
         }
+
         uniqueIps.forEach(ip => {
             if (locationCache.has(ip)) {
                 locationMap[ip] = locationCache.get(ip)!;
             }
         });
 
-        // Attach location to the inner raw_events
-        const formattedGroups: PaginatedTrackingGroup[] = rawGroups.map((group: any) => ({
-            contact_id: group.contact_id,
-            contact_name: group.contact_name,
-            contact_email: group.contact_email,
-            contact_linkedin: group.contact_linkedin,
-            subject: group.subject,
-            sent_at: group.sent_at,
-            total_activity: group.total_activity,
-            latest_activity: group.latest_activity,
-            raw_events: (group.raw_events || []).map((event: any) => ({
-                ...event,
-                location: locationMap[event.ip_address] || null,
-            }))
-        }));
+        // Build formatted groups with geo filtering applied
+        const formattedGroups: PaginatedTrackingGroup[] = rawGroups
+            .map((group: any) => {
+                const allEvents: any[] = group.raw_events || [];
+
+                // Attach resolved location to each event
+                const eventsWithLocation = allEvents.map((event: any) => ({
+                    ...event,
+                    location: locationMap[event.ip_address] || null,
+                }));
+
+                // Filter out events whose resolved location matches an excluded location
+                const filteredEvents = eventsWithLocation.filter((event: any) => {
+                    const resolvedLocation = event.location;
+                    if (!resolvedLocation || excludedLocations.length === 0) return true;
+                    return !excludedLocations.some(
+                        (excluded: string) =>
+                            resolvedLocation.toLowerCase() === excluded.toLowerCase()
+                    );
+                });
+
+                // Recalculate latest_activity from filtered events only
+                const latestActivity = filteredEvents.length > 0
+                    ? filteredEvents.reduce((max: string, e: any) =>
+                        new Date(e.created_at) > new Date(max) ? e.created_at : max,
+                        filteredEvents[0].created_at
+                    )
+                    : group.latest_activity;
+
+                return {
+                    contact_id: group.contact_id,
+                    contact_name: group.contact_name,
+                    contact_email: group.contact_email,
+                    contact_linkedin: group.contact_linkedin,
+                    subject: group.subject,
+                    sent_at: group.sent_at,
+                    total_activity: filteredEvents.length,
+                    latest_activity: latestActivity,
+                    raw_events: filteredEvents,
+                };
+            })
+            // Remove groups where all events were from excluded locations
+            .filter((group: PaginatedTrackingGroup) => group.raw_events.length > 0)
+            // Re-sort by filtered total_activity since DB sort was pre-filtering
+            .sort((a: PaginatedTrackingGroup, b: PaginatedTrackingGroup) => {
+                if (b.total_activity !== a.total_activity) {
+                    return (b.total_activity as number) - (a.total_activity as number);
+                }
+                return new Date(b.latest_activity).getTime() - new Date(a.latest_activity).getTime();
+            });
 
         return NextResponse.json({
             data: formattedGroups,
