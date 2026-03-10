@@ -5,8 +5,8 @@ import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,57 +16,58 @@ import {
 import {
   Building2,
   ChevronDown,
-  Plus,
   Search,
   MapPin,
-  Factory,
-  Users,
   SortAsc,
   SortDesc,
   ChevronLeft,
   ChevronRight,
   X,
+  Rows2,
+  FileUp,
+  Download,
   Trash2,
   Tag,
 } from "lucide-react";
-import CompaniesSection from "@/components/dashboard/Company/CompaniesSection";
+import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
-  CompanyListResponse,
-  IndustryGroupResponse,
+  CompanyGroupResponse,
   LocationGroupResponse,
-  EmployeeSizeGroupResponse,
   SearchResponse,
+  TagGroupResponse,
   PaginationInfo,
-} from "@/app/api/companies/route";
-import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
+} from "@/types/contacts";
+import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
+import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
+import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
-import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
+import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
+
 
 // Component that uses useSearchParams wrapped in Suspense
 function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean }) => React.ReactNode }) {
-  const { isJoyrideMode } = useTour('companies');
+  const { isJoyrideMode } = useTour('contacts');
   return <>{children({ isJoyrideMode })}</>;
 }
 
-export type GroupByType = "none" | "industry" | "location" | "employee_size";
-export type LocationType = "country" | "state" | "city";
-export type SortBy = "name" | "created_at";
+export type GroupByType = "none" | "company" | "location" | "city" | "tags";
+export type LocationType = "country" | "city";
+export type SortBy = "name";
 export type SortOrder = "asc" | "desc";
 
-interface CompanyValidationData {
-  company_analysis_completed: boolean;
-  company_analysis_requested: boolean;
-  istracked: boolean;
-  name: string;
+interface ContactValidationData {
+  primaryAnalysisCompleted: boolean;
+  primaryAnalysisRequested: boolean;
+  full_name: string;
+  company_id: string | null;
 }
 
 export type DashboardResponse =
-  | CompanyListResponse
-  | IndustryGroupResponse
+  | CompanyGroupResponse
   | LocationGroupResponse
-  | EmployeeSizeGroupResponse
-  | SearchResponse;
+  | SearchResponse
+  | TagGroupResponse;
 
 // State interface for managing dashboard data
 interface DashboardState {
@@ -85,7 +86,7 @@ interface FetchParams {
   sortOrder?: SortOrder;
 }
 
-function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
+function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const { loading: authLoading } = useAuth();
   const [dashboardState, setDashboardState] = useState<DashboardState>({
     data: null,
@@ -107,15 +108,19 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageLimit, setPageLimit] = useState<number>(20);
   const [sortBy, setSortBy] = useState<SortBy>("name");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [selectedCompanies, setSelectedCompanies] = useState<Map<string, CompanyValidationData>>(
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [selectedContacts, setSelectedContacts] = useState<Map<string, ContactValidationData>>(
     new Map()
   );
-  const [addCompanyDrawerOpen, setAddCompanyDrawerOpen] = useState(false);
+  const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
+  const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
+  const [outreachDrawerOpen, setOutreachDrawerOpen] = useState(false);
   const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
-  const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
+  const [exportLoading, setExportLoading] = useState<boolean>(false);
+
+  const displayData = isJoyrideMode ? SAMPLE_CONTACT_DATA : dashboardState.data;
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -152,7 +157,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           queryParams.append("sortOrder", params?.sortOrder || sortOrder);
         }
         const response = await axios.get(
-          `/api/companies?${queryParams.toString()}`
+          `/api/contacts?${queryParams.toString()}`
         );
         console.log("API Response:", response.data);
 
@@ -162,7 +167,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         });
         setfetchLoading(false);
       } catch (error) {
-        console.error("Failed to fetch Companies data:", error);
+        console.error("Failed to fetch Contacts data:", error);
         setDashboardState((prev) => ({
           ...prev,
         }));
@@ -226,85 +231,140 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     setCurrentPage(1);
   };
 
-  // Clear search functionality is handled by clearAllFilters
-
   const clearAllFilters = () => {
     setGroupBy("none");
     setLocationType("country");
     setSearchTerm("");
     setSearchInput("");
     setSortBy("name");
-    setSortOrder("asc");
+    setSortOrder("desc");
     setCurrentPage(1);
-    setSelectedCompanies(new Map());
+    setSelectedContacts(new Map());
   };
 
 
-
-
-  // Company selection handlers
-  const handleCompanySelect = (companyId: string, companyData: CompanyValidationData) => {
-    setSelectedCompanies((prev) => {
+  // Contact selection handlers
+  const handleContactSelect = (contactId: string, contactData: ContactValidationData) => {
+    setSelectedContacts((prev) => {
       const newMap = new Map(prev);
-      if (newMap.has(companyId)) {
-        newMap.delete(companyId);
+      if (newMap.has(contactId)) {
+        newMap.delete(contactId);
       } else {
-        newMap.set(companyId, companyData);
+        newMap.set(contactId, contactData);
       }
       return newMap;
     });
   };
 
-  const handleSelectAll = (companiesData: Array<{ id: string, data: CompanyValidationData }>) => {
-    setSelectedCompanies((prev) => {
+  const handleSelectAll = (contactsData: Array<{ id: string, data: ContactValidationData }>) => {
+    setSelectedContacts((prev) => {
       const newMap = new Map(prev);
-      const companyIds = companiesData.map(company => company.id);
-      const allSelected = companyIds.every((id) => newMap.has(id));
+      const contactIds = contactsData.map(contact => contact.id);
+      const allSelected = contactIds.every((id) => newMap.has(id));
 
       if (allSelected) {
         // Deselect all
-        companyIds.forEach((id) => newMap.delete(id));
+        contactIds.forEach((id) => newMap.delete(id));
       } else {
         // Select all
-        companiesData.forEach(({ id, data }) => newMap.set(id, data));
+        contactsData.forEach(({ id, data }) => newMap.set(id, data));
       }
       return newMap;
     });
   };
 
 
-  const handleDeleteCompanies = async () => {
-    if (selectedCompanies.size === 0) {
-      toast.error("No companies selected for deletion");
+
+  const handleExportToCSV = async () => {
+    if (selectedContacts.size === 0) {
+      toast.error("No contacts selected for export");
       return;
     }
 
-    const selectedCompaniesArray = Array.from(selectedCompanies.entries());
-    const selectedCompanyIds = selectedCompaniesArray.map(([id]) => id);
+    const selectedContactIds = Array.from(selectedContacts.keys());
 
-    // Check for in-progress companies
-    const inProgressCompanies = selectedCompaniesArray.filter(
-      ([, data]) => data.company_analysis_requested && !data.company_analysis_completed
+    try {
+      setExportLoading(true);
+
+      const response = await axios.post('/api/csv-export', {
+        type: 'contacts',
+        ids: selectedContactIds
+      }, {
+        responseType: 'blob'
+      });
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers['content-disposition'];
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : `contacts_export_${new Date().toISOString().split('T')[0]}.csv`;
+
+      // Create blob and download
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success(`Exported ${selectedContactIds.length} contacts successfully`);
+
+    } catch (error) {
+      console.error('Export failed:', error);
+
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+
+        if (status === 429) {
+          toast.error("Rate limit exceeded. Please wait before exporting more data.");
+        } else if (status === 401) {
+          toast.error("Unauthorized. Please log in again.");
+        } else if (status >= 500) {
+          toast.error("Server error. Please try again later.");
+        } else {
+          toast.error("Export failed. Please try again.");
+        }
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleDeleteContacts = async () => {
+    if (selectedContacts.size === 0) {
+      toast.error("No contacts selected for deletion");
+      return;
+    }
+
+    const selectedContactsArray = Array.from(selectedContacts.entries());
+    const selectedContactIds = selectedContactsArray.map(([id]) => id);
+
+    // Check for in-progress contacts
+    const inProgressContacts = selectedContactsArray.filter(
+      ([, data]) => data.primaryAnalysisRequested && !data.primaryAnalysisCompleted
     );
-    const deletableCompanies = selectedCompaniesArray.filter(
-      ([, data]) => !data.company_analysis_requested || data.company_analysis_completed
+    const deletableContacts = selectedContactsArray.filter(
+      ([, data]) => !data.primaryAnalysisRequested || data.primaryAnalysisCompleted
     );
 
     // Build confirmation message
     let confirmMessage = '';
-    if (inProgressCompanies.length > 0 && deletableCompanies.length > 0) {
-      confirmMessage = `You have selected ${selectedCompanyIds.length} company(s).\n\n` +
-        `${deletableCompanies.length} company(s) will be deleted.\n` +
-        `${inProgressCompanies.length} company(s) are in-progress and cannot be deleted.\n\n` +
-        `⚠️ WARNING: Deleting companies will also delete all associated contacts.\n\n` +
-        `Do you want to proceed with deleting ${deletableCompanies.length} company(s)? This action cannot be undone.`;
-    } else if (inProgressCompanies.length > 0 && deletableCompanies.length === 0) {
-      toast.error(`All selected companies are in-progress and cannot be deleted.`);
+    if (inProgressContacts.length > 0 && deletableContacts.length > 0) {
+      confirmMessage = `You have selected ${selectedContactIds.length} contact(s).\n\n` +
+        `${deletableContacts.length} contact(s) will be deleted.\n` +
+        `${inProgressContacts.length} contact(s) are in-progress and cannot be deleted.\n\n` +
+        `Do you want to proceed with deleting ${deletableContacts.length} contact(s)? This action cannot be undone.`;
+    } else if (inProgressContacts.length > 0 && deletableContacts.length === 0) {
+      toast.error(`All selected contacts are in-progress and cannot be deleted.`);
       return;
     } else {
-      confirmMessage = `Are you sure you want to delete ${deletableCompanies.length} company(s)?\n\n` +
-        `⚠️ WARNING: This will also delete all associated contacts.\n\n` +
-        `This action cannot be undone.`;
+      confirmMessage = `Are you sure you want to delete ${deletableContacts.length} contact(s)? This action cannot be undone.`;
     }
 
     // Confirm deletion
@@ -315,8 +375,8 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     try {
       setDeleteLoading(true);
 
-      const response = await axios.post('/api/companies/delete', {
-        company_ids: selectedCompanyIds
+      const response = await axios.post('/api/contacts/delete', {
+        contact_ids: selectedContactIds
       });
 
       if (response.data.success) {
@@ -324,25 +384,25 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
         if (deleted_count > 0 && skipped_count > 0) {
           toast.success(
-            `Deleted ${deleted_count} company(s). ${skipped_count} company(s) are in-progress and were skipped.`
+            `Deleted ${deleted_count} contact(s). ${skipped_count} contact(s) are in-progress and were skipped.`
           );
         } else if (deleted_count > 0) {
-          toast.success(`Successfully deleted ${deleted_count} company(s)`);
+          toast.success(`Successfully deleted ${deleted_count} contact(s)`);
         } else if (skipped_count > 0) {
-          toast.error(`${skipped_count} company(s) are in-progress and cannot be deleted.`);
+          toast.error(`${skipped_count} contact(s) are in-progress and cannot be deleted.`);
         }
 
-        setSelectedCompanies(new Map());
+        setSelectedContacts(new Map());
         fetchDashboardData();
       } else {
-        toast.error(response.data.message || "Failed to delete companies");
+        toast.error(response.data.message || "Failed to delete contacts");
       }
     } catch (error) {
       console.error('Delete failed:', error);
 
       if (axios.isAxiosError(error) && error.response?.data) {
         const errorData = error.response.data;
-        toast.error(errorData.message || "Failed to delete companies");
+        toast.error(errorData.message || "Failed to delete contacts");
       } else {
         toast.error("Network error. Please try again.");
       }
@@ -351,8 +411,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     }
   };
 
-
-
   // Check if any filters are applied
   const hasFiltersApplied = () => {
     return (
@@ -360,7 +418,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       locationType !== "country" ||
       searchTerm !== "" ||
       sortBy !== "name" ||
-      sortOrder !== "asc"
+      sortOrder !== "desc"
     );
   };
   // Show error state if there's an error
@@ -379,20 +437,23 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       {/* Enhanced Actions Bar */}
       <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
         <div className="flex flex-wrap items-center gap-2 transition-all duration-300">
-          {/* Browse Mode Controls - Hidden when companies are selected */}
-          {selectedCompanies.size === 0 && (
+          {/* Browse Mode Controls - Hidden when contacts are selected */}
+          {selectedContacts.size === 0 && (
             <>
               {/* Group Controls */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild data-testid="group-dropdown">
                   <Button variant="outline" size="sm" className="gap-2 text-sm">
-                    <Building2 className="h-4 w-4" />
+                    {groupBy === "tags" ? (
+                      <Tag className="h-4 w-4" />
+                    ) : groupBy === "location" ? (
+                      <MapPin className="h-4 w-4" />
+                    ) : (
+                      <Building2 className="h-4 w-4" />
+                    )}
                     <span className="hidden sm:inline">Group:</span>
                     <span>
-                      {groupBy === "none"
-                        ? "None"
-                        : groupBy.charAt(0).toUpperCase() +
-                        groupBy.slice(1).replace("_", " ")}
+                      {groupBy === "none" ? "None" : groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
                     </span>
                     <ChevronDown className="h-3 w-3" />
                   </Button>
@@ -402,11 +463,9 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                     <Building2 className="h-4 w-4 mr-2" />
                     None
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => handleGroupByChange("industry")}
-                  >
-                    <Factory className="h-4 w-4 mr-2" />
-                    Industry
+                  <DropdownMenuItem onSelect={() => handleGroupByChange("company")}>
+                    <Building2 className="h-4 w-4 mr-2" />
+                    Company
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => handleGroupByChange("location")}
@@ -414,11 +473,9 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                     <MapPin className="h-4 w-4 mr-2" />
                     Location
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => handleGroupByChange("employee_size")}
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Employee Size
+                  <DropdownMenuItem onSelect={() => handleGroupByChange("tags")}>
+                    <Tag className="h-4 w-4 mr-2" />
+                    Tags
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -444,11 +501,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                       Country
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onSelect={() => handleLocationTypeChange("state")}
-                    >
-                      State
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
                       onSelect={() => handleLocationTypeChange("city")}
                     >
                       City
@@ -457,20 +509,24 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </DropdownMenu>
               )}
 
-              {/* Sort Controls - Fixed to Name only with sort order toggle */}
+              {/* Sort Controls - Temperature Priority */}
               <Button
                 variant="outline"
                 size="sm"
                 className="gap-2 text-sm"
                 onClick={handleSortOrderToggle}
               >
-                {sortOrder === "asc" ? (
-                  <SortAsc className="h-4 w-4" />
-                ) : (
+                {sortOrder === "desc" ? (
                   <SortDesc className="h-4 w-4" />
+                ) : (
+                  <SortAsc className="h-4 w-4" />
                 )}
-                <span className="hidden sm:inline">Sort:</span>
-                <span>Name</span>
+                <span className="hidden sm:inline">
+                  {sortOrder === "desc" ? "Hot First" : "Cold First"}
+                </span>
+                <span className="sm:hidden">
+                  {sortOrder === "desc" ? "🔥" : "🔵"}
+                </span>
               </Button>
 
               {/* Search Input with Button */}
@@ -480,11 +536,10 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black"
                 />
                 <Input
-                  placeholder="Search companies..."
+                  placeholder="Search contacts..."
                   value={searchInput}
                   onChange={handleSearchInputChange}
                   className="pl-10 w-64"
-                  data-testid="search-input"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleSearchSubmit();
@@ -509,8 +564,8 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Browse Mode Controls - Hidden when companies are selected */}
-          {selectedCompanies.size === 0 && (
+          {/* Browse Mode Controls - Hidden when contacts are selected */}
+          {selectedContacts.size === 0 && (
             <>
               {/* Page Size Control */}
               <DropdownMenu>
@@ -535,26 +590,29 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
               <DropdownMenu>
-                <DropdownMenuTrigger asChild data-testid="add-company-btn">
+                <DropdownMenuTrigger asChild data-testid="insert-dropdown">
                   <Button size="sm" className="gap-2 text-sm h-9">
                     <ChevronDown className="h-3 w-3" />
                     <span className="hidden sm:inline">Insert</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setAddCompanyDrawerOpen(true)} >
-                    <Plus className="h-4 w-4 mr-2" />
-                    <span>Add Company</span>
+                  <DropdownMenuItem onSelect={() => setAddContactDrawerOpen(true)}>
+                    <Rows2 className="h-4 w-4" />
+                    <span>Add Contact</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setImportContactsDrawerOpen(true)}>
+                    <FileUp className="h-4 w-4 mr-2" />
+                    <span>Import data from CSV</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
           )}
 
-          {/* Action Mode Controls - Shown only when companies are selected */}
-          {selectedCompanies.size > 0 && (
+          {/* Action Mode Controls - Shown only when contacts are selected */}
+          {selectedContacts.size > 0 && (
             <>
               {/* Manage Tags Button */}
               <Button
@@ -568,17 +626,36 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 <span className="sm:hidden">Tags</span>
               </Button>
 
+              {/* Export to CSV Button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 text-sm h-9"
+                disabled={exportLoading}
+                onClick={handleExportToCSV}
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {exportLoading ? "Exporting..." : "Export to CSV"}
+                </span>
+                <span className="sm:hidden">
+                  {exportLoading ? "Exporting..." : "Export"}
+                </span>
+              </Button>
+
+
+
               {/* Delete Button */}
               <Button
                 size="sm"
                 variant="destructive"
                 className="gap-2 text-sm h-9"
                 disabled={deleteLoading}
-                onClick={handleDeleteCompanies}
+                onClick={handleDeleteContacts}
               >
                 <Trash2 className="h-4 w-4" />
                 <span className="hidden sm:inline">
-                  Delete ({selectedCompanies.size})
+                  Delete ({selectedContacts.size})
                 </span>
                 <span className="sm:hidden">
                   Delete
@@ -590,7 +667,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 size="sm"
                 variant="ghost"
                 className="gap-2 text-sm h-9"
-                onClick={() => setSelectedCompanies(new Map())}
+                onClick={() => setSelectedContacts(new Map())}
               >
                 <X className="h-4 w-4" />
                 <span className="hidden sm:inline">Clear Selection</span>
@@ -599,10 +676,25 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             </>
           )}
 
-          {/* Add Company Drawer */}
-          <AddCompanyDrawer
-            open={addCompanyDrawerOpen}
-            onOpenChange={setAddCompanyDrawerOpen}
+          {/* Add Contact Drawer */}
+          <AddContactDrawer
+            open={addContactDrawerOpen}
+            onOpenChange={setAddContactDrawerOpen}
+            onSubmit={() => fetchDashboardData()}
+          />
+
+          {/* Import Contacts Drawer */}
+          <ImportContactsDrawer
+            open={importContactsDrawerOpen}
+            onOpenChange={setImportContactsDrawerOpen}
+            onSubmit={() => fetchDashboardData()}
+          />
+
+          {/* Outreach Drawer */}
+          <OutreachDrawer
+            open={outreachDrawerOpen}
+            onOpenChange={setOutreachDrawerOpen}
+            selectedContacts={selectedContacts}
             onSubmit={() => fetchDashboardData()}
           />
 
@@ -610,8 +702,8 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           <TagsDrawer
             open={tagsDrawerOpen}
             onOpenChange={setTagsDrawerOpen}
-            selectedItems={Array.from(selectedCompanies.keys())}
-            taggableType="company"
+            selectedItems={Array.from(selectedContacts.keys())}
+            taggableType="contact"
             onTagsUpdated={() => fetchDashboardData()}
           />
         </div>
@@ -621,15 +713,15 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       {authLoading || fetchLoading ? (
         <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
           <Loading />
-          <p className="text-sm text-muted-foreground mt-4">Loading your companies...</p>
+          <p className="text-sm text-muted-foreground mt-4">Loading your contacts...</p>
         </div>
       ) : (
         <div className="min-h-[400px] bg-white shadow-sm p-6">
-          <CompaniesSection
+          <ContactsSection
             groupBy={groupBy}
             records={displayData as DashboardResponse}
-            selectedCompanies={selectedCompanies}
-            onCompanySelect={handleCompanySelect}
+            selectedContacts={selectedContacts}
+            onContactSelect={handleContactSelect}
             onSelectAll={handleSelectAll}
           />
         </div>
@@ -723,16 +815,16 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   );
 }
 
-export default function CompaniesPage() {
+export default function AudiencePage() {
   return (
     <Suspense fallback={
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
         <Loading />
-        <p className="text-sm text-muted-foreground mt-4">Loading your companies...</p>
+        <p className="text-sm text-muted-foreground mt-4">Loading your contacts...</p>
       </div>
     }>
       <TourProvider>
-        {({ isJoyrideMode }) => <CompaniesPageContent isJoyrideMode={isJoyrideMode} />}
+        {({ isJoyrideMode }) => <AudiencePageContent isJoyrideMode={isJoyrideMode} />}
       </TourProvider>
     </Suspense>
   );

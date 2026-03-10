@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LinkedInContact } from "@/app/api/messages/route";
+import { LinkedInContact } from "@/types/messages";
 import { Clock, Edit3, Save, X, Link2, MessageSquareReply, Eye, ThumbsUp, MessageCircle, RefreshCw, Send, SmilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, isValid } from "date-fns";

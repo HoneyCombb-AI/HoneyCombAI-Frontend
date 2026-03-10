@@ -7,8 +7,7 @@ import { Loading } from "@/components/loading";
 import { MessageList } from "@/components/messages/MessageList";
 import { MessageViewer } from "@/components/messages/MessageViewer";
 import { MessageFilters } from "@/components/messages/MessageFilters";
-import { type LinkedInContactsResponse, type LinkedInContact } from "@/app/api/messages/route";
-import { LinkedInMessage } from "@/app/api/messages/[contactId]/route";
+import { type LinkedInContactsResponse, type LinkedInContact, type LinkedInMessage } from "@/types/messages";
 
 export default function LinkedInPage() {
   const { loading: authLoading } = useAuth();

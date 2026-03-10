@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
+import type { DrawerCompany } from '@/types/companies';
 
 /**
  * GET /api/companies/[id] - Fetch detailed company data for drawer
@@ -11,44 +12,6 @@ import { rateLimiters } from '@/app/api/utils/rate-limiter';
  * - All company metadata including description, technology stack
  * - Social links, news data, and company insights
  */
-
-export interface DrawerCompany {
-  id: string;
-  name: string;
-  company_url: string | null;
-  logo_url: string | null;
-  country: string | null;
-  industry: string | null;
-  linkedin_url: string | null;
-  city: string | null;
-  state: string | null;
-  keywords: string[] | null;
-  short_description: string | null;
-  technology_names: string[] | null;
-  estimated_num_employees: number | null;
-  founded_year: number | null;
-  Company_Nudges: {
-    signals: Array<{
-      intent: string;
-      description: string;
-      source: string;
-      tags: string[];
-    }>;
-  } | null;
-  news_data: Array<{
-    date: string;
-    link: string;
-    title: string;
-  }> | null;
-  created_at: string;
-  contact_count: number;
-  nudges: Array<{
-    intent: string;
-    description: string;
-    source: string;
-    tags: string[];
-  }>;
-}
 
 export async function GET(
   _req: NextRequest,
@@ -65,7 +28,7 @@ export async function GET(
     }
 
     const supabase = await createClient();
-    
+
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {

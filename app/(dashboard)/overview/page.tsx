@@ -23,7 +23,7 @@ import {
     // MailPlus,
     MessageSquare,
 } from "lucide-react";
-import { DashboardData } from "@/app/api/overview/route";
+import { DashboardData } from "@/types/overview";
 import { Loading } from "@/components/loading";
 
 export default function OverviewPage() {

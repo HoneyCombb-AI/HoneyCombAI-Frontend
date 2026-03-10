@@ -1,35 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-export type EmailStatusFilter = "all" | "valid" | "invalid" | "risky" | "unknown";
-export type EmailTemperatureFilter = "all" | "hot" | "warm" | "cold";
-
-export type ContactEmail = {
-    id: string;
-    email: string | null;
-    first_name: string | null;
-    last_name: string | null;
-    full_name: string;
-    company_name: string;
-    tags: { name: string; color: string }[];
-    // Pending draft fields
-    draft_id: string | null;
-    draft_subject: string | null;
-    draft_body: string | null;
-    draft_status: string | null;
-    draft_position: number | null;
-    // Email account ownership
-    email_account_name: string | null;
-    email_account_id: string | null;
-};
-
-export interface EmailsResponse {
-    emails: ContactEmail[];
-    total: number;
-    page: number;
-    limit: number;
-    hasMore: boolean;
-}
+import type { ContactEmail, EmailsResponse } from '@/types/emails';
 
 export async function GET(req: NextRequest) {
     try {

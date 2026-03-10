@@ -3,7 +3,7 @@ import React, { useState, useMemo, useCallback, memo } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { GroupByType } from '@/app/companies/page';
+import { GroupByType } from '@/app/(dashboard)/companies/page';
 import { CompaniesDrawer } from './CompaniesDrawer';
 import { NotesDrawer } from '../NotesDrawer';
 import { RingState } from '../Ring-state';
@@ -15,7 +15,7 @@ import type {
   LocationGroupResponse,
   EmployeeSizeGroupResponse,
   SearchResponse
-} from '@/app/api/companies/route';
+} from '@/types/companies';
 
 type DashboardResponse = CompanyListResponse | IndustryGroupResponse | LocationGroupResponse | EmployeeSizeGroupResponse | SearchResponse;
 

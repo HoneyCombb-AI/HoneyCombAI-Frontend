@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-export interface UpdateTaskRequest {
-    task_id: string;
-    draft_message?: string;
-    connection_note?: string;
-}
+import type { UpdateTaskRequest } from '@/types/messages';
 
 export async function PATCH(
     req: NextRequest,

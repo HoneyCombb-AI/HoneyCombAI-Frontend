@@ -1,6 +1,6 @@
 "use client";
 
-import { LinkedInContact } from "@/app/api/messages/route";
+import { LinkedInContact } from "@/types/messages";
 import { cn } from "@/lib/utils";
 import { MessageSquare, Loader2, ChevronDown, Clock, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";

@@ -43,7 +43,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import Link from "next/dist/client/link";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { NotificationPopoverContent } from "@/components/notification-popover";
 import { toast } from "sonner";
@@ -226,7 +226,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="/support?layout=dashboard" className="flex items-center w-full">
+                <Link href="/support" className="flex items-center w-full">
                   <MessageSquare className="h-4 w-4" />
                   <span>Support</span>
                 </Link>

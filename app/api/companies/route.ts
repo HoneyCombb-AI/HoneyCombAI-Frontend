@@ -1,81 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
-
-// Tag interface
-export interface CompanyTag {
-  id: string;
-  name: string;
-  color: string;
-}
-
-// CLEAN: Only data that appears in the table
-export interface DashboardCompany {
-  id: string;
-  name: string;
-  logo_url: string | null;
-  industry: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  contact_count: number;
-  company_analysis_completed : boolean;
-  company_analysis_requested : boolean;
-  istracked : boolean;
-  tags: CompanyTag[];
-}
-
-// Response interfaces
-export interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
-
-export interface CompanyListResponse {
-  companies: DashboardCompany[];
-  pagination: PaginationInfo;
-}
-
-export interface IndustryGroupResponse {
-  industries: Record<string, {
-    industry: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-    avgEmployees: number;
-  }>;
-  pagination: PaginationInfo;
-}
-
-export interface LocationGroupResponse {
-  locations: Record<string, {
-    location: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-  }>;
-  pagination: PaginationInfo;
-}
-
-export interface EmployeeSizeGroupResponse {
-  employee_sizes: Record<string, {
-    size_range: string;
-    companies: DashboardCompany[];
-    companyCount: number;
-    totalContacts: number;
-  }>;
-  pagination: PaginationInfo;
-}
-
-export interface SearchResponse {
-  companies: DashboardCompany[];
-  pagination: PaginationInfo;
-  searchTerm: string;
-}
+import type {
+  CompanyTag,
+  DashboardCompany,
+  PaginationInfo,
+  CompanyListResponse,
+  IndustryGroupResponse,
+  LocationGroupResponse,
+  EmployeeSizeGroupResponse,
+  SearchResponse
+} from '@/types/companies';
 
 // Helper function to get pagination info
 function getPaginationInfo(page: number, limit: number, total: number): PaginationInfo {
@@ -139,7 +74,7 @@ function getQueryParams(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const { page, limit, sortBy, sortOrder, searchTerm, groupBy, locationType } = getQueryParams(req);
-    
+
     if (page < 1 || limit < 1 || limit > 100) {
       return NextResponse.json(
         { error: 'Invalid pagination parameters. Page must be >= 1, limit must be 1-100.' },
@@ -148,7 +83,7 @@ export async function GET(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    
+
     // If search is provided, handle search functionality
     if (searchTerm.trim()) {
       return handleSearch(supabase, searchTerm, page, limit, sortBy, sortOrder);

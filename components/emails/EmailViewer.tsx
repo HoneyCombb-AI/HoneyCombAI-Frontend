@@ -1,12 +1,11 @@
 "use client";
 
-import { ContactEmail } from "@/app/api/emails/route";
+import { ContactEmail, ContactMessage } from "@/types/emails";
 import { Mail, Send, Inbox, Reply } from "lucide-react";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { ContactMessage } from "@/app/api/emails/[contactId]/messages/route";
 import { PendingDraftBanner } from "./PendingDraftBanner";
 import DOMPurify from "dompurify";
 

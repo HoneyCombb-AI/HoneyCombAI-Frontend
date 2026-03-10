@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
+import type {
+  PaginationInfo,
+  CompanyGroupResponse,
+  LocationGroupResponse,
+  SearchResponse,
+  TagGroupResponse
+} from '@/types/contacts';
 
 /**
  * PERFORMANCE OPTIMIZATIONS APPLIED:
@@ -17,90 +24,6 @@ import { SupabaseClient } from '@supabase/supabase-js';
  * - Reduced database load
  * - Drawer data loaded on-demand only
  */
-
-// Display interfaces
-export interface MinimalCompany {
-  id: string;
-  name: string;
-  logo_url: string | null;
-  industry: string | null;
-}
-
-export interface ContactSignal {
-  id: string;
-  signal_type: string;
-  confidence_score: number;
-  is_custom: boolean;
-}
-
-export interface ContactTag {
-  id: string;
-  name: string;
-  color: string;
-}
-
-export interface DashboardContact {
-  id: string;
-  company_id: string;
-  full_name: string;
-  title: string | null;
-  city: string | null;
-  country: string | null;
-  profile_picture: string | null;
-  temperature: 'hot' | 'warm' | 'cold' | null;
-  contact_sort_score: number | null;
-  primaryAnalysisCompleted: boolean;
-  primaryAnalysisRequested: boolean;
-  hasNotes: boolean;
-  company: MinimalCompany | null;
-  signals: ContactSignal[];
-  tags: ContactTag[];
-}
-
-// Response interfaces
-export interface PaginationInfo {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
-
-export interface CompanyGroupResponse {
-  companies: Array<MinimalCompany & {
-    contacts: DashboardContact[];
-    contactCount: number;
-  }>;
-  pagination: PaginationInfo;
-}
-
-
-export interface LocationGroupResponse {
-  locations: Record<string, {
-    location: string;
-    contacts: DashboardContact[];
-    contactCount: number;
-  }>;
-  pagination: PaginationInfo;
-}
-
-export interface SearchResponse {
-  contacts: DashboardContact[];
-  pagination: PaginationInfo;
-  searchTerm: string;
-}
-
-export interface TagGroupResponse {
-  tags: Record<string, {
-    tagName: string;
-    color: string | null;
-    contacts: DashboardContact[];
-    contactCount: number;
-  }>;
-  pagination: PaginationInfo;
-}
-
 
 // Helper function to get pagination info
 function getPaginationInfo(page: number, limit: number, total: number): PaginationInfo {

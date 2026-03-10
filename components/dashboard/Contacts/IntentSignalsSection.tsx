@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { ExternalLink, Zap, TrendingUp, Users, DollarSign, Bot, Globe, MessageSquare, ThumbsUp, Share2, FileText, LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import * as chrono from 'chrono-node'
-import { DrawerContactSignal } from "@/app/api/contacts/[id]/route"
+import { DrawerContactSignal } from "@/types/contacts"
 import { useFontSize } from "@/lib/font-size-context"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 

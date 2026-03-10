@@ -2,15 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
-
-export interface CompanyListItem {
-  id: string;
-  name: string;
-}
-
-interface CompanyListResponse {
-  companies: CompanyListItem[];
-}
+import type { CompanyListItem } from '@/types/companies';
 
 interface OrganizationMember {
   organization_id: string;
@@ -19,7 +11,7 @@ interface OrganizationMember {
 export async function GET() {
   try {
     const supabase = await createClient();
-    
+
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -47,7 +39,7 @@ export async function GET() {
         }
       );
     }
-    
+
     // Fetch companies for the current user with proper security
     const { data: companies, error } = await supabase
       .from('companies')
@@ -66,7 +58,7 @@ export async function GET() {
       );
     }
 
-    const response: CompanyListResponse = {
+    const response: { companies: CompanyListItem[] } = {
       companies: companies || []
     };
 

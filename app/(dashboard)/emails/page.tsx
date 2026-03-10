@@ -9,8 +9,7 @@ import { EmailList } from "@/components/emails/EmailList";
 import { EmailViewer } from "@/components/emails/EmailViewer";
 import { EmailFilters } from "@/components/emails/EmailFilters";
 import { EmailComposer } from "@/components/emails/EmailComposer";
-import { type EmailsResponse, type ContactEmail } from "@/app/api/emails/route";
-import { ContactMessage } from "@/app/api/emails/[contactId]/messages/route";
+import { type EmailsResponse, type ContactEmail, type ContactMessage } from "@/types/emails";
 
 export default function EmailsPage() {
     const { loading: authLoading } = useAuth();

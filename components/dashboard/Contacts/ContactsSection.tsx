@@ -4,14 +4,14 @@ import React, { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GroupByType } from '@/app/contacts/page';
+import { GroupByType } from '@/app/(dashboard)/contacts/page';
 import type {
   DashboardContact,
   CompanyGroupResponse,
   LocationGroupResponse,
   SearchResponse,
   TagGroupResponse
-} from '@/app/api/contacts/route';
+} from '@/types/contacts';
 import { ContactsDrawer } from './ContactsDrawer';
 import { NotesDrawer } from '../NotesDrawer';
 import { RingState } from '../Ring-state';
@@ -149,7 +149,7 @@ const ContactRow = memo<{
         </div>
       </td>
 
-      {/* Heat */}     
+      {/* Heat */}
       {/* <td
         className="px-2 py-3 w-[8%] cursor-pointer"
         onClick={() => onContactClick(contact)}
