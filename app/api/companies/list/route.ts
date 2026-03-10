@@ -46,7 +46,7 @@ export async function GET() {
       .select('id, name')
       .or(
         `user_id.eq.${user.id},` +
-        `organization_id.in.(${await getOrganizationIds(supabase)})`
+        `organization_id.in.(${await getOrganizationIds(supabase, user.id)})`
       )
       .order('name', { ascending: true });
 
@@ -75,15 +75,12 @@ export async function GET() {
 }
 
 // Helper function to get organization IDs for the current user
-async function getOrganizationIds(supabase: SupabaseClient): Promise<string> {
+async function getOrganizationIds(supabase: SupabaseClient, userId: string): Promise<string> {
   try {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return '';
-
     const { data: orgMembers } = await supabase
       .from('organization_members')
       .select('organization_id')
-      .eq('user_id', user.user.id);
+      .eq('user_id', userId);
 
     if (!orgMembers || orgMembers.length === 0) return '';
 

@@ -159,7 +159,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         const response = await axios.get(
           `/api/contacts?${queryParams.toString()}`
         );
-        console.log("API Response:", response.data);
 
         setDashboardState({
           data: response.data,

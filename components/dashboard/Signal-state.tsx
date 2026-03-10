@@ -45,11 +45,8 @@ export const SignalState: React.FC<SignalStateProps> = ({
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
 
-  const getConfidenceClass = useCallback((score: number) => {
-    return score >= 80 ? 'bg-green-500' :
-      score >= 60 ? 'bg-yellow-500' :
-        score >= 40 ? 'bg-orange-500' : 'bg-red-400';
-  }, []);
+
+
 
   const SourceDisplay = useCallback(({ signal }: { signal: ProcessedSignal }) => {
     if (!signal.source) return null;
@@ -126,7 +123,7 @@ export const SignalState: React.FC<SignalStateProps> = ({
         {signal.key}
       </Badge>
     );
-  }, [contactId, showTooltips, detailed, getConfidenceClass, SourceDisplay, getFontSizeClass]);
+  }, [contactId, showTooltips, detailed, SourceDisplay, getFontSizeClass]);
 
   const renderSignalGroup = useCallback((
     signals: ProcessedSignal[],

@@ -31,7 +31,7 @@ function wrapInDocument(html: string): string {
 export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
     const [contentHeight, setContentHeight] = useState(INITIAL_HEIGHT);
     const iframeRef = useRef<HTMLIFrameElement>(null);
-    const observersRef = useRef<{ ro?: ResizeObserver; mo?: MutationObserver }>({});
+    const observersRef = useRef<{ ro?: ResizeObserver; mo?: MutationObserver; timeoutIds?: number[] }>({});
 
     /** Measure the true content height from the iframe document. */
     const measureHeight = useCallback(() => {
@@ -54,6 +54,11 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
     const handleLoad = useCallback(() => {
         observersRef.current.ro?.disconnect();
         observersRef.current.mo?.disconnect();
+        // Clear any pending timeouts from previous loads
+        if (observersRef.current.timeoutIds) {
+            observersRef.current.timeoutIds.forEach(clearTimeout);
+        }
+        observersRef.current.timeoutIds = [];
 
         requestAnimationFrame(() => {
             measureHeight();
@@ -81,8 +86,10 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
                 });
 
                 // Extra safety for fonts and external resources
-                setTimeout(measureHeight, 300);
-                setTimeout(measureHeight, 1000);
+                observersRef.current.timeoutIds?.push(
+                    window.setTimeout(measureHeight, 300),
+                    window.setTimeout(measureHeight, 1000)
+                );
             } catch {
                 // cross-origin guard
             }
@@ -99,6 +106,9 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
         return () => {
             observersRef.current.ro?.disconnect();
             observersRef.current.mo?.disconnect();
+            if (observersRef.current.timeoutIds) {
+                observersRef.current.timeoutIds.forEach(clearTimeout);
+            }
         };
     }, []);
 
@@ -119,7 +129,7 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
             <iframe
                 ref={iframeRef}
                 srcDoc={srcDoc}
-                sandbox="allow-popups"
+                sandbox=""
                 tabIndex={-1}
                 title="Email preview"
                 onLoad={handleLoad}

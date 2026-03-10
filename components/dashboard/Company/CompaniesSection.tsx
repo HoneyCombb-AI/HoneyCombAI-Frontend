@@ -254,7 +254,6 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
   }, [groupBy, records]);
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [allCollapsed, setAllCollapsed] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<DashboardCompany | null>(null);
 
@@ -293,8 +292,7 @@ const CompaniesSection: React.FC<CompaniesSectionProps> = ({ groupBy, records, s
 
   const toggleAllCollapse = useCallback(() => {
     setCollapsedGroups(new Set(groups.map(g => g.id)));
-    setAllCollapsed(true);
-  }, [allCollapsed, groups]);
+  }, [groups]);
 
   return (
     <div className="space-y-4">

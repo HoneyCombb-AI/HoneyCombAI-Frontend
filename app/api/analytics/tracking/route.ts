@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 import type { PaginatedTrackingGroup } from '@/types/analytics';
 
-let locationCache = new Map<string, string>(); // In-memory cache
+const locationCache = new Map<string, string>(); // In-memory cache
 
 export async function GET(req: NextRequest) {
     try {

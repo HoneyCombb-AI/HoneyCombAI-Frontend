@@ -178,7 +178,7 @@ export interface DrawerContact {
 
 export type ContactsGroupByType = "none" | "company" | "location" | "city" | "tags";
 export type ContactsLocationType = "country" | "city";
-export type ContactsSortBy = "name";
+export type ContactsSortBy = "name" | "created_at" | "temperature" | "contact_sort_score" | string;
 export type ContactsSortOrder = "asc" | "desc";
 
 export type ContactsDashboardResponse =
