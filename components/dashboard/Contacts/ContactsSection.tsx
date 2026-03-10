@@ -177,7 +177,7 @@ const ContactRow = memo<{
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 hover:scale-110 transition-transform duration-200 flex-shrink-0"
+              className="h-6 w-6 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 hover:scale-110 transition-transform duration-200 shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 onNotesClick(contact.id, contact.full_name);
@@ -360,7 +360,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                   )}
                   <div className="flex items-center gap-3">
                     {group.logoUrl ? (
-                      <div className="w-6 h-6 rounded relative overflow-hidden flex-shrink-0">
+                      <div className="w-6 h-6 rounded relative overflow-hidden shrink-0">
                         <Image
                           src={group.logoUrl}
                           alt="Company logo"

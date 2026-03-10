@@ -197,7 +197,7 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
                                     isCustom ? "bg-amber-50/50" : "bg-gray-50"
                                 )}>
                                     <p className={cn(
-                                        "font-normal text-gray-900 text-left break-words",
+                                        "font-normal text-gray-900 text-left wrap-break-word",
                                         fontSizeClass
                                     )}>
                                         {signal.description}
@@ -225,7 +225,7 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
                                                                     <SourceIcon className="h-3 w-3" />
                                                                 </a>
                                                             </TooltipTrigger>
-                                                            <TooltipContent className="text-xs bg-gray-900 text-white border-0 z-[60]">
+                                                            <TooltipContent className="text-xs bg-gray-900 text-white border-0 z-60">
                                                                 View {toSentenceCase(source.activity_type || 'source')}
                                                             </TooltipContent>
                                                         </Tooltip>

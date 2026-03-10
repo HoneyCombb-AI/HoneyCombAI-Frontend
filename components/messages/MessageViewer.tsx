@@ -99,7 +99,7 @@ export function MessageViewer({
                     {/* Message Body */}
                     <div
                       className={cn(
-                        "text-sm leading-relaxed break-words whitespace-pre-wrap",
+                        "text-sm leading-relaxed wrap-break-word whitespace-pre-wrap",
                         isOutbound ? "text-gray-700" : "text-gray-700"
                       )}
                     >

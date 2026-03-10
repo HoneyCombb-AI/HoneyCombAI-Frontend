@@ -1,7 +1,6 @@
 "use client";
 import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -403,17 +402,6 @@ const IntegrationContent: React.FC = () => {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
-      <header className="hidden md:flex h-16 items-center gap-2 px-6 border-b bg-white">
-        <SidebarTrigger className="-ml-1" />
-        <div className="flex flex-1 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Integrations
-            </h1>
-          </div>
-        </div>
-      </header>
-
       <div className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Gmail Card */}

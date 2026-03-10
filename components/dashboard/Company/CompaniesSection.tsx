@@ -118,7 +118,7 @@ const CompanyRow = memo<{
         onClick={() => onCompanyClick(company)}
       >
         <div className="flex items-start gap-1">
-          <MapPin className="h-3 w-3 text-gray-600 mt-0.5 flex-shrink-0" />
+          <MapPin className="h-3 w-3 text-gray-600 mt-0.5 shrink-0" />
           <div className="flex flex-col min-w-0">
             {company.city ? (
               <>

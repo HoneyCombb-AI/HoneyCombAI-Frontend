@@ -60,7 +60,7 @@ export function EmailList({
                             )}
                         >
                             <div className="flex items-start gap-3 w-full">
-                                <Avatar className="h-10 w-10 flex-shrink-0">
+                                <Avatar className="h-10 w-10 shrink-0">
                                     <AvatarFallback>{initials}</AvatarFallback>
                                 </Avatar>
 
