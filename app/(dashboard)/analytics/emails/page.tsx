@@ -81,7 +81,7 @@ export default function EmailAnalyticsPage() {
             {/* Header/Filter Bar matching EmailFilters style */}
             <div className="p-4 flex flex-col justify-between sm:flex-row items-center gap-4 border-b bg-white shrink-0 z-10 sticky top-0 shadow-sm">
                 {/* Search Bar */}
-                <div className="relative w-full sm:w-[320px] shrink-0">
+                <div className="relative w-full sm:w-xs shrink-0">
                     <Globe
                         onClick={handleSearchSubmit}
                         className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:cursor-pointer hover:text-black transition-colors"
@@ -276,7 +276,7 @@ export default function EmailAnalyticsPage() {
 
                     {/* Pagination Controls - Footer Style */}
                     {pagination && pagination.totalPages > 1 && (
-                        <footer className="border-t bg-white px-6 py-4 mt-auto shrink-0 z-10 sticky bottom-0 border-t border-gray-200">
+                        <footer className="border-t bg-white px-6 py-4 mt-auto shrink-0 z-10 sticky bottom-0 border-gray-200">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div className="text-sm text-gray-600">
                                     Showing{" "}

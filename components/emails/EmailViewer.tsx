@@ -114,7 +114,7 @@ export function EmailViewer({
                                             {isHtml ? (
                                                 <ScaledEmailPreview html={sanitizedBody} />
                                             ) : (
-                                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">
+                                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap wrap-break-word">
                                                     {rawBody}
                                                 </p>
                                             )}

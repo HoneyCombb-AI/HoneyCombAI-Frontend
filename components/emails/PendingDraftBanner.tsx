@@ -106,7 +106,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                         className="group flex flex-1 items-center justify-between gap-3 px-5 py-3 text-left transition-colors hover:bg-violet-50/50 min-w-0"
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-100 border border-violet-200 flex-shrink-0">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-violet-100 border border-violet-200 shrink-0">
                                 <Mail className="h-4 w-4 text-violet-700" />
                             </div>
                             <div className="min-w-0">
@@ -235,7 +235,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                                 {/* Subject preview */}
                                 {contact.draft_subject && (
                                     <div className="flex items-center gap-2">
-                                        <FileText className="h-3.5 w-3.5 text-violet-600 flex-shrink-0" />
+                                        <FileText className="h-3.5 w-3.5 text-violet-600 shrink-0" />
                                         <span className="text-sm font-medium text-violet-900">
                                             {contact.draft_subject}
                                         </span>

@@ -213,7 +213,7 @@ export function NotificationPopoverContent({ isOpen }: NotificationPopoverConten
                 `}
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 mt-1">
+                  <div className="shrink-0 mt-1">
                     {!notification.is_read ? (
                       <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
                     ) : (

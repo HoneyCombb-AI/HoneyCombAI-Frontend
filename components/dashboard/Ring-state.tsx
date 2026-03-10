@@ -24,7 +24,7 @@ export function RingState({ green, golden, requested, profilePicture, fullName }
     const optimizedProfilePicture = profilePicture;
 
     const initialsDiv = (
-        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium rounded-full">
+        <div className="w-full h-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium rounded-full">
             {getInitials(fullName)}
         </div>
     );

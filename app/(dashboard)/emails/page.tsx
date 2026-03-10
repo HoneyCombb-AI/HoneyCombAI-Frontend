@@ -239,7 +239,7 @@ export default function EmailsPage() {
     return (
         <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
             {/* Filter Bar - Fixed at top */}
-            <div className="flex-shrink-0 border-b bg-white shadow-sm">
+            <div className="shrink-0 border-b bg-white shadow-sm">
                 <EmailFilters
                     search={search}
                     onSearchChange={setSearch}

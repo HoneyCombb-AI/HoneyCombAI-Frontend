@@ -91,7 +91,7 @@ export default function Step5({
               <div className="space-y-2">
                 <label className="text-sm font-semibold">Client Specific Guidance</label>
                 <textarea
-                  className="w-full h-64 p-3 mt-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y flex-shrink-0"
+                  className="w-full h-64 p-3 mt-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y shrink-0"
                   value={editableData.client_specific_guidance}
                   onChange={(e) => updateEditableField("client_specific_guidance", e.target.value)}
                   rows={8}
@@ -102,7 +102,7 @@ export default function Step5({
               <div className="space-y-2">
                 <label className="text-sm font-semibold">Industry Context</label>
                 <textarea
-                  className="w-full h-64 p-3 mt-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y flex-shrink-0"
+                  className="w-full h-64 p-3 mt-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y shrink-0"
                   value={editableData.industry_context}
                   onChange={(e) => updateEditableField("industry_context", e.target.value)}
                   rows={8}

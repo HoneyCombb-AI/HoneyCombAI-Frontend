@@ -92,7 +92,7 @@ export function CompaniesDrawer({ open, onOpenChange, trigger, selectedCompany }
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b">
             <DrawerTitle>
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 relative">
+                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 relative">
                   {selectedCompany.logo_url ? (
                     <Image
                       src={selectedCompany.logo_url}
@@ -102,13 +102,13 @@ export function CompaniesDrawer({ open, onOpenChange, trigger, selectedCompany }
                       className="object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
+                    <div className="w-full h-full bg-linear-to-br from-blue-500 to-purple-600 
                     flex items-center justify-center text-white text-sm font-medium">
                       {selectedCompany.name.charAt(0)}
                     </div>
                   )}
                   <div
-                    className={`w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 
+                    className={`w-full h-full bg-linear-to-br from-blue-500 to-purple-600 
                     flex items-center justify-center text-white text-sm font-medium ${selectedCompany.logo_url ? 'hidden' : ''}`}
                   >
                     {selectedCompany.name.charAt(0)}
@@ -331,7 +331,7 @@ export function CompaniesDrawer({ open, onOpenChange, trigger, selectedCompany }
                               variant="ghost"
                               size="sm"
                               onClick={() => window.open(news.link, '_blank')}
-                              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-900 flex-shrink-0"
+                              className="h-6 w-6 p-0 text-gray-400 hover:text-gray-900 shrink-0"
                             >
                               <ExternalLink className="h-3 w-3" />
                             </Button>

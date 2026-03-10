@@ -145,9 +145,9 @@ export function AppSidebar() {
       <SidebarHeader className="border-b p-4">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="h-16 w-16 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
+            <div className="h-16 w-16 bg-linear-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
             </div>
-            <div className="absolute -inset-2 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
+            <div className="absolute -inset-2 bg-linear-to-r from-amber-400 to-yellow-500 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
             <div className="absolute inset-0 flex items-end justify-end p-1 pointer-events-none">
               <svg className="w-8 h-8 mt-1 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z" />
@@ -156,7 +156,7 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-xl bg-gradient-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent tracking-tight hidden sm:block">
+              <span className="font-bold text-xl bg-linear-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent tracking-tight hidden sm:block">
                 HoneyComb
               </span>
               <span className="text-sm font-medium text-[#0f4f48] hidden sm:block">
