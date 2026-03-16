@@ -137,43 +137,46 @@ export function ActivityFeed({
                                         className="border border-gray-200 rounded-lg bg-white"
                                     >
                                         <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-50/50 rounded-t-lg">
-                                            <div className="flex flex-1 items-center justify-between gap-4">
-                                                <div className="flex items-center gap-4 min-w-[200px] max-w-[400px]">
-                                                    <div className="flex flex-col items-start min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-semibold text-gray-900 truncate">{contact.contact_name}</span>
-                                                            {contact.contact_linkedin && (
-                                                                <a href={contact.contact_linkedin} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[#0A66C2] hover:opacity-80 transition-opacity">
-                                                                    <Linkedin className="w-4 h-4" />
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                        <span className="text-sm text-gray-500 flex items-center gap-1.5 mt-0.5">
-                                                            <Mail className="w-3.5 h-3.5" />
-                                                            <span className="truncate">{contact.contact_email}</span>
+                                            <div className="flex flex-1 w-full items-center justify-between gap-3 min-w-0">
+                                                {/* Left Section: Name & Email */}
+                                                <div className="flex flex-col items-start w-[35%] max-w-[250px] shrink-0 min-w-0">
+                                                    <div className="flex items-center gap-2 w-full min-w-0">
+                                                        <span className="font-semibold text-gray-900 truncate min-w-0 block">
+                                                            {contact.contact_name}
+                                                        </span>
+                                                        {contact.contact_linkedin && (
+                                                            <a href={contact.contact_linkedin} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[#0A66C2] hover:opacity-80 transition-opacity shrink-0">
+                                                                <Linkedin className="w-4 h-4" />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500 flex items-center gap-1.5 mt-0.5 w-full min-w-0">
+                                                        <Mail className="w-3.5 h-3.5 shrink-0" />
+                                                        <span className="truncate min-w-0 block">
+                                                            {contact.contact_email}
                                                         </span>
                                                     </div>
                                                 </div>
 
-                                                {/* Middle Section: Subject and Date (Flex grow to take space) */}
-                                                <div className="hidden md:flex flex-col items-start flex-1 min-w-0 pr-4 border-l pl-4 border-gray-100">
-                                                    <span className="text-sm font-medium text-gray-700 truncate w-full" title={contact.subject}>
+                                                {/* Middle Section: Subject and Date (Flex grow) */}
+                                                <div className="flex flex-col justify-center flex-1 min-w-0 px-3 border-l border-gray-100">
+                                                    <span className="text-sm font-medium text-gray-700 truncate w-full block" title={contact.subject}>
                                                         {contact.subject}
                                                     </span>
-                                                    <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                                    <span className="text-xs text-gray-500 mt-1 flex items-center gap-1 truncate w-full block">
                                                         Sent: {contact.sent_at ? format(parseISO(contact.sent_at), "do MMMM yyyy, h:mm a") : 'Unknown'}
                                                     </span>
                                                 </div>
 
                                                 {/* Right Section: Stats */}
-                                                <div className="flex items-center gap-3 shrink-0">
+                                                <div className="flex items-center gap-2 shrink-0">
                                                     <div className="flex bg-white border rounded-md shadow-sm overflow-hidden">
-                                                        <div className="flex items-center gap-1.5 px-3 py-1.5 border-r border-gray-100 bg-gray-50/50">
-                                                            <Eye className="w-4 h-4 text-emerald-600" />
+                                                        <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-gray-100 bg-gray-50/50">
+                                                            <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
                                                             <span className="text-sm font-semibold text-gray-700">{contact.unique_opens}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50/50">
-                                                            <MousePointerClick className="w-4 h-4 text-blue-600" />
+                                                        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50/50">
+                                                            <MousePointerClick className="w-4 h-4 text-blue-600 shrink-0" />
                                                             <span className="text-sm font-semibold text-gray-700">{contact.unique_clicks}</span>
                                                         </div>
                                                     </div>
