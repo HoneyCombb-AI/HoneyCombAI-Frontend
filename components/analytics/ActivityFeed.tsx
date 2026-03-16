@@ -123,10 +123,11 @@ export function ActivityFeed({
                     ) : (
                         <>
                             <Accordion
-                                type="multiple"
-                                value={expandedContact ? [expandedContact] : []}
-                                onValueChange={(vals) => {
-                                    onExpandedChange(vals[0] || null);
+                                type="single"
+                                collapsible
+                                value={expandedContact || ""}
+                                onValueChange={(val) => {
+                                    onExpandedChange(val || null);
                                 }}
                                 className="space-y-2"
                             >
