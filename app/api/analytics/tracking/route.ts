@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 import type { PaginatedTrackingGroup } from '@/types/analytics';
 
-const locationCache = new Map<string, string>(); // In-memory cache
+// locationCache removed
 
 export async function GET(req: NextRequest) {
     try {
@@ -21,13 +21,18 @@ export async function GET(req: NextRequest) {
         const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 20;
         const page = Number.isFinite(rawPage) ? Math.max(rawPage, 1) : 1;
         const searchTerm = searchParams.get('search') || '';
+        const locationFilter = searchParams.get('location') || null;
+        const rawStep = searchParams.get('step');
+        const stepFilter = rawStep ? Number.parseInt(rawStep, 10) : null;
 
         const offset = (page - 1) * limit;
 
         const { data: groupedEvents, error: rpcError } = await supabase.rpc('get_paginated_email_analytics', {
             search_term: searchTerm,
             page_offset: offset,
-            page_limit: limit
+            page_limit: limit,
+            p_location_filter: locationFilter,
+            p_step_filter: stepFilter
         });
 
         if (rpcError) {
@@ -38,87 +43,12 @@ export async function GET(req: NextRequest) {
         const rawGroups = groupedEvents || [];
         const totalCount = rawGroups.length > 0 ? Number(rawGroups[0].total_count) : 0;
 
-        // Extract org-level excluded locations from the RPC response (same value on every row)
-        const excludedLocations: string[] = rawGroups.length > 0
-            ? (rawGroups[0].excluded_locations || [])
-            : [];
 
-        // Collect all unique IPs for batch geo-resolution
-        const allIps = rawGroups.flatMap((group: any) =>
-            (group.raw_events || []).map((e: any) => e.ip_address)
-        ).filter(Boolean);
 
-        const uniqueIps = Array.from(new Set(allIps)) as string[];
-        const locationMap: Record<string, string> = {};
-
-        const missingIps = uniqueIps.filter(ip => !locationCache.has(ip) && ip !== '127.0.0.1' && ip !== '::1');
-        if (uniqueIps.includes('127.0.0.1')) locationMap['127.0.0.1'] = 'Localhost';
-        if (uniqueIps.includes('::1')) locationMap['::1'] = 'Localhost';
-
-        if (missingIps.length > 0) {
-            try {
-                const chunks = [];
-                for (let i = 0; i < missingIps.length; i += 100) {
-                    chunks.push(missingIps.slice(i, i + 100));
-                }
-                for (const chunk of chunks) {
-                    const res = await fetch('http://ip-api.com/batch', {
-                        method: 'POST',
-                        body: JSON.stringify(chunk),
-                        headers: { 'Content-Type': 'application/json' },
-                        signal: AbortSignal.timeout(3000)
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        data.forEach((location: any) => {
-                            if (location.status === 'success') {
-                                const parts = [location.city, location.regionName, location.country].filter(Boolean);
-                                if (parts.length > 0) {
-                                    locationCache.set(location.query, parts.join(', '));
-                                }
-                            }
-                        });
-                    }
-                }
-            } catch (err) {
-                console.warn(`Failed to resolve bulk IP locations from external service`);
-            }
-        }
-
-        uniqueIps.forEach(ip => {
-            if (locationCache.has(ip)) {
-                locationMap[ip] = locationCache.get(ip)!;
-            }
-        });
-
-        // Build formatted groups with geo filtering applied
+        // Build formatted groups with geo filtering applied (now handled by RPC)
         const formattedGroups: PaginatedTrackingGroup[] = rawGroups
             .map((group: any) => {
                 const allEvents: any[] = group.raw_events || [];
-
-                // Attach resolved location to each event
-                const eventsWithLocation = allEvents.map((event: any) => ({
-                    ...event,
-                    location: locationMap[event.ip_address] || null,
-                }));
-
-                // Filter out events whose resolved location matches an excluded location
-                const filteredEvents = eventsWithLocation.filter((event: any) => {
-                    const resolvedLocation = event.location;
-                    if (!resolvedLocation || excludedLocations.length === 0) return true;
-                    return !excludedLocations.some(
-                        (excluded: string) =>
-                            resolvedLocation.toLowerCase() === excluded.toLowerCase()
-                    );
-                });
-
-                // Recalculate latest_activity from filtered events only
-                const latestActivity = filteredEvents.length > 0
-                    ? filteredEvents.reduce((max: string, e: any) =>
-                        new Date(e.created_at) > new Date(max) ? e.created_at : max,
-                        filteredEvents[0].created_at
-                    )
-                    : group.latest_activity;
 
                 return {
                     contact_id: group.contact_id,
@@ -127,20 +57,14 @@ export async function GET(req: NextRequest) {
                     contact_linkedin: group.contact_linkedin,
                     subject: group.subject,
                     sent_at: group.sent_at,
-                    total_activity: filteredEvents.length,
-                    latest_activity: latestActivity,
-                    raw_events: filteredEvents,
+                    position: group.position,
+                    total_activity: group.total_activity,
+                    latest_activity: group.latest_activity,
+                    raw_events: allEvents,
                 };
             })
-            // Remove groups where all events were from excluded locations
-            .filter((group: PaginatedTrackingGroup) => group.raw_events.length > 0)
-            // Re-sort by filtered total_activity since DB sort was pre-filtering
-            .sort((a: PaginatedTrackingGroup, b: PaginatedTrackingGroup) => {
-                if (b.total_activity !== a.total_activity) {
-                    return (b.total_activity as number) - (a.total_activity as number);
-                }
-                return new Date(b.latest_activity).getTime() - new Date(a.latest_activity).getTime();
-            });
+            // Remove groups with no raw events left
+            .filter((group: PaginatedTrackingGroup) => group.raw_events && group.raw_events.length > 0);
 
         return NextResponse.json({
             data: formattedGroups,
