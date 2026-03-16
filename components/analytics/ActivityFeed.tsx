@@ -64,7 +64,7 @@ export function ActivityFeed({
     }
 
     return (
-        <div className="max-w-6xl mx-auto pb-2">
+        <div className="w-full pb-2">
             {/* Compact Step Metric Row - horizontal chips */}
             <div className="flex flex-wrap gap-2">
                 {stepMetrics.map((metric) => (

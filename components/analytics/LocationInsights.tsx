@@ -72,7 +72,7 @@ export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsi
     const gridClass = getGridClass(maxSteps);
 
     return (
-        <div className="space-y-3 max-w-6xl mx-auto pb-20">
+        <div className="space-y-3 w-full pb-20">
             {sortedLocations.map(([location, data]) => (
                 <Card key={location} className="overflow-hidden shadow-sm border border-gray-200 bg-white">
                     <div className="px-4 py-2.5 border-b bg-gray-50/50 flex items-center justify-between">
