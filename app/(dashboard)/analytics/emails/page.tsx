@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { StepMetric, StepContact, GeolocationGroupItem, GeolocationPaginatedResponse } from "@/types/analytics";
 import {
@@ -39,6 +39,9 @@ export default function EmailAnalyticsPage() {
     const [geoPagination, setGeoPagination] = useState<PaginationInfo | null>(null);
     const [groupBy, setGroupBy] = useState<'country' | 'region' | 'city'>('country');
 
+    // Store last fetched parameters to prevent duplicate/unnecessary API calls
+    const lastFetchedGeoParams = useRef({ page: 0, limit: 0, groupBy: '' });
+
     // Calculate max steps for dynamic grid
     const maxSteps = useMemo(() => {
         const steps = new Set<number>();
@@ -52,24 +55,6 @@ export default function EmailAnalyticsPage() {
         geoMetrics.forEach(extractSteps);
         return steps.size;
     }, [geoMetrics]);
-
-    // Fetch Step Metrics
-    const fetchStepMetrics = useCallback(async () => {
-        try {
-            setLoadingMetrics(true);
-            const response = await axios.get<{ data: StepMetric[] }>('/api/analytics/steps');
-            const data = response.data.data || [];
-            const mappedData = data.map(m => ({
-                ...m,
-                step_label: m.step_label === 'Initial Email' ? 'First Email' : m.step_label
-            }));
-            setStepMetrics(mappedData);
-        } catch (err: any) {
-            console.error("Error fetching step metrics:", err);
-        } finally {
-            setLoadingMetrics(false);
-        }
-    }, []);
 
     // Fetch Contacts for Selected Step
     const fetchStepContacts = useCallback(async (step: number, page: number, limit: number) => {
@@ -87,6 +72,31 @@ export default function EmailAnalyticsPage() {
             setLoadingContacts(false);
         }
     }, []);
+
+    // Fetch Step Metrics
+    const fetchStepMetrics = useCallback(async () => {
+        try {
+            setLoadingMetrics(true);
+            const response = await axios.get<{ data: StepMetric[] }>('/api/analytics/steps');
+            const data = response.data.data || [];
+            const mappedData = data.map(m => ({
+                ...m,
+                step_label: m.step_label === 'Initial Email' ? 'First Email' : m.step_label
+            }));
+            setStepMetrics(mappedData);
+
+            if (mappedData.length > 0) {
+                const defaultStep = mappedData.find(m => m.step === 1)?.step || mappedData[0].step;
+                setSelectedStep(defaultStep);
+                setContactPage(1);
+                fetchStepContacts(defaultStep, 1, 30); // 30 is the default contactLimit
+            }
+        } catch (err: any) {
+            console.error("Error fetching step metrics:", err);
+        } finally {
+            setLoadingMetrics(false);
+        }
+    }, [fetchStepContacts]);
 
     // Fetch Location Metrics
     const fetchGeoMetrics = useCallback(async (page: number, limit: number, group: 'country' | 'region' | 'city' = 'country') => {
@@ -110,8 +120,18 @@ export default function EmailAnalyticsPage() {
     }, [fetchStepMetrics]);
 
     useEffect(() => {
-        fetchGeoMetrics(geoPage, geoLimit, groupBy);
-    }, [fetchGeoMetrics, geoPage, geoLimit, groupBy]);
+        if (activeTab === 'geo') {
+            const currentParams = { page: geoPage, limit: geoLimit, groupBy };
+            if (
+                lastFetchedGeoParams.current.page !== currentParams.page ||
+                lastFetchedGeoParams.current.limit !== currentParams.limit ||
+                lastFetchedGeoParams.current.groupBy !== currentParams.groupBy
+            ) {
+                lastFetchedGeoParams.current = currentParams;
+                fetchGeoMetrics(currentParams.page, currentParams.limit, currentParams.groupBy);
+            }
+        }
+    }, [fetchGeoMetrics, activeTab, geoPage, geoLimit, groupBy]);
 
     // Handle Step Selection
     const handleStepClick = (step: number) => {
@@ -206,8 +226,9 @@ export default function EmailAnalyticsPage() {
 
             {/* Main Content Area */}
             {loadingMetrics ? (
-                <div className="flex-1 bg-white shadow-sm p-6 flex items-center justify-center min-h-0">
+                <div className="flex-1 flex-col  bg-white shadow-sm p-6 flex items-center justify-center min-h-0">
                     <Loading />
+                    <p className="text-sm text-muted-foreground mt-4">Loading your Analytics...</p>
                 </div>
             ) : (
                 <div className="flex-1 bg-white shadow-sm p-6 flex flex-col min-h-0">

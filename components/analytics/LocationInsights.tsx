@@ -33,8 +33,8 @@ function StepMetricsGrid({ metrics }: { metrics: StepMetricDetail[], maxSteps: n
                         <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
                             {stepData.step === 1 ? 'First Email' :
                                 stepData.step === 2 ? 'First Follow-up' :
-                                stepData.step === 3 ? 'Second Follow-up' :
-                                `Step ${stepData.step}`}
+                                    stepData.step === 3 ? 'Second Follow-up' :
+                                        `Step ${stepData.step}`}
                         </div>
                     </div>
 
@@ -142,8 +142,9 @@ function RegionRow({ region, maxSteps, valueKey }: { region: RegionGroup, maxSte
 export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsightsProps) {
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-12">
+            <div className="flex-1 flex flex-col items-center justify-center">
                 <Loading />
+                <p className="text-sm text-muted-foreground mt-4">Loading your GeoActivity...</p>
             </div>
         );
     }

@@ -113,8 +113,9 @@ export function ActivityFeed({
                     </div>
 
                     {loadingContacts ? (
-                        <div className="flex items-center justify-center py-12">
+                        <div className="flex-1 flex flex-col items-center justify-center">
                             <Loading />
+                            <p className="text-sm text-muted-foreground mt-4">Loading your Activity...</p>
                         </div>
                     ) : stepContacts.length === 0 ? (
                         <div className="text-center py-12 text-gray-400">
@@ -164,7 +165,7 @@ export function ActivityFeed({
                                                     <span className="text-sm font-medium text-gray-700 truncate w-full block" title={contact.subject}>
                                                         {contact.subject}
                                                     </span>
-                                                    <span className="text-xs text-gray-500 mt-1 flex items-center gap-1 truncate w-full block">
+                                                    <span className="text-xs text-gray-500 mt-1 items-center gap-1 truncate w-full block">
                                                         Sent: {contact.sent_at ? format(parseISO(contact.sent_at), "do MMMM yyyy, h:mm a") : 'Unknown'}
                                                     </span>
                                                 </div>
@@ -201,7 +202,7 @@ export function ActivityFeed({
                                                             return (
                                                                 <AccordionItem key={idx} value={`group-${idx}`} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
                                                                     {/* Group Header */}
-                                                                    <AccordionTrigger className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 bg-gradient-to-r from-gray-50 to-white hover:no-underline">
+                                                                    <AccordionTrigger className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 bg-linear-to-r from-gray-50 to-white hover:no-underline">
                                                                         <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">
                                                                             <div className={`p-2 rounded-lg shrink-0 flex items-center justify-center ${isOpen ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-50 border border-gray-200'}`}>
                                                                                 {isOpen ? (
@@ -242,19 +243,19 @@ export function ActivityFeed({
                                                                                     {event.location ? (
                                                                                         <div className="flex items-start gap-2.5 text-gray-900">
                                                                                             <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                                                                                            <span className="font-semibold text-[15px] break-words leading-tight">{event.location}</span>
+                                                                                            <span className="font-semibold text-[15px] wrap-break-word leading-tight">{event.location}</span>
                                                                                         </div>
                                                                                     ) : (
                                                                                         <div className="flex items-start gap-2.5 text-gray-900">
                                                                                             <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                                                                                            <span className="font-semibold text-[15px] text-gray-400 break-words leading-tight">Location Unknown</span>
+                                                                                            <span className="font-semibold text-[15px] text-gray-400 wrap-break-word leading-tight">Location Unknown</span>
                                                                                         </div>
                                                                                     )}
 
                                                                                     {/* Time - Secondary Focus */}
                                                                                     <div className="flex items-start gap-2.5 text-gray-800">
                                                                                         <CalendarClock className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
-                                                                                        <span className="font-medium text-sm leading-tight break-words">{format(parseISO(event.created_at), "do MMMM yyyy, h:mm a")}</span>
+                                                                                        <span className="font-medium text-sm leading-tight wrap-break-word">{format(parseISO(event.created_at), "do MMMM yyyy, h:mm a")}</span>
                                                                                     </div>
 
                                                                                     {/* IP Address - Muted */}
