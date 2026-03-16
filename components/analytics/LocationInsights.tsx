@@ -141,7 +141,7 @@ function RegionRow({ region, maxSteps, valueKey }: { region: RegionGroup, maxSte
                 <AccordionContent className="border-t border-blue-100 px-0 py-0 m-0 bg-white">
                     <div className="p-5">
                         <h4 className="text-sm font-semibold text-indigo-700/80 mb-3 px-1 uppercase tracking-wider">Cities</h4>
-                        <Accordion type="multiple" className="flex flex-col gap-3">
+                        <Accordion type="single" collapsible className="flex flex-col gap-3">
                             {region.cities.map((city, idx) => (
                                 <CityRow key={`${city.city}-${idx}`} city={city} maxSteps={maxSteps} valueKey={`city-${city.city}-${idx}`} />
                             ))}
@@ -174,7 +174,7 @@ export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsi
 
     return (
         <div className="w-full pb-2">
-            <Accordion type="multiple" className="space-y-4">
+            <Accordion type="single" collapsible className="space-y-4">
                 {geoMetrics.map((item, idx) => {
                     const isCountry = 'country' in item;
                     const isRegion = 'region' in item;
@@ -211,7 +211,7 @@ export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsi
                                     <AccordionContent className="border-t border-gray-100 px-0 py-0 m-0 bg-white">
                                         <div className="p-6">
                                             <h4 className="text-sm font-semibold text-blue-700/80 mb-4 px-1 uppercase tracking-wider">Regions</h4>
-                                            <Accordion type="multiple" className="flex flex-col gap-4">
+                                            <Accordion type="single" collapsible className="flex flex-col gap-4">
                                                 {countryItem.regions.map((region, rIdx) => (
                                                     <RegionRow key={`${region.region}-${rIdx}`} region={region} maxSteps={maxSteps} valueKey={`region-${region.region}-${rIdx}`} />
                                                 ))}
