@@ -2,7 +2,6 @@
 
 import { Eye, MousePointerClick, MapPin, Map, Flag } from "lucide-react";
 import { GeolocationGroupItem, CityGroup, RegionGroup, CountryGroup, StepMetricDetail } from "@/types/analytics";
-import { Badge } from "@/components/ui/badge";
 import { Loading } from "@/components/loading";
 import {
     Accordion,
@@ -17,42 +16,28 @@ interface LocationInsightsProps {
     loading: boolean;
     maxSteps: number;
 }
-
-function getStepBadgeColor(step: number) {
-    const colors = [
-        "bg-blue-100 text-blue-800",
-        "bg-emerald-100 text-emerald-800",
-        "bg-amber-100 text-amber-800",
-        "bg-purple-100 text-purple-800",
-        "bg-rose-100 text-rose-800",
-    ];
-    return colors[(step - 1) % colors.length];
-}
-
-function getGridClass(stepCount: number) {
-    if (stepCount <= 1) return "grid-cols-1";
-    if (stepCount === 2) return "grid-cols-2 lg:grid-cols-2";
-    if (stepCount === 3) return "grid-cols-1 md:grid-cols-3 lg:grid-cols-3";
-    return "grid-cols-1 md:grid-cols-2 lg:grid-cols-4";
-}
-
 // Sub-component to render the lowest level (Step Metrics)
-function StepMetricsGrid({ metrics, maxSteps }: { metrics: StepMetricDetail[], maxSteps: number }) {
+function StepMetricsGrid({ metrics }: { metrics: StepMetricDetail[], maxSteps: number }) {
     if (!metrics || metrics.length === 0) return null;
-    const gridClass = getGridClass(maxSteps);
+
+    const visibleMetrics = metrics.slice().sort((a, b) => a.step - b.step).slice(0, 4);
 
     return (
-        <div className={`grid ${gridClass} gap-4 p-5`}>
-            {metrics.sort((a, b) => a.step - b.step).map(stepData => (
-                <div key={stepData.step} className="flex flex-col gap-2 w-full h-full p-4 border border-indigo-100 rounded-lg bg-white shadow-sm hover:border-indigo-200 transition-colors">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-5">
+            {visibleMetrics.map(stepData => (
+                <div
+                    key={stepData.step}
+                    className="flex flex-col gap-2 w-full h-full p-3 border border-gray-100 rounded-lg bg-white shadow-sm hover:border-gray-200 transition-colors"
+                >
                     <div className="flex items-center justify-between mb-1">
-                        <Badge className={getStepBadgeColor(stepData.step)} variant="secondary">
+                        <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
                             {stepData.step === 1 ? 'First Email' :
                                 stepData.step === 2 ? 'First Follow-up' :
-                                    stepData.step === 3 ? 'Second Follow-up' :
-                                        `Step ${stepData.step}`}
-                        </Badge>
+                                stepData.step === 3 ? 'Second Follow-up' :
+                                `Step ${stepData.step}`}
+                        </div>
                     </div>
+
                     <div className="space-y-1.5 mt-1">
                         <div className="flex items-center justify-between text-[15px]">
                             <span className="text-gray-500 font-medium flex items-center gap-1.5">
@@ -60,6 +45,7 @@ function StepMetricsGrid({ metrics, maxSteps }: { metrics: StepMetricDetail[], m
                             </span>
                             <span className="font-semibold text-gray-900">{stepData.open_count}</span>
                         </div>
+
                         <div className="flex items-center justify-between text-[15px]">
                             <span className="text-gray-500 font-medium flex items-center gap-1.5">
                                 <MousePointerClick className="w-4 h-4 text-blue-600" /> Clicks
@@ -120,7 +106,7 @@ function RegionRow({ region, maxSteps, valueKey }: { region: RegionGroup, maxSte
                     <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
                         <div className="flex items-center gap-2">
                             <span className="font-semibold text-[14px] text-gray-900 truncate max-w-full">{region.region}</span>
-                            {region.parent_country && <span className="text-xs text-blue-600 font-medium truncate shrink-0">({region.parent_country})</span>}
+                            {region.parent_country && <span className="text-xs text-blue-600 font-medium truncate shrink-0">-{region.parent_country}</span>}
                         </div>
                     </div>
                 </div>
