@@ -64,9 +64,9 @@ export function ActivityFeed({
     }
 
     return (
-        <div className="max-w-6xl mx-auto pb-20">
+        <div className="max-w-6xl mx-auto pb-2">
             {/* Compact Step Metric Row - horizontal chips */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2">
                 {stepMetrics.map((metric) => (
                     <button
                         key={metric.step}
@@ -135,7 +135,7 @@ export function ActivityFeed({
                                     <AccordionItem
                                         key={contact.contact_id}
                                         value={contact.contact_id}
-                                        className="border border-gray-200 rounded-lg bg-white"
+                                        className="border border-gray-200 rounded-lg bg-white last:border-b"
                                     >
                                         <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-50/50 rounded-t-lg">
                                             <div className="flex flex-1 w-full items-center justify-between gap-3 min-w-0">
@@ -199,7 +199,7 @@ export function ActivityFeed({
                                                             }
 
                                                             return (
-                                                                <AccordionItem key={idx} value={`group-${idx}`} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                                                                <AccordionItem key={idx} value={`group-${idx}`} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
                                                                     {/* Group Header */}
                                                                     <AccordionTrigger className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 bg-gradient-to-r from-gray-50 to-white hover:no-underline">
                                                                         <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">

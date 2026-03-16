@@ -84,7 +84,12 @@ export default function EmailAnalyticsPage() {
         try {
             setLoadingMetrics(true);
             const response = await axios.get<{ data: StepMetric[] }>('/api/analytics/steps');
-            setStepMetrics(response.data.data || []);
+            const data = response.data.data || [];
+            const mappedData = data.map(m => ({
+                ...m,
+                step_label: m.step_label === 'Initial Email' ? 'First Email' : m.step_label
+            }));
+            setStepMetrics(mappedData);
         } catch (err: any) {
             console.error("Error fetching step metrics:", err);
         } finally {
@@ -181,7 +186,7 @@ export default function EmailAnalyticsPage() {
     };
 
     return (
-        <div className="flex min-h-screen w-full flex-col bg-gray-50/50 min-w-0">
+        <div className="flex flex-1 flex-col w-full bg-gray-50/50 min-w-0 min-h-0">
             {/* Header Bar */}
             <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
                 <div className="flex items-center gap-4">
@@ -241,7 +246,7 @@ export default function EmailAnalyticsPage() {
                         if (activeTab === 'feed') handleContactLimitChange(numVal);
                         else handleGeoLimitChange(numVal);
                     }}>
-                        <SelectTrigger className="w-[100px] h-9">
+                        <SelectTrigger className="w-full h-9">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px] overflow-y-auto">
@@ -255,11 +260,11 @@ export default function EmailAnalyticsPage() {
 
             {/* Main Content Area */}
             {loadingMetrics ? (
-                <div className="min-h-screen bg-white shadow-sm p-6 flex items-center justify-center">
+                <div className="flex-1 bg-white shadow-sm p-6 flex items-center justify-center min-h-0">
                     <Loading />
                 </div>
             ) : (
-                <div className="min-h-screen bg-white shadow-sm p-6 mb-auto flex-1">
+                <div className="flex-1 bg-white shadow-sm p-6 flex flex-col min-h-0">
                     {activeTab === 'geo' ? (
                         <LocationInsights
                             geoMetrics={geoMetrics}

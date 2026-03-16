@@ -94,7 +94,7 @@ export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsi
                             <div key={stepData.step} className="border border-gray-100 rounded-md p-2.5 bg-gray50/30">
                                 <div className="flex items-center justify-between mb-1.5">
                                     <Badge className={getStepBadgeColor(stepData.step)} variant="secondary">
-                                        {stepData.step === 1 ? 'Initial Email' :
+                                        {stepData.step === 1 ? 'First Email' :
                                             stepData.step === 2 ? 'First Follow-up' :
                                                 stepData.step === 3 ? 'Second Follow-up' :
                                                     `Step ${stepData.step}`}
