@@ -161,7 +161,7 @@ export function ActivityFeed({
                                                         {contact.subject}
                                                     </span>
                                                     <span className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                                                        Sent: {contact.sent_at ? format(parseISO(contact.sent_at), "MMM d, yyyy 'at' h:mm a") : 'Unknown'}
+                                                        Sent: {contact.sent_at ? format(parseISO(contact.sent_at), "do MMMM yyyy, h:mm a") : 'Unknown'}
                                                     </span>
                                                 </div>
 
@@ -184,25 +184,40 @@ export function ActivityFeed({
                                             <div className="px-6 pb-6 pt-4 bg-gray-50/80 border-t border-gray-100">
                                                 <h4 className="text-sm font-medium text-gray-700 mb-4 px-1">Engagement Details</h4>
                                                 {contact.raw_events && contact.raw_events.length > 0 ? (
-                                                    <div className="flex flex-col gap-4">
+                                                    <Accordion type="multiple" className="flex flex-col gap-4">
                                                         {contact.raw_events.map((group, idx) => {
                                                             const isOpen = group.event_type === 'open';
+                                                            let domain = '';
+                                                            if (!isOpen && group.clicked_url) {
+                                                                try {
+                                                                    domain = new URL(group.clicked_url).hostname.replace('www.', '');
+                                                                } catch (e) { }
+                                                            }
+
                                                             return (
-                                                                <div key={idx} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                                                                <AccordionItem key={idx} value={`group-${idx}`} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all hover:shadow-md">
                                                                     {/* Group Header */}
-                                                                    <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 bg-gradient-to-r from-gray-50 to-white">
-                                                                        <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row">
-                                                                            <div className={`p-2 rounded-lg shrink-0 flex items-center justify-center ${isOpen ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
-                                                                                {isOpen ? <Eye className="w-4 h-4" /> : <MousePointerClick className="w-4 h-4" />}
+                                                                    <AccordionTrigger className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 bg-gradient-to-r from-gray-50 to-white hover:no-underline">
+                                                                        <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">
+                                                                            <div className={`p-2 rounded-lg shrink-0 flex items-center justify-center ${isOpen ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-50 border border-gray-200'}`}>
+                                                                                {isOpen ? (
+                                                                                    <Eye className="w-4 h-4" />
+                                                                                ) : domain ? (
+                                                                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                                                                    <img src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`} alt={domain} className="w-4 h-4 rounded-sm" />
+                                                                                ) : (
+                                                                                    <MousePointerClick className="w-4 h-4 text-gray-500" />
+                                                                                )}
                                                                             </div>
-                                                                            <div className="min-w-0">
-                                                                                <div className="font-semibold text-gray-900 text-sm truncate" title={isOpen ? 'Email Opened' : (group.clicked_url || 'Clicked Link')}>
-                                                                                    {isOpen ? 'Email Opened' : (group.clicked_url || 'Clicked Link')}
-                                                                                </div>
-                                                                                {!isOpen && group.clicked_url && (
-                                                                                    <a href={group.clicked_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800 hover:underline mt-0.5 block truncate max-w-[400px]" title={group.clicked_url}>
+                                                                            <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
+                                                                                {!isOpen && group.clicked_url ? (
+                                                                                    <a href={group.clicked_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="font-semibold text-[14px] text-blue-600 hover:text-blue-800 hover:underline block truncate max-w-full" title={group.clicked_url}>
                                                                                         {group.clicked_url}
                                                                                     </a>
+                                                                                ) : (
+                                                                                    <div className="font-semibold text-gray-900 text-[14px] truncate max-w-full" title="Email Opened">
+                                                                                        Email Opened
+                                                                                    </div>
                                                                                 )}
                                                                             </div>
                                                                         </div>
@@ -212,35 +227,45 @@ export function ActivityFeed({
                                                                                 {group.count} {group.count === 1 ? 'Event' : 'Events'}
                                                                             </span>
                                                                         </div>
-                                                                    </div>
+                                                                    </AccordionTrigger>
 
                                                                     {/* Group Details (Events) */}
-                                                                    <div className="divide-y divide-gray-50">
-                                                                        {group.events?.map((event, eIdx) => (
-                                                                            <div key={eIdx} className="px-5 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm hover:bg-gray-50 transition-colors">
-                                                                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-gray-600">
-                                                                                    <div className="flex items-center gap-2 min-w-[140px]">
-                                                                                        <CalendarClock className="w-3.5 h-3.5 text-gray-400" />
-                                                                                        <span className="font-medium">{format(parseISO(event.created_at), "MMM d, h:mm a")}</span>
-                                                                                    </div>
-                                                                                    {event.location && (
-                                                                                        <div className="flex items-center gap-2">
-                                                                                            <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                                                                                            <span className="truncate max-w-[200px]">{event.location}</span>
+                                                                    <AccordionContent className="border-t border-gray-100 px-0 py-0 m-0">
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6 p-5">
+                                                                            {group.events?.map((event, eIdx) => (
+                                                                                <div key={eIdx} className="flex flex-col gap-2 w-full h-full p-4 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors bg-white/50 backdrop-blur-sm">
+                                                                                    {/* Location - Primary Focus */}
+                                                                                    {event.location ? (
+                                                                                        <div className="flex items-start gap-2.5 text-gray-900">
+                                                                                            <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                                                                            <span className="font-semibold text-[15px] break-words leading-tight">{event.location}</span>
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <div className="flex items-start gap-2.5 text-gray-900">
+                                                                                            <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                                                                                            <span className="font-semibold text-[15px] text-gray-400 break-words leading-tight">Location Unknown</span>
                                                                                         </div>
                                                                                     )}
+
+                                                                                    {/* Time - Secondary Focus */}
+                                                                                    <div className="flex items-start gap-2.5 text-gray-800">
+                                                                                        <CalendarClock className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+                                                                                        <span className="font-medium text-sm leading-tight break-words">{format(parseISO(event.created_at), "do MMMM yyyy, h:mm a")}</span>
+                                                                                    </div>
+
+                                                                                    {/* IP Address - Muted */}
+                                                                                    <div className="flex items-center gap-2 text-gray-500 mt-1">
+                                                                                        <Globe className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                                                                        <span className="text-xs font-mono tracking-tight">{event.ip_address || 'Unknown IP'}</span>
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div className="flex items-center gap-2 text-gray-500 shrink-0">
-                                                                                    <Globe className="w-3.5 h-3.5 text-gray-400" />
-                                                                                    <span className="bg-gray-50 px-2 py-0.5 rounded text-xs border border-gray-100">{event.ip_address || 'Unknown IP'}</span>
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </AccordionContent>
+                                                                </AccordionItem>
                                                             );
                                                         })}
-                                                    </div>
+                                                    </Accordion>
                                                 ) : (
                                                     <div className="bg-white rounded-lg border border-dashed border-gray-300 p-8 text-center">
                                                         <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 mb-3">
