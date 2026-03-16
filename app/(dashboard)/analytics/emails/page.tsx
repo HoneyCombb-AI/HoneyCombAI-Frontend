@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "axios";
-import { StepMetric, StepContact, GeolocationMetric } from "@/types/analytics";
+import { StepMetric, StepContact, GeolocationGroupItem, GeolocationPaginatedResponse } from "@/types/analytics";
 import {
     Select,
     SelectContent,
@@ -16,29 +16,30 @@ import { PaginationFooter, PaginationInfo } from "@/components/analytics/Paginat
 import { Loading } from "@/components/loading";
 
 // Get unique countries/cities/regions from geo metrics for filter dropdowns
-function extractLocationParts(metrics: GeolocationMetric[]) {
+function extractLocationParts(metrics: GeolocationGroupItem[]) {
     const countries = new Set<string>();
     const cities = new Set<string>();
     const regions = new Set<string>();
 
-    metrics.forEach(m => {
-        const parts = m.location.split(',').map(p => p.trim());
-        if (parts.length >= 3) {
-            countries.add(parts[2]);
-            regions.add(parts[1]);
-            cities.add(parts[0]);
-        } else if (parts.length === 2) {
-            countries.add(parts[1]);
-            regions.add(parts[1]);
-        } else if (parts.length === 1) {
-            countries.add(parts[0]);
-        }
-    });
+    const extract = (item: any) => {
+        if (item.country) countries.add(item.country);
+        if (item.parent_country) countries.add(item.parent_country);
+
+        if (item.region) regions.add(item.region);
+        if (item.parent_region) regions.add(item.parent_region);
+
+        if (item.city) cities.add(item.city);
+
+        if (item.regions) item.regions.forEach(extract);
+        if (item.cities) item.cities.forEach(extract);
+    };
+
+    metrics.forEach(extract);
 
     return {
-        countries: Array.from(countries).sort(),
-        cities: Array.from(cities).sort(),
-        regions: Array.from(regions).sort()
+        countries: Array.from(countries).filter(Boolean).sort(),
+        cities: Array.from(cities).filter(Boolean).sort(),
+        regions: Array.from(regions).filter(Boolean).sort()
     };
 }
 
@@ -60,7 +61,7 @@ export default function EmailAnalyticsPage() {
     const [expandedContact, setExpandedContact] = useState<string | null>(null);
 
     // Location Insights State
-    const [geoMetrics, setGeoMetrics] = useState<GeolocationMetric[]>([]);
+    const [geoMetrics, setGeoMetrics] = useState<GeolocationGroupItem[]>([]);
     const [loadingGeo, setLoadingGeo] = useState(false);
     const [geoPage, setGeoPage] = useState(1);
     const [geoLimit, setGeoLimit] = useState(30);
@@ -68,6 +69,7 @@ export default function EmailAnalyticsPage() {
     const [countryFilter, setCountryFilter] = useState<string>("all");
     const [cityFilter, setCityFilter] = useState<string>("all");
     const [regionFilter, setRegionFilter] = useState<string>("all");
+    const [groupBy, setGroupBy] = useState<'country' | 'region' | 'city'>('country');
 
     // Extracted location parts for filters
     const locationParts = useMemo(() => extractLocationParts(geoMetrics), [geoMetrics]);
@@ -75,7 +77,14 @@ export default function EmailAnalyticsPage() {
     // Calculate max steps for dynamic grid
     const maxSteps = useMemo(() => {
         const steps = new Set<number>();
-        geoMetrics.forEach(m => steps.add(m.step));
+        const extractSteps = (item: any) => {
+            if (item.step_metrics) {
+                item.step_metrics.forEach((sm: any) => steps.add(sm.step));
+            }
+            if (item.cities) item.cities.forEach(extractSteps);
+            if (item.regions) item.regions.forEach(extractSteps);
+        };
+        geoMetrics.forEach(extractSteps);
         return steps.size;
     }, [geoMetrics]);
 
@@ -115,20 +124,17 @@ export default function EmailAnalyticsPage() {
     }, []);
 
     // Fetch Location Metrics
-    const fetchGeoMetrics = useCallback(async (page: number, limit: number) => {
+    const fetchGeoMetrics = useCallback(async (page: number, limit: number, group: 'country' | 'region' | 'city' = 'country') => {
         try {
             setLoadingGeo(true);
-            const params: any = { page, limit };
+            const params: any = { page, limit, group_by: group };
             if (countryFilter !== "all") params.country = countryFilter;
             if (cityFilter !== "all") params.city = cityFilter;
             if (regionFilter !== "all") params.region = regionFilter;
 
-            // Updated expectation from backend to return data + pagination
-            const response = await axios.get<{ data: GeolocationMetric[], pagination?: PaginationInfo }>('/api/analytics/geolocation', { params });
+            const response = await axios.get<GeolocationPaginatedResponse>('/api/analytics/geolocation', { params });
             setGeoMetrics(response.data.data || []);
-            if (response.data.pagination) setGeoPagination(response.data.pagination);
-            // Optional: fallback fake pagination generation if needed depending on backend state
-            else setGeoPagination(null);
+            setGeoPagination(response.data.pagination || null);
         } catch (err: any) {
             console.error("Error fetching geo metrics:", err);
         } finally {
@@ -142,8 +148,8 @@ export default function EmailAnalyticsPage() {
     }, [fetchStepMetrics]);
 
     useEffect(() => {
-        fetchGeoMetrics(geoPage, geoLimit);
-    }, [fetchGeoMetrics, geoPage, geoLimit]);
+        fetchGeoMetrics(geoPage, geoLimit, groupBy);
+    }, [fetchGeoMetrics, geoPage, geoLimit, groupBy]);
 
     // Handle Step Selection
     const handleStepClick = (step: number) => {
@@ -206,39 +212,22 @@ export default function EmailAnalyticsPage() {
                 <div className="flex flex-wrap items-center gap-3">
                     {activeTab === 'geo' && (
                         <>
-                            <Select value={countryFilter} onValueChange={setCountryFilter}>
+                            <Select value={groupBy} onValueChange={(val: any) => {
+                                setGroupBy(val);
+                                setGeoPage(1); // Reset page on group change
+                            }}>
                                 <SelectTrigger className="w-[140px] h-9">
-                                    <SelectValue placeholder="Country" />
+                                    <SelectValue placeholder="Group by" />
                                 </SelectTrigger>
-                                <SelectContent className="max-h-[300px] overflow-y-auto">
-                                    <SelectItem value="all">All Countries</SelectItem>
-                                    {locationParts.countries.map(c => (
-                                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                                    ))}
+                                <SelectContent>
+                                    <SelectItem value="country">Group: Country</SelectItem>
+                                    <SelectItem value="region">Group: Region</SelectItem>
+                                    <SelectItem value="city">Group: City</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <Select value={cityFilter} onValueChange={setCityFilter}>
-                                <SelectTrigger className="w-[140px] h-9">
-                                    <SelectValue placeholder="City" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[300px] overflow-y-auto">
-                                    <SelectItem value="all">All Cities</SelectItem>
-                                    {locationParts.cities.map(c => (
-                                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select value={regionFilter} onValueChange={setRegionFilter}>
-                                <SelectTrigger className="w-[140px] h-9">
-                                    <SelectValue placeholder="Region" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-[300px] overflow-y-auto">
-                                    <SelectItem value="all">All Regions</SelectItem>
-                                    {locationParts.regions.map(r => (
-                                        <SelectItem key={r} value={r}>{r}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                       
+                          
+
                         </>
                     )}
                     <Select value={activeTab === 'feed' ? contactLimit.toString() : geoLimit.toString()} onValueChange={(val) => {
@@ -268,6 +257,7 @@ export default function EmailAnalyticsPage() {
                     {activeTab === 'geo' ? (
                         <LocationInsights
                             geoMetrics={geoMetrics}
+                            groupBy={groupBy}
                             loading={loadingGeo}
                             maxSteps={maxSteps}
                         />

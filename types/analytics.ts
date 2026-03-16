@@ -28,11 +28,49 @@ export interface PaginatedTrackingGroup {
     }[] | null;
 }
 
-export interface GeolocationMetric {
-    location: string;
+export interface StepMetricDetail {
     step: number;
     open_count: number;
     click_count: number;
+}
+
+export interface CityGroup {
+    city: string;
+    parent_region?: string;
+    parent_country?: string;
+    total_open_count: number;
+    total_click_count: number;
+    step_metrics: StepMetricDetail[];
+}
+
+export interface RegionGroup {
+    region: string;
+    parent_country?: string;
+    total_open_count: number;
+    total_click_count: number;
+    cities?: CityGroup[];
+}
+
+export interface CountryGroup {
+    country: string;
+    total_open_count: number;
+    total_click_count: number;
+    regions?: RegionGroup[];
+}
+
+export type GeolocationGroupItem = CountryGroup | RegionGroup | CityGroup;
+
+export interface GeolocationPaginatedResponse {
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+    };
+    group_by: 'country' | 'region' | 'city';
+    data: GeolocationGroupItem[];
 }
 
 export interface StepMetric {
