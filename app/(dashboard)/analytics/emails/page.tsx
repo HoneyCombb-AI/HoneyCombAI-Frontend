@@ -14,35 +14,6 @@ import { ActivityFeed } from "@/components/analytics/ActivityFeed";
 import { LocationInsights } from "@/components/analytics/LocationInsights";
 import { PaginationFooter, PaginationInfo } from "@/components/analytics/PaginationFooter";
 import { Loading } from "@/components/loading";
-
-// Get unique countries/cities/regions from geo metrics for filter dropdowns
-function extractLocationParts(metrics: GeolocationGroupItem[]) {
-    const countries = new Set<string>();
-    const cities = new Set<string>();
-    const regions = new Set<string>();
-
-    const extract = (item: any) => {
-        if (item.country) countries.add(item.country);
-        if (item.parent_country) countries.add(item.parent_country);
-
-        if (item.region) regions.add(item.region);
-        if (item.parent_region) regions.add(item.parent_region);
-
-        if (item.city) cities.add(item.city);
-
-        if (item.regions) item.regions.forEach(extract);
-        if (item.cities) item.cities.forEach(extract);
-    };
-
-    metrics.forEach(extract);
-
-    return {
-        countries: Array.from(countries).filter(Boolean).sort(),
-        cities: Array.from(cities).filter(Boolean).sort(),
-        regions: Array.from(regions).filter(Boolean).sort()
-    };
-}
-
 export default function EmailAnalyticsPage() {
     // State
     const [activeTab, setActiveTab] = useState<'feed' | 'geo'>('feed');
@@ -66,13 +37,7 @@ export default function EmailAnalyticsPage() {
     const [geoPage, setGeoPage] = useState(1);
     const [geoLimit, setGeoLimit] = useState(30);
     const [geoPagination, setGeoPagination] = useState<PaginationInfo | null>(null);
-    const [countryFilter, setCountryFilter] = useState<string>("all");
-    const [cityFilter, setCityFilter] = useState<string>("all");
-    const [regionFilter, setRegionFilter] = useState<string>("all");
     const [groupBy, setGroupBy] = useState<'country' | 'region' | 'city'>('country');
-
-    // Extracted location parts for filters
-    const locationParts = useMemo(() => extractLocationParts(geoMetrics), [geoMetrics]);
 
     // Calculate max steps for dynamic grid
     const maxSteps = useMemo(() => {
@@ -128,9 +93,6 @@ export default function EmailAnalyticsPage() {
         try {
             setLoadingGeo(true);
             const params: any = { page, limit, group_by: group };
-            if (countryFilter !== "all") params.country = countryFilter;
-            if (cityFilter !== "all") params.city = cityFilter;
-            if (regionFilter !== "all") params.region = regionFilter;
 
             const response = await axios.get<GeolocationPaginatedResponse>('/api/analytics/geolocation', { params });
             setGeoMetrics(response.data.data || []);
@@ -140,7 +102,7 @@ export default function EmailAnalyticsPage() {
         } finally {
             setLoadingGeo(false);
         }
-    }, [countryFilter, cityFilter, regionFilter]);
+    }, []);
 
     // Initial Data Fetch
     useEffect(() => {
@@ -194,7 +156,7 @@ export default function EmailAnalyticsPage() {
     return (
         <div className="flex flex-1 flex-col w-full bg-gray-50/50 min-w-0 min-h-0">
             {/* Header Bar */}
-            <div className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
+            <div className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
                 <div className="flex items-center gap-4">
                     {/* Tab Select */}
                     <Select value={activeTab} onValueChange={(val) => setActiveTab(val as 'feed' | 'geo')}>
@@ -209,33 +171,28 @@ export default function EmailAnalyticsPage() {
                 </div>
 
                 {/* Right side controls */}
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-3">
                     {activeTab === 'geo' && (
-                        <>
-                            <Select value={groupBy} onValueChange={(val: any) => {
-                                setGroupBy(val);
-                                setGeoPage(1); // Reset page on group change
-                            }}>
-                                <SelectTrigger className="w-[140px] h-9">
-                                    <SelectValue placeholder="Group by" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="country">Group: Country</SelectItem>
-                                    <SelectItem value="region">Group: Region</SelectItem>
-                                    <SelectItem value="city">Group: City</SelectItem>
-                                </SelectContent>
-                            </Select>
-                       
-                          
-
-                        </>
+                        <Select value={groupBy} onValueChange={(val: any) => {
+                            setGroupBy(val);
+                            setGeoPage(1); // Reset page on group change
+                        }}>
+                            <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Group by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="country">Group: Country</SelectItem>
+                                <SelectItem value="region">Group: Region</SelectItem>
+                                <SelectItem value="city">Group: City</SelectItem>
+                            </SelectContent>
+                        </Select>
                     )}
                     <Select value={activeTab === 'feed' ? contactLimit.toString() : geoLimit.toString()} onValueChange={(val) => {
                         const numVal = parseInt(val);
                         if (activeTab === 'feed') handleContactLimitChange(numVal);
                         else handleGeoLimitChange(numVal);
                     }}>
-                        <SelectTrigger className="w-full h-9">
+                        <SelectTrigger className="w-[120px] h-9">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px] overflow-y-auto">
