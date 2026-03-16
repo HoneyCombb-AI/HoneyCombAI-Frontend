@@ -44,7 +44,7 @@ function StepMetricsGrid({ metrics, maxSteps }: { metrics: StepMetricDetail[], m
     return (
         <div className={`grid ${gridClass} gap-4 p-5`}>
             {metrics.sort((a, b) => a.step - b.step).map(stepData => (
-                <div key={stepData.step} className="flex flex-col gap-2 w-full h-full p-4 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors bg-white/50 backdrop-blur-sm shadow-sm">
+                <div key={stepData.step} className="flex flex-col gap-2 w-full h-full p-4 border border-indigo-100 rounded-lg bg-white shadow-sm hover:border-indigo-200 transition-colors">
                     <div className="flex items-center justify-between mb-1">
                         <Badge className={getStepBadgeColor(stepData.step)} variant="secondary">
                             {stepData.step === 1 ? 'First Email' :
@@ -73,26 +73,26 @@ function StepMetricsGrid({ metrics, maxSteps }: { metrics: StepMetricDetail[], m
     );
 }
 
-// Component to render a City row
+// Component to render a City row (Indigo Theme)
 function CityRow({ city, maxSteps, valueKey }: { city: CityGroup, maxSteps: number, valueKey: string }) {
     return (
-        <AccordionItem value={valueKey} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
-            <AccordionTrigger className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 bg-gradient-to-r from-gray-50 to-white hover:no-underline">
+        <AccordionItem value={valueKey} className="bg-white rounded-lg border border-indigo-200 shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
+            <AccordionTrigger className="px-4 py-3 border-b border-indigo-100 flex items-center justify-between gap-4 bg-indigo-50/50 hover:no-underline hover:bg-indigo-100/50 transition-colors">
                 <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">
-                    <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-gray-50 border border-gray-200">
-                        <MapPin className="w-4 h-4 text-gray-500" />
+                    <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-indigo-100 border border-indigo-200">
+                        <MapPin className="w-4 h-4 text-indigo-700" />
                     </div>
                     <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
                         <span className="font-semibold text-[14px] text-gray-900 truncate max-w-full">{city.city}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex bg-white border rounded-md shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-gray-100 bg-gray-50/50">
+                    <div className="flex bg-white border border-indigo-100 rounded-md shadow-sm overflow-hidden">
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-indigo-50 flex-1">
                             <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
                             <span className="text-sm font-semibold text-gray-700">{city.total_open_count}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50/50">
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 flex-1">
                             <MousePointerClick className="w-4 h-4 text-blue-600 shrink-0" />
                             <span className="text-sm font-semibold text-gray-700">{city.total_click_count}</span>
                         </div>
@@ -100,7 +100,7 @@ function CityRow({ city, maxSteps, valueKey }: { city: CityGroup, maxSteps: numb
                 </div>
             </AccordionTrigger>
             {city.step_metrics && (
-                <AccordionContent className="border-t border-gray-100 px-0 py-0 m-0 bg-gray-50/50">
+                <AccordionContent className="border-t border-indigo-100 px-0 py-0 m-0 bg-white">
                     <StepMetricsGrid metrics={city.step_metrics} maxSteps={maxSteps} />
                 </AccordionContent>
             )}
@@ -108,29 +108,29 @@ function CityRow({ city, maxSteps, valueKey }: { city: CityGroup, maxSteps: numb
     );
 }
 
-// Component to render a Region row (with nested Cities)
+// Component to render a Region row (with nested Cities) (Blue Theme)
 function RegionRow({ region, maxSteps, valueKey }: { region: RegionGroup, maxSteps: number, valueKey: string }) {
     return (
-        <AccordionItem value={valueKey} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
-            <AccordionTrigger className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 bg-gradient-to-r from-gray-50 to-white hover:no-underline">
+        <AccordionItem value={valueKey} className="bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
+            <AccordionTrigger className="px-4 py-3 border-b border-blue-100 flex items-center justify-between gap-4 bg-blue-50/50 hover:no-underline hover:bg-blue-100/50 transition-colors">
                 <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">
-                    <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-gray-50 border border-gray-200">
-                        <Map className="w-4 h-4 text-gray-500" />
+                    <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-blue-100 border border-blue-200">
+                        <Map className="w-4 h-4 text-blue-700" />
                     </div>
                     <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
                         <div className="flex items-center gap-2">
                             <span className="font-semibold text-[14px] text-gray-900 truncate max-w-full">{region.region}</span>
-                            {region.parent_country && <span className="text-xs text-gray-500 font-medium truncate shrink-0">({region.parent_country})</span>}
+                            {region.parent_country && <span className="text-xs text-blue-600 font-medium truncate shrink-0">({region.parent_country})</span>}
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex bg-white border rounded-md shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-gray-100 bg-gray-50/50">
+                    <div className="flex bg-white border border-blue-100 rounded-md shadow-sm overflow-hidden">
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-blue-50 flex-1">
                             <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
                             <span className="text-sm font-semibold text-gray-700">{region.total_open_count}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50/50">
+                        <div className="flex items-center gap-1.5 px-2 py-1.5 flex-1">
                             <MousePointerClick className="w-4 h-4 text-blue-600 shrink-0" />
                             <span className="text-sm font-semibold text-gray-700">{region.total_click_count}</span>
                         </div>
@@ -138,9 +138,9 @@ function RegionRow({ region, maxSteps, valueKey }: { region: RegionGroup, maxSte
                 </div>
             </AccordionTrigger>
             {region.cities && region.cities.length > 0 && (
-                <AccordionContent className="border-t border-gray-100 px-0 py-0 m-0">
-                    <div className="p-4 bg-gray-50/80">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3 px-1">Cities</h4>
+                <AccordionContent className="border-t border-blue-100 px-0 py-0 m-0 bg-white">
+                    <div className="p-5">
+                        <h4 className="text-sm font-semibold text-indigo-700/80 mb-3 px-1 uppercase tracking-wider">Cities</h4>
                         <Accordion type="multiple" className="flex flex-col gap-3">
                             {region.cities.map((city, idx) => (
                                 <CityRow key={`${city.city}-${idx}`} city={city} maxSteps={maxSteps} valueKey={`city-${city.city}-${idx}`} />
@@ -174,32 +174,33 @@ export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsi
 
     return (
         <div className="w-full pb-2">
-            <Accordion type="multiple" className="space-y-2">
+            <Accordion type="multiple" className="space-y-4">
                 {geoMetrics.map((item, idx) => {
                     const isCountry = 'country' in item;
                     const isRegion = 'region' in item;
                     const isCity = 'city' in item;
 
+                    // Level 1: Country - Neutral Gray Theme
                     if (isCountry) {
                         const countryItem = item as CountryGroup;
                         return (
-                            <AccordionItem key={`country-${countryItem.country}-${idx}`} value={`country-${countryItem.country}-${idx}`} className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
-                                <AccordionTrigger className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-4 bg-gradient-to-r from-gray-50 to-white hover:no-underline rounded-t-lg">
+                            <AccordionItem key={`country-${countryItem.country}-${idx}`} value={`country-${countryItem.country}-${idx}`} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
+                                <AccordionTrigger className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-4 hover:no-underline bg-white hover:bg-gray-50/50 transition-colors">
                                     <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">
-                                        <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-gray-50 border border-gray-200">
-                                            <Flag className="w-4 h-4 text-gray-600" />
+                                        <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-gray-50 border border-gray-200 text-gray-600">
+                                            <Flag className="w-4 h-4" />
                                         </div>
                                         <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
                                             <span className="font-semibold text-[15px] text-gray-900 truncate max-w-full">{countryItem.country}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
-                                        <div className="flex bg-white border rounded-md shadow-sm overflow-hidden">
-                                            <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-gray-100 bg-gray-50/50">
+                                        <div className="flex bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
+                                            <div className="flex items-center gap-1.5 px-3 py-2 border-r border-gray-100 flex-1">
                                                 <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
                                                 <span className="text-sm font-semibold text-gray-700">{countryItem.total_open_count}</span>
                                             </div>
-                                            <div className="flex items-center gap-1.5 px-2 py-1.5 bg-gray-50/50">
+                                            <div className="flex items-center gap-1.5 px-3 py-2 flex-1">
                                                 <MousePointerClick className="w-4 h-4 text-blue-600 shrink-0" />
                                                 <span className="text-sm font-semibold text-gray-700">{countryItem.total_click_count}</span>
                                             </div>
@@ -207,10 +208,10 @@ export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsi
                                     </div>
                                 </AccordionTrigger>
                                 {countryItem.regions && countryItem.regions.length > 0 && (
-                                    <AccordionContent className="border-t border-gray-100 px-0 py-0 m-0">
-                                        <div className="px-5 pb-5 pt-4 bg-gray-50/80">
-                                            <h4 className="text-sm font-medium text-gray-700 mb-4 px-1">Regions</h4>
-                                            <Accordion type="multiple" className="flex flex-col gap-3">
+                                    <AccordionContent className="border-t border-gray-100 px-0 py-0 m-0 bg-white">
+                                        <div className="p-6">
+                                            <h4 className="text-sm font-semibold text-blue-700/80 mb-4 px-1 uppercase tracking-wider">Regions</h4>
+                                            <Accordion type="multiple" className="flex flex-col gap-4">
                                                 {countryItem.regions.map((region, rIdx) => (
                                                     <RegionRow key={`${region.region}-${rIdx}`} region={region} maxSteps={maxSteps} valueKey={`region-${region.region}-${rIdx}`} />
                                                 ))}
