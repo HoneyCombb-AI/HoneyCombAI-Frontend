@@ -37,7 +37,7 @@ function StepMetricsGrid({ metrics }: { metrics: StepMetricDetail[] }) {
             {sorted.map(stepData => (
                 <div
                     key={stepData.step}
-                    className="flex flex-col gap-2 w-full h-full p-4 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors bg-white/50 backdrop-blur-sm"
+                    className="flex flex-col gap-2 w-full h-full p-4 border border-gray-300 rounded-lg hover:border-gray-500 transition-colors bg-white/50 backdrop-blur-sm"
                 >
                     {/* Step - Primary Focus */}
                     <div className="flex items-start gap-2.5 text-indigo-800 mb-2">
