@@ -64,13 +64,13 @@ export async function GET(req: NextRequest) {
 
         if (rpcError) {
             console.error('Failed to load geolocation metrics via RPC:', rpcError);
-            return NextResponse.json({ error: `Failed to load metrics: ${rpcError.message}` }, { status: 500 });
+            return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
         }
 
         return NextResponse.json(response);
 
     } catch (error: any) {
         console.error('API /api/analytics/geolocation error:', error);
-        return NextResponse.json({ error: error.message || 'Unknown error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
