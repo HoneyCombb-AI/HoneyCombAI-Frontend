@@ -209,24 +209,24 @@ export function ActivityFeedDetails({
                                                         <AccordionContent className="border-t border-gray-100 px-0 py-0 m-0">
                                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6 p-5">
                                                                 {group.events?.map((event, eIdx) => (
-                                                                    <div key={eIdx} className="flex flex-col gap-2 w-full h-full p-4 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors bg-white/50 backdrop-blur-sm">
+                                                                    <div key={eIdx} className="flex flex-col gap-2 w-full h-full p-4 border border-gray-300 rounded-lg hover:border-gray-500 transition-colors bg-white/50 backdrop-blur-sm">
                                                                         {/* Location - Primary Focus */}
                                                                         {event.location ? (
                                                                             <div className="flex items-start gap-2.5 text-gray-900">
                                                                                 <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                                                                                <span className="font-medium text-[15px] wrap-break-word leading-tight">{event.location}</span>
+                                                                                <span className="font-medium wrap-break-word leading-tight">{event.location}</span>
                                                                             </div>
                                                                         ) : (
                                                                             <div className="flex items-start gap-2.5 text-gray-900">
                                                                                 <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                                                                                <span className="font-medium text-[15px] text-gray-400 wrap-break-word leading-tight">Location Unknown</span>
+                                                                                <span className="font-semibold text-gray-400 wrap-break-word leading-tight">Location Unknown</span>
                                                                             </div>
                                                                         )}
 
                                                                         {/* Time - Secondary Focus */}
                                                                         <div className="flex items-start gap-2.5 text-gray-800">
                                                                             <CalendarClock className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
-                                                                            <span className="font-medium text-sm leading-tight wrap-break-word">{format(parseISO(event.created_at), "do MMMM yyyy, h:mm a")}</span>
+                                                                            <span className="font-normal text-sm leading-tight wrap-break-word">{format(parseISO(event.created_at), "do MMMM yyyy, h:mm a")}</span>
                                                                         </div>
 
                                                                         {/* IP Address - Muted */}
