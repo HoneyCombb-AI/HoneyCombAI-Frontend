@@ -42,6 +42,10 @@ export default function EmailAnalyticsPage() {
     // Store last fetched parameters to prevent duplicate/unnecessary API calls
     const lastFetchedGeoParams = useRef({ page: 0, limit: 0, groupBy: '' });
 
+    // AbortController refs to cancel in-flight requests
+    const contactAbortRef = useRef<AbortController | null>(null);
+    const geoAbortRef = useRef<AbortController | null>(null);
+
     // Calculate max steps for dynamic grid
     const maxSteps = useMemo(() => {
         const steps = new Set<number>();
@@ -58,18 +62,27 @@ export default function EmailAnalyticsPage() {
 
     // Fetch Contacts for Selected Step
     const fetchStepContacts = useCallback(async (step: number, page: number, limit: number) => {
+        // Cancel any previous in-flight request
+        contactAbortRef.current?.abort();
+        const controller = new AbortController();
+        contactAbortRef.current = controller;
+
         try {
             setLoadingContacts(true);
             const response = await axios.get<{ data: StepContact[], pagination: PaginationInfo }>(
                 `/api/analytics/steps/${step}`,
-                { params: { page, limit } }
+                { params: { page, limit }, signal: controller.signal }
             );
             setStepContacts(response.data.data || []);
             setContactPagination(response.data.pagination);
         } catch (err: any) {
+            if (axios.isCancel(err)) return; // Stale request — ignore
             console.error("Error fetching step contacts:", err);
         } finally {
-            setLoadingContacts(false);
+            // Only clear loading if this controller is still the active one
+            if (contactAbortRef.current === controller) {
+                setLoadingContacts(false);
+            }
         }
     }, []);
 
@@ -100,17 +113,26 @@ export default function EmailAnalyticsPage() {
 
     // Fetch Location Metrics
     const fetchGeoMetrics = useCallback(async (page: number, limit: number, group: 'country' | 'region' | 'city' = 'country') => {
+        // Cancel any previous in-flight request
+        geoAbortRef.current?.abort();
+        const controller = new AbortController();
+        geoAbortRef.current = controller;
+
         try {
             setLoadingGeo(true);
             const params: any = { page, limit, group_by: group };
 
-            const response = await axios.get<GeolocationPaginatedResponse>('/api/analytics/geolocation', { params });
+            const response = await axios.get<GeolocationPaginatedResponse>('/api/analytics/geolocation', { params, signal: controller.signal });
             setGeoMetrics(response.data.data || []);
             setGeoPagination(response.data.pagination || null);
         } catch (err: any) {
+            if (axios.isCancel(err)) return; // Stale request — ignore
             console.error("Error fetching geo metrics:", err);
         } finally {
-            setLoadingGeo(false);
+            // Only clear loading if this controller is still the active one
+            if (geoAbortRef.current === controller) {
+                setLoadingGeo(false);
+            }
         }
     }, []);
 
