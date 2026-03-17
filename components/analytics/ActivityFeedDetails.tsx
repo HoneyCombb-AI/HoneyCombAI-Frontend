@@ -214,12 +214,12 @@ export function ActivityFeedDetails({
                                                                         {event.location ? (
                                                                             <div className="flex items-start gap-2.5 text-gray-900">
                                                                                 <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                                                                                <span className="font-semibold text-[15px] wrap-break-word leading-tight">{event.location}</span>
+                                                                                <span className="font-medium text-[15px] wrap-break-word leading-tight">{event.location}</span>
                                                                             </div>
                                                                         ) : (
                                                                             <div className="flex items-start gap-2.5 text-gray-900">
                                                                                 <MapPin className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                                                                                <span className="font-semibold text-[15px] text-gray-400 wrap-break-word leading-tight">Location Unknown</span>
+                                                                                <span className="font-medium text-[15px] text-gray-400 wrap-break-word leading-tight">Location Unknown</span>
                                                                             </div>
                                                                         )}
 

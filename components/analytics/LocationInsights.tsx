@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MousePointerClick, MapPin, Map, Flag, ChevronDown } from "lucide-react";
+import { Eye, MousePointerClick, MapPin, Map, Flag, ChevronDown, Mail } from "lucide-react";
 import { GeolocationGroupItem, CityGroup, RegionGroup, CountryGroup, StepMetricDetail } from "@/types/analytics";
 import { Loading } from "@/components/loading";
 import { useState } from "react";
@@ -19,6 +19,8 @@ function stepLabel(step: number): string {
     if (step === 1) return 'First Email';
     if (step === 2) return 'First Follow-up';
     if (step === 3) return 'Second Follow-up';
+    if (step === 4) return 'Third Follow-up';
+    if (step === 5) return 'Fourth Follow-up';
     return `Step ${step}`;
 }
 
@@ -31,30 +33,32 @@ function StepMetricsGrid({ metrics }: { metrics: StepMetricDetail[] }) {
     const sorted = [...metrics].sort((a, b) => a.step - b.step);
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pt-3 pb-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-3 pb-2">
             {sorted.map(stepData => (
                 <div
                     key={stepData.step}
-                    className="flex flex-col gap-2 p-3.5 border border-gray-100 rounded-lg bg-white shadow-sm hover:border-gray-200 transition-colors"
+                    className="flex flex-col gap-2 w-full h-full p-4 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors bg-white/50 backdrop-blur-sm"
                 >
-                    <div className="inline-flex items-center rounded-full px-2.5 py-0.5 w-fit text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        {stepLabel(stepData.step)}
+                    {/* Step - Primary Focus */}
+                    <div className="flex items-start gap-2.5 text-gray-900">
+                        <Mail className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                        <span className="font-semibold text-sm wrap-break-word leading-tight">{stepLabel(stepData.step)}</span>
                     </div>
 
-                    <div className="space-y-1.5 mt-1">
-                        <div className="flex items-center justify-between text-[13px]">
-                            <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                                <Eye className="w-3.5 h-3.5 text-emerald-600" /> Opens
-                            </span>
-                            <span className="font-semibold text-gray-900">{stepData.open_count}</span>
-                        </div>
+                    {/* Opens - Secondary Focus */}
+                    <div className="flex items-start gap-2.5 text-gray-800">
+                        <Eye className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span className="font-medium text-sm leading-tight wrap-break-word">
+                            {stepData.open_count} {stepData.open_count === 1 ? 'Open' : 'Opens'}
+                        </span>
+                    </div>
 
-                        <div className="flex items-center justify-between text-[13px]">
-                            <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                                <MousePointerClick className="w-3.5 h-3.5 text-blue-600" /> Clicks
-                            </span>
-                            <span className="font-semibold text-gray-900">{stepData.click_count}</span>
-                        </div>
+                    {/* Clicks - Muted */}
+                    <div className="flex items-center gap-2 text-gray-500 mt-1">
+                        <MousePointerClick className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span className="text-xs font-mono tracking-tight">
+                            {stepData.click_count} {stepData.click_count === 1 ? 'Click' : 'Clicks'}
+                        </span>
                     </div>
                 </div>
             ))}
@@ -168,7 +172,7 @@ function ExpandableRow({
                 {/* Title + subtitle + pills */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-[15px] text-gray-900 truncate">{title}</span>
+                        <span className="font-semibold text-lg text-gray-900 truncate">{title}</span>
                         {subtitle && (
                             <span className="text-xs text-gray-400 font-medium truncate shrink-0">{subtitle}</span>
                         )}
