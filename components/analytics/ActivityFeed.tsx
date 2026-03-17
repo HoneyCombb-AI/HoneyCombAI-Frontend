@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MousePointerClick, MapPin, Globe, CalendarClock, Mail, ChevronDown, Users } from "lucide-react";
+import { Eye, MousePointerClick, MapPin, Globe, CalendarClock, Mail, ChevronDown, Users, Share2 } from "lucide-react";
 import { Linkedin } from "lucide-react";
 import { StepMetric, StepContact } from "@/types/analytics";
 import { Loading } from "@/components/loading";
@@ -42,6 +42,26 @@ function getStepBadgeColor(step: number) {
         "bg-rose-100 text-rose-800",
     ];
     return colors[(step - 1) % colors.length];
+}
+
+/** Extracts the country portion from a location string like "Madrid, Madrid, Spain" → "Spain" */
+function parseCountry(location: string | null | undefined): string | null {
+    if (!location) return null;
+    const parts = location.split(',');
+    return parts[parts.length - 1].trim();
+}
+
+/** Returns true if the contact's events span 3+ distinct countries, suggesting internal forwarding */
+function isPossiblyForwarded(rawEvents: StepContact['raw_events']): boolean {
+    if (!rawEvents) return false;
+    const countries = new Set<string>();
+    for (const group of rawEvents) {
+        for (const event of group.events ?? []) {
+            const country = parseCountry(event.location);
+            if (country) countries.add(country);
+        }
+    }
+    return countries.size >= 3;
 }
 
 export function ActivityFeed({
@@ -170,8 +190,14 @@ export function ActivityFeed({
                                                     </span>
                                                 </div>
 
-                                                {/* Right Section: Stats */}
+                                                {/* Right Section: Forwarding badge + Stats */}
                                                 <div className="flex items-center gap-2 shrink-0">
+                                                    {isPossiblyForwarded(contact.raw_events) && (
+                                                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md whitespace-nowrap">
+                                                            <Share2 className="w-3 h-3 shrink-0" />
+                                                            Internally forwarded
+                                                        </span>
+                                                    )}
                                                     <div className="flex bg-white border rounded-md shadow-sm overflow-hidden">
                                                         <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-gray-100 bg-gray-50/50">
                                                             <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
