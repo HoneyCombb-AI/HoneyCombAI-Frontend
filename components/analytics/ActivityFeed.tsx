@@ -243,7 +243,7 @@ export function ActivityFeed({
                                                                             <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
                                                                                 {!isOpen && group.clicked_url ? (
                                                                                     <a href={group.clicked_url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="font-semibold text-[14px] text-blue-600 hover:text-blue-800 hover:underline block truncate max-w-full" title={group.clicked_url}>
-                                                                                        {group.clicked_url}
+                                                                                        {group.clicked_url.length > 60 ? `${group.clicked_url.slice(0, 60)}…` : group.clicked_url}
                                                                                     </a>
                                                                                 ) : (
                                                                                     <div className="font-semibold text-gray-900 text-[14px] truncate max-w-full" title="Email Opened">
