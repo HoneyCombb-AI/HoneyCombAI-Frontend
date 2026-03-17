@@ -23,7 +23,14 @@ export async function GET(req: NextRequest) {
         const searchTerm = searchParams.get('search') || '';
         const locationFilter = searchParams.get('location') || null;
         const rawStep = searchParams.get('step');
-        const stepFilter = rawStep ? Number.parseInt(rawStep, 10) : null;
+        let stepFilter: number | null = null;
+        if (rawStep !== null) {
+            const parsedStep = Number.parseInt(rawStep, 10);
+            if (Number.isNaN(parsedStep)) {
+                return NextResponse.json({ error: 'Invalid step: must be an integer' }, { status: 400 });
+            }
+            stepFilter = parsedStep;
+        }
 
         const offset = (page - 1) * limit;
 
@@ -37,15 +44,14 @@ export async function GET(req: NextRequest) {
 
         if (rpcError) {
             console.error('Failed to load paginated tracking events via RPC:', rpcError);
-            return NextResponse.json({ error: `Failed to load tracking events: ${rpcError.message}` }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to load tracking events' }, { status: 500 });
         }
 
         const rawGroups = groupedEvents || [];
-        const totalCount = rawGroups.length > 0 ? Number(rawGroups[0].total_count) : 0;
 
+        const rpcTotal = rawGroups.length > 0 ? Number(rawGroups[0].total_count) : 0;
 
-
-        // Build formatted groups with geo filtering applied (now handled by RPC)
+        // Build formatted groups — filter discards groups with no raw events.
         const formattedGroups: PaginatedTrackingGroup[] = rawGroups
             .map((group: any) => {
                 const allEvents: any[] = group.raw_events || [];
@@ -66,6 +72,8 @@ export async function GET(req: NextRequest) {
             // Remove groups with no raw events left
             .filter((group: PaginatedTrackingGroup) => group.raw_events && group.raw_events.length > 0);
 
+        const totalCount = formattedGroups.length > 0 ? rpcTotal : 0;
+
         return NextResponse.json({
             data: formattedGroups,
             pagination: {
@@ -73,13 +81,13 @@ export async function GET(req: NextRequest) {
                 limit,
                 total: totalCount,
                 totalPages: Math.ceil(totalCount / limit),
-                hasNext: offset + limit < totalCount,
+                hasNext: offset + formattedGroups.length < totalCount,
                 hasPrev: page > 1
             }
         });
 
     } catch (error: any) {
         console.error('API /api/analytics/tracking error:', error);
-        return NextResponse.json({ error: error.message || 'Unknown error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

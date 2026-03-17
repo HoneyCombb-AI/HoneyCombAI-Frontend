@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest) {
 
         if (rpcError) {
             console.error('Failed to load step metrics via RPC:', rpcError);
-            return NextResponse.json({ error: `Failed to load metrics: ${rpcError.message}` }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to load metrics' }, { status: 500 });
         }
 
         return NextResponse.json({
@@ -24,6 +24,6 @@ export async function GET(_req: NextRequest) {
 
     } catch (error: any) {
         console.error('API /api/analytics/steps error:', error);
-        return NextResponse.json({ error: error.message || 'Unknown error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

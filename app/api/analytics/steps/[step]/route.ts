@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
 
         if (rpcError) {
             console.error('Failed to load step contacts via RPC:', rpcError);
-            return NextResponse.json({ error: `Failed to load contacts: ${rpcError.message}` }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to load contacts' }, { status: 500 });
         }
 
         const rawContacts = contacts || [];
@@ -77,6 +77,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
 
     } catch (error: any) {
         console.error('API /api/analytics/steps/[step] error:', error);
-        return NextResponse.json({ error: error.message || 'Unknown error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
