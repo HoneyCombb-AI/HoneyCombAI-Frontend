@@ -67,11 +67,11 @@ export function ActivityFeedDetails({
     return (
         <div className="mt-4">
             <div className="flex items-center gap-2 mb-3">
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-medium font-semibold">
                     {stepMetrics.find(m => m.step === selectedStep)?.step_label}
                 </h3>
                 <span className="text-sm text-gray-500">
-                    ({contactPagination?.total || 0} contacts)
+                    - {contactPagination?.total || 0} contacts
                 </span>
             </div>
 
