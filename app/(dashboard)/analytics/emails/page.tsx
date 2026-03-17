@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import { StepMetric, StepContact, GeolocationGroupItem, GeolocationPaginatedResponse } from "@/types/analytics";
 import {
@@ -46,19 +46,6 @@ export default function EmailAnalyticsPage() {
     const contactAbortRef = useRef<AbortController | null>(null);
     const geoAbortRef = useRef<AbortController | null>(null);
 
-    // Calculate max steps for dynamic grid
-    const maxSteps = useMemo(() => {
-        const steps = new Set<number>();
-        const extractSteps = (item: any) => {
-            if (item.step_metrics) {
-                item.step_metrics.forEach((sm: any) => steps.add(sm.step));
-            }
-            if (item.cities) item.cities.forEach(extractSteps);
-            if (item.regions) item.regions.forEach(extractSteps);
-        };
-        geoMetrics.forEach(extractSteps);
-        return steps.size;
-    }, [geoMetrics]);
 
     // Fetch Contacts for Selected Step
     const fetchStepContacts = useCallback(async (step: number, page: number, limit: number) => {
@@ -262,7 +249,6 @@ export default function EmailAnalyticsPage() {
                         geoMetrics={geoMetrics}
                         groupBy={groupBy}
                         loading={loadingGeo}
-                        maxSteps={maxSteps}
                     />
                 ) : (
                     // Feed tab depends on step metrics — show spinner until ready

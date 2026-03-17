@@ -3,7 +3,7 @@ import { rateLimiters, getRealIP } from './app/api/utils/rate-limiter';
 
 import { updateSession } from '@/lib/supabase/middleware';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Only apply rate limiting to API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
     try {

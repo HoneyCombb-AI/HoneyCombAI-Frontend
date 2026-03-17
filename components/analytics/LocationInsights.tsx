@@ -1,54 +1,57 @@
 "use client";
 
-import { Eye, MousePointerClick, MapPin, Map, Flag } from "lucide-react";
+import { Eye, MousePointerClick, MapPin, Map, Flag, ChevronDown } from "lucide-react";
 import { GeolocationGroupItem, CityGroup, RegionGroup, CountryGroup, StepMetricDetail } from "@/types/analytics";
 import { Loading } from "@/components/loading";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface LocationInsightsProps {
     geoMetrics: GeolocationGroupItem[];
     groupBy: 'country' | 'region' | 'city';
     loading: boolean;
-    maxSteps: number;
 }
-// Sub-component to render the lowest level (Step Metrics)
-function StepMetricsGrid({ metrics }: { metrics: StepMetricDetail[], maxSteps: number }) {
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step metric label helper
+// ─────────────────────────────────────────────────────────────────────────────
+function stepLabel(step: number): string {
+    if (step === 1) return 'First Email';
+    if (step === 2) return 'First Follow-up';
+    if (step === 3) return 'Second Follow-up';
+    return `Step ${step}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step Metrics Grid — shown directly inside each row when expanded
+// ─────────────────────────────────────────────────────────────────────────────
+function StepMetricsGrid({ metrics }: { metrics: StepMetricDetail[] }) {
     if (!metrics || metrics.length === 0) return null;
 
-    const visibleMetrics = metrics.slice().sort((a, b) => a.step - b.step).slice(0, 4);
+    const sorted = [...metrics].sort((a, b) => a.step - b.step);
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-5">
-            {visibleMetrics.map(stepData => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pt-3 pb-1">
+            {sorted.map(stepData => (
                 <div
                     key={stepData.step}
-                    className="flex flex-col gap-2 w-full h-full p-3 border border-gray-100 rounded-lg bg-white shadow-sm hover:border-gray-200 transition-colors"
+                    className="flex flex-col gap-2 p-3.5 border border-gray-100 rounded-lg bg-white shadow-sm hover:border-gray-200 transition-colors"
                 >
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                            {stepData.step === 1 ? 'First Email' :
-                                stepData.step === 2 ? 'First Follow-up' :
-                                    stepData.step === 3 ? 'Second Follow-up' :
-                                        `Step ${stepData.step}`}
-                        </div>
+                    <div className="inline-flex items-center rounded-full px-2.5 py-0.5 w-fit text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        {stepLabel(stepData.step)}
                     </div>
 
                     <div className="space-y-1.5 mt-1">
-                        <div className="flex items-center justify-between text-[15px]">
+                        <div className="flex items-center justify-between text-[13px]">
                             <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                                <Eye className="w-4 h-4 text-emerald-600" /> Opens
+                                <Eye className="w-3.5 h-3.5 text-emerald-600" /> Opens
                             </span>
                             <span className="font-semibold text-gray-900">{stepData.open_count}</span>
                         </div>
 
-                        <div className="flex items-center justify-between text-[15px]">
+                        <div className="flex items-center justify-between text-[13px]">
                             <span className="text-gray-500 font-medium flex items-center gap-1.5">
-                                <MousePointerClick className="w-4 h-4 text-blue-600" /> Clicks
+                                <MousePointerClick className="w-3.5 h-3.5 text-blue-600" /> Clicks
                             </span>
                             <span className="font-semibold text-gray-900">{stepData.click_count}</span>
                         </div>
@@ -59,87 +62,153 @@ function StepMetricsGrid({ metrics }: { metrics: StepMetricDetail[], maxSteps: n
     );
 }
 
-// Component to render a City row (Indigo Theme)
-function CityRow({ city, maxSteps, valueKey }: { city: CityGroup, maxSteps: number, valueKey: string }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-location pills (region/city names shown as read-only tags)
+// ─────────────────────────────────────────────────────────────────────────────
+function SubLocationPills({ items, label }: { items: string[]; label: string }) {
+    if (!items || items.length === 0) return null;
     return (
-        <AccordionItem value={valueKey} className="bg-white rounded-lg border border-indigo-200 shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
-            <AccordionTrigger className="px-4 py-3 border-b border-indigo-100 flex items-center justify-between gap-4 bg-indigo-50/50 hover:no-underline hover:bg-indigo-100/50 transition-colors">
-                <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">
-                    <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-indigo-100 border border-indigo-200">
-                        <MapPin className="w-4 h-4 text-indigo-700" />
-                    </div>
-                    <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
-                        <span className="font-semibold text-[14px] text-gray-900 truncate max-w-full">{city.city}</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex bg-white border border-indigo-100 rounded-md shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-indigo-50 flex-1">
-                            <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
-                            <span className="text-sm font-semibold text-gray-700">{city.total_open_count}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 flex-1">
-                            <MousePointerClick className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span className="text-sm font-semibold text-gray-700">{city.total_click_count}</span>
-                        </div>
-                    </div>
-                </div>
-            </AccordionTrigger>
-            {city.step_metrics && (
-                <AccordionContent className="border-t border-indigo-100 px-0 py-0 m-0 bg-white">
-                    <StepMetricsGrid metrics={city.step_metrics} maxSteps={maxSteps} />
-                </AccordionContent>
-            )}
-        </AccordionItem>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+            <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider self-center mr-1">{label}:</span>
+            {items.map((name) => (
+                <span
+                    key={name}
+                    className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200"
+                >
+                    {name}
+                </span>
+            ))}
+        </div>
     );
 }
 
-// Component to render a Region row (with nested Cities) (Blue Theme)
-function RegionRow({ region, maxSteps, valueKey }: { region: RegionGroup, maxSteps: number, valueKey: string }) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Totals badge (opens + clicks)
+// ─────────────────────────────────────────────────────────────────────────────
+function TotalsBadge({
+    opens,
+    clicks,
+    borderColor = "border-gray-200",
+    dividerColor = "border-gray-100",
+}: {
+    opens: number;
+    clicks: number;
+    borderColor?: string;
+    dividerColor?: string;
+}) {
     return (
-        <AccordionItem value={valueKey} className="bg-white rounded-lg border border-blue-200 shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
-            <AccordionTrigger className="px-4 py-3 border-b border-blue-100 flex items-center justify-between gap-4 bg-blue-50/50 hover:no-underline hover:bg-blue-100/50 transition-colors">
-                <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">
-                    <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-blue-100 border border-blue-200">
-                        <Map className="w-4 h-4 text-blue-700" />
-                    </div>
-                    <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
-                        <div className="flex items-center gap-2">
-                            <span className="font-semibold text-[14px] text-gray-900 truncate max-w-full">{region.region}</span>
-                            {region.parent_country && <span className="text-xs text-blue-600 font-medium truncate shrink-0">-{region.parent_country}</span>}
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    <div className="flex bg-white border border-blue-100 rounded-md shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 border-r border-blue-50 flex-1">
-                            <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
-                            <span className="text-sm font-semibold text-gray-700">{region.total_open_count}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 px-2 py-1.5 flex-1">
-                            <MousePointerClick className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span className="text-sm font-semibold text-gray-700">{region.total_click_count}</span>
-                        </div>
-                    </div>
-                </div>
-            </AccordionTrigger>
-            {region.cities && region.cities.length > 0 && (
-                <AccordionContent className="border-t border-blue-100 px-0 py-0 m-0 bg-white">
-                    <div className="p-5">
-                        <h4 className="text-sm font-semibold text-indigo-700/80 mb-3 px-1 uppercase tracking-wider">Cities</h4>
-                        <Accordion type="single" collapsible className="flex flex-col gap-3">
-                            {region.cities.map((city, idx) => (
-                                <CityRow key={`${city.city}-${idx}`} city={city} maxSteps={maxSteps} valueKey={`city-${city.city}-${idx}`} />
-                            ))}
-                        </Accordion>
-                    </div>
-                </AccordionContent>
-            )}
-        </AccordionItem>
+        <div className={cn("flex bg-white border rounded-md shadow-sm overflow-hidden shrink-0", borderColor)}>
+            <div className={cn("flex items-center gap-1.5 px-2.5 py-1.5 border-r flex-1", dividerColor)}>
+                <Eye className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="text-sm font-semibold text-gray-700">{opens}</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 flex-1">
+                <MousePointerClick className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span className="text-sm font-semibold text-gray-700">{clicks}</span>
+            </div>
+        </div>
     );
 }
 
-export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsightsProps) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Generic expandable row — used for country, region, and city
+// ─────────────────────────────────────────────────────────────────────────────
+interface ExpandableRowProps {
+    icon: React.ReactNode;
+    iconBg: string;
+    iconBorder: string;
+    rowBorder: string;
+    headerBg: string;
+    headerHover: string;
+    title: string;
+    subtitle?: string | null;
+    opens: number;
+    clicks: number;
+    totalsBorderColor?: string;
+    totalsDividerColor?: string;
+    pills?: { items: string[]; label: string }[];
+    stepMetrics: StepMetricDetail[];
+}
+
+function ExpandableRow({
+    icon,
+    iconBg,
+    iconBorder,
+    rowBorder,
+    headerBg,
+    headerHover,
+    title,
+    subtitle,
+    opens,
+    clicks,
+    totalsBorderColor,
+    totalsDividerColor,
+    pills = [],
+    stepMetrics,
+}: ExpandableRowProps) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div className={cn("rounded-xl border bg-white shadow-sm overflow-hidden transition-all hover:shadow-md", rowBorder)}>
+            {/* Header row */}
+            <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className={cn(
+                    "w-full px-5 py-4 flex items-center gap-4 text-left transition-colors",
+                    headerBg,
+                    headerHover
+                )}
+            >
+                {/* Icon */}
+                <div className={cn("p-2 rounded-lg shrink-0 flex items-center justify-center border", iconBg, iconBorder)}>
+                    {icon}
+                </div>
+
+                {/* Title + subtitle + pills */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-[15px] text-gray-900 truncate">{title}</span>
+                        {subtitle && (
+                            <span className="text-xs text-gray-400 font-medium truncate shrink-0">{subtitle}</span>
+                        )}
+                    </div>
+                    {pills.map((p) => (
+                        <SubLocationPills key={p.label} items={p.items} label={p.label} />
+                    ))}
+                </div>
+
+                {/* Totals + chevron */}
+                <div className="flex items-center gap-3 shrink-0">
+                    <TotalsBadge
+                        opens={opens}
+                        clicks={clicks}
+                        borderColor={totalsBorderColor}
+                        dividerColor={totalsDividerColor}
+                    />
+                    <ChevronDown
+                        className={cn(
+                            "w-4 h-4 text-gray-400 transition-transform duration-200",
+                            open && "rotate-180"
+                        )}
+                    />
+                </div>
+            </button>
+
+            {/* Step metrics — shown when expanded */}
+            {open && stepMetrics && stepMetrics.length > 0 && (
+                <div className="px-5 pb-5 border-t border-gray-100 bg-gray-50/40">
+                    <StepMetricsGrid metrics={stepMetrics} />
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main export
+// ─────────────────────────────────────────────────────────────────────────────
+export function LocationInsights({ geoMetrics, loading }: LocationInsightsProps) {
     if (loading) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center">
@@ -160,69 +229,88 @@ export function LocationInsights({ geoMetrics, loading, maxSteps }: LocationInsi
     }
 
     return (
-        <div className="w-full pb-2">
-            <Accordion type="single" collapsible className="space-y-4">
-                {geoMetrics.map((item, idx) => {
-                    const isCountry = 'country' in item;
-                    const isRegion = 'region' in item;
-                    const isCity = 'city' in item;
+        <div className="w-full pb-2 flex flex-col gap-3">
+            {geoMetrics.map((item, idx) => {
+                const isCountry = 'country' in item;
+                const isRegion = 'region' in item && !('country' in item);
+                const isCity = 'city' in item;
 
-                    // Level 1: Country - Neutral Gray Theme
-                    if (isCountry) {
-                        const countryItem = item as CountryGroup;
-                        return (
-                            <AccordionItem key={`country-${countryItem.country}-${idx}`} value={`country-${countryItem.country}-${idx}`} className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden transition-all hover:shadow-md last:border-b">
-                                <AccordionTrigger className="px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-4 hover:no-underline bg-white hover:bg-gray-50/50 transition-colors">
-                                    <div className="flex items-start md:items-center gap-3 min-w-0 flex-col md:flex-row flex-1">
-                                        <div className="p-2 rounded-lg shrink-0 flex items-center justify-center bg-gray-50 border border-gray-200 text-gray-600">
-                                            <Flag className="w-4 h-4" />
-                                        </div>
-                                        <div className="min-w-0 flex flex-col items-start bg-transparent text-left w-full">
-                                            <span className="font-semibold text-[15px] text-gray-900 truncate max-w-full">{countryItem.country}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <div className="flex bg-white border border-gray-200 rounded-md shadow-sm overflow-hidden">
-                                            <div className="flex items-center gap-1.5 px-3 py-2 border-r border-gray-100 flex-1">
-                                                <Eye className="w-4 h-4 text-emerald-600 shrink-0" />
-                                                <span className="text-sm font-semibold text-gray-700">{countryItem.total_open_count}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 px-3 py-2 flex-1">
-                                                <MousePointerClick className="w-4 h-4 text-blue-600 shrink-0" />
-                                                <span className="text-sm font-semibold text-gray-700">{countryItem.total_click_count}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </AccordionTrigger>
-                                {countryItem.regions && countryItem.regions.length > 0 && (
-                                    <AccordionContent className="border-t border-gray-100 px-0 py-0 m-0 bg-white">
-                                        <div className="p-6">
-                                            <h4 className="text-sm font-semibold text-blue-700/80 mb-4 px-1 uppercase tracking-wider">Regions</h4>
-                                            <Accordion type="single" collapsible className="flex flex-col gap-4">
-                                                {countryItem.regions.map((region, rIdx) => (
-                                                    <RegionRow key={`${region.region}-${rIdx}`} region={region} maxSteps={maxSteps} valueKey={`region-${region.region}-${rIdx}`} />
-                                                ))}
-                                            </Accordion>
-                                        </div>
-                                    </AccordionContent>
-                                )}
-                            </AccordionItem>
-                        );
-                    }
+                // ── Country row (Gray theme)
+                if (isCountry) {
+                    const c = item as CountryGroup;
+                    return (
+                        <ExpandableRow
+                            key={`country-${c.country}-${idx}`}
+                            icon={<Flag className="w-4 h-4 text-gray-600" />}
+                            iconBg="bg-gray-50"
+                            iconBorder="border-gray-200"
+                            rowBorder="border-gray-200"
+                            headerBg="bg-white"
+                            headerHover="hover:bg-gray-50/50"
+                            title={c.country}
+                            opens={c.total_open_count}
+                            clicks={c.total_click_count}
+                            pills={[
+                                { items: c.regions ?? [], label: "Regions" },
+                                { items: c.cities ?? [], label: "Cities" },
+                            ]}
+                            stepMetrics={c.step_metrics ?? []}
+                        />
+                    );
+                }
 
-                    if (isRegion) {
-                        const regionItem = item as RegionGroup;
-                        return <RegionRow key={`root-region-${regionItem.region}-${idx}`} region={regionItem} maxSteps={maxSteps} valueKey={`root-region-${regionItem.region}-${idx}`} />;
-                    }
+                // ── Region row (Blue theme)
+                if (isRegion) {
+                    const r = item as RegionGroup;
+                    return (
+                        <ExpandableRow
+                            key={`region-${r.region}-${idx}`}
+                            icon={<Map className="w-4 h-4 text-blue-700" />}
+                            iconBg="bg-blue-50"
+                            iconBorder="border-blue-200"
+                            rowBorder="border-blue-200"
+                            headerBg="bg-blue-50/30"
+                            headerHover="hover:bg-blue-50/60"
+                            title={r.region}
+                            subtitle={r.parent_country ? `· ${r.parent_country}` : null}
+                            opens={r.total_open_count}
+                            clicks={r.total_click_count}
+                            totalsBorderColor="border-blue-100"
+                            totalsDividerColor="border-blue-50"
+                            pills={[
+                                { items: r.cities ?? [], label: "Cities" },
+                            ]}
+                            stepMetrics={r.step_metrics ?? []}
+                        />
+                    );
+                }
 
-                    if (isCity) {
-                        const cityItem = item as CityGroup;
-                        return <CityRow key={`root-city-${cityItem.city}-${idx}`} city={cityItem} maxSteps={maxSteps} valueKey={`root-city-${cityItem.city}-${idx}`} />;
-                    }
+                // ── City row (Indigo theme)
+                if (isCity) {
+                    const city = item as CityGroup;
+                    const sub = [city.parent_region, city.parent_country].filter(Boolean).join(', ');
+                    return (
+                        <ExpandableRow
+                            key={`city-${city.city}-${idx}`}
+                            icon={<MapPin className="w-4 h-4 text-indigo-700" />}
+                            iconBg="bg-indigo-50"
+                            iconBorder="border-indigo-200"
+                            rowBorder="border-indigo-200"
+                            headerBg="bg-indigo-50/30"
+                            headerHover="hover:bg-indigo-50/60"
+                            title={city.city}
+                            subtitle={sub ? `· ${sub}` : null}
+                            opens={city.total_open_count}
+                            clicks={city.total_click_count}
+                            totalsBorderColor="border-indigo-100"
+                            totalsDividerColor="border-indigo-50"
+                            stepMetrics={city.step_metrics ?? []}
+                        />
+                    );
+                }
 
-                    return null;
-                })}
-            </Accordion>
+                return null;
+            })}
         </div>
     );
 }

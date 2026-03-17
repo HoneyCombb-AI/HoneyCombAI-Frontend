@@ -36,7 +36,7 @@ export interface StepMetricDetail {
 
 export interface CityGroup {
     city: string;
-    parent_region?: string;
+    parent_region?: string | null;
     parent_country?: string;
     total_open_count: number;
     total_click_count: number;
@@ -46,16 +46,19 @@ export interface CityGroup {
 export interface RegionGroup {
     region: string;
     parent_country?: string;
+    cities: string[];            // top-10 city names for display context
     total_open_count: number;
     total_click_count: number;
-    cities?: CityGroup[];
+    step_metrics: StepMetricDetail[];
 }
 
 export interface CountryGroup {
     country: string;
+    regions: string[];           // top-10 region names for display context
+    cities: string[];            // top-10 city names for display context
     total_open_count: number;
     total_click_count: number;
-    regions?: RegionGroup[];
+    step_metrics: StepMetricDetail[];
 }
 
 export type GeolocationGroupItem = CountryGroup | RegionGroup | CityGroup;
