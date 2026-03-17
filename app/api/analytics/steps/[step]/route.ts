@@ -21,9 +21,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
         }
 
         const { step } = await params;
-        const stepNum = parseInt(step, 10);
+        const stepNum = Number(step);
 
-        if (isNaN(stepNum)) {
+        if (!Number.isInteger(stepNum) || stepNum <= 0) {
             return NextResponse.json({ error: 'Invalid step parameter' }, { status: 400 });
         }
 

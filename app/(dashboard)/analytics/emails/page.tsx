@@ -125,9 +125,11 @@ export default function EmailAnalyticsPage() {
             const response = await axios.get<GeolocationPaginatedResponse>('/api/analytics/geolocation', { params, signal: controller.signal });
             setGeoMetrics(response.data.data || []);
             setGeoPagination(response.data.pagination || null);
+            return true; // Signal success so the caller can advance lastFetchedGeoParams
         } catch (err: any) {
-            if (axios.isCancel(err)) return; // Stale request — ignore
+            if (axios.isCancel(err)) return false; // Stale request — ignore
             console.error("Error fetching geo metrics:", err);
+            return false; // Failed — caller should NOT advance lastFetchedGeoParams
         } finally {
             // Only clear loading if this controller is still the active one
             if (geoAbortRef.current === controller) {
@@ -149,8 +151,14 @@ export default function EmailAnalyticsPage() {
                 lastFetchedGeoParams.current.limit !== currentParams.limit ||
                 lastFetchedGeoParams.current.groupBy !== currentParams.groupBy
             ) {
-                lastFetchedGeoParams.current = currentParams;
-                fetchGeoMetrics(currentParams.page, currentParams.limit, currentParams.groupBy);
+                // Only advance the cache after a successful response so that
+                // failed requests can be retried with the same params.
+                fetchGeoMetrics(currentParams.page, currentParams.limit, currentParams.groupBy)
+                    .then((succeeded) => {
+                        if (succeeded) {
+                            lastFetchedGeoParams.current = currentParams;
+                        }
+                    });
             }
         }
     }, [fetchGeoMetrics, activeTab, geoPage, geoLimit, groupBy]);
@@ -246,21 +254,23 @@ export default function EmailAnalyticsPage() {
                 </div>
             </div>
 
-            {/* Main Content Area */}
-            {loadingMetrics ? (
-                <div className="flex-1 flex-col  bg-white shadow-sm p-6 flex items-center justify-center min-h-0">
-                    <Loading />
-                    <p className="text-sm text-muted-foreground mt-4">Loading your Analytics...</p>
-                </div>
-            ) : (
-                <div className="flex-1 bg-white shadow-sm p-6 flex flex-col min-h-0">
-                    {activeTab === 'geo' ? (
-                        <LocationInsights
-                            geoMetrics={geoMetrics}
-                            groupBy={groupBy}
-                            loading={loadingGeo}
-                            maxSteps={maxSteps}
-                        />
+            {/* Main Content Area — each tab uses its own loading state */}
+            <div className="flex-1 bg-white shadow-sm p-6 flex flex-col min-h-0">
+                {activeTab === 'geo' ? (
+                    // Geo tab is independent of step-metrics; uses its own loadingGeo state
+                    <LocationInsights
+                        geoMetrics={geoMetrics}
+                        groupBy={groupBy}
+                        loading={loadingGeo}
+                        maxSteps={maxSteps}
+                    />
+                ) : (
+                    // Feed tab depends on step metrics — show spinner until ready
+                    loadingMetrics ? (
+                        <div className="flex flex-1 flex-col items-center justify-center">
+                            <Loading />
+                            <p className="text-sm text-muted-foreground mt-4">Loading your Analytics...</p>
+                        </div>
                     ) : (
                         <ActivityFeed
                             stepMetrics={stepMetrics}
@@ -272,9 +282,9 @@ export default function EmailAnalyticsPage() {
                             onStepClick={handleStepClick}
                             onExpandedChange={setExpandedContact}
                         />
-                    )}
-                </div>
-            )}
+                    )
+                )}
+            </div>
 
             {/* Pagination Footers - Pushed to the bottom */}
             {activeTab === 'feed' && selectedStep && (
