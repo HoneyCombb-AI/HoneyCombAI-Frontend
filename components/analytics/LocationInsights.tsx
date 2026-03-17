@@ -40,21 +40,21 @@ function StepMetricsGrid({ metrics }: { metrics: StepMetricDetail[] }) {
                     className="flex flex-col gap-2 w-full h-full p-4 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors bg-white/50 backdrop-blur-sm"
                 >
                     {/* Step - Primary Focus */}
-                    <div className="flex items-start gap-2.5 text-gray-900">
+                    <div className="flex items-start gap-2.5 text-indigo-800 mb-2">
                         <Mail className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
                         <span className="font-semibold text-sm wrap-break-word leading-tight">{stepLabel(stepData.step)}</span>
                     </div>
 
                     {/* Opens - Secondary Focus */}
-                    <div className="flex items-start gap-2.5 text-gray-800">
+                    <div className="flex items-start gap-2.5 text-gray-700">
                         <Eye className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span className="font-medium text-sm leading-tight wrap-break-word">
+                        <span className="font-normal text-sm leading-tight wrap-break-word">
                             {stepData.open_count} {stepData.open_count === 1 ? 'Open' : 'Opens'}
                         </span>
                     </div>
 
                     {/* Clicks - Muted */}
-                    <div className="flex items-center gap-2 text-gray-500 mt-1">
+                    <div className="flex items-center gap-2 text-gray-700 mt-1">
                         <MousePointerClick className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                         <span className="text-xs font-mono tracking-tight">
                             {stepData.click_count} {stepData.click_count === 1 ? 'Click' : 'Clicks'}
