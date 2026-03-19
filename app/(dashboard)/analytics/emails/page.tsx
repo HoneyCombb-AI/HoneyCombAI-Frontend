@@ -10,6 +10,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
 import { ActivityFeed } from "@/components/analytics/ActivityFeed";
 import { LocationInsights } from "@/components/analytics/LocationInsights";
 import { PaginationFooter, PaginationInfo } from "@/components/analytics/PaginationFooter";
@@ -38,6 +40,9 @@ export default function EmailAnalyticsPage() {
     const [geoLimit, setGeoLimit] = useState(30);
     const [geoPagination, setGeoPagination] = useState<PaginationInfo | null>(null);
     const [groupBy, setGroupBy] = useState<'country' | 'region' | 'city'>('country');
+
+    // Export State
+    const [exportLoading, setExportLoading] = useState(false);
 
     // Store last fetched parameters to prevent duplicate/unnecessary API calls
     const lastFetchedGeoParams = useRef({ page: 0, limit: 0, groupBy: '' });
@@ -190,6 +195,30 @@ export default function EmailAnalyticsPage() {
         setGeoPage(1);
     };
 
+    // Handle CSV Export
+    const handleExport = async () => {
+        try {
+            setExportLoading(true);
+            const response = await fetch('/api/analytics/export');
+            if (!response.ok) {
+                throw new Error('Export failed');
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `email-analytics-export-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Export error:', err);
+        } finally {
+            setExportLoading(false);
+        }
+    };
+
     return (
         <div className="flex flex-1 flex-col w-full bg-gray-50/50 min-w-0 min-h-0">
             {/* Header Bar */}
@@ -238,6 +267,20 @@ export default function EmailAnalyticsPage() {
                             <SelectItem value="100">Show 100</SelectItem>
                         </SelectContent>
                     </Select>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExport}
+                        disabled={exportLoading}
+                        className="h-9 gap-2"
+                    >
+                        {exportLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Download className="h-4 w-4" />
+                        )}
+                        Export CSV
+                    </Button>
                 </div>
             </div>
 
