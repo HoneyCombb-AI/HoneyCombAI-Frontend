@@ -16,6 +16,7 @@ interface ExportRow {
     click_count: number;
     click_locations: string | null;
     internally_forwarded: boolean;
+    sender_email: string | null;
 }
 
 function escapeCSVField(value: string | null | undefined): string {
@@ -41,6 +42,7 @@ function rowsToCSV(rows: ExportRow[]): string {
         'Click Count',
         'Click Locations',
         'Internally Forwarded',
+        'Sender Email',
     ];
 
     const csvLines = [headers.join(',')];
@@ -59,6 +61,7 @@ function rowsToCSV(rows: ExportRow[]): string {
             String(row.click_count ?? 0),
             escapeCSVField(row.click_locations),
             row.internally_forwarded ? 'Yes' : 'No',
+            escapeCSVField(row.sender_email),
         ].join(','));
     }
 
