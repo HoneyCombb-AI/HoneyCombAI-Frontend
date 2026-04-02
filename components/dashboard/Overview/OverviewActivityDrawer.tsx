@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { formatDistanceToNow, parseISO } from "date-fns"
 import axios from "axios"
@@ -87,25 +87,39 @@ export function OverviewActivityDrawer({
     const [items, setItems] = useState<OverviewActivityItem[]>([])
     const [loading, setLoading] = useState(false)
     const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+    const abortRef = useRef<AbortController | null>(null)
+
+    useEffect(() => {
+        return () => {
+            abortRef.current?.abort()
+        }
+    }, [])
 
     useEffect(() => {
         if (open && statType) {
             fetchActivityDetails(statType)
         }
         if (!open) {
+            abortRef.current?.abort()
             setItems([])
             setImageErrors(new Set())
         }
     }, [open, statType])
 
     const fetchActivityDetails = async (type: OverviewStatType) => {
+        abortRef.current?.abort()
+        const controller = new AbortController()
+        abortRef.current = controller
         setLoading(true)
         try {
             const response = await axios.get<OverviewActivityItem[]>(
-                `/api/overview/activity-details?type=${type}`
+                `/api/overview/activity-details?type=${type}`,
+                { signal: controller.signal }
             )
+            if (controller.signal.aborted) return
             setItems(response.data)
         } catch (err) {
+            if (axios.isAxiosError(err) && err.code === "ERR_CANCELED") return
             console.error("Error fetching activity details:", err)
             if (axios.isAxiosError(err) && err.response?.status === 429) {
                 toast.error("Too many requests. Please wait before trying again.")
@@ -114,7 +128,9 @@ export function OverviewActivityDrawer({
             }
             setItems([])
         } finally {
-            setLoading(false)
+            if (!controller.signal.aborted) {
+                setLoading(false)
+            }
         }
     }
 
@@ -233,7 +249,7 @@ export function OverviewActivityDrawer({
                                                     }
                                                 />
                                             ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
+                                                <div className="w-full h-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
                                                     {getInitials(
                                                         item.contact_name || ""
                                                     )}
