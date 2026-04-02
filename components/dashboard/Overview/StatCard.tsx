@@ -10,9 +10,10 @@ interface StatCardProps {
     description?: string;
     className?: string;
     trend?: "up" | "down" | "neutral";
+    onClick?: () => void;
 }
 
-export function StatCard({ title, value, icon: Icon, description, className, trend: _trend }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, description, className, trend: _trend, onClick }: StatCardProps) {
     // Determine if value is a number or a string that looks like a number percentage
     const isNumber = typeof value === 'number';
     const numValue = isNumber ? value as number : 0;
@@ -23,7 +24,14 @@ export function StatCard({ title, value, icon: Icon, description, className, tre
     const percentageValue = !isNaN(parsed) ? parsed : 0;
 
     return (
-        <Card className={cn("overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:bg-accent/5 transition-colors", className)}>
+        <Card
+            className={cn(
+                "overflow-hidden border-border/50 bg-background/50 backdrop-blur-sm hover:bg-accent/5 transition-all",
+                onClick && "cursor-pointer hover:ring-1 hover:ring-primary/20 hover:shadow-sm active:scale-[0.98]",
+                className
+            )}
+            onClick={onClick}
+        >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                     {title}
