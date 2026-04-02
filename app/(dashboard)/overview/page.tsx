@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { StatCard } from "@/components/dashboard/Overview/StatCard";
 import { SignalTrendChart } from "@/components/dashboard/Overview/SignalTrendChart";
 import { EngagementStyleChart } from "@/components/dashboard/Overview/EngagementStyleChart";
 import { SocialDistributionChart } from "@/components/dashboard/Overview/SocialDistributionChart";
+import { OverviewActivityDrawer } from "@/components/dashboard/Overview/OverviewActivityDrawer";
 import {
     Activity,
     Flame,
@@ -23,13 +24,24 @@ import {
     // MailPlus,
     MessageSquare,
 } from "lucide-react";
-import { DashboardData } from "@/types/overview";
+import { DashboardData, OverviewStatType } from "@/types/overview";
 import { Loading } from "@/components/loading";
 
 export default function OverviewPage() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Drawer state
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [drawerStatType, setDrawerStatType] = useState<OverviewStatType | null>(null);
+    const [drawerTitle, setDrawerTitle] = useState("");
+
+    const openDrawer = useCallback((statType: OverviewStatType, title: string) => {
+        setDrawerStatType(statType);
+        setDrawerTitle(title);
+        setDrawerOpen(true);
+    }, []);
 
     useEffect(() => {
         async function fetchDashboardData() {
@@ -191,6 +203,7 @@ export default function OverviewPage() {
                         icon={Send}
                         description="Outreach actions completed today"
                         className="bg-sky-500/10 border-sky-500/20"
+                        onClick={() => openDrawer('linkedin_tasks_today', 'LinkedIn Tasks Today')}
                     />
                     <StatCard
                         title="Emails Sent Today"
@@ -198,6 +211,7 @@ export default function OverviewPage() {
                         icon={Mail}
                         description="Outbound emails sent today"
                         className="bg-indigo-500/10 border-indigo-500/20"
+                        onClick={() => openDrawer('emails_today', 'Emails Sent Today')}
                     />
                     <StatCard
                         title="Connects Today"
@@ -205,6 +219,7 @@ export default function OverviewPage() {
                         icon={UserPlus}
                         description="Connection requests today"
                         className="bg-blue-500/10 border-blue-500/20"
+                        onClick={() => openDrawer('connects_today', 'Connects Today')}
                     />
                     <StatCard
                         title="Messages Today"
@@ -212,6 +227,7 @@ export default function OverviewPage() {
                         icon={MessageSquare}
                         description="LinkedIn messages today"
                         className="bg-cyan-500/10 border-cyan-500/20"
+                        onClick={() => openDrawer('messages_today', 'Messages Today')}
                     />
                 </div>
             </section>
@@ -295,6 +311,14 @@ export default function OverviewPage() {
                     />
                 </div>
             </section>
+
+            {/* Activity Detail Drawer */}
+            <OverviewActivityDrawer
+                open={drawerOpen}
+                onOpenChange={setDrawerOpen}
+                statType={drawerStatType}
+                title={drawerTitle}
+            />
 
         </div>
     );
