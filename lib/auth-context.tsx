@@ -75,46 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   useEffect(() => {
-    // Get initial session
-    const getUser = async () => {
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-
-        if (error) throw error;
-
-        setSession(session);
-        setUser(session?.user ?? null);
-        setError(null);
-      } catch (error: unknown) {
-        console.error("Error getting user:", error);
-        setError(
-          error instanceof Error ? error.message : "Unknown error occurred"
-        );
-        setUser(null);
-        setSession(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getUser();
-
-    // Listen for auth changes
+    // Single source of truth: onAuthStateChange handles INITIAL_SESSION
+    // as well as subsequent auth events — no separate getSession() needed.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession((prev) => {
-        if (prev?.access_token === session?.access_token) return prev;
-        return session ?? null;
-      });
-      setUser((prev) => {
-        const newUser = session?.user ?? null;
-        if (prev?.id === newUser?.id) return prev;
-        return newUser;
-      });
+      setSession(session ?? null);
+      setUser(session?.user ?? null);
+      setError(null);
+      setLoading(false);
+
       if (event === "SIGNED_OUT") {
         setRole(null);
         setApprovalRequired(false);
