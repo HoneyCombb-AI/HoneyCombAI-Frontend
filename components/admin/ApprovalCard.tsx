@@ -209,12 +209,12 @@ export function ApprovalCard({
                             )}
                         </div>
                     ) : (
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 rounded-md p-3 max-h-64 overflow-y-auto">
+                        <div className="text-sm text-gray-700 bg-gray-50 rounded-md p-3 max-h-64 overflow-y-auto">
                             {isEmailSnapshot(snapshot)
-                                ? snapshot.body
-                                : (snapshot as LinkedInSnapshot).draft_message ||
+                                ? <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: snapshot.body }} />
+                                : <div className="whitespace-pre-wrap">{(snapshot as LinkedInSnapshot).draft_message ||
                                   (snapshot as LinkedInSnapshot).connection_note ||
-                                  "No content"}
+                                  "No content"}</div>}
                         </div>
                     )}
 

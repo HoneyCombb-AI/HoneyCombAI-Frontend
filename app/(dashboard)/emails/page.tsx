@@ -140,6 +140,7 @@ export default function EmailsPage() {
                         draft_position: null,
                         email_account_name: null,
                         email_account_id: null,
+                        has_pending_approval: false,
                     };
                     setEmails(prev => {
                         if (prev.some(e => e.id === minimalContact.id)) return prev;
@@ -194,6 +195,19 @@ export default function EmailsPage() {
             setMessageError(null);
             const response = await axios.get(`/api/emails/${contactId}/messages`);
             setMessages(response.data.messages || []);
+
+            // Merge pending approval data into the contact entry
+            const approval = response.data.pending_approval || null;
+            setEmails(prev => prev.map(e => {
+                if (e.id !== contactId) return e;
+                return {
+                    ...e,
+                    has_pending_approval: !!approval,
+                    pending_approval_id: approval?.id || null,
+                    pending_approval_subject: approval?.subject || null,
+                    pending_approval_body: approval?.body || null,
+                };
+            }));
         } catch (e: unknown) {
             if (axios.isAxiosError(e)) {
                 setMessageError(e.response?.data?.error || e.message);

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PendingDraftBanner } from "./PendingDraftBanner";
+import { PendingApprovalBanner } from "./PendingApprovalBanner";
 import DOMPurify from "dompurify";
 
 interface EmailViewerProps {
@@ -47,6 +48,13 @@ export function EmailViewer({
             {email.draft_id && onDraftSave && (
                 <div className="shrink-0">
                     <PendingDraftBanner key={email.id} contact={email} onSave={onDraftSave} />
+                </div>
+            )}
+
+            {/* Pending Approval Banner */}
+            {email.pending_approval_id && (
+                <div className="shrink-0">
+                    <PendingApprovalBanner key={`approval-${email.id}`} contact={email} />
                 </div>
             )}
 

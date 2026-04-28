@@ -106,18 +106,25 @@ export function EmailList({
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        {email.draft_id && (
-                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-50 text-violet-800 border border-violet-300 animate-pulse">
-                                                <Clock className="h-3 w-3" />
-                                                Pending Draft
-                                            </span>
-                                        )}
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            {email.company_name}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 shrink-0 overflow-hidden">
+                                            {email.draft_id && (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-50 text-violet-800 border border-violet-300 animate-pulse whitespace-nowrap" title="Pending Draft">
+                                                    <Clock className="h-3 w-3 shrink-0" />
+                                                    <span className="truncate max-w-[80px]">Pending Draft</span>
+                                                </span>
+                                            )}
+                                            {email.has_pending_approval && (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap" title="Awaiting Approval">
+                                                    <Clock className="h-3 w-3 shrink-0" />
+                                                    <span className="truncate max-w-[80px]">Awaiting Approval</span>
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-
-                                    <p className="text-xs text-muted-foreground truncate">
-                                        {email.company_name}
-                                    </p>
                                 </div>
                             </div>
                         </button>

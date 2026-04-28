@@ -129,9 +129,31 @@ export async function GET(
             };
         });
 
+        // Fetch pending approval item for this contact (if any)
+        const { data: approvalRows } = await supabase
+            .from('approval_queue')
+            .select('id, snapshot, submitted_at')
+            .eq('contact_id', contactId)
+            .eq('status', 'pending')
+            .eq('organization_id', organizationId)
+            .in('item_type', ['manual_email', 'email_draft'])
+            .order('submitted_at', { ascending: false })
+            .limit(1);
+
+        const approvalItem = approvalRows?.[0] || null;
+        const pendingApproval = approvalItem
+            ? {
+                id: approvalItem.id,
+                subject: (approvalItem.snapshot as any)?.subject || '',
+                body: (approvalItem.snapshot as any)?.body || '',
+                submitted_at: approvalItem.submitted_at,
+            }
+            : null;
+
         const result: MessagesResponse = {
             messages,
             contact_id: contactId,
+            pending_approval: pendingApproval,
         };
 
         return NextResponse.json(result);
