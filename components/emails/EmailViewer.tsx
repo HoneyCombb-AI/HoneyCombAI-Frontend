@@ -63,8 +63,9 @@ export function EmailViewer({
                 style={{ paddingBottom: bottomInset ? bottomInset + 24 : undefined }}
             >
                 {loading ? (
-                    <div className="flex items-center justify-center h-full">
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
                         <Loading />
+                        <p className="text-sm text-muted-foreground mt-4">Loading your Emails...</p>
                     </div>
                 ) : error ? (
                     <div className="flex items-center justify-center h-full">
