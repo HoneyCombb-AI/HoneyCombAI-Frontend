@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Puzzle,
   Settings,
@@ -27,9 +27,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useNotifications } from "@/lib/notification-context";
 import {
@@ -52,7 +52,7 @@ import { toast } from "sonner";
 const items = [
   {
     title: "Overview",
-    icon: LayoutDashboard, // Using LayoutDashboard
+    icon: LayoutDashboard,
     url: "/overview",
     hasChevron: false,
   },
@@ -111,7 +111,19 @@ export function AppSidebar() {
   const { unreadCount } = useNotifications();
   const pathname = usePathname();
   const router = useRouter();
+  const { setOpen, state } = useSidebar();
+  const isCollapsed = state === "collapsed";
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  // Route-aware sidebar: expanded on /overview, collapsed everywhere else.
+  // Uses a ref so the effect only re-runs when pathname changes,
+  // not when ShadCN recreates the setOpen function reference.
+  const setOpenRef = useRef(setOpen);
+  setOpenRef.current = setOpen;
+
+  useEffect(() => {
+    setOpenRef.current(pathname === "/overview");
+  }, [pathname]);
 
   const isPathActive = (path: string) => {
     return pathname === path;
@@ -141,32 +153,37 @@ export function AppSidebar() {
     .slice(0, 2);
 
   return (
-    <Sidebar className="border-r">
-      <SidebarHeader className="border-b p-4">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="h-16 w-16 bg-linear-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-2xl shadow-amber-500/25 rotate-3 hover:rotate-0 transition-transform duration-700">
+    <Sidebar
+      collapsible="icon"
+      className="border-r"
+    >
+      <SidebarHeader className="border-b p-3">
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+          <div className="relative shrink-0">
+            <div className={`${isCollapsed ? 'h-8 w-8 rounded-lg' : 'h-10 w-10 rounded-xl'} bg-linear-to-br from-amber-400 to-yellow-500 shadow-lg shadow-amber-500/25 rotate-3 hover:rotate-0 transition-all duration-700`}>
             </div>
-            <div className="absolute -inset-2 bg-linear-to-r from-amber-400 to-yellow-500 rounded-2xl blur-lg opacity-30 animate-pulse"></div>
-            <div className="absolute inset-0 flex items-end justify-end p-1 pointer-events-none">
-              <svg className="w-8 h-8 mt-1 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+            <div className={`absolute ${isCollapsed ? '-inset-1' : '-inset-1.5'} bg-linear-to-r from-amber-400 to-yellow-500 rounded-xl blur-lg opacity-30 animate-pulse`}></div>
+            <div className="absolute inset-0 flex items-end justify-end p-0.5 pointer-events-none">
+              <svg className={`${isCollapsed ? 'w-4 h-4' : 'w-5 h-5'} mt-0.5 text-slate-900`} viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.5 3.5L22 12l-4.5 8.5h-11L2 12l4.5-8.5h11z" />
               </svg>
             </div>
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-xl bg-linear-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent tracking-tight hidden sm:block">
-                HoneyComb
-              </span>
-              <span className="text-sm font-medium text-[#0f4f48] hidden sm:block">
-                AI
+          {!isCollapsed && (
+            <div className="flex flex-col overflow-hidden">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-lg bg-linear-to-r from-amber-600 to-yellow-500 bg-clip-text text-transparent tracking-tight truncate">
+                  HoneyComb
+                </span>
+                <span className="text-sm font-medium text-[#0f4f48]">
+                  AI
+                </span>
+              </div>
+              <span className="text-xs text-muted-foreground font-medium truncate">
+                Business Intelligence
               </span>
             </div>
-            <span className="text-xs text-muted-foreground font-medium">
-              Business Intelligence
-            </span>
-          </div>
+          )}
         </div>
       </SidebarHeader>
 
@@ -178,7 +195,11 @@ export function AppSidebar() {
                 const isActive = isPathActive(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                    >
                       <Link
                         href={item.url}
                         className="flex items-center w-full"
@@ -194,77 +215,78 @@ export function AppSidebar() {
                 );
               })}
             </SidebarMenu>
+
+
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-4 space-y-4">
+      <SidebarFooter className="border-t p-2 space-y-1">
         {/* Notification and Support */}
-        <div className="space-y-2">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
-                <PopoverTrigger asChild>
-                  <SidebarMenuButton asChild>
-                    <button className="flex items-center w-full relative">
-                      <div className="relative">
-                        <Bell className="h-4 w-4" />
-                        {unreadCount > 0 && (
-                          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium min-w-4">
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <span className="flex-1 ml-2">Notification</span>
-                    </button>
-                  </SidebarMenuButton>
-                </PopoverTrigger>
-                <PopoverContent className="min-w-80" align="start">
-                  <NotificationPopoverContent isOpen={isNotificationOpen} />
-                </PopoverContent>
-              </Popover>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/support" className="flex items-center w-full">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>Support</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <Popover open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
+              <PopoverTrigger asChild>
+                <SidebarMenuButton tooltip="Notifications">
+                  <div className="relative">
+                    <Bell className="h-4 w-4" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium min-w-4">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  <span>Notification</span>
+                </SidebarMenuButton>
+              </PopoverTrigger>
+              <PopoverContent className="min-w-80 z-[60]" align="end" side="right" sideOffset={8}>
+                <NotificationPopoverContent isOpen={isNotificationOpen} />
+              </PopoverContent>
+            </Popover>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Support">
+              <Link href="/support">
+                <MessageSquare className="h-4 w-4" />
+                <span>Support</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
 
         {/* User Profile with Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-start h-auto p-2 rounded-lg bg-muted/50 hover:bg-muted"
-            >
-              <div className="flex items-center gap-3 w-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={avatarUrl} alt={displayName} />
-                  <AvatarFallback className="bg-white text-black">{initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-medium leading-none truncate">
-                    {displayName}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {userEmail}
-                  </p>
-                </div>
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={handleSignOut}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Sign Out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  tooltip={displayName}
+                  className="bg-muted/50 hover:bg-muted"
+                >
+                  <Avatar className="h-6 w-6 shrink-0">
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                    <AvatarFallback className="bg-white text-black text-xs">{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium leading-none truncate">
+                      {displayName}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {userEmail}
+                    </p>
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="right" className="w-56">
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );
