@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Mail,
   Activity,
+  ShieldCheck,
 } from "lucide-react";
 
 import {
@@ -107,7 +108,7 @@ const items = [
 ];
 
 export function AppSidebar() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, role } = useAuth();
   const { unreadCount } = useNotifications();
   const pathname = usePathname();
   const router = useRouter();
@@ -216,6 +217,23 @@ export function AppSidebar() {
               })}
             </SidebarMenu>
 
+            {/* Admin-only items */}
+            {role === 'admin' && (
+              <SidebarMenu className="my-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isPathActive("/approvals")}
+                    tooltip="Approvals"
+                  >
+                    <Link href="/approvals" className="flex items-center w-full">
+                      <ShieldCheck className="h-4 w-4" />
+                      <span className="flex-1">Approvals</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
 
           </SidebarGroupContent>
         </SidebarGroup>

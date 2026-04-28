@@ -15,6 +15,7 @@ const TITLE_MAP: Record<string, string> = {
   "/organization": "Organization",
   "/profile": "Settings",
   "/support": "Support",
+  "/approvals": "Approvals",
 };
 
 function resolveTitle(pathname: string): string {

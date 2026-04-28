@@ -11,6 +11,7 @@ import {
   useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 interface AuthContextType {
   user: User | null;
@@ -19,6 +20,8 @@ interface AuthContextType {
   error: string | null;
   signOut: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  role: 'admin' | 'user' | null;
+  approvalRequired: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +31,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<'admin' | 'user' | null>(null);
+  const [approvalRequired, setApprovalRequired] = useState(false);
   const router = useRouter();
 
   const supabase = useMemo(() => createClient(), []);
@@ -57,6 +62,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       setUser(null);
       setSession(null);
+      setRole(null);
+      setApprovalRequired(false);
       setError(null);
     } catch (error: unknown) {
       console.error("Error signing out:", error);
@@ -101,12 +108,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (event === "SIGNED_OUT") {
+        setRole(null);
+        setApprovalRequired(false);
         router.push("/");
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Non-blocking role fetch — runs independently after auth resolves.
+  // Does NOT affect `loading` state so the app never hangs waiting for this.
+  useEffect(() => {
+    if (!user) {
+      setRole(null);
+      setApprovalRequired(false);
+      return;
+    }
+
+    axios
+      .get("/api/admin/role")
+      .then((res) => {
+        setRole(res.data.role || 'user');
+        setApprovalRequired(res.data.approval_required ?? false);
+      })
+      .catch(() => {
+        // Default to user role if the call fails — app still works
+        setRole('user');
+        setApprovalRequired(false);
+      });
+  }, [user]);
 
   const value = {
     user,
@@ -115,6 +146,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error,
     signOut,
     refreshSession,
+    role,
+    approvalRequired,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -60,7 +60,53 @@ export async function POST(
             );
         }
 
-        // Call remote mail server API to send email
+        // --- Approval gate ---
+        // Check if org requires approval and user is not admin
+        const { data: profile } = await supabase
+            .from('organization_members')
+            .select('role, organization_id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (profile?.organization_id) {
+            const { data: org } = await supabase
+                .from('organizations')
+                .select('approval_required')
+                .eq('id', profile.organization_id)
+                .single();
+
+            if (org?.approval_required && profile.role !== 'admin') {
+                // Get contact info for the snapshot
+                const { data: contact } = await supabase
+                    .from('contacts')
+                    .select('full_name, email, company:companies(name)')
+                    .eq('id', contactId)
+                    .maybeSingle();
+
+                await supabase.from('approval_queue').insert({
+                    organization_id: profile.organization_id,
+                    item_type: 'manual_email',
+                    submitted_by: user.id,
+                    contact_id: contactId,
+                    snapshot: {
+                        subject: body.subject,
+                        body: body.body,
+                        account_id: body.account_id,
+                        account_provider: body.account_provider,
+                        thread_id: body.thread_id || null,
+                        reply_to_message_id: body.reply_to_message_id || null,
+                        contact_email: contact?.email || '',
+                        contact_name: contact?.full_name || '',
+                        company_name: ((contact?.company as unknown as { name: string } | null)?.name) || '',
+                    },
+                });
+
+                return NextResponse.json({
+                    status: 'queued_for_approval',
+                    message: 'Email submitted for admin approval',
+                });
+            }
+        }
         const response = await axios.post(
             `${MAIL_SERVER_URL}/emails/contact/${contactId}/send`,
             {

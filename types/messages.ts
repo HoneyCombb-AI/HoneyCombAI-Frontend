@@ -21,6 +21,7 @@ export type LinkedInContact = {
     // Pending task fields (from get_linkedin_contacts RPC)
     task_id: string | null;
     task_type: string | null;
+    task_status: string | null;
     draft_message: string | null;
     connection_note: string | null;
     scheduled_at: string | null;

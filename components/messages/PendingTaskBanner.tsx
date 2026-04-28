@@ -44,6 +44,8 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
 
     if (!contact.task_id) return null;
 
+    const isAwaitingApproval = contact.task_status === 'AWAITING_APPROVAL';
+
     const scheduledDate = contact.scheduled_at ? new Date(contact.scheduled_at) : null;
     const formattedDate =
         scheduledDate && isValid(scheduledDate)
@@ -77,7 +79,7 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
     };
 
     return (
-        <div className="border-b bg-violet-50 border-violet-200">
+        <div className={`border-b ${isAwaitingApproval ? 'bg-amber-50 border-amber-200' : 'bg-violet-50 border-violet-200'}`}>
             {/* Header Row */}
             <div className="flex items-center justify-between px-5 py-3">
                 <div className="flex items-center gap-2.5">
@@ -86,8 +88,8 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-violet-900">
-                                Pending {taskLabel}
+                            <span className={`text-sm font-semibold ${isAwaitingApproval ? 'text-amber-900' : 'text-violet-900'}`}>
+                                {isAwaitingApproval ? 'Awaiting Admin Approval' : `Pending ${taskLabel}`}
                             </span>
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-200 text-violet-800 uppercase tracking-wide">
                                 {isEditable ? "Draft" : "Scheduled"}
@@ -112,7 +114,7 @@ export function PendingTaskBanner({ contact, onSave }: PendingTaskBannerProps) {
                     </div>
                 </div>
 
-                {isEditable && !editing && (
+                {isEditable && !editing && !isAwaitingApproval && (
                     <Button
                         variant="outline"
                         size="sm"

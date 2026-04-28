@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "./RichTextEditor";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronUp, Loader2, Sparkles, Send } from "lucide-react";
+import { ChevronUp, Loader2, Sparkles, Send, ShieldCheck } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
+import { useAuth } from "@/lib/auth-context";
 
 interface ContactMessage {
     id: string;
@@ -45,6 +46,8 @@ export function EmailComposer({
     const [senderFirstName, setSenderFirstName] = useState<string | null>(null);
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
+    const { role, approvalRequired } = useAuth();
+    const needsApproval = approvalRequired && role === 'user';
 
     const resolvedMode = replyToMessage ? "reply" : mode;
     const isReply = resolvedMode === "reply";
@@ -196,7 +199,7 @@ export function EmailComposer({
 
         setSending(true);
         try {
-            await axios.post(`/api/emails/${contact.id}/send`, {
+            const res = await axios.post(`/api/emails/${contact.id}/send`, {
                 subject,
                 body,
                 account_id: senderAccountId,
@@ -205,7 +208,11 @@ export function EmailComposer({
                 reply_to_message_id: replyToMessage?.message_id,
             });
 
-            toast.success("Email sent successfully!");
+            if (res.data?.status === 'queued_for_approval') {
+                toast.success("Email submitted for admin approval");
+            } else {
+                toast.success("Email sent successfully!");
+            }
             onSent();
             // Clear form after send
             setSubject("");
@@ -304,10 +311,12 @@ export function EmailComposer({
                             >
                                 {sending ? (
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : needsApproval ? (
+                                    <ShieldCheck className="h-4 w-4 mr-2" />
                                 ) : (
                                     <Send className="h-4 w-4 mr-2" />
                                 )}
-                                Send
+                                {needsApproval ? "Submit for Approval" : "Send"}
                             </Button>
                         </div>
                     </div>

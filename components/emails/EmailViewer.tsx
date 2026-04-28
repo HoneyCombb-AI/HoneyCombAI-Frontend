@@ -71,7 +71,7 @@ export function EmailViewer({
                     <div className="space-y-6 max-w-4xl mx-auto pb-4">
                         {messages.map((message) => {
                             const isSent = message.direction === 'outbound';
-                            const rawBody = message.body || "";
+                            const rawBody = (message.body || "").trim();
                             // Detect whether the body contains HTML markup
                             const isHtml = /<[a-z][\s\S]*>/i.test(rawBody);
                             const sanitizedBody = DOMPurify.sanitize(rawBody);
