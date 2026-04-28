@@ -93,10 +93,11 @@ export async function PATCH(
 
         // For rejections, insert notification for submitter
         if (action === 'reject') {
-            const itemTypeLabel = (data.item_type || '').replace(/_/g, ' ');
+            const snapshot = data.snapshot || {};
+            const contactName = snapshot.contact_name || 'a contact';
             const notifText = rejection_reason
-                ? `Your ${itemTypeLabel} was rejected: ${rejection_reason}`
-                : `Your ${itemTypeLabel} was rejected by an admin.`;
+                ? `Your email to ${contactName} was rejected by admin. Reason: "${rejection_reason}"`
+                : `Your email to ${contactName} was rejected by admin.`;
 
             await supabase.from('notifications').insert({
                 user_id: data.submitted_by,
