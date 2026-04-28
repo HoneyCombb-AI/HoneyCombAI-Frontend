@@ -187,11 +187,7 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
                             size="sm"
                             onClick={handleApprove}
                             disabled={loadingAction === "approving"}
-                            className={`gap-1.5 whitespace-nowrap text-white ${
-                                loadingAction === "approving"
-                                    ? "bg-green-600"
-                                    : "bg-green-600 hover:bg-green-700"
-                            }`}
+                            className="gap-1.5 whitespace-nowrap"
                         >
                             {loadingAction === "approving" ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
