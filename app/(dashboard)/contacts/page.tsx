@@ -1,6 +1,7 @@
 "use client";
 import axios from "axios";
 import { useState, useEffect, useCallback, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   Download,
   Trash2,
   Tag,
+  Mail,
 } from "lucide-react";
 import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
@@ -88,6 +90,7 @@ interface FetchParams {
 
 function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const { loading: authLoading } = useAuth();
+  const router = useRouter();
   const [dashboardState, setDashboardState] = useState<DashboardState>({
     data: null,
     pagination: {
@@ -642,7 +645,22 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </span>
               </Button>
 
-
+              {/* Send Email Button - Only when 1 contact selected */}
+              {selectedContacts.size === 1 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 text-sm h-9"
+                  onClick={() => {
+                    const contactId = Array.from(selectedContacts.keys())[0];
+                    router.push(`/emails?contactId=${contactId}`);
+                  }}
+                >
+                  <Mail className="h-4 w-4" />
+                  <span className="hidden sm:inline">Send Email</span>
+                  <span className="sm:hidden">Email</span>
+                </Button>
+              )}
 
               {/* Delete Button */}
               <Button

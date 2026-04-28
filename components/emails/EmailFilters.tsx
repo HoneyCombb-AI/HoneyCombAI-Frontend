@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Search, Filter, X } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Search, Filter, X, Plus, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import axios from "axios";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface EmailFiltersProps {
     search: string;
@@ -28,6 +29,44 @@ export function EmailFilters({
 }: EmailFiltersProps) {
     const [availableTags, setAvailableTags] = useState<TagOption[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const router = useRouter();
+
+    // New Email popover state
+    const [composeOpen, setComposeOpen] = useState(false);
+    const [contactSearch, setContactSearch] = useState("");
+    const [contactResults, setContactResults] = useState<{id: string; full_name: string; email: string | null; company_name: string | null}[]>([]);
+    const [searching, setSearching] = useState(false);
+    const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Debounced contact search
+    useEffect(() => {
+        if (!composeOpen || contactSearch.trim().length < 2) {
+            setContactResults([]);
+            return;
+        }
+        if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        searchTimerRef.current = setTimeout(async () => {
+            setSearching(true);
+            try {
+                const res = await axios.get("/api/contacts/search", {
+                    params: { q: contactSearch.trim(), limit: 8 },
+                });
+                setContactResults(res.data.contacts || []);
+            } catch {
+                setContactResults([]);
+            } finally {
+                setSearching(false);
+            }
+        }, 300);
+        return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+    }, [contactSearch, composeOpen]);
+
+    const handleSelectContact = useCallback((contactId: string) => {
+        setComposeOpen(false);
+        setContactSearch("");
+        setContactResults([]);
+        router.push(`/emails?contactId=${contactId}`);
+    }, [router]);
 
     useEffect(() => {
         axios.get("/api/tags")
@@ -160,6 +199,70 @@ export function EmailFilters({
                         >
                             Reset
                         </Button>
+                    </>
+                )}
+            </div>
+
+            {/* New Email Button - Right side */}
+            <div className="relative shrink-0 ml-auto">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 text-sm"
+                    onClick={() => setComposeOpen(!composeOpen)}
+                >
+                    <Plus className="h-3.5 w-3.5" />
+                    New
+                </Button>
+
+                {composeOpen && (
+                    <>
+                        <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => { setComposeOpen(false); setContactSearch(""); setContactResults([]); }}
+                        />
+                        <div className="absolute top-full mt-2 right-0 z-20 w-80 rounded-md border bg-white p-3 shadow-lg animate-in fade-in-0 zoom-in-95">
+                            <p className="text-xs font-medium text-muted-foreground mb-2">Search for a contact</p>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                                <Input
+                                    placeholder="Type a name or email..."
+                                    value={contactSearch}
+                                    onChange={(e) => setContactSearch(e.target.value)}
+                                    className="pl-9 text-sm"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="mt-2 max-h-56 overflow-y-auto">
+                                {searching ? (
+                                    <div className="flex items-center justify-center py-4">
+                                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                    </div>
+                                ) : contactResults.length > 0 ? (
+                                    <div className="space-y-0.5">
+                                        {contactResults.map((c) => (
+                                            <div
+                                                key={c.id}
+                                                className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+                                                onClick={() => handleSelectContact(c.id)}
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-sm font-medium text-gray-900 truncate">{c.full_name}</div>
+                                                    <div className="text-xs text-muted-foreground truncate">
+                                                        {c.email || "No email"}
+                                                        {c.company_name && ` · ${c.company_name}`}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : contactSearch.trim().length >= 2 ? (
+                                    <p className="text-sm text-center text-muted-foreground py-4">No contacts found</p>
+                                ) : (
+                                    <p className="text-sm text-center text-muted-foreground py-4">Type at least 2 characters</p>
+                                )}
+                            </div>
+                        </div>
                     </>
                 )}
             </div>

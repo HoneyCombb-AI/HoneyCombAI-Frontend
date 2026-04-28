@@ -10,9 +10,13 @@ import { EmailViewer } from "@/components/emails/EmailViewer";
 import { EmailFilters } from "@/components/emails/EmailFilters";
 import { EmailComposer } from "@/components/emails/EmailComposer";
 import { type EmailsResponse, type ContactEmail, type ContactMessage } from "@/types/emails";
+import { useSearchParams } from "next/navigation";
 
 export default function EmailsPage() {
     const { loading: authLoading } = useAuth();
+    const searchParams = useSearchParams();
+    const contactIdParam = searchParams.get('contactId');
+    const handledContactIdRef = useRef<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -100,6 +104,54 @@ export default function EmailsPage() {
             fetchEmails(false);
         }
     }, [authLoading, debouncedSearch, selectedTags]); // Removing fetchEmails from dependency to avoid loop if not handled carefully, relying on stable fetchEmails or just these deps
+
+    // Handle ?contactId= query param — auto-select or inject the contact
+    useEffect(() => {
+        if (!contactIdParam || authLoading || loading) return;
+        if (handledContactIdRef.current === contactIdParam) return;
+
+        // Check if contact is already in the list — move to top
+        const existing = emails.find(e => e.id === contactIdParam);
+        if (existing) {
+            setEmails(prev => [existing, ...prev.filter(e => e.id !== contactIdParam)]);
+            setSelectedId(contactIdParam);
+            handledContactIdRef.current = contactIdParam;
+            return;
+        }
+
+        // Not in list — fetch contact info and inject as a new entry
+        const injectContact = async () => {
+            try {
+                const res = await axios.get('/api/contacts/' + contactIdParam);
+                const c = res.data?.contact;
+                if (c) {
+                    const minimalContact: ContactEmail = {
+                        id: c.id,
+                        full_name: c.full_name || '',
+                        first_name: c.first_name || null,
+                        last_name: c.last_name || null,
+                        email: c.email || '',
+                        company_name: c.company_name || c.current_company || '',
+                        tags: [],
+                        draft_id: null,
+                        draft_subject: null,
+                        draft_body: null,
+                        draft_status: null,
+                        draft_position: null,
+                        email_account_name: null,
+                        email_account_id: null,
+                    };
+                    setEmails(prev => {
+                        if (prev.some(e => e.id === minimalContact.id)) return prev;
+                        return [minimalContact, ...prev];
+                    });
+                    setSelectedId(minimalContact.id);
+                }
+            } catch { /* contact not found — ignore */ }
+            handledContactIdRef.current = contactIdParam;
+        };
+        injectContact();
+    }, [contactIdParam, authLoading, loading, emails]);
 
     // Fetch current user's sender account to check ownership
     useEffect(() => {
