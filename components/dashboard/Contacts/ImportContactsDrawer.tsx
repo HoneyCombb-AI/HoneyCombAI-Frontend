@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState } from "react"
 import { useDropzone } from "react-dropzone"
-import { FileUp, Upload, X, AlertCircle, Download } from "lucide-react"
+import { FileUp, Upload, X, AlertCircle, Download, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import axios from "axios"
 
@@ -535,10 +535,14 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                 <Button
                   type="submit"
                   disabled={!selectedFile || isUploading}
-                  className="gap-2"
+                  className="gap-2 whitespace-nowrap"
                 >
-                  <Upload className="h-4 w-4" />
-                  {isUploading ? "Uploading..." : "Import Contacts"}
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  Import Contacts
                 </Button>
               </div>
             </div>

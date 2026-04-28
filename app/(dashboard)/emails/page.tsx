@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { CSSProperties } from "react";
 import axios from "axios";
 import { useAuth } from "@/lib/auth-context";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
 import { EmailList } from "@/components/emails/EmailList";
 import { EmailViewer } from "@/components/emails/EmailViewer";
@@ -14,6 +15,7 @@ import { useSearchParams } from "next/navigation";
 
 export default function EmailsPage() {
     const { loading: authLoading } = useAuth();
+    const { state: sidebarState } = useSidebar();
     const searchParams = useSearchParams();
     const contactIdParam = searchParams.get('contactId');
     const handledContactIdRef = useRef<string | null>(null);
@@ -276,6 +278,12 @@ export default function EmailsPage() {
     useLayoutEffect(() => {
         updateComposerRect();
     }, [updateComposerRect, selectedId]);
+
+    // Recalculate after sidebar transition (200ms CSS transition)
+    useEffect(() => {
+        const timer = setTimeout(() => updateComposerRect(), 220);
+        return () => clearTimeout(timer);
+    }, [sidebarState, updateComposerRect]);
 
     useEffect(() => {
         updateComposerRect();

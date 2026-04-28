@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from "react";
+import type { CSSProperties } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Loading } from "@/components/loading";
@@ -9,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { ApprovalCard } from "@/components/admin/ApprovalCard";
+import { ApprovalList } from "@/components/admin/ApprovalList";
+import { ApprovalDetail } from "@/components/admin/ApprovalDetail";
+import { ApprovalActions } from "@/components/admin/ApprovalActions";
 import type { ApprovalItem } from "@/types/admin";
 
 type TabStatus = "pending" | "approved" | "rejected";
@@ -19,6 +22,7 @@ type TabStatus = "pending" | "approved" | "rejected";
 export default function ApprovalsPage() {
     const { role, approvalRequired, loading: authLoading } = useAuth();
     const router = useRouter();
+    const { state: sidebarState } = useSidebar();
 
     const [activeTab, setActiveTab] = useState<TabStatus>("pending");
     const [items, setItems] = useState<ApprovalItem[]>([]);
@@ -27,6 +31,13 @@ export default function ApprovalsPage() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
     const [approvalToggle, setApprovalToggle] = useState(approvalRequired);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+
+    // Refs for fixed-position action bar (same pattern as EmailComposer)
+    const detailRef = useRef<HTMLDivElement>(null);
+    const actionsRef = useRef<HTMLDivElement>(null);
+    const [actionsRect, setActionsRect] = useState({ left: 0, width: 0 });
+    const [actionsHeight, setActionsHeight] = useState(0);
 
     // Redirect non-admins
     useEffect(() => {
@@ -62,6 +73,64 @@ export default function ApprovalsPage() {
         }
     }, [authLoading, role, fetchItems]);
 
+    // Auto-select first item when items change
+    useEffect(() => {
+        if (items.length > 0 && (!selectedId || !items.find(i => i.id === selectedId))) {
+            setSelectedId(items[0].id);
+        }
+    }, [items]);
+
+    const selectedItem = useMemo(
+        () => items.find((i) => i.id === selectedId) || null,
+        [items, selectedId]
+    );
+
+    // Calculate action bar rect (same as EmailComposer positioning)
+    const updateActionsRect = useCallback(() => {
+        if (!detailRef.current) return;
+        const rect = detailRef.current.getBoundingClientRect();
+        setActionsRect({ left: rect.left, width: rect.width });
+    }, []);
+
+    useLayoutEffect(() => {
+        updateActionsRect();
+    }, [updateActionsRect, selectedId]);
+
+    // Recalculate after sidebar transition (200ms CSS transition)
+    useEffect(() => {
+        const timer = setTimeout(() => updateActionsRect(), 220);
+        return () => clearTimeout(timer);
+    }, [sidebarState, updateActionsRect]);
+
+    useEffect(() => {
+        updateActionsRect();
+        window.addEventListener("resize", updateActionsRect);
+        return () => window.removeEventListener("resize", updateActionsRect);
+    }, [updateActionsRect]);
+
+    useEffect(() => {
+        if (!detailRef.current || typeof ResizeObserver === "undefined") return;
+        const observer = new ResizeObserver(() => updateActionsRect());
+        observer.observe(detailRef.current);
+        return () => observer.disconnect();
+    }, [updateActionsRect]);
+
+    // Track action bar height for bottom padding
+    useEffect(() => {
+        if (!actionsRef.current) return;
+        const el = actionsRef.current;
+        const update = () => setActionsHeight(el.getBoundingClientRect().height);
+        update();
+        if (typeof ResizeObserver === "undefined") return;
+        const observer = new ResizeObserver(() => update());
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [selectedId]);
+
+    const actionsStyle: CSSProperties = actionsRect.width
+        ? { left: actionsRect.left, width: actionsRect.width }
+        : { left: 0, visibility: "hidden", pointerEvents: "none" };
+
     const handleToggleApproval = useCallback(async (checked: boolean) => {
         try {
             await axios.patch("/api/admin/approval-settings", {
@@ -88,30 +157,39 @@ export default function ApprovalsPage() {
                 action,
                 ...payload,
             });
-            toast.success(action === "approve" ? "Approved & sent" : "Rejected");
+            toast.success(
+                action === "approve"
+                    ? "Email approved and sent successfully"
+                    : "Email rejected successfully"
+            );
             setItems((prev) => prev.filter((item) => item.id !== id));
             setTotal((prev) => Math.max(0, prev - 1));
         } catch {
-            toast.error(`Failed to ${action}`);
+            toast.error(
+                action === "approve"
+                    ? "Failed to approve email"
+                    : "Failed to reject email"
+            );
         }
     }, []);
 
     const handleApprove = useCallback((id: string, snapshot?: Record<string, unknown>) => {
-        handleAction(id, "approve", { snapshot });
+        return handleAction(id, "approve", { snapshot });
     }, [handleAction]);
 
     const handleReject = useCallback((id: string, reason: string) => {
-        handleAction(id, "reject", { rejection_reason: reason });
+        return handleAction(id, "reject", { rejection_reason: reason });
     }, [handleAction]);
 
     const handleTabChange = useCallback((tab: TabStatus) => {
         setActiveTab(tab);
         setPage(1);
+        setSelectedId(null);
     }, []);
 
     if (authLoading || role === null) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen">
+            <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
                 <Loading />
                 <p className="text-sm text-muted-foreground mt-4">Loading...</p>
             </div>
@@ -129,9 +207,9 @@ export default function ApprovalsPage() {
     ];
 
     return (
-        <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
-            {/* Toolbar — same level: tabs on left, toggle on right */}
-            <div className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
+        <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
+            {/* Filter Bar - Fixed at top */}
+            <div className="shrink-0 sticky top-0 z-40 flex items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
                 <div className="flex items-center gap-2">
                     {tabs.map((tab) => (
                         <Button
@@ -166,44 +244,51 @@ export default function ApprovalsPage() {
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-6">
-                {fetchLoading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <Loading />
-                        <p className="text-sm text-muted-foreground mt-4">Loading your approvals...</p>
+            {fetchLoading ? (
+                <div className="flex-1 flex flex-col items-center justify-center">
+                    <Loading />
+                    <p className="text-sm text-muted-foreground mt-4">Loading approvals...</p>
+                </div>
+            ) : (
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0 overflow-hidden min-h-0">
+                    {/* Left Panel - Item List */}
+                    <div className="border-r bg-white lg:col-span-1 overflow-y-auto h-full min-h-0">
+                        <ApprovalList
+                            items={items}
+                            selectedId={selectedId}
+                            onSelect={setSelectedId}
+                            hasMore={hasMore}
+                            onLoadMore={() => setPage((p) => p + 1)}
+                            loadingMore={false}
+                            activeTab={activeTab}
+                        />
                     </div>
-                ) : items.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <ShieldCheck className="h-12 w-12 text-gray-300 mb-4" />
-                        <p className="text-sm text-muted-foreground">
-                            No {activeTab} items
-                        </p>
+
+                    {/* Right Panel - Detail View */}
+                    <div
+                        ref={detailRef}
+                        className="lg:col-span-2 overflow-hidden h-full min-h-0 relative"
+                        style={{ paddingBottom: activeTab === "pending" && selectedItem ? actionsHeight : undefined }}
+                    >
+                        <ApprovalDetail item={selectedItem} />
                     </div>
-                ) : (
-                    <div className="max-w-4xl mx-auto space-y-4">
-                        {items.map((item) => (
-                            <ApprovalCard
-                                key={item.id}
-                                item={item}
+
+                    {/* Action Bar - Fixed at bottom (same pattern as EmailComposer) */}
+                    {activeTab === "pending" && selectedItem && (
+                        <div
+                            ref={actionsRef}
+                            className="fixed bottom-0 z-50"
+                            style={actionsStyle}
+                        >
+                            <ApprovalActions
+                                item={selectedItem}
                                 onApprove={handleApprove}
                                 onReject={handleReject}
-                                isReadOnly={activeTab !== "pending"}
                             />
-                        ))}
-
-                        {hasMore && (
-                            <div className="flex justify-center pt-4">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setPage((p) => p + 1)}
-                                >
-                                    Load More
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
