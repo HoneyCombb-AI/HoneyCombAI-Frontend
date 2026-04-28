@@ -32,6 +32,9 @@ export default function EmailsPage() {
     const [messages, setMessages] = useState<ContactMessage[]>([]);
     const [replyToMessage, setReplyToMessage] = useState<ContactMessage | null>(null);
     const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
+    const [senderEmail, setSenderEmail] = useState<string | null>(null);
+    const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
+    const [senderFirstName, setSenderFirstName] = useState<string | null>(null);
     const viewerRef = useRef<HTMLDivElement>(null);
     const composerRef = useRef<HTMLDivElement>(null);
     const [composerHeight, setComposerHeight] = useState(0);
@@ -163,9 +166,20 @@ export default function EmailsPage() {
                 const res = await axios.get("/api/emails/sender");
                 if (res.data?.isConnected && res.data?.account_id) {
                     setSenderAccountId(res.data.account_id);
+                    setSenderEmail(res.data.email ?? null);
+                    setSenderProvider(res.data.provider ?? null);
+                    setSenderFirstName(res.data.first_name ?? null);
+                } else {
+                    setSenderAccountId(null);
+                    setSenderEmail(null);
+                    setSenderProvider(null);
+                    setSenderFirstName(null);
                 }
             } catch {
                 setSenderAccountId(null);
+                setSenderEmail(null);
+                setSenderProvider(null);
+                setSenderFirstName(null);
             }
         };
         loadSender();
@@ -372,6 +386,10 @@ export default function EmailsPage() {
                                             lastMessageSubject={lastMessage?.subject}
                                             mode={composerMode}
                                             onSent={() => fetchMessages(selectedEmail.id)}
+                                            senderEmail={senderEmail}
+                                            senderProvider={senderProvider}
+                                            senderAccountId={senderAccountId}
+                                            senderFirstName={senderFirstName}
                                         />
                                     </div>
                                 );

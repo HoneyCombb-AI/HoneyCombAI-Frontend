@@ -26,6 +26,10 @@ interface EmailComposerProps {
     lastMessageSubject?: string;
     mode?: "compose" | "reply" | "followup";
     onSent: () => void;
+    senderEmail?: string | null;
+    senderProvider?: "gmail" | "outlook" | null;
+    senderAccountId?: string | null;
+    senderFirstName?: string | null;
 }
 
 export function EmailComposer({
@@ -34,16 +38,16 @@ export function EmailComposer({
     lastMessageSubject,
     mode = "compose",
     onSent,
+    senderEmail = null,
+    senderProvider = null,
+    senderAccountId = null,
+    senderFirstName = null,
 }: EmailComposerProps) {
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
     const [generating, setGenerating] = useState(false);
     const [sending, setSending] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
-    const [senderEmail, setSenderEmail] = useState<string | null>(null);
-    const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
-    const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
-    const [senderFirstName, setSenderFirstName] = useState<string | null>(null);
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
     const { role, approvalRequired } = useAuth();
@@ -85,32 +89,6 @@ export function EmailComposer({
         prevContactIdRef.current = contactId;
         prevReplyIdRef.current = replyId;
     }, [contact?.id, replyToMessage?.id, defaultSubject]);
-
-    const loadSender = useCallback(async () => {
-        try {
-            const senderRes = await axios.get("/api/emails/sender");
-            if (senderRes.data?.isConnected && senderRes.data?.email && senderRes.data?.account_id) {
-                setSenderEmail(senderRes.data.email);
-                setSenderProvider(senderRes.data.provider ?? null);
-                setSenderAccountId(senderRes.data.account_id);
-                setSenderFirstName(senderRes.data.first_name ?? null);
-            } else {
-                setSenderEmail(null);
-                setSenderProvider(null);
-                setSenderAccountId(null);
-                setSenderFirstName(null);
-            }
-        } catch (error) {
-            setSenderEmail(null);
-            setSenderProvider(null);
-            setSenderAccountId(null);
-            setSenderFirstName(null);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadSender();
-    }, [loadSender]);
 
 
     // Add signature to body

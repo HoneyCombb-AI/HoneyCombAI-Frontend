@@ -106,8 +106,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      setSession((prev) => {
+        if (prev?.access_token === session?.access_token) return prev;
+        return session ?? null;
+      });
+      setUser((prev) => {
+        const newUser = session?.user ?? null;
+        if (prev?.id === newUser?.id) return prev;
+        return newUser;
+      });
       if (event === "SIGNED_OUT") {
         setRole(null);
         setApprovalRequired(false);
@@ -138,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRole('user');
         setApprovalRequired(false);
       });
-  }, [user]);
+  }, [user?.id]);
 
   const value = {
     user,
