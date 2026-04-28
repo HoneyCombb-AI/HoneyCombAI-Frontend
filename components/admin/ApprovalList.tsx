@@ -1,6 +1,7 @@
 "use client";
 
 import { ApprovalItem } from "@/types/admin";
+import { isEmailSnapshot } from "@/types/admin";
 import { cn } from "@/lib/utils";
 import { User, ShieldCheck, Loader2, ChevronDown } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -51,8 +52,7 @@ export function ApprovalList({
                         .toUpperCase()
                         .slice(0, 2) || "?";
 
-                    const snapshot = item.snapshot as unknown as Record<string, unknown>;
-                    const subject = (snapshot?.subject as string) || "";
+                    const subject = isEmailSnapshot(item.snapshot) ? item.snapshot.subject : "";
 
                     return (
                         <button

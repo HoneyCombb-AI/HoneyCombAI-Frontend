@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { ApprovalList } from "@/components/admin/ApprovalList";
 import { ApprovalDetail } from "@/components/admin/ApprovalDetail";
 import { ApprovalActions } from "@/components/admin/ApprovalActions";
-import type { ApprovalItem } from "@/types/admin";
+import type { ApprovalItem, ApprovalSnapshot } from "@/types/admin";
 
 type TabStatus = "pending" | "approved" | "rejected";
 
@@ -150,7 +150,7 @@ export default function ApprovalsPage() {
     const handleAction = useCallback(async (
         id: string,
         action: "approve" | "reject",
-        payload?: { snapshot?: Record<string, unknown>; rejection_reason?: string }
+        payload?: { snapshot?: ApprovalSnapshot; rejection_reason?: string }
     ) => {
         try {
             await axios.patch(`/api/admin/approvals/${id}`, {
@@ -173,7 +173,7 @@ export default function ApprovalsPage() {
         }
     }, []);
 
-    const handleApprove = useCallback((id: string, snapshot?: Record<string, unknown>) => {
+    const handleApprove = useCallback((id: string, snapshot?: ApprovalSnapshot) => {
         return handleAction(id, "approve", { snapshot });
     }, [handleAction]);
 

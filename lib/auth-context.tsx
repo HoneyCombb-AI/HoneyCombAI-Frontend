@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import type { RoleResponse } from "@/types/admin";
 
 interface AuthContextType {
   user: User | null;
@@ -127,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     axios
-      .get("/api/admin/role")
+      .get<RoleResponse>("/api/admin/role")
       .then((res) => {
         setRole(res.data.role || 'user');
         setApprovalRequired(res.data.approval_required ?? false);

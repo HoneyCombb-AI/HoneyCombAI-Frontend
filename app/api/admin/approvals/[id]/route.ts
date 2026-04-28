@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import type { ReviewActionPayload, ReviewApprovalRPCResponse, EmailSnapshot } from '@/types/admin';
 import axios from 'axios';
 
 const MAIL_SERVER_URL = process.env.MAIL_SERVER_URL || 'https://mail.honeycombai.in';
@@ -19,7 +20,7 @@ export async function PATCH(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = await req.json();
+        const body = await req.json() as ReviewActionPayload;
         const { action, snapshot: editedSnapshot, rejection_reason } = body;
 
         if (!action || !['approve', 'reject'].includes(action)) {
@@ -36,7 +37,7 @@ export async function PATCH(
             p_action: action,
             p_rejection_reason: rejection_reason || null,
             p_snapshot: editedSnapshot || null,
-        });
+        }) as { data: ReviewApprovalRPCResponse | null; error: unknown };
 
         if (error) {
             console.error('Error in review_approval_item RPC:', error);
@@ -60,19 +61,23 @@ export async function PATCH(
             return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
 
+        if (!data) {
+            return NextResponse.json({ error: 'Unexpected empty response' }, { status: 500 });
+        }
+
         // For manual_email approvals, dispatch via mail server (external action)
         if (action === 'approve' && data.item_type === 'manual_email') {
-            const snapshot = data.snapshot;
+            const snapshot = data.snapshot as EmailSnapshot | undefined;
             try {
                 await axios.post(
                     `${MAIL_SERVER_URL}/emails/contact/${data.contact_id}/send`,
                     {
-                        subject: snapshot.subject,
-                        body: snapshot.body,
-                        account_id: snapshot.account_id,
-                        account_provider: snapshot.account_provider,
-                        thread_id: snapshot.thread_id,
-                        reply_to_message_id: snapshot.reply_to_message_id,
+                        subject: snapshot?.subject,
+                        body: snapshot?.body,
+                        account_id: snapshot?.account_id,
+                        account_provider: snapshot?.account_provider,
+                        thread_id: snapshot?.thread_id,
+                        reply_to_message_id: snapshot?.reply_to_message_id,
                     },
                     {
                         auth: {
@@ -81,7 +86,7 @@ export async function PATCH(
                         },
                     }
                 );
-            } catch (mailError) {
+            } catch (mailError: unknown) {
                 console.error('Mail dispatch failed after approval:', mailError);
                 // Approval is already saved; log the dispatch failure
                 return NextResponse.json({
@@ -93,8 +98,7 @@ export async function PATCH(
 
         // For rejections, insert notification for submitter
         if (action === 'reject') {
-            const snapshot = data.snapshot || {};
-            const contactName = snapshot.contact_name || 'a contact';
+            const contactName = data.snapshot?.contact_name || 'a contact';
             const notifText = rejection_reason
                 ? `Your email to ${contactName} was rejected by admin. Reason: "${rejection_reason}"`
                 : `Your email to ${contactName} was rejected by admin.`;

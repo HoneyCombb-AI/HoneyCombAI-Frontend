@@ -36,7 +36,14 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        return NextResponse.json(data);
+        // Normalize snake_case RPC response to camelCase for the frontend
+        return NextResponse.json({
+            items: data?.items ?? [],
+            total: data?.total ?? 0,
+            page: data?.page ?? page,
+            limit: data?.limit ?? limit,
+            hasMore: data?.has_more ?? false,
+        });
 
     } catch (error: unknown) {
         console.error('Error in approvals route:', error);

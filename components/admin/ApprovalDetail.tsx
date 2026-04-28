@@ -13,16 +13,15 @@ import {
     AtSign,
 } from "lucide-react";
 import { format } from "date-fns";
-import type { ApprovalItem, EmailSnapshot, LinkedInSnapshot } from "@/types/admin";
+import type { ApprovalItem, LinkedInSnapshot } from "@/types/admin";
+import { isEmailSnapshot } from "@/types/admin";
 import DOMPurify from "dompurify";
 
 interface ApprovalDetailProps {
     item: ApprovalItem | null;
 }
 
-function isEmailSnapshot(snapshot: unknown): snapshot is EmailSnapshot {
-    return typeof snapshot === "object" && snapshot !== null && "subject" in snapshot;
-}
+
 
 export function ApprovalDetail({ item }: ApprovalDetailProps) {
     const sanitizedBody = useMemo(() => {

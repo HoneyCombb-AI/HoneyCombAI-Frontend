@@ -4,27 +4,24 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, X, Pencil, Loader2 } from "lucide-react";
-import type { ApprovalItem } from "@/types/admin";
+import type { ApprovalItem, ApprovalSnapshot, EmailSnapshot, LinkedInSnapshot } from "@/types/admin";
+import { isEmailSnapshot } from "@/types/admin";
 import { RichTextEditor } from "@/components/emails/RichTextEditor";
 import { Input } from "@/components/ui/input";
 
 interface ApprovalActionsProps {
     item: ApprovalItem;
-    onApprove: (id: string, snapshot?: Record<string, unknown>) => void;
+    onApprove: (id: string, snapshot?: ApprovalSnapshot) => void;
     onReject: (id: string, reason: string) => void;
 }
 
-function isEmailSnapshot(snapshot: unknown): snapshot is { subject: string; body: string } {
-    return typeof snapshot === "object" && snapshot !== null && "subject" in snapshot;
-}
+
 
 export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsProps) {
     const [editing, setEditing] = useState(false);
     const [rejecting, setRejecting] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
-    const [editSnapshot, setEditSnapshot] = useState<Record<string, unknown>>(
-        item.snapshot as unknown as Record<string, unknown>
-    );
+    const [editSnapshot, setEditSnapshot] = useState<ApprovalSnapshot>(item.snapshot);
     const [loadingAction, setLoadingAction] = useState<"approving" | "rejecting" | null>(null);
     const [prevItemId, setPrevItemId] = useState(item.id);
     if (item.id !== prevItemId) {
@@ -32,7 +29,7 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
         setEditing(false);
         setRejecting(false);
         setRejectionReason("");
-        setEditSnapshot(item.snapshot as unknown as Record<string, unknown>);
+        setEditSnapshot(item.snapshot);
         setLoadingAction(null);
     }
 
@@ -70,9 +67,9 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
                             <div>
                                 <label className="text-xs font-medium text-muted-foreground">Subject</label>
                                 <Input
-                                    value={(editSnapshot.subject as string) || ""}
+                                    value={isEmailSnapshot(editSnapshot) ? editSnapshot.subject : ""}
                                     onChange={(e) =>
-                                        setEditSnapshot((s) => ({ ...s, subject: e.target.value }))
+                                        setEditSnapshot((s) => ({ ...s, subject: e.target.value } as EmailSnapshot))
                                     }
                                     className="mt-1"
                                 />
@@ -81,9 +78,9 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
                                 <label className="text-xs font-medium text-muted-foreground">Body</label>
                                 <div className="mt-1">
                                     <RichTextEditor
-                                        value={(editSnapshot.body as string) || ""}
+                                        value={isEmailSnapshot(editSnapshot) ? editSnapshot.body : ""}
                                         onChange={(html) =>
-                                            setEditSnapshot((s) => ({ ...s, body: html }))
+                                            setEditSnapshot((s) => ({ ...s, body: html } as EmailSnapshot))
                                         }
                                         placeholder="Edit email body..."
                                     />
@@ -95,12 +92,12 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
                             <label className="text-xs font-medium text-muted-foreground">Message</label>
                             <Textarea
                                 value={
-                                    (editSnapshot.draft_message as string) ||
-                                    (editSnapshot.connection_note as string) ||
-                                    ""
+                                    !isEmailSnapshot(editSnapshot)
+                                        ? (editSnapshot.draft_message || editSnapshot.connection_note || "")
+                                        : ""
                                 }
                                 onChange={(e) =>
-                                    setEditSnapshot((s) => ({ ...s, draft_message: e.target.value }))
+                                    setEditSnapshot((s) => ({ ...s, draft_message: e.target.value } as LinkedInSnapshot))
                                 }
                                 rows={4}
                                 className="mt-1"
@@ -162,7 +159,7 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
                             variant="outline"
                             onClick={() => {
                                 if (!editing) {
-                                    setEditSnapshot(item.snapshot as unknown as Record<string, unknown>);
+                                    setEditSnapshot(item.snapshot);
                                 }
                                 setEditing(!editing);
                             }}

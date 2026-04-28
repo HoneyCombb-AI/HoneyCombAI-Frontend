@@ -50,10 +50,47 @@ export interface ApprovalItem {
     company_name: string | null;
 }
 
+/** Union helper for snapshot types */
+export type ApprovalSnapshot = EmailSnapshot | LinkedInSnapshot;
+
+/** Type guard: narrows ApprovalSnapshot to EmailSnapshot */
+export function isEmailSnapshot(snapshot: ApprovalSnapshot): snapshot is EmailSnapshot {
+    return 'subject' in snapshot;
+}
+
 export interface ApprovalsResponse {
     items: ApprovalItem[];
     total: number;
     page: number;
     limit: number;
     hasMore: boolean;
+}
+
+// ---- API request/response types ----
+
+export type ReviewAction = 'approve' | 'reject';
+
+export interface ReviewActionPayload {
+    action: ReviewAction;
+    snapshot?: EmailSnapshot | LinkedInSnapshot;
+    rejection_reason?: string;
+}
+
+export interface ReviewApprovalRPCResponse {
+    error?: 'forbidden' | 'not_found' | 'already_reviewed' | 'invalid_action';
+    status?: 'approved' | 'rejected';
+    item_type?: ApprovalItemType;
+    contact_id?: string;
+    submitted_by?: string;
+    snapshot?: EmailSnapshot | LinkedInSnapshot;
+}
+
+export interface RoleResponse {
+    role: 'admin' | 'user' | null;
+    approval_required: boolean;
+    organization_id: string | null;
+}
+
+export interface ApprovalSettingsPayload {
+    approval_required: boolean;
 }
