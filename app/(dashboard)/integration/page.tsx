@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import type { IntegrationStatuses } from "@/lib/types/integration";
 import {
   Tooltip,
   TooltipContent,
@@ -149,32 +150,25 @@ const IntegrationContent: React.FC = () => {
 
   const checkStatuses = async () => {
     try {
-      // Gmail Check
-      const gmailRes = await fetch("/api/gmail/status");
-      if (gmailRes.ok) {
-        const data = await gmailRes.json();
-        setIsConnected(data.isConnected);
-        setConnectedEmail(data.email);
-      }
+      const res = await fetch("/api/integration/status");
+      if (res.ok) {
+        const data: IntegrationStatuses = await res.json();
 
-      // LinkedIn Check
-      const liRes = await fetch("/api/linkedin/status");
-      if (liRes.ok) {
-        const data = await liRes.json();
-        setLiStatus(data.status);
-        setLiConnectedEmail(data.email);
-        setLiError(data.error);
-      }
+        // Gmail
+        setIsConnected(data.gmail.isConnected);
+        setConnectedEmail(data.gmail.email);
 
-      // Outlook Check
-      const outlookRes = await fetch("/api/outlook/status");
-      if (outlookRes.ok) {
-        const data = await outlookRes.json();
-        setIsOutlookConnected(data.isConnected);
-        setOutlookConnectedEmail(data.email);
+        // LinkedIn
+        setLiStatus(data.linkedin.status);
+        setLiConnectedEmail(data.linkedin.email);
+        setLiError(data.linkedin.error);
+
+        // Outlook
+        setIsOutlookConnected(data.outlook.isConnected);
+        setOutlookConnectedEmail(data.outlook.email);
       }
     } catch (error) {
-      console.error("Failed to check status", error);
+      console.error("Failed to check statuses", error);
     } finally {
       setIsLoading(false);
     }
@@ -440,26 +434,39 @@ const IntegrationContent: React.FC = () => {
                     </Button>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full bg-white hover:bg-gray-100 text-gray-700 border-gray-200 transition-all duration-200 cursor-pointer"
-                    onClick={() => {
-                      window.location.href = "/api/gmail/connect";
-                    }}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-500" />
-                        Checking...
-                      </>
-                    ) : (
-                      <>
-                        <GoogleLogo />
-                        <span className="ml-2">Connect Gmail</span>
-                      </>
-                    )}
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-full">
+                          <Button
+                            variant="outline"
+                            className="w-full bg-white hover:bg-gray-100 text-gray-700 border-gray-200 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
+                            onClick={() => {
+                              window.location.href = "/api/gmail/connect";
+                            }}
+                            disabled={isLoading || isOutlookConnected}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-500" />
+                                Checking...
+                              </>
+                            ) : (
+                              <>
+                                <GoogleLogo />
+                                <span className="ml-2">Connect Gmail</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
+                      {isOutlookConnected && (
+                        <TooltipContent>
+                          <p>Disconnect Outlook first before connecting Gmail.</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             </CardContent>
@@ -504,26 +511,39 @@ const IntegrationContent: React.FC = () => {
                     </Button>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full bg-white hover:bg-gray-100 text-[#0078D4] border-gray-200 transition-all duration-200 cursor-pointer"
-                    onClick={() => {
-                      window.location.href = "/api/outlook/connect";
-                    }}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-500" />
-                        Checking...
-                      </>
-                    ) : (
-                      <>
-                        <OutlookLogo />
-                        <span className="ml-2">Connect Outlook</span>
-                      </>
-                    )}
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-full">
+                          <Button
+                            variant="outline"
+                            className="w-full bg-white hover:bg-gray-100 text-[#0078D4] border-gray-200 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
+                            onClick={() => {
+                              window.location.href = "/api/outlook/connect";
+                            }}
+                            disabled={isLoading || isConnected}
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin text-gray-500" />
+                                Checking...
+                              </>
+                            ) : (
+                              <>
+                                <OutlookLogo />
+                                <span className="ml-2">Connect Outlook</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
+                      {isConnected && (
+                        <TooltipContent>
+                          <p>Disconnect Gmail first before connecting Outlook.</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             </CardContent>
