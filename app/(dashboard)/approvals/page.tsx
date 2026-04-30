@@ -20,13 +20,14 @@ import type { ApprovalItem, ApprovalSnapshot } from "@/types/admin";
 type TabStatus = "pending" | "approved" | "rejected";
 
 export default function ApprovalsPage() {
-    const { role, approvalRequired, loading: authLoading } = useAuth();
+    const { role, approvalRequired, setApprovalRequired, loading: authLoading } = useAuth();
     const router = useRouter();
     const { state: sidebarState } = useSidebar();
 
     const [activeTab, setActiveTab] = useState<TabStatus>("pending");
     const [items, setItems] = useState<ApprovalItem[]>([]);
     const [fetchLoading, setFetchLoading] = useState<boolean>(false);
+    const [loadingMore, setLoadingMore] = useState<boolean>(false);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
@@ -52,18 +53,27 @@ export default function ApprovalsPage() {
     }, [approvalRequired]);
 
     const fetchItems = useCallback(async () => {
-        setFetchLoading(true);
+        if (page === 1) {
+            setFetchLoading(true);
+        } else {
+            setLoadingMore(true);
+        }
         try {
             const res = await axios.get("/api/admin/approvals", {
                 params: { status: activeTab, page, limit: 20 },
             });
-            setItems(res.data.items || []);
+            if (page === 1) {
+                setItems(res.data.items || []);
+            } else {
+                setItems((prev) => [...prev, ...(res.data.items || [])]);
+            }
             setTotal(res.data.total || 0);
             setHasMore(res.data.hasMore || false);
         } catch {
             toast.error("Failed to load approvals");
         } finally {
             setFetchLoading(false);
+            setLoadingMore(false);
         }
     }, [activeTab, page]);
 
@@ -136,6 +146,7 @@ export default function ApprovalsPage() {
             await axios.patch("/api/admin/approval-settings", {
                 approval_required: checked,
             });
+            setApprovalRequired(checked);
             setApprovalToggle(checked);
             toast.success(
                 checked
@@ -145,7 +156,7 @@ export default function ApprovalsPage() {
         } catch {
             toast.error("Failed to update setting");
         }
-    }, []);
+    }, [setApprovalRequired]);
 
     const handleAction = useCallback(async (
         id: string,
@@ -259,7 +270,7 @@ export default function ApprovalsPage() {
                             onSelect={setSelectedId}
                             hasMore={hasMore}
                             onLoadMore={() => setPage((p) => p + 1)}
-                            loadingMore={false}
+                            loadingMore={loadingMore}
                             activeTab={activeTab}
                         />
                     </div>

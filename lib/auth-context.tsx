@@ -23,6 +23,7 @@ interface AuthContextType {
   refreshSession: () => Promise<void>;
   role: 'admin' | 'user' | null;
   approvalRequired: boolean;
+  setApprovalRequired: (value: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -126,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshSession,
     role,
     approvalRequired,
+    setApprovalRequired,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

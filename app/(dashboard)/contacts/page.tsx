@@ -63,6 +63,7 @@ interface ContactValidationData {
   primaryAnalysisRequested: boolean;
   full_name: string;
   company_id: string | null;
+  email: string | null;
 }
 
 export type DashboardResponse =
@@ -645,22 +646,24 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </span>
               </Button>
 
-              {/* Send Email Button - Only when 1 contact selected */}
-              {selectedContacts.size === 1 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-2 text-sm h-9"
-                  onClick={() => {
-                    const contactId = Array.from(selectedContacts.keys())[0];
-                    router.push(`/emails?contactId=${contactId}`);
-                  }}
-                >
-                  <Mail className="h-4 w-4" />
-                  <span className="hidden sm:inline">Send Email</span>
-                  <span className="sm:hidden">Email</span>
-                </Button>
-              )}
+              {/* Send Email Button - Only when 1 contact with an email is selected */}
+              {selectedContacts.size === 1 && (() => {
+                const contactId = Array.from(selectedContacts.keys())[0];
+                const contactEmail = selectedContacts.get(contactId)?.email;
+                if (!contactEmail) return null;
+                return (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-2 text-sm h-9"
+                    onClick={() => router.push(`/emails?contactId=${contactId}`)}
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span className="hidden sm:inline">Send Email</span>
+                    <span className="sm:hidden">Email</span>
+                  </Button>
+                );
+              })()}
 
               {/* Delete Button */}
               <Button
