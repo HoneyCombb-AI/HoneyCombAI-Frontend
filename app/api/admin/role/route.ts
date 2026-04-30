@@ -17,7 +17,15 @@ export async function GET() {
             .eq('user_id', user.id)
             .maybeSingle();
 
-        if (memberError || !membership) {
+        if (memberError) {
+            console.error('Failed to fetch org membership:', memberError);
+            return NextResponse.json(
+                { error: 'Failed to fetch membership' },
+                { status: 500 }
+            );
+        }
+
+        if (!membership) {
             return NextResponse.json({
                 role: null,
                 approval_required: false,

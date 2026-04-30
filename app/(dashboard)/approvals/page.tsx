@@ -52,7 +52,7 @@ export default function ApprovalsPage() {
         setApprovalToggle(approvalRequired);
     }, [approvalRequired]);
 
-    const fetchItems = useCallback(async () => {
+    const fetchItems = useCallback(async (signal?: AbortSignal) => {
         if (page === 1) {
             setFetchLoading(true);
         } else {
@@ -61,6 +61,7 @@ export default function ApprovalsPage() {
         try {
             const res = await axios.get("/api/admin/approvals", {
                 params: { status: activeTab, page, limit: 20 },
+                signal,
             });
             if (page === 1) {
                 setItems(res.data.items || []);
@@ -69,17 +70,23 @@ export default function ApprovalsPage() {
             }
             setTotal(res.data.total || 0);
             setHasMore(res.data.hasMore || false);
-        } catch {
-            toast.error("Failed to load approvals");
+        } catch (err) {
+            if (!axios.isCancel(err)) {
+                toast.error("Failed to load approvals");
+            }
         } finally {
-            setFetchLoading(false);
-            setLoadingMore(false);
+            if (!signal?.aborted) {
+                setFetchLoading(false);
+                setLoadingMore(false);
+            }
         }
     }, [activeTab, page]);
 
     useEffect(() => {
         if (!authLoading && role === "admin") {
-            fetchItems();
+            const controller = new AbortController();
+            fetchItems(controller.signal);
+            return () => controller.abort();
         }
     }, [authLoading, role, fetchItems]);
 

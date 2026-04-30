@@ -20,11 +20,19 @@ export async function GET(req: NextRequest) {
         }
 
         // Get user's organization
-        const { data: membership } = await supabase
+        const { data: membership, error: membershipError } = await supabase
             .from('organization_members')
             .select('organization_id')
             .eq('user_id', user.id)
             .maybeSingle();
+
+        if (membershipError) {
+            console.error('Failed to fetch org membership:', membershipError);
+            return NextResponse.json(
+                { error: 'Failed to fetch membership' },
+                { status: 500 }
+            );
+        }
 
         if (!membership) {
             return NextResponse.json({ contacts: [] });

@@ -42,6 +42,7 @@ export function EmailFilters({
     useEffect(() => {
         if (!composeOpen || contactSearch.trim().length < 2) {
             setContactResults([]);
+            setSearching(false);
             return;
         }
         const controller = new AbortController();
