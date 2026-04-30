@@ -52,7 +52,8 @@ export default function EmailsPage() {
     // Debounce search so we don't spam API
     const [debouncedSearch, setDebouncedSearch] = useState(search);
     useEffect(() => {
-        const timer = setTimeout(() => setDebouncedSearch(search), 500);
+        const normalized = search.toLowerCase();
+        const timer = setTimeout(() => setDebouncedSearch(normalized), 500);
         return () => clearTimeout(timer);
     }, [search]);
 
@@ -68,7 +69,7 @@ export default function EmailsPage() {
 
             const response = await axios.get<EmailsResponse>("/api/emails", {
                 params: {
-                    search: debouncedSearch.trim() || undefined,
+                    search: debouncedSearch.trim().toLowerCase() || undefined,
                     tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
                     page: currentPage,
                     limit: LIMIT,
