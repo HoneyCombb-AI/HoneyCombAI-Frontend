@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import type { IntegrationStatuses } from "@/lib/types/integration";
 import {
   Tooltip,
   TooltipContent,
@@ -149,32 +150,25 @@ const IntegrationContent: React.FC = () => {
 
   const checkStatuses = async () => {
     try {
-      // Gmail Check
-      const gmailRes = await fetch("/api/gmail/status");
-      if (gmailRes.ok) {
-        const data = await gmailRes.json();
-        setIsConnected(data.isConnected);
-        setConnectedEmail(data.email);
-      }
+      const res = await fetch("/api/integration/status");
+      if (res.ok) {
+        const data: IntegrationStatuses = await res.json();
 
-      // LinkedIn Check
-      const liRes = await fetch("/api/linkedin/status");
-      if (liRes.ok) {
-        const data = await liRes.json();
-        setLiStatus(data.status);
-        setLiConnectedEmail(data.email);
-        setLiError(data.error);
-      }
+        // Gmail
+        setIsConnected(data.gmail.isConnected);
+        setConnectedEmail(data.gmail.email);
 
-      // Outlook Check
-      const outlookRes = await fetch("/api/outlook/status");
-      if (outlookRes.ok) {
-        const data = await outlookRes.json();
-        setIsOutlookConnected(data.isConnected);
-        setOutlookConnectedEmail(data.email);
+        // LinkedIn
+        setLiStatus(data.linkedin.status);
+        setLiConnectedEmail(data.linkedin.email);
+        setLiError(data.linkedin.error);
+
+        // Outlook
+        setIsOutlookConnected(data.outlook.isConnected);
+        setOutlookConnectedEmail(data.outlook.email);
       }
     } catch (error) {
-      console.error("Failed to check status", error);
+      console.error("Failed to check statuses", error);
     } finally {
       setIsLoading(false);
     }
