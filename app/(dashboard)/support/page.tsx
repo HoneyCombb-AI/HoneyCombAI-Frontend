@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,18 +22,28 @@ type SupportFormData = z.infer<typeof supportSchema>;
 
 export default function SupportPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm({
     resolver: zodResolver(supportSchema),
     defaultValues: {
       title: 'Support Request'
     }
   });
+
+  useEffect(() => {
+    if (user) {
+      const name = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split("@")[0] || '';
+      if (name) setValue('name', name);
+      if (user.email) setValue('email', user.email);
+    }
+  }, [user, setValue]);
 
   const onSubmit = async (data: SupportFormData) => {
     setIsSubmitting(true);
@@ -82,14 +93,10 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="w-full">
-      <div className="text-left mb-8 md:hidden">
-        <h1 className="text-2xl font-bold text-gray-900">Contact Support</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Need help? Send us a message and we&apos;ll get back to you.
-        </p>
-      </div>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
+      <div className="flex-1 p-6 flex justify-center items-start pt-12">
+        <div className="w-full max-w-2xl h-fit">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Name
@@ -154,14 +161,18 @@ export default function SupportPage() {
               )}
             </div>
 
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full"
-        >
-          {isSubmitting ? 'Sending...' : 'Send Message'}
-        </Button>
-      </form>
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-auto px-8"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Message'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

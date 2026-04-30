@@ -4,15 +4,21 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { CSSProperties } from "react";
 import axios from "axios";
 import { useAuth } from "@/lib/auth-context";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
 import { EmailList } from "@/components/emails/EmailList";
 import { EmailViewer } from "@/components/emails/EmailViewer";
 import { EmailFilters } from "@/components/emails/EmailFilters";
 import { EmailComposer } from "@/components/emails/EmailComposer";
 import { type EmailsResponse, type ContactEmail, type ContactMessage } from "@/types/emails";
+import { useSearchParams } from "next/navigation";
 
 export default function EmailsPage() {
     const { loading: authLoading } = useAuth();
+    const { state: sidebarState } = useSidebar();
+    const searchParams = useSearchParams();
+    const contactIdParam = searchParams.get('contactId');
+    const handledContactIdRef = useRef<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -26,6 +32,9 @@ export default function EmailsPage() {
     const [messages, setMessages] = useState<ContactMessage[]>([]);
     const [replyToMessage, setReplyToMessage] = useState<ContactMessage | null>(null);
     const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
+    const [senderEmail, setSenderEmail] = useState<string | null>(null);
+    const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
+    const [senderFirstName, setSenderFirstName] = useState<string | null>(null);
     const viewerRef = useRef<HTMLDivElement>(null);
     const composerRef = useRef<HTMLDivElement>(null);
     const [composerHeight, setComposerHeight] = useState(0);
@@ -101,6 +110,58 @@ export default function EmailsPage() {
         }
     }, [authLoading, debouncedSearch, selectedTags]); // Removing fetchEmails from dependency to avoid loop if not handled carefully, relying on stable fetchEmails or just these deps
 
+    // Handle ?contactId= query param — auto-select or inject the contact
+    useEffect(() => {
+        if (!contactIdParam || authLoading || loading) return;
+        if (handledContactIdRef.current === contactIdParam) return;
+
+        // Check if contact is already in the list — move to top
+        const existing = emails.find(e => e.id === contactIdParam);
+        if (existing) {
+            setEmails(prev => [existing, ...prev.filter(e => e.id !== contactIdParam)]);
+            setSelectedId(contactIdParam);
+            handledContactIdRef.current = contactIdParam;
+            return;
+        }
+
+        // Not in list — fetch contact info and inject as a new entry
+        let cancelled = false;
+        const injectContact = async () => {
+            try {
+                const res = await axios.get('/api/contacts/' + contactIdParam);
+                if (cancelled) return;
+                const c = res.data?.contact;
+                if (c) {
+                    const minimalContact: ContactEmail = {
+                        id: c.id,
+                        full_name: c.full_name || '',
+                        first_name: c.first_name || null,
+                        last_name: c.last_name || null,
+                        email: c.email || '',
+                        company_name: c.company_name || c.current_company || '',
+                        tags: [],
+                        draft_id: null,
+                        draft_subject: null,
+                        draft_body: null,
+                        draft_status: null,
+                        draft_position: null,
+                        email_account_name: null,
+                        email_account_id: null,
+                        has_pending_approval: false,
+                    };
+                    setEmails(prev => {
+                        if (prev.some(e => e.id === minimalContact.id)) return prev;
+                        return [minimalContact, ...prev];
+                    });
+                    setSelectedId(minimalContact.id);
+                }
+            } catch { /* contact not found — ignore */ }
+            if (!cancelled) handledContactIdRef.current = contactIdParam;
+        };
+        injectContact();
+        return () => { cancelled = true; };
+    }, [contactIdParam, authLoading, loading, emails]);
+
     // Fetch current user's sender account to check ownership
     useEffect(() => {
         const loadSender = async () => {
@@ -108,9 +169,20 @@ export default function EmailsPage() {
                 const res = await axios.get("/api/emails/sender");
                 if (res.data?.isConnected && res.data?.account_id) {
                     setSenderAccountId(res.data.account_id);
+                    setSenderEmail(res.data.email ?? null);
+                    setSenderProvider(res.data.provider ?? null);
+                    setSenderFirstName(res.data.first_name ?? null);
+                } else {
+                    setSenderAccountId(null);
+                    setSenderEmail(null);
+                    setSenderProvider(null);
+                    setSenderFirstName(null);
                 }
             } catch {
                 setSenderAccountId(null);
+                setSenderEmail(null);
+                setSenderProvider(null);
+                setSenderFirstName(null);
             }
         };
         loadSender();
@@ -142,6 +214,19 @@ export default function EmailsPage() {
             setMessageError(null);
             const response = await axios.get(`/api/emails/${contactId}/messages`);
             setMessages(response.data.messages || []);
+
+            // Merge pending approval data into the contact entry
+            const approval = response.data.pending_approval || null;
+            setEmails(prev => prev.map(e => {
+                if (e.id !== contactId) return e;
+                return {
+                    ...e,
+                    has_pending_approval: !!approval,
+                    pending_approval_id: approval?.id || null,
+                    pending_approval_subject: approval?.subject || null,
+                    pending_approval_body: approval?.body || null,
+                };
+            }));
         } catch (e: unknown) {
             if (axios.isAxiosError(e)) {
                 setMessageError(e.response?.data?.error || e.message);
@@ -210,6 +295,12 @@ export default function EmailsPage() {
     useLayoutEffect(() => {
         updateComposerRect();
     }, [updateComposerRect, selectedId]);
+
+    // Recalculate after sidebar transition (200ms CSS transition)
+    useEffect(() => {
+        const timer = setTimeout(() => updateComposerRect(), 220);
+        return () => clearTimeout(timer);
+    }, [sidebarState, updateComposerRect]);
 
     useEffect(() => {
         updateComposerRect();
@@ -298,6 +389,10 @@ export default function EmailsPage() {
                                             lastMessageSubject={lastMessage?.subject}
                                             mode={composerMode}
                                             onSent={() => fetchMessages(selectedEmail.id)}
+                                            senderEmail={senderEmail}
+                                            senderProvider={senderProvider}
+                                            senderAccountId={senderAccountId}
+                                            senderFirstName={senderFirstName}
                                         />
                                     </div>
                                 );

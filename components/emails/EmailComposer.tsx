@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "./RichTextEditor";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronUp, Loader2, Sparkles, Send } from "lucide-react";
+import { ChevronUp, Loader2, Sparkles, Send, ShieldCheck } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { formatDistanceToNowStrict } from "date-fns";
+import { useAuth } from "@/lib/auth-context";
 
 interface ContactMessage {
     id: string;
@@ -25,6 +26,10 @@ interface EmailComposerProps {
     lastMessageSubject?: string;
     mode?: "compose" | "reply" | "followup";
     onSent: () => void;
+    senderEmail?: string | null;
+    senderProvider?: "gmail" | "outlook" | null;
+    senderAccountId?: string | null;
+    senderFirstName?: string | null;
 }
 
 export function EmailComposer({
@@ -33,18 +38,20 @@ export function EmailComposer({
     lastMessageSubject,
     mode = "compose",
     onSent,
+    senderEmail = null,
+    senderProvider = null,
+    senderAccountId = null,
+    senderFirstName = null,
 }: EmailComposerProps) {
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
     const [generating, setGenerating] = useState(false);
     const [sending, setSending] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
-    const [senderEmail, setSenderEmail] = useState<string | null>(null);
-    const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
-    const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
-    const [senderFirstName, setSenderFirstName] = useState<string | null>(null);
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
+    const { role, approvalRequired } = useAuth();
+    const needsApproval = approvalRequired && role === 'user';
 
     const resolvedMode = replyToMessage ? "reply" : mode;
     const isReply = resolvedMode === "reply";
@@ -82,32 +89,6 @@ export function EmailComposer({
         prevContactIdRef.current = contactId;
         prevReplyIdRef.current = replyId;
     }, [contact?.id, replyToMessage?.id, defaultSubject]);
-
-    const loadSender = useCallback(async () => {
-        try {
-            const senderRes = await axios.get("/api/emails/sender");
-            if (senderRes.data?.isConnected && senderRes.data?.email && senderRes.data?.account_id) {
-                setSenderEmail(senderRes.data.email);
-                setSenderProvider(senderRes.data.provider ?? null);
-                setSenderAccountId(senderRes.data.account_id);
-                setSenderFirstName(senderRes.data.first_name ?? null);
-            } else {
-                setSenderEmail(null);
-                setSenderProvider(null);
-                setSenderAccountId(null);
-                setSenderFirstName(null);
-            }
-        } catch (error) {
-            setSenderEmail(null);
-            setSenderProvider(null);
-            setSenderAccountId(null);
-            setSenderFirstName(null);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadSender();
-    }, [loadSender]);
 
 
     // Add signature to body
@@ -196,7 +177,7 @@ export function EmailComposer({
 
         setSending(true);
         try {
-            await axios.post(`/api/emails/${contact.id}/send`, {
+            const res = await axios.post(`/api/emails/${contact.id}/send`, {
                 subject,
                 body,
                 account_id: senderAccountId,
@@ -205,7 +186,11 @@ export function EmailComposer({
                 reply_to_message_id: replyToMessage?.message_id,
             });
 
-            toast.success("Email sent successfully!");
+            if (res.data?.status === 'queued_for_approval') {
+                toast.success("Email submitted for admin approval");
+            } else {
+                toast.success("Email sent successfully!");
+            }
             onSent();
             // Clear form after send
             setSubject("");
@@ -304,10 +289,12 @@ export function EmailComposer({
                             >
                                 {sending ? (
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : needsApproval ? (
+                                    <ShieldCheck className="h-4 w-4 mr-2" />
                                 ) : (
                                     <Send className="h-4 w-4 mr-2" />
                                 )}
-                                Send
+                                {needsApproval ? "Submit for Approval" : "Send"}
                             </Button>
                         </div>
                     </div>

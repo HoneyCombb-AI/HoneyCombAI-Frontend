@@ -67,7 +67,7 @@ export const rateLimiters = {
   // Global API limits
   globalPerIP: (ip: string) => 
     RateLimiter.checkLimit(ip, {
-      limit: 1000,
+      limit: 1200,
       windowSeconds: 3600, // 1 hour
       keyPrefix: 'global_ip'
     }),

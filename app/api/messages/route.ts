@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
       strategy: String(row.strategy ?? ''),
       task_id: row.task_id ? String(row.task_id) : null,
       task_type: row.task_type ? String(row.task_type) : null,
+      task_status: row.task_status ? String(row.task_status) : null,
       draft_message: row.draft_message ? String(row.draft_message) : null,
       connection_note: row.connection_note ? String(row.connection_note) : null,
       scheduled_at: row.scheduled_at ? String(row.scheduled_at) : null,

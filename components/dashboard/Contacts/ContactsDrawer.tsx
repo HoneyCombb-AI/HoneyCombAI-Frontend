@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Building, Clock, Languages, Instagram, User } from "lucide-react"
+import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Building, Clock, Languages, Instagram, User, Send } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { parseISO, format } from "date-fns"
 import axios from "axios"
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/drawer"
 import { DashboardContact, DrawerContact } from "@/types/contacts"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import { WhyReachOutStandalone, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
 import { IntentSignalsSection } from "./IntentSignalsSection"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
@@ -35,6 +37,7 @@ const customDrawerStyles = {
 };
 
 export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }: DrawerDemoProps) {
+  const router = useRouter()
   const [drawerContact, setDrawerContact] = useState<DrawerContact | null>(null)
   const [loading, setLoading] = useState(false)
   const [, setError] = useState<string | null>(null)
@@ -184,11 +187,26 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                   {selectedContact.company?.name && (
                     <>
                       <div className="text-sm text-gray-500">
-                        at {selectedContact.company.name}
+                        &nbsp;at&nbsp;{selectedContact.company.name}
                       </div>
                     </>
                   )}
                 </div>
+                {/* Send Email Button */}
+                {drawerContact?.email && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 text-sm shrink-0"
+                    onClick={() => {
+                      router.push(`/emails?contactId=${selectedContact.id}`);
+                      onOpenChange(false);
+                    }}
+                  >
+                    <Send className="h-3 w-3" />
+                    Send Email
+                  </Button>
+                )}
               </div>
             </div>
           </DrawerHeader>

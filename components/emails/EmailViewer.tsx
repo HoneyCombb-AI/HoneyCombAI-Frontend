@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PendingDraftBanner } from "./PendingDraftBanner";
+import { PendingApprovalBanner } from "./PendingApprovalBanner";
 import DOMPurify from "dompurify";
 
 interface EmailViewerProps {
@@ -50,13 +51,21 @@ export function EmailViewer({
                 </div>
             )}
 
+            {/* Pending Approval Banner — only for manual_email approvals; drafts awaiting approval are already shown by PendingDraftBanner */}
+            {email.pending_approval_id && email.draft_status !== 'awaiting_approval' && (
+                <div className="shrink-0">
+                    <PendingApprovalBanner key={`approval-${email.id}`} contact={email} />
+                </div>
+            )}
+
             <div
                 className="flex-1 overflow-y-auto bg-gray-50 px-3 py-3 min-h-0"
                 style={{ paddingBottom: bottomInset ? bottomInset + 24 : undefined }}
             >
                 {loading ? (
-                    <div className="flex items-center justify-center h-full">
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
                         <Loading />
+                        <p className="text-sm text-muted-foreground mt-4">Loading your Emails...</p>
                     </div>
                 ) : error ? (
                     <div className="flex items-center justify-center h-full">
@@ -71,7 +80,7 @@ export function EmailViewer({
                     <div className="space-y-6 max-w-4xl mx-auto pb-4">
                         {messages.map((message) => {
                             const isSent = message.direction === 'outbound';
-                            const rawBody = message.body || "";
+                            const rawBody = (message.body || "").trim();
                             // Detect whether the body contains HTML markup
                             const isHtml = /<[a-z][\s\S]*>/i.test(rawBody);
                             const sanitizedBody = DOMPurify.sanitize(rawBody);

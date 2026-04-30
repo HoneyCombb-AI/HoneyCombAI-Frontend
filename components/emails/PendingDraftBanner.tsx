@@ -48,6 +48,8 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
 
     if (!contact.draft_id) return null;
 
+    const isAwaitingApproval = contact.draft_status === 'awaiting_approval';
+
     const handleSave = async () => {
         if (!contact.draft_id) return;
         setSaving(true);
@@ -97,7 +99,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
     const sanitizedPreview = DOMPurify.sanitize(contact.draft_body || "");
 
     return (
-        <div className="border-b border-violet-200 bg-white/95 shadow-sm">
+        <div className={`border-b shadow-sm ${isAwaitingApproval ? 'border-amber-200 bg-amber-50/50' : 'border-violet-200 bg-white/95'}`}>
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 {/* Header row: trigger + edit button side by side */}
                 <div className="flex items-center">
@@ -111,8 +113,8 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                             </div>
                             <div className="min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold text-violet-900">
-                                        Pending Email Draft
+                                    <span className={`text-sm font-semibold ${isAwaitingApproval ? 'text-amber-900' : 'text-violet-900'}`}>
+                                        {isAwaitingApproval ? 'Awaiting Admin Approval' : 'Pending Email Draft'}
                                     </span>
                                     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-200 text-violet-800 uppercase tracking-wide">
                                         {stepLabel}
@@ -150,7 +152,7 @@ export function PendingDraftBanner({ contact, onSave }: PendingDraftBannerProps)
                     </CollapsibleTrigger>
 
                     {/* Edit button outside the trigger to avoid nested <button> */}
-                    {!isOpen && !editing && (
+                    {!isOpen && !editing && !isAwaitingApproval && (
                         <div className="pr-5 shrink-0">
                             <Button
                                 variant="outline"

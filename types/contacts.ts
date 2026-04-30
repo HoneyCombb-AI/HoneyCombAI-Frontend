@@ -33,6 +33,7 @@ export interface DashboardContact {
     title: string | null;
     city: string | null;
     country: string | null;
+    email: string | null;
     profile_picture: string | null;
     temperature: 'hot' | 'warm' | 'cold' | null;
     contact_sort_score: number | null;

@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
             draft_position: e.draft_position ?? null,
             email_account_name: e.email_account_name ?? null,
             email_account_id: e.email_account_id ?? null,
+            has_pending_approval: e.has_pending_approval ?? false,
         }));
 
         const response: EmailsResponse = {
