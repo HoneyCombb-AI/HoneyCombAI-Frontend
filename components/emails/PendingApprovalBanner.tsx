@@ -17,13 +17,12 @@ interface PendingApprovalBannerProps {
  */
 export function PendingApprovalBanner({ contact }: PendingApprovalBannerProps) {
     const [isOpen, setIsOpen] = useState(false);
-
-    if (!contact.pending_approval_id) return null;
-
     const sanitizedPreview = useMemo(
         () => DOMPurify.sanitize(contact.pending_approval_body || ""),
         [contact.pending_approval_body]
     );
+
+    if (!contact.pending_approval_id) return null;
 
     return (
         <div className="border-b shadow-sm border-violet-200 bg-white/95">

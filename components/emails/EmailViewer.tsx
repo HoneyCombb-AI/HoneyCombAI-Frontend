@@ -51,8 +51,8 @@ export function EmailViewer({
                 </div>
             )}
 
-            {/* Pending Approval Banner */}
-            {email.pending_approval_id && (
+            {/* Pending Approval Banner — only for manual_email approvals; drafts awaiting approval are already shown by PendingDraftBanner */}
+            {email.pending_approval_id && email.draft_status !== 'awaiting_approval' && (
                 <div className="shrink-0">
                     <PendingApprovalBanner key={`approval-${email.id}`} contact={email} />
                 </div>

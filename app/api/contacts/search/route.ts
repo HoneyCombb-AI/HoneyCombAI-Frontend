@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
 
         const { searchParams } = new URL(req.url);
         const q = searchParams.get('q')?.trim() || '';
-        const limit = Math.min(parseInt(searchParams.get('limit') || '8'), 20);
+        const rawLimit = Number.parseInt(searchParams.get('limit') || '8', 10);
+        const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 20) : 8;
 
         if (q.length < 2) {
             return NextResponse.json({ contacts: [] });

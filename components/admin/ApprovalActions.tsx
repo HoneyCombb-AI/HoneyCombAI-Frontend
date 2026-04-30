@@ -96,9 +96,12 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
                                         ? (editSnapshot.draft_message || editSnapshot.connection_note || "")
                                         : ""
                                 }
-                                onChange={(e) =>
-                                    setEditSnapshot((s) => ({ ...s, draft_message: e.target.value } as LinkedInSnapshot))
-                                }
+                                onChange={(e) => {
+                                    const field = !isEmailSnapshot(editSnapshot) && editSnapshot.draft_message
+                                        ? "draft_message"
+                                        : "connection_note";
+                                    setEditSnapshot((s) => ({ ...s, [field]: e.target.value } as LinkedInSnapshot));
+                                }}
                                 rows={4}
                                 className="mt-1"
                             />

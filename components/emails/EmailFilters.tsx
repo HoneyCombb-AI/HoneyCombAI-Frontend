@@ -44,21 +44,30 @@ export function EmailFilters({
             setContactResults([]);
             return;
         }
+        const controller = new AbortController();
         if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
         searchTimerRef.current = setTimeout(async () => {
             setSearching(true);
             try {
                 const res = await axios.get("/api/contacts/search", {
                     params: { q: contactSearch.trim(), limit: 8 },
+                    signal: controller.signal,
                 });
                 setContactResults(res.data.contacts || []);
-            } catch {
-                setContactResults([]);
+            } catch (err) {
+                if (!axios.isCancel(err)) {
+                    setContactResults([]);
+                }
             } finally {
-                setSearching(false);
+                if (!controller.signal.aborted) {
+                    setSearching(false);
+                }
             }
         }, 300);
-        return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+        return () => {
+            controller.abort();
+            if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+        };
     }, [contactSearch, composeOpen]);
 
     const handleSelectContact = useCallback((contactId: string) => {
@@ -241,19 +250,23 @@ export function EmailFilters({
                                 ) : contactResults.length > 0 ? (
                                     <div className="space-y-0.5">
                                         {contactResults.map((c) => (
-                                            <div
+                                            <Button
                                                 key={c.id}
-                                                className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                disabled={!c.email}
+                                                className="w-full justify-start h-auto py-2 font-normal"
                                                 onClick={() => handleSelectContact(c.id)}
                                             >
-                                                <div className="min-w-0 flex-1">
+                                                <div className="min-w-0 flex-1 text-left">
                                                     <div className="text-sm font-medium text-gray-900 truncate">{c.full_name}</div>
                                                     <div className="text-xs text-muted-foreground truncate">
                                                         {c.email || "No email"}
                                                         {c.company_name && ` · ${c.company_name}`}
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Button>
                                         ))}
                                     </div>
                                 ) : contactSearch.trim().length >= 2 ? (

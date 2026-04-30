@@ -26,15 +26,23 @@ export async function GET() {
         }
 
         // Get org approval setting
-        const { data: org } = await supabase
+        const { data: org, error: orgError } = await supabase
             .from('organizations')
             .select('approval_required')
             .eq('id', membership.organization_id)
             .single();
 
+        if (orgError || !org) {
+            console.error('Failed to fetch organization settings:', orgError);
+            return NextResponse.json(
+                { error: 'Failed to fetch organization settings' },
+                { status: 500 }
+            );
+        }
+
         return NextResponse.json({
             role: membership.role || 'user',
-            approval_required: org?.approval_required ?? false,
+            approval_required: org.approval_required,
             organization_id: membership.organization_id,
         });
 

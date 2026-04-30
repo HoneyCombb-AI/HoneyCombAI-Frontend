@@ -125,9 +125,11 @@ export default function EmailsPage() {
         }
 
         // Not in list — fetch contact info and inject as a new entry
+        let cancelled = false;
         const injectContact = async () => {
             try {
                 const res = await axios.get('/api/contacts/' + contactIdParam);
+                if (cancelled) return;
                 const c = res.data?.contact;
                 if (c) {
                     const minimalContact: ContactEmail = {
@@ -154,9 +156,10 @@ export default function EmailsPage() {
                     setSelectedId(minimalContact.id);
                 }
             } catch { /* contact not found — ignore */ }
-            handledContactIdRef.current = contactIdParam;
+            if (!cancelled) handledContactIdRef.current = contactIdParam;
         };
         injectContact();
+        return () => { cancelled = true; };
     }, [contactIdParam, authLoading, loading, emails]);
 
     // Fetch current user's sender account to check ownership

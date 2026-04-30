@@ -30,6 +30,64 @@ export async function PATCH(
             );
         }
 
+        // For manual_email approvals: send the email BEFORE persisting the approval
+        // so the item remains retryable if dispatch fails.
+        if (action === 'approve') {
+            const { data: item, error: peekError } = await supabase
+                .from('approval_queue')
+                .select('item_type, contact_id, snapshot')
+                .eq('id', id)
+                .single();
+
+            if (peekError) {
+                console.error('Failed to fetch approval item for pre-send check:', peekError);
+                return NextResponse.json({ error: 'Failed to fetch approval item' }, { status: 500 });
+            }
+
+            if (item?.item_type === 'manual_email') {
+                const snapshot = (editedSnapshot || item.snapshot) as EmailSnapshot | undefined;
+
+                if (!item.contact_id || !snapshot?.subject || !snapshot?.body) {
+                    return NextResponse.json(
+                        { error: 'Missing contact or email content' },
+                        { status: 422 }
+                    );
+                }
+
+                try {
+                    await axios.post(
+                        `${MAIL_SERVER_URL}/emails/contact/${item.contact_id}/send`,
+                        {
+                            subject: snapshot.subject,
+                            body: snapshot.body,
+                            account_id: snapshot.account_id,
+                            account_provider: snapshot.account_provider,
+                            thread_id: snapshot.thread_id,
+                            reply_to_message_id: snapshot.reply_to_message_id,
+                        },
+                        {
+                            auth: {
+                                username: MAIL_SERVER_USER,
+                                password: MAIL_SERVER_PASSWORD,
+                            },
+                        }
+                    );
+                } catch (mailError: unknown) {
+                    console.error('Mail dispatch failed; approval not persisted:', mailError);
+                    if (axios.isAxiosError(mailError)) {
+                        return NextResponse.json(
+                            { error: mailError.response?.data?.detail || 'Email dispatch failed. Approval not saved.' },
+                            { status: mailError.response?.status || 502 }
+                        );
+                    }
+                    return NextResponse.json(
+                        { error: 'Email dispatch failed. Approval not saved.' },
+                        { status: 502 }
+                    );
+                }
+            }
+        }
+
         // Single RPC call — admin check, fetch, lock, update, flip linked items
         const { data, error } = await supabase.rpc('review_approval_item', {
             p_user_id: user.id,
@@ -63,37 +121,6 @@ export async function PATCH(
 
         if (!data) {
             return NextResponse.json({ error: 'Unexpected empty response' }, { status: 500 });
-        }
-
-        // For manual_email approvals, dispatch via mail server (external action)
-        if (action === 'approve' && data.item_type === 'manual_email') {
-            const snapshot = data.snapshot as EmailSnapshot | undefined;
-            try {
-                await axios.post(
-                    `${MAIL_SERVER_URL}/emails/contact/${data.contact_id}/send`,
-                    {
-                        subject: snapshot?.subject,
-                        body: snapshot?.body,
-                        account_id: snapshot?.account_id,
-                        account_provider: snapshot?.account_provider,
-                        thread_id: snapshot?.thread_id,
-                        reply_to_message_id: snapshot?.reply_to_message_id,
-                    },
-                    {
-                        auth: {
-                            username: MAIL_SERVER_USER,
-                            password: MAIL_SERVER_PASSWORD,
-                        },
-                    }
-                );
-            } catch (mailError: unknown) {
-                console.error('Mail dispatch failed after approval:', mailError);
-                // Approval is already saved; log the dispatch failure
-                return NextResponse.json({
-                    status: 'approved',
-                    warning: 'Approved but email dispatch failed. It may need to be resent.',
-                });
-            }
         }
 
         // For rejections, insert notification for submitter

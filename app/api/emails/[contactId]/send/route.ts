@@ -62,28 +62,52 @@ export async function POST(
 
         // --- Approval gate ---
         // Check if org requires approval and user is not admin
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
             .from('organization_members')
             .select('role, organization_id')
             .eq('user_id', user.id)
             .maybeSingle();
 
+        if (profileError) {
+            console.error('Failed to fetch user membership for approval gate:', profileError);
+            return NextResponse.json(
+                { detail: 'Failed to evaluate approval requirements' },
+                { status: 500 }
+            );
+        }
+
         if (profile?.organization_id) {
-            const { data: org } = await supabase
+            const { data: org, error: orgError } = await supabase
                 .from('organizations')
                 .select('approval_required')
                 .eq('id', profile.organization_id)
                 .single();
 
-            if (org?.approval_required && profile.role !== 'admin') {
+            if (orgError || !org) {
+                console.error('Failed to fetch organization settings for approval gate:', orgError);
+                return NextResponse.json(
+                    { detail: 'Failed to evaluate approval requirements' },
+                    { status: 500 }
+                );
+            }
+
+            if (org.approval_required && profile.role !== 'admin') {
                 // Get contact info for the snapshot
-                const { data: contact } = await supabase
+                const { data: contact, error: contactError } = await supabase
                     .from('contacts')
                     .select('full_name, email, company:companies(name)')
                     .eq('id', contactId)
                     .maybeSingle();
 
-                await supabase.from('approval_queue').insert({
+                if (contactError) {
+                    console.error('Failed to fetch contact for approval snapshot:', contactError);
+                    return NextResponse.json(
+                        { detail: 'Failed to fetch contact details' },
+                        { status: 500 }
+                    );
+                }
+
+                const { error: insertError } = await supabase.from('approval_queue').insert({
                     organization_id: profile.organization_id,
                     item_type: 'manual_email',
                     submitted_by: user.id,
@@ -100,6 +124,14 @@ export async function POST(
                         company_name: ((contact?.company as unknown as { name: string } | null)?.name) || '',
                     },
                 });
+
+                if (insertError) {
+                    console.error('Failed to insert approval queue item:', insertError);
+                    return NextResponse.json(
+                        { detail: 'Failed to submit email for approval' },
+                        { status: 500 }
+                    );
+                }
 
                 return NextResponse.json({
                     status: 'queued_for_approval',
