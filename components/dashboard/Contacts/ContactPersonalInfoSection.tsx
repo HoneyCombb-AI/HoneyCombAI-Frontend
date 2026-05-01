@@ -106,15 +106,15 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
   const [twitterHandle, setTwitterHandle] = useState(contact.twitter_handle || "")
   const [instagramHandle, setInstagramHandle] = useState(contact.instagram_handle || "")
   
-  const [emails, setEmails] = useState<Partial<ContactEmail>[]>(
+  const [emails, setEmails] = useState<(Partial<ContactEmail> & { _uiKey?: string })[]>(
     contact.emails?.length > 0
       ? contact.emails.map(e => ({ id: e.id, email: e.email, is_primary: e.is_primary, label: e.label || "" }))
-      : contact.email ? [{ id: crypto.randomUUID(), email: contact.email, is_primary: true, label: "" }] : []
+      : contact.email ? [{ _uiKey: crypto.randomUUID(), email: contact.email, is_primary: true, label: "" }] : []
   )
-  const [phones, setPhones] = useState<Partial<ContactPhone>[]>(
+  const [phones, setPhones] = useState<(Partial<ContactPhone> & { _uiKey?: string })[]>(
     contact.phones?.length > 0
       ? contact.phones.map(p => ({ id: p.id, phone: p.phone, is_primary: p.is_primary, label: p.label || "" }))
-      : contact.phone ? [{ id: crypto.randomUUID(), phone: contact.phone, is_primary: true, label: "" }] : []
+      : contact.phone ? [{ _uiKey: crypto.randomUUID(), phone: contact.phone, is_primary: true, label: "" }] : []
   )
 
   // ── Memoised display data ──────────────────────────────────────────────────
@@ -165,12 +165,12 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
     setEmails(
       contact.emails?.length > 0
         ? contact.emails.map(e => ({ id: e.id, email: e.email, is_primary: e.is_primary, label: e.label || "" }))
-        : contact.email ? [{ id: crypto.randomUUID(), email: contact.email, is_primary: true, label: "" }] : []
+        : contact.email ? [{ _uiKey: crypto.randomUUID(), email: contact.email, is_primary: true, label: "" }] : []
     )
     setPhones(
       contact.phones?.length > 0
         ? contact.phones.map(p => ({ id: p.id, phone: p.phone, is_primary: p.is_primary, label: p.label || "" }))
-        : contact.phone ? [{ id: crypto.randomUUID(), phone: contact.phone, is_primary: true, label: "" }] : []
+        : contact.phone ? [{ _uiKey: crypto.randomUUID(), phone: contact.phone, is_primary: true, label: "" }] : []
     )
     setErrors({})
     setIsEditing(true)
@@ -187,7 +187,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
     setEmails(prev => prev.map((e, i) => ({ ...e, is_primary: i === index, label: i === index ? "" : e.label }))), [])
 
   const addEmail = useCallback(() =>
-    setEmails(prev => [...prev, { id: crypto.randomUUID(), email: "", is_primary: prev.length === 0, label: "" }]), [])
+    setEmails(prev => [...prev, { _uiKey: crypto.randomUUID(), email: "", is_primary: prev.length === 0, label: "" }]), [])
 
   const removeEmail = useCallback((index: number) =>
     setEmails(prev => {
@@ -205,7 +205,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
     setPhones(prev => prev.map((p, i) => ({ ...p, is_primary: i === index, label: i === index ? "" : p.label }))), [])
 
   const addPhone = useCallback(() =>
-    setPhones(prev => [...prev, { id: crypto.randomUUID(), phone: "", is_primary: prev.length === 0, label: "" }]), [])
+    setPhones(prev => [...prev, { _uiKey: crypto.randomUUID(), phone: "", is_primary: prev.length === 0, label: "" }]), [])
 
   const removePhone = useCallback((index: number) =>
     setPhones(prev => {
@@ -224,8 +224,8 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
       linkedin_url: linkedinUrl || null,
       twitter_handle: twitterHandle || null,
       instagram_handle: instagramHandle || null,
-      emails,
-      phones,
+      emails: emails.map(({ _uiKey, ...e }) => e),
+      phones: phones.map(({ _uiKey, ...p }) => p),
     }
 
     const result = ContactUpdateSchema.safeParse(payload)
@@ -275,7 +275,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
           </Button>
         </div>
 
-        <div className="grid grid-cols-3 gap-x-6">
+        <div className={cn("grid gap-x-6", useThreeColumns ? "grid-cols-3" : "grid-cols-2")}>
 
           {/* ── Column 1: Location, Socials, Industry, Languages ──── */}
           <div className="space-y-2.5">
@@ -334,32 +334,25 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                 </div>
               </div>
             )}
-
-            {/* Dense mode: added by + updated by move into col 1 */}
-            {useThreeColumns && (
-              <>
-                {contact.created_by_name && (
-                  <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
-                    <User className="h-4 w-4 shrink-0 text-gray-400" />
-                    <span>Added by <span className="font-medium text-gray-700">{contact.created_by_name}</span></span>
-                  </div>
-                )}
-                {contact.updated_at && (
-                  <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
-                    <Clock className="h-4 w-4 shrink-0 text-gray-400" />
-                    <span>
-                      Updated{contact.updated_by_name ? <> by <span className="font-medium text-gray-700">{contact.updated_by_name}</span></> : ""} on{" "}
-                      {format(parseISO(contact.updated_at), "PPP")}
-                    </span>
-                  </div>
-                )}
-              </>
+            {/* Added by + Updated by always in col 1 */}
+            {contact.created_by_name && (
+              <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
+                <User className="h-4 w-4 shrink-0 text-gray-400" />
+                <span>Added by <span className="font-medium text-gray-700">{contact.created_by_name}</span></span>
+              </div>
+            )}
+            {contact.updated_at && (
+              <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
+                <Clock className="h-4 w-4 shrink-0 text-gray-400" />
+                <span>
+                  Updated{contact.updated_by_name ? <> by <span className="font-medium text-gray-700">{contact.updated_by_name}</span></> : ""} on{" "}
+                  {format(parseISO(contact.updated_at), "PPP")}
+                </span>
+              </div>
             )}
           </div>
-
-          {/* ── Column 2 ─────────────────────────────────────────────── */}
+          {/* ── Column 2: Emails (+ phones in sparse mode) ────────── */}
           <div className="space-y-2.5">
-            {/* Emails always in col 2 */}
             {displayEmails.length > 0
               ? displayEmails.map(entry => (
                 <div key={entry.id} className={cn("flex items-center gap-2", typo.body)}>
@@ -377,7 +370,6 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   <span>No email provided</span>
                 </div>
               )}
-
             {/* Sparse mode: phones also go into col 2 */}
             {!useThreeColumns && (
               displayPhones.length > 0
@@ -399,12 +391,10 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                 )
             )}
           </div>
-
-          {/* ── Column 3 ─────────────────────────────────────────────── */}
-          <div className="space-y-2.5">
-            {useThreeColumns ? (
-              /* Dense mode: col 3 = phones */
-              displayPhones.map(entry => (
+          {/* ── Column 3 (dense mode only): Phones ────────────────── */}
+          {useThreeColumns && (
+            <div className="space-y-2.5">
+              {displayPhones.map(entry => (
                 <div key={entry.id} className={cn("flex items-center gap-2", typo.body)}>
                   <Phone className={cn("h-4 w-4 shrink-0", entry.is_primary ? "text-green-500" : "text-gray-400")} />
                   <span className={cn("truncate", entry.is_primary ? "text-gray-900 font-semibold" : "text-gray-600")}>
@@ -413,28 +403,9 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   {entry.is_primary && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Primary</Badge>}
                   {entry.label && <span className={cn("text-gray-400 capitalize shrink-0", typo.muted)}>{entry.label}</span>}
                 </div>
-              ))
-            ) : (
-              /* Sparse mode: col 3 = added by + updated by */
-              <>
-                {contact.created_by_name && (
-                  <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
-                    <User className="h-4 w-4 shrink-0 text-gray-400" />
-                    <span>Added by <span className="font-medium text-gray-700">{contact.created_by_name}</span></span>
-                  </div>
-                )}
-                {contact.updated_at && (
-                  <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
-                    <Clock className="h-4 w-4 shrink-0 text-gray-400" />
-                    <span>
-                      Updated{contact.updated_by_name ? <> by <span className="font-medium text-gray-700">{contact.updated_by_name}</span></> : ""} on{" "}
-                      {format(parseISO(contact.updated_at), "PPP")}
-                    </span>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     )
@@ -458,7 +429,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
         </Label>
         <div className="space-y-2">
           {emails.map((entry, index) => (
-            <div key={entry.id} className="flex items-center gap-2">
+            <div key={entry.id || entry._uiKey || index} className="flex items-center gap-2">
               <Input
                 value={entry.email || ""}
                 onChange={e => updateEmail(index, "email", e.target.value)}
@@ -507,7 +478,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
         </Label>
         <div className="space-y-2">
           {phones.map((entry, index) => (
-            <div key={entry.id} className="flex items-center gap-2">
+            <div key={entry.id || entry._uiKey || index} className="flex items-center gap-2">
               <Input
                 value={entry.phone || ""}
                 onChange={e => {
