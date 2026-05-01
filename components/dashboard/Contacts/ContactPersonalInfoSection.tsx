@@ -299,9 +299,9 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             <div className={cn("flex items-center gap-2.5", typo.body)}>
               <Instagram className="h-4 w-4 text-[#E4405F] shrink-0" />
               {contact.instagram_handle ? (
-                <a href={`https://instagram.com/${contact.instagram_handle}`} target="_blank" rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline flex items-center gap-1">
-                  @{contact.instagram_handle} <ExternalLink className="h-3 w-3 shrink-0" />
+                <a href={contact.instagram_handle.startsWith('http') ? contact.instagram_handle : `https://instagram.com/${contact.instagram_handle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline flex items-center gap-1 truncate">
+                  Instagram Profile <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
                 <span className={cn("italic text-gray-500", typo.muted)}>No Instagram profile</span>
@@ -310,9 +310,9 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             <div className={cn("flex items-center gap-2.5", typo.body)}>
               <Twitter className="h-4 w-4 text-[#1DA1F2] shrink-0" />
               {contact.twitter_handle ? (
-                <a href={`https://twitter.com/${contact.twitter_handle}`} target="_blank" rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline flex items-center gap-1">
-                  @{contact.twitter_handle} <ExternalLink className="h-3 w-3 shrink-0" />
+                <a href={contact.twitter_handle.startsWith('http') ? contact.twitter_handle : `https://twitter.com/${contact.twitter_handle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline flex items-center gap-1 truncate">
+                  X Profile <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
                 <span className={cn("italic text-gray-500", typo.muted)}>No X profile</span>
