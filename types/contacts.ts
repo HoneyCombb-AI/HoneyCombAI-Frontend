@@ -89,6 +89,22 @@ export interface TagGroupResponse {
 
 // --- Drawer types (from api/contacts/[id]/route.ts) ---
 
+export interface ContactEmail {
+    id: string;
+    email: string;
+    is_primary: boolean;
+    label: string | null;
+    created_at: string;
+}
+
+export interface ContactPhone {
+    id: string;
+    phone: string;
+    is_primary: boolean;
+    label: string | null;
+    created_at: string;
+}
+
 export interface DrawerContactSignal {
     id: string;
     signal_type: string;
@@ -164,7 +180,14 @@ export interface DrawerContact {
     twitter_handle: string | null;
     instagram_handle: string | null;
     languages: string[] | null;
+    created_at: string | null;
     updated_at: string;
+    created_by: string | null;
+    created_by_name: string | null;
+    updated_by: string | null;
+    updated_by_name: string | null;
+    emails: ContactEmail[];
+    phones: ContactPhone[];
 
     primary_analysis_completed: boolean;
     primary_analysis_requested: boolean;

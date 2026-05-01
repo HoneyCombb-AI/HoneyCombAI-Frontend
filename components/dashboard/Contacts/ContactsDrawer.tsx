@@ -3,9 +3,8 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { MapPin, Mail, Phone, Flag, LinkedinIcon, Twitter, ExternalLink, Building, Clock, Languages, Instagram, User, Send } from "lucide-react"
+import { Send } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { parseISO, format } from "date-fns"
 import axios from "axios"
 import { toast } from "sonner"
 import {
@@ -16,10 +15,10 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer"
 import { DashboardContact, DrawerContact } from "@/types/contacts"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { WhyReachOutStandalone, SocialActivitySection, SocialIntelligenceSection } from "./ContactDrawerComponents"
+import { ContactPersonalInfoSection } from "./ContactPersonalInfoSection"
 import { IntentSignalsSection } from "./IntentSignalsSection"
 import CompleteProfileSkeleton from "./ContactsDrawerSkeleton"
 
@@ -193,7 +192,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                   )}
                 </div>
                 {/* Send Email Button */}
-                {drawerContact?.email && (
+                {((drawerContact?.emails?.length ?? 0) > 0 || drawerContact?.email) && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -223,138 +222,16 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                 </>
               )}
 
-              <div className="flex gap-4">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                      <User className="h-3.5 w-3.5" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-gray-900">Personal Information</h3>
-                  </div>
-
-                  {/* Two-column layout for personal information */}
-                  <div className="grid grid-cols-2 gap-6">
-                    {/* Column 1: 5 items */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <MapPin className="h-4 w-4" />
-                        <span>
-                          {drawerContact?.city || selectedContact.city || "No location provided"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <Flag className="h-4 w-4" />
-                        <span>{drawerContact?.country || selectedContact.country || "No country provided"}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <Mail className="h-4 w-4" />
-                        <span>{drawerContact?.email || "No email provided"}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <Phone className="h-4 w-4" />
-                        <span>{drawerContact?.phone || "No phone provided"}</span>
-                      </div>
-
-                      {/* Languages - moved to column 1 */}
-                      {drawerContact?.languages && drawerContact.languages.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-3 text-sm font-semibold text-gray-600">
-                            <Languages className="h-4 w-4" />
-                            <span>Languages</span>
-                          </div>
-                          <div className="flex flex-wrap gap-1 ml-7">
-                            {drawerContact.languages.map((language: string, idx: number) => (
-                              <Badge key={idx} variant="secondary" className="text-xs px-2 py-1">
-                                {language}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Column 2: 5 items */}
-                    <div className="space-y-4">
-                      {/* LinkedIn - moved to first item in column 2 */}
-                      <div className="flex items-center gap-3 text-sm">
-                        <LinkedinIcon className="h-4 w-4 text-[#0A66C2]" />
-                        {drawerContact?.linkedin_url ? (
-                          <a
-                            href={drawerContact.linkedin_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline flex items-center gap-1"
-                          >
-                            LinkedIn Profile
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : (
-                          <span className="text-gray-600">No LinkedIn profile</span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3 text-sm">
-                        <Twitter className="h-4 w-4 text-[#1DA1F2]" />
-                        {drawerContact?.twitter_handle ? (
-                          <a
-                            href={`https://twitter.com/${drawerContact.twitter_handle}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline flex items-center gap-1"
-                          >
-                            @{drawerContact.twitter_handle}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : (
-                          <span className="text-gray-600">No X profile</span>
-                        )}
-                      </div>
-
-                      {/* Instagram Handle */}
-                      <div className="flex items-center gap-3 text-sm">
-                        <Instagram className="h-4 w-4 text-[#E4405F]" />
-                        {drawerContact?.instagram_handle ? (
-                          <a
-                            href={`https://instagram.com/${drawerContact.instagram_handle}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline flex items-center gap-1"
-                          >
-                            @{drawerContact.instagram_handle}
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        ) : (
-                          <span className="text-gray-600">No Instagram profile</span>
-                        )}
-                      </div>
-
-                      {selectedContact.company?.industry && (
-                        <div className="flex items-center gap-3 text-sm text-gray-600">
-                          <Building className="h-4 w-6" />
-                          <span>Works in {selectedContact.company?.industry}</span>
-                        </div>
-                      )}
-
-                      {/* Profile updated - moved to last item in column 2 */}
-                      {drawerContact?.updated_at && (
-                        <div className="flex items-center gap-3 text-sm text-gray-600">
-                          <Clock className="h-4 w-5" />
-                          <span>Profile updated on {drawerContact.updated_at
-                            ? format(parseISO(drawerContact.updated_at), "PPP")
-                            : "—"
-                          }</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-
-                </div>
-              </div>
+              {drawerContact && (
+                <ContactPersonalInfoSection
+                  contact={drawerContact}
+                  companyIndustry={selectedContact.company?.industry}
+                  onUpdate={() => fetchContactDetails(selectedContact.id)}
+                />
+              )}
               {/* Why Reach Out Section - Standalone */}
               {drawerContact?.ai_analysis?.[0] && (
                 <>
-                  <Separator className="my-5" />
                   <WhyReachOutStandalone analysis={drawerContact.ai_analysis[0]} />
                 </>
               )}
