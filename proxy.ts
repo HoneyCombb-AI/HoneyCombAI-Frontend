@@ -4,6 +4,30 @@ import { rateLimiters, getRealIP } from './app/api/utils/rate-limiter';
 import { updateSession } from '@/lib/supabase/middleware';
 
 export async function proxy(request: NextRequest) {
+  // Check if maintenance mode is enabled
+  const isMaintenanceMode = process.env.MAINTENANCE_MODE === 'true';
+
+  if (isMaintenanceMode) {
+    const url = request.nextUrl.clone();
+    
+    // Do not redirect if already on the maintenance page to avoid infinite loops
+    if (url.pathname === '/maintenance') {
+      return await updateSession(request);
+    }
+
+    // Return 503 for API routes
+    if (url.pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'Service Unavailable', maintenance: true, message: 'The site is currently undergoing maintenance.' },
+        { status: 503, headers: { 'Retry-After': '3600' } }
+      );
+    }
+
+    // Rewrite all other requests to the maintenance page
+    url.pathname = '/maintenance';
+    return NextResponse.rewrite(url);
+  }
+
   // Only apply rate limiting to API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
     try {
