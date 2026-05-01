@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { X, Plus, Edit2, Trash2, Loader2, FileText, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 import axios from "axios"
 import { createClient } from "@/lib/supabase/client"
+import { useFontSize } from "@/lib/font-size-context"
 
 interface Note {
   id: string
@@ -48,6 +49,9 @@ export function NotesDrawer({
   notableName,
   onNotesUpdated
 }: NotesDrawerProps) {
+  const { getFontSizeClass } = useFontSize()
+  const fontSizeClass = useMemo(() => getFontSizeClass(), [getFontSizeClass])
+
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
@@ -229,7 +233,7 @@ export function NotesDrawer({
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b px-6">
             <DrawerTitle className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">
+                <h2 className={`text-lg font-semibold ${fontSizeClass}`}>
                   {notableName ? (
                     <>
                       <span className="text-gray-500 font-normal">Notes for </span>
@@ -240,7 +244,7 @@ export function NotesDrawer({
                   )}
                 </h2>
                 {!notableName && (
-                  <p className="text-sm text-gray-500 font-normal mt-1">
+                  <p className={`text-gray-500 font-normal mt-1 ${fontSizeClass}`}>
                     {notableType === "contact" ? "Contact" : "Company"} notes
                   </p>
                 )}
@@ -252,7 +256,7 @@ export function NotesDrawer({
                 className="h-12 w-auto p-1.5"
               >
                 <div className="flex flex-1 justify-center items-center gap-2">
-                  <p className="text-black font-semibold">Close</p>
+                  <p className={`text-black font-semibold ${fontSizeClass}`}>Close</p>
                   <X className="h-8 w-8" />
                 </div>
               </Button>
@@ -262,11 +266,11 @@ export function NotesDrawer({
           <div className="px-6 py-4 space-y-6">
             {/* Add New Note Section */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900">Add New Note</h3>
+              <h3 className={`font-semibold text-gray-900 ${fontSizeClass}`}>Add New Note</h3>
 
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="note-content" className="text-xs">Note Content</Label>
+                  <Label htmlFor="note-content" className={fontSizeClass}>Note Content</Label>
                   <Textarea
                     id="note-content"
                     placeholder="Enter your note here..."
@@ -274,7 +278,7 @@ export function NotesDrawer({
                     onChange={(e) => setNewNoteContent(e.target.value)}
                     disabled={isAdding}
                     rows={10}
-                    className="resize-none"
+                    className={`resize-none ${fontSizeClass}`}
                   />
                 </div>
 
@@ -285,15 +289,15 @@ export function NotesDrawer({
                   size="sm"
                 >
                   {isAdding ? (
-                    <>
+                    <span className={`flex items-center ${fontSizeClass}`}>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Adding...
-                    </>
+                    </span>
                   ) : (
-                    <>
+                    <span className={`flex items-center ${fontSizeClass}`}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Note
-                    </>
+                    </span>
                   )}
                 </Button>
               </div>
@@ -303,7 +307,7 @@ export function NotesDrawer({
 
             {/* Existing Notes Section */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className={`font-semibold text-gray-900 ${fontSizeClass}`}>
                 All Notes
                 {notes.length > 0 && (
                   <span className="text-gray-500 font-normal ml-2">
@@ -319,7 +323,7 @@ export function NotesDrawer({
               ) : notes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <FileText className="h-12 w-12 text-gray-300 mb-3" />
-                  <p className="text-sm text-gray-500">No notes yet. Add one above!</p>
+                  <p className={`text-gray-500 ${fontSizeClass}`}>No notes yet. Add one above!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -329,14 +333,14 @@ export function NotesDrawer({
                         // Edit mode
                         <div className="space-y-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
                           <div className="space-y-2">
-                            <Label htmlFor="edit-note-content" className="text-xs">Note Content</Label>
+                            <Label htmlFor="edit-note-content" className={fontSizeClass}>Note Content</Label>
                             <Textarea
                               id="edit-note-content"
                               value={editNoteContent}
                               onChange={(e) => setEditNoteContent(e.target.value)}
                               disabled={isUpdating}
                               rows={10}
-                              className="resize-none"
+                              className={`resize-none ${fontSizeClass}`}
                             />
                           </div>
 
@@ -372,7 +376,7 @@ export function NotesDrawer({
                         <Alert className="p-3 border-red-200 bg-red-50">
                           <AlertDescription>
                             <div className="space-y-3">
-                              <p className="text-sm text-red-900 font-medium">
+                              <p className={`text-red-900 font-medium ${fontSizeClass}`}>
                                 Delete this note?
                               </p>
                               <div className="flex gap-2">
@@ -409,7 +413,7 @@ export function NotesDrawer({
                         // View mode
                         <div className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <p className="text-xs text-gray-500">
+                            <p className={`text-gray-500 ${fontSizeClass}`}>
                               {formatDate(note.created_at)}
                             </p>
                             {isOwner(note) && (
@@ -435,13 +439,13 @@ export function NotesDrawer({
                               </div>
                             )}
                           </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word">
+                          <p className={`text-gray-700 whitespace-pre-wrap wrap-break-word leading-relaxed ${fontSizeClass}`}>
                             {note.content}
                           </p>
                           {note.created_by_name && (
                             <div className="flex items-center justify-end gap-1 mt-2">
                               <User className="h-3 w-3 text-gray-500" />
-                              <p className="text-xs text-gray-500">{note.created_by_name}</p>
+                              <p className={`text-gray-500 ${fontSizeClass}`}>{note.created_by_name}</p>
                             </div>
                           )}
                         </div>
