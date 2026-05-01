@@ -109,12 +109,12 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
   const [emails, setEmails] = useState<Partial<ContactEmail>[]>(
     contact.emails?.length > 0
       ? contact.emails.map(e => ({ id: e.id, email: e.email, is_primary: e.is_primary, label: e.label || "" }))
-      : contact.email ? [{ email: contact.email, is_primary: true, label: "" }] : []
+      : contact.email ? [{ id: crypto.randomUUID(), email: contact.email, is_primary: true, label: "" }] : []
   )
   const [phones, setPhones] = useState<Partial<ContactPhone>[]>(
     contact.phones?.length > 0
       ? contact.phones.map(p => ({ id: p.id, phone: p.phone, is_primary: p.is_primary, label: p.label || "" }))
-      : contact.phone ? [{ phone: contact.phone, is_primary: true, label: "" }] : []
+      : contact.phone ? [{ id: crypto.randomUUID(), phone: contact.phone, is_primary: true, label: "" }] : []
   )
 
   // ── Memoised display data ──────────────────────────────────────────────────
@@ -165,12 +165,12 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
     setEmails(
       contact.emails?.length > 0
         ? contact.emails.map(e => ({ id: e.id, email: e.email, is_primary: e.is_primary, label: e.label || "" }))
-        : contact.email ? [{ email: contact.email, is_primary: true, label: "" }] : []
+        : contact.email ? [{ id: crypto.randomUUID(), email: contact.email, is_primary: true, label: "" }] : []
     )
     setPhones(
       contact.phones?.length > 0
         ? contact.phones.map(p => ({ id: p.id, phone: p.phone, is_primary: p.is_primary, label: p.label || "" }))
-        : contact.phone ? [{ phone: contact.phone, is_primary: true, label: "" }] : []
+        : contact.phone ? [{ id: crypto.randomUUID(), phone: contact.phone, is_primary: true, label: "" }] : []
     )
     setErrors({})
     setIsEditing(true)
@@ -184,10 +184,10 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
   // ── Email handlers ────────────────────────────────────────────────────────
 
   const setPrimaryEmail = useCallback((index: number) =>
-    setEmails(prev => prev.map((e, i) => ({ ...e, is_primary: i === index }))), [])
+    setEmails(prev => prev.map((e, i) => ({ ...e, is_primary: i === index, label: i === index ? "" : e.label }))), [])
 
   const addEmail = useCallback(() =>
-    setEmails(prev => [...prev, { email: "", is_primary: prev.length === 0, label: "" }]), [])
+    setEmails(prev => [...prev, { id: crypto.randomUUID(), email: "", is_primary: prev.length === 0, label: "" }]), [])
 
   const removeEmail = useCallback((index: number) =>
     setEmails(prev => {
@@ -202,10 +202,10 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
   // ── Phone handlers ────────────────────────────────────────────────────────
 
   const setPrimaryPhone = useCallback((index: number) =>
-    setPhones(prev => prev.map((p, i) => ({ ...p, is_primary: i === index }))), [])
+    setPhones(prev => prev.map((p, i) => ({ ...p, is_primary: i === index, label: i === index ? "" : p.label }))), [])
 
   const addPhone = useCallback(() =>
-    setPhones(prev => [...prev, { phone: "", is_primary: prev.length === 0, label: "" }]), [])
+    setPhones(prev => [...prev, { id: crypto.randomUUID(), phone: "", is_primary: prev.length === 0, label: "" }]), [])
 
   const removePhone = useCallback((index: number) =>
     setPhones(prev => {
@@ -458,7 +458,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
         </Label>
         <div className="space-y-2">
           {emails.map((entry, index) => (
-            <div key={index} className="flex items-center gap-2">
+            <div key={entry.id} className="flex items-center gap-2">
               <Input
                 value={entry.email || ""}
                 onChange={e => updateEmail(index, "email", e.target.value)}
@@ -466,11 +466,12 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                 className={cn("h-8 flex-1", typo.body, errors[`emails.${index}.email`] ? "border-red-400" : "")}
               />
               <Input
-                value={entry.label || ""}
+                value={entry.is_primary ? "" : (entry.label || "")}
                 onChange={e => updateEmail(index, "label", e.target.value)}
-                placeholder="work, personal..."
+                placeholder={entry.is_primary ? "Primary" : "work, personal..."}
                 maxLength={20}
-                className={cn("h-8 w-32", typo.body)}
+                disabled={entry.is_primary}
+                className={cn("h-8 w-32", typo.body, entry.is_primary && "opacity-50 cursor-not-allowed")}
               />
               <button
                 type="button"
@@ -506,7 +507,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
         </Label>
         <div className="space-y-2">
           {phones.map((entry, index) => (
-            <div key={index} className="flex items-center gap-2">
+            <div key={entry.id} className="flex items-center gap-2">
               <Input
                 value={entry.phone || ""}
                 onChange={e => {
@@ -518,11 +519,12 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                 className={cn("h-8 flex-1", typo.body, errors[`phones.${index}.phone`] ? "border-red-400" : "")}
               />
               <Input
-                value={entry.label || ""}
+                value={entry.is_primary ? "" : (entry.label || "")}
                 onChange={e => updatePhone(index, "label", e.target.value)}
-                placeholder="mobile, office..."
+                placeholder={entry.is_primary ? "Primary" : "mobile, office..."}
                 maxLength={20}
-                className={cn("h-8 w-32", typo.body)}
+                disabled={entry.is_primary}
+                className={cn("h-8 w-32", typo.body, entry.is_primary && "opacity-50 cursor-not-allowed")}
               />
               <button
                 type="button"
