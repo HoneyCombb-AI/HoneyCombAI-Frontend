@@ -61,7 +61,18 @@ const ContactUpdateSchema = z.object({
     phones => phones.filter(p => p.is_primary).length <= 1,
     { message: "Only one phone can be marked as primary" }
   ),
-})
+}).refine(
+  data => {
+    const hasLinkedin = data.linkedin_url && data.linkedin_url.trim().length > 0;
+    const hasTwitter = data.twitter_handle && data.twitter_handle.trim().length > 0;
+    const hasInstagram = data.instagram_handle && data.instagram_handle.trim().length > 0;
+    return hasLinkedin || hasTwitter || hasInstagram;
+  },
+  {
+    message: "At least one social media link (LinkedIn, X, or Instagram) is required",
+    path: ["linkedin_url"],
+  }
+)
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
