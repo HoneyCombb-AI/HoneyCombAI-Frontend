@@ -15,6 +15,7 @@ interface UpdateNoteResponse {
     notable_id: string;
     content: string;
     created_at: string;
+    created_by: string | null;
   };
   error?: string;
 }
@@ -23,7 +24,6 @@ export async function PATCH(req: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -32,7 +32,6 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Apply rate limiting
     const rateLimit = await rateLimiters.TANPerUser(user.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -52,10 +51,8 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Parse request body
     const body: UpdateNoteRequest = await req.json();
 
-    // Validate request structure
     if (!body.id || typeof body.id !== 'string') {
       return NextResponse.json(
         { success: false, error: 'id is required and must be a valid string' },
@@ -70,14 +67,29 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Update the note
+    // Check ownership before updating
+    const { data: existingNote, error: fetchError } = await supabase
+      .from('notes')
+      .select('id, created_by')
+      .eq('id', body.id)
+      .single();
+
+    if (fetchError || !existingNote) {
+      return NextResponse.json({ success: false, error: 'Note not found' }, { status: 404 });
+    }
+
+    if (existingNote.created_by !== null && existingNote.created_by !== user.id) {
+      return NextResponse.json(
+        { success: false, error: 'You can only edit your own notes' },
+        { status: 403 }
+      );
+    }
+
     const { data: updatedNote, error: updateError } = await supabase
       .from('notes')
-      .update({
-        content: body.content.trim(),
-      })
+      .update({ content: body.content.trim() })
       .eq('id', body.id)
-      .select('*')
+      .select('id, notable_type, notable_id, content, created_at, created_by')
       .single();
 
     if (updateError) {
@@ -96,6 +108,7 @@ export async function PATCH(req: NextRequest) {
         notable_id: updatedNote.notable_id,
         content: updatedNote.content,
         created_at: updatedNote.created_at,
+        created_by: updatedNote.created_by ?? null,
       }
     };
 
