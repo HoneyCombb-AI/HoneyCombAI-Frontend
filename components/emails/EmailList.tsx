@@ -34,7 +34,7 @@ export function EmailList({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="divide-y">
+            <div className="divide-y overflow-y-auto no-scrollbar">
                 {emails.map((email) => {
                     const isSelected = email.id === selectedId;
                     const nameInitials = (email.full_name || "")

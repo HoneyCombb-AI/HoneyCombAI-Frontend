@@ -59,7 +59,7 @@ export function EmailViewer({
             )}
 
             <div
-                className="flex-1 overflow-y-auto bg-gray-50 px-3 py-3 min-h-0"
+                className="flex-1 overflow-y-auto no-scrollbar bg-gray-50 px-3 py-3 min-h-0"
                 style={{ paddingBottom: bottomInset ? bottomInset + 24 : undefined }}
             >
                 {loading ? (

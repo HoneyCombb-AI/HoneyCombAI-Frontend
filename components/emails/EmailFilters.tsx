@@ -243,7 +243,7 @@ export function EmailFilters({
                                     autoFocus
                                 />
                             </div>
-                            <div className="mt-2 max-h-56 overflow-y-auto">
+                            <div className="mt-2 max-h-56 overflow-y-auto no-scrollbar">
                                 {searching ? (
                                     <div className="flex items-center justify-center py-4">
                                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
