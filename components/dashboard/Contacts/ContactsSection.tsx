@@ -165,11 +165,11 @@ const ContactRow = memo<{
 
       {/* Signals */}
       <td
-        className="px-2 py-0 w-[35%] cursor-pointer h-full"
+        className="px-2 py-3 w-[35%] cursor-pointer overflow-hidden"
         onClick={() => onContactClick(contact)}
       >
-        <div className="flex items-stretch justify-between gap-2 h-full min-h-[52px]">
-          <div className="flex-1 min-w-0 flex items-center py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
             <SignalState
               signals={contact.signals}
               contactId={contact.id}
@@ -177,14 +177,17 @@ const ContactRow = memo<{
           </div>
           {/* Notes Icon - Persistent if hasNotes, shows edit button on hover otherwise */}
           {contact.hasNotes ? (
-            <div className="flex flex-col items-center shrink-0 py-0">
-              {/* Top segment of vertical rope */}
-              <div className="flex-1 w-[2.5px] bg-blue-400/70 rounded-t-full min-h-[8px]" />
+            <div className="relative shrink-0">
+              {/* Vertical rope line — centered on button, extends beyond and clipped by td overflow-hidden */}
+              <div
+                className="absolute left-1/2 -translate-x-1/2 w-[2.5px] bg-blue-600 pointer-events-none"
+                style={{ top: '-100px', bottom: '-100px' }}
+              />
               {/* Notes button icon */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-7 p-0 bg-white shadow-sm border border-blue-200 hover:bg-blue-50 hover:scale-110 transition-transform duration-200 shrink-0 z-10 relative my-0"
+                className="h-7 w-7 p-0 bg-white shadow-sm border border-blue-200 hover:bg-blue-50 hover:scale-110 transition-transform duration-200 z-10 relative"
                 onClick={(e) => {
                   e.stopPropagation();
                   onNotesClick(contact.id, contact.full_name);
@@ -192,11 +195,9 @@ const ContactRow = memo<{
               >
                 <Edit3 className="h-4 w-4 text-blue-600 hover:text-blue-700 transition-colors duration-200" />
               </Button>
-              {/* Bottom segment of vertical rope */}
-              <div className="flex-1 w-[2.5px] bg-blue-400/70 rounded-b-full min-h-[8px]" />
             </div>
           ) : (
-            <div className="opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center py-3">
+            <div className="opacity-0 group-hover/row:opacity-100 transition-opacity">
               <Button
                 variant="ghost"
                 size="sm"
