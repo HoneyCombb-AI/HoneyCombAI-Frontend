@@ -125,6 +125,26 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
     [contact.city, contact.country]
   )
 
+  const hasChanges = useMemo(() => {
+    if (linkedinUrl !== (contact.linkedin_url || "")) return true
+    if (twitterHandle !== (contact.twitter_handle || "")) return true
+    if (instagramHandle !== (contact.instagram_handle || "")) return true
+    
+    const initialEmails = contact.emails?.length > 0
+      ? contact.emails.map(e => ({ id: e.id, email: e.email, is_primary: e.is_primary, label: e.label || "" }))
+      : contact.email ? [{ email: contact.email, is_primary: true, label: "" }] : []
+      
+    if (JSON.stringify(emails) !== JSON.stringify(initialEmails)) return true
+    
+    const initialPhones = contact.phones?.length > 0
+      ? contact.phones.map(p => ({ id: p.id, phone: p.phone, is_primary: p.is_primary, label: p.label || "" }))
+      : contact.phone ? [{ phone: contact.phone, is_primary: true, label: "" }] : []
+      
+    if (JSON.stringify(phones) !== JSON.stringify(initialPhones)) return true
+    
+    return false
+  }, [linkedinUrl, twitterHandle, instagramHandle, emails, phones, contact])
+
   // ── Mode handlers ──────────────────────────────────────────────────────────
 
   const enterEditMode = useCallback(() => {
@@ -239,7 +259,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             </div>
             <h3 className={cn("font-semibold text-gray-900", typo.body)}>Personal Information</h3>
           </div>
-          <Button variant="ghost" size="sm" className={cn("h-7 gap-1.5 text-gray-500 hover:text-gray-900", typo.muted)} onClick={enterEditMode}>
+          <Button variant="ghost" size="sm" className={cn("h-7 gap-1.5 text-gray-500 hover:text-gray-900 cursor-pointer", typo.muted)} onClick={enterEditMode}>
             <Pencil className="h-3 w-3" /> Edit
           </Button>
         </div>
@@ -558,11 +578,11 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-1">
-        <Button size="sm" className={cn("h-8 gap-1.5", typo.body)} onClick={handleSave} disabled={saving}>
+        <Button size="sm" className={cn("h-8 gap-1.5 cursor-pointer", typo.body)} onClick={handleSave} disabled={saving || !hasChanges}>
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
           {saving ? "Saving..." : "Save Changes"}
         </Button>
-        <Button size="sm" variant="ghost" className={cn("h-8 gap-1.5 text-gray-500", typo.body)} onClick={handleCancel} disabled={saving}>
+        <Button size="sm" variant="ghost" className={cn("h-8 gap-1.5 text-gray-500 cursor-pointer", typo.body)} onClick={handleCancel} disabled={saving}>
           <X className="h-3.5 w-3.5" /> Cancel
         </Button>
       </div>
