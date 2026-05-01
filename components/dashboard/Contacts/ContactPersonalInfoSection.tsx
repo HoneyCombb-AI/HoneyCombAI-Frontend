@@ -293,7 +293,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   LinkedIn Profile <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className={cn("italic text-gray-500", typo.muted)}>No LinkedIn profile</span>
+                <span className={cn("italic text-gray-500", typo.body)}>No LinkedIn profile</span>
               )}
             </div>
             <div className={cn("flex items-center gap-2.5", typo.body)}>
@@ -304,7 +304,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   Instagram Profile <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className={cn("italic text-gray-500", typo.muted)}>No Instagram profile</span>
+                <span className={cn("italic text-gray-500", typo.body)}>No Instagram profile</span>
               )}
             </div>
             <div className={cn("flex items-center gap-2.5", typo.body)}>
@@ -315,7 +315,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   X Profile <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className={cn("italic text-gray-500", typo.muted)}>No X profile</span>
+                <span className={cn("italic text-gray-500", typo.body)}>No X profile</span>
               )}
             </div>
             {companyIndustry && (
@@ -335,21 +335,23 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
               </div>
             )}
             {/* Added by + Updated by always in col 1 */}
-            {contact.created_by_name && (
-              <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
-                <User className="h-4 w-4 shrink-0 text-gray-400" />
-                <span>Added by <span className="font-medium text-gray-700">{contact.created_by_name}</span></span>
-              </div>
-            )}
-            {contact.updated_at && (
-              <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
-                <Clock className="h-4 w-4 shrink-0 text-gray-400" />
-                <span>
-                  Updated{contact.updated_by_name ? <> by <span className="font-medium text-gray-700">{contact.updated_by_name}</span></> : ""} on{" "}
-                  {format(parseISO(contact.updated_at), "PPP")}
-                </span>
-              </div>
-            )}
+            <div className="pt-4 mt-4 space-y-2.5">
+              {contact.created_by_name && (
+                <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
+                  <User className="h-4 w-4 shrink-0 text-indigo-500" />
+                  <span>Added by <span className="font-semibold text-gray-700">{contact.created_by_name}</span></span>
+                </div>
+              )}
+              {contact.updated_at && (
+                <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
+                  <Clock className="h-4 w-4 shrink-0 text-amber-500" />
+                  <span>
+                    Updated{contact.updated_by_name ? <> by <span className="font-semibold text-gray-700">{contact.updated_by_name}</span></> : ""} on{" "}
+                    {format(parseISO(contact.updated_at), "PPP")}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
           {/* ── Column 2: Emails (+ phones in sparse mode) ────────── */}
           <div className="space-y-2.5">
@@ -365,7 +367,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                 </div>
               ))
               : (
-                <div className={cn("flex items-center gap-2 italic text-gray-500", typo.muted)}>
+                <div className={cn("flex items-center gap-2 italic text-gray-500", typo.body)}>
                   <Mail className="h-4 w-4 shrink-0" />
                   <span>No email provided</span>
                 </div>
@@ -384,7 +386,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   </div>
                 ))
                 : (
-                  <div className={cn("flex items-center gap-2 italic text-gray-500", typo.muted)}>
+                  <div className={cn("flex items-center gap-2 italic text-gray-500", typo.body)}>
                     <Phone className="h-4 w-4 shrink-0" />
                     <span>No phone provided</span>
                   </div>
@@ -556,7 +558,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
       {locationLabel && (
         <div className={cn("flex items-center gap-2 text-gray-400", typo.muted)}>
           <MapPin className="h-3.5 w-3.5 shrink-0" />
-          <span>{locationLabel} · location is not editable here</span>
+          <span>{locationLabel}</span>
         </div>
       )}
 
