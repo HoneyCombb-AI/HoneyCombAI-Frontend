@@ -100,7 +100,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
       {trigger && <DrawerTrigger asChild>{trigger}</DrawerTrigger>}
       <DrawerContent style={customDrawerStyles}>
 
-        <div className="mx-auto w-full h-screen overflow-y-auto">
+        <div className="mx-auto w-full h-screen overflow-y-auto no-scrollbar">
           <DrawerHeader className="sticky top-0 bg-white z-60 border-b">
             <DrawerTitle>
               <div className="flex items-center justify-between gap-4">

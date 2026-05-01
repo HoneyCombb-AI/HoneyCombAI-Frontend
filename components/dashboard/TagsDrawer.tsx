@@ -320,7 +320,7 @@ export function TagsDrawer({
   return (
     <Drawer direction="left" open={open} onOpenChange={onOpenChange}>
       <DrawerContent style={customDrawerStyles} className="left-0 right-auto">
-        <div className="mx-auto w-full h-screen overflow-y-auto">
+        <div className="mx-auto w-full h-screen overflow-y-auto no-scrollbar">
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b px-6">
             <DrawerTitle className="flex items-center justify-between">
               <div>

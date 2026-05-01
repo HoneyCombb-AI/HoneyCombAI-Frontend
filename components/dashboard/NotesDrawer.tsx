@@ -229,7 +229,7 @@ export function NotesDrawer({
   return (
     <Drawer direction="left" open={open} onOpenChange={onOpenChange} dismissible={false}>
       <DrawerContent style={customDrawerStyles} className="left-0 right-auto">
-        <div className="mx-auto w-full h-screen overflow-y-auto">
+        <div className="mx-auto w-full h-screen overflow-y-auto no-scrollbar">
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b px-6">
             <DrawerTitle className="flex items-center justify-between">
               <div>
@@ -310,8 +310,8 @@ export function NotesDrawer({
               <h3 className={`font-semibold text-gray-900 ${fontSizeClass}`}>
                 All Notes
                 {notes.length > 0 && (
-                  <span className="text-gray-500 font-normal ml-2">
-                    ({notes.length})
+                  <span className="text-gray-700 font-normal ml-2">
+                    - {notes.length}
                   </span>
                 )}
               </h3>
