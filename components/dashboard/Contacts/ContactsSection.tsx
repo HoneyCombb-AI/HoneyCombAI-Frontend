@@ -165,30 +165,51 @@ const ContactRow = memo<{
 
       {/* Signals */}
       <td
-        className="px-2 py-3 w-[35%] cursor-pointer relative"
+        className="px-2 py-0 w-[35%] cursor-pointer h-full"
         onClick={() => onContactClick(contact)}
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0">
+        <div className="flex items-stretch justify-between gap-2 h-full min-h-[52px]">
+          <div className="flex-1 min-w-0 flex items-center py-3">
             <SignalState
               signals={contact.signals}
               contactId={contact.id}
             />
           </div>
           {/* Notes Icon - Persistent if hasNotes, shows edit button on hover otherwise */}
-          <div className={contact.hasNotes ? "" : "opacity-0 group-hover/row:opacity-100 transition-opacity"}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 hover:scale-110 transition-transform duration-200 shrink-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNotesClick(contact.id, contact.full_name);
-              }}
-            >
-              <Edit3 className={`h-3.5 w-3.5 transition-colors duration-200 ${contact.hasNotes ? 'text-blue-600 hover:text-blue-700' : 'text-gray-600 hover:text-gray-900'}`} />
-            </Button>
-          </div>
+          {contact.hasNotes ? (
+            <div className="flex flex-col items-center shrink-0 py-0">
+              {/* Top segment of vertical rope */}
+              <div className="flex-1 w-[2.5px] bg-blue-400/70 rounded-t-full min-h-[8px]" />
+              {/* Notes button icon */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 bg-white shadow-sm border border-blue-200 hover:bg-blue-50 hover:scale-110 transition-transform duration-200 shrink-0 z-10 relative my-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNotesClick(contact.id, contact.full_name);
+                }}
+              >
+                <Edit3 className="h-4 w-4 text-blue-600 hover:text-blue-700 transition-colors duration-200" />
+              </Button>
+              {/* Bottom segment of vertical rope */}
+              <div className="flex-1 w-[2.5px] bg-blue-400/70 rounded-b-full min-h-[8px]" />
+            </div>
+          ) : (
+            <div className="opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center py-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 hover:scale-110 transition-transform duration-200 shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNotesClick(contact.id, contact.full_name);
+                }}
+              >
+                <Edit3 className="h-3.5 w-3.5 text-gray-600 hover:text-gray-900 transition-colors duration-200" />
+              </Button>
+            </div>
+          )}
         </div>
       </td>
     </tr>
