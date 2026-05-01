@@ -10,11 +10,22 @@ import { format, parseISO } from "date-fns"
 import axios from "axios"
 import { toast } from "sonner"
 import { z } from "zod"
+import { cn } from "@/lib/utils"
+import { useFontSize } from "@/lib/font-size-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import type { DrawerContact, ContactEmail, ContactPhone } from "@/types/contacts"
+
+// ─── Typography scale map ───────────────────────────────────────────────────
+
+const mutedSizeMap: Record<string, string> = {
+  "text-xs": "text-[10px]",
+  "text-sm": "text-xs",
+  "text-base": "text-sm",
+  "text-lg": "text-base",
+}
 
 // ─── Validation ─────────────────────────────────────────────────────────────
 
@@ -67,6 +78,15 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
   companyIndustry,
   onUpdate,
 }: ContactPersonalInfoSectionProps) {
+  const { getFontSizeClass } = useFontSize()
+
+  // ── Typography classes (scale with accessibility setting) ──────────────
+  const typo = useMemo(() => {
+    const body = getFontSizeClass()
+    const muted = mutedSizeMap[body] || "text-xs"
+    return { body, muted }
+  }, [getFontSizeClass])
+
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -217,9 +237,9 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600">
               <User className="h-3.5 w-3.5" />
             </div>
-            <h3 className="text-sm font-semibold text-gray-900">Personal Information</h3>
+            <h3 className={cn("font-semibold text-gray-900", typo.body)}>Personal Information</h3>
           </div>
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-gray-500 hover:text-gray-900" onClick={enterEditMode}>
+          <Button variant="ghost" size="sm" className={cn("h-7 gap-1.5 text-gray-500 hover:text-gray-900", typo.muted)} onClick={enterEditMode}>
             <Pencil className="h-3 w-3" /> Edit
           </Button>
         </div>
@@ -229,12 +249,12 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
           {/* ── Column 1: Location, Socials, Industry, Languages ──── */}
           <div className="space-y-2.5">
             {locationLabel && (
-              <div className="flex items-center gap-2.5 text-sm text-gray-600">
+              <div className={cn("flex items-center gap-2.5 text-gray-700", typo.body)}>
                 <MapPin className="h-4 w-4 shrink-0 text-gray-400" />
-                <span>{locationLabel}</span>
+                <span className="font-medium">{locationLabel}</span>
               </div>
             )}
-            <div className="flex items-center gap-2.5 text-sm">
+            <div className={cn("flex items-center gap-2.5", typo.body)}>
               <LinkedinIcon className="h-4 w-4 text-[#0A66C2] shrink-0" />
               {contact.linkedin_url ? (
                 <a href={contact.linkedin_url} target="_blank" rel="noopener noreferrer"
@@ -242,10 +262,10 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   LinkedIn Profile <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className="text-gray-400">No LinkedIn profile</span>
+                <span className={cn("italic text-gray-300", typo.muted)}>No LinkedIn profile</span>
               )}
             </div>
-            <div className="flex items-center gap-2.5 text-sm">
+            <div className={cn("flex items-center gap-2.5", typo.body)}>
               <Instagram className="h-4 w-4 text-[#E4405F] shrink-0" />
               {contact.instagram_handle ? (
                 <a href={`https://instagram.com/${contact.instagram_handle}`} target="_blank" rel="noopener noreferrer"
@@ -253,10 +273,10 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   @{contact.instagram_handle} <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className="text-gray-400">No Instagram profile</span>
+                <span className={cn("italic text-gray-300", typo.muted)}>No Instagram profile</span>
               )}
             </div>
-            <div className="flex items-center gap-2.5 text-sm">
+            <div className={cn("flex items-center gap-2.5", typo.body)}>
               <Twitter className="h-4 w-4 text-[#1DA1F2] shrink-0" />
               {contact.twitter_handle ? (
                 <a href={`https://twitter.com/${contact.twitter_handle}`} target="_blank" rel="noopener noreferrer"
@@ -264,17 +284,17 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   @{contact.twitter_handle} <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className="text-gray-400">No X profile</span>
+                <span className={cn("italic text-gray-300", typo.muted)}>No X profile</span>
               )}
             </div>
             {companyIndustry && (
-              <div className="flex items-center gap-2.5 text-sm text-gray-600">
+              <div className={cn("flex items-center gap-2.5 text-gray-700", typo.body)}>
                 <Building className="h-4 w-4 shrink-0 text-gray-400" />
-                <span>Works in {companyIndustry}</span>
+                <span>Works in <span className="font-medium">{companyIndustry}</span></span>
               </div>
             )}
             {contact.languages && contact.languages.length > 0 && (
-              <div className="flex items-start gap-2.5 text-sm text-gray-600">
+              <div className={cn("flex items-start gap-2.5 text-gray-700", typo.body)}>
                 <Languages className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" />
                 <div className="flex flex-wrap gap-1">
                   {contact.languages.map((lang, i) => (
@@ -288,16 +308,16 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             {useThreeColumns && (
               <>
                 {contact.created_by_name && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-500">
+                  <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
                     <User className="h-4 w-4 shrink-0 text-gray-400" />
-                    <span>Added by {contact.created_by_name}</span>
+                    <span>Added by <span className="font-medium text-gray-700">{contact.created_by_name}</span></span>
                   </div>
                 )}
                 {contact.updated_at && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-500">
+                  <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
                     <Clock className="h-4 w-4 shrink-0 text-gray-400" />
                     <span>
-                      Updated{contact.updated_by_name ? ` by ${contact.updated_by_name}` : ""} on{" "}
+                      Updated{contact.updated_by_name ? <> by <span className="font-medium text-gray-700">{contact.updated_by_name}</span></> : ""} on{" "}
                       {format(parseISO(contact.updated_at), "PPP")}
                     </span>
                   </div>
@@ -311,17 +331,17 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             {/* Emails always in col 2 */}
             {displayEmails.length > 0
               ? displayEmails.map(entry => (
-                <div key={entry.id} className="flex items-center gap-2 text-sm">
-                  <Mail className={`h-4 w-4 shrink-0 ${entry.is_primary ? "text-blue-500" : "text-gray-400"}`} />
-                  <span className={`truncate ${entry.is_primary ? "text-gray-900 font-medium" : "text-gray-600"}`}>
+                <div key={entry.id} className={cn("flex items-center gap-2", typo.body)}>
+                  <Mail className={cn("h-4 w-4 shrink-0", entry.is_primary ? "text-blue-500" : "text-gray-400")} />
+                  <span className={cn("truncate", entry.is_primary ? "text-gray-900 font-semibold" : "text-gray-600")}>
                     {entry.email}
                   </span>
-                  {entry.is_primary && <Badge variant="secondary" className="text-xs px-1.5 py-0 shrink-0">Primary</Badge>}
-                  {entry.label && <span className="text-xs text-gray-400 capitalize shrink-0">{entry.label}</span>}
+                  {entry.is_primary && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Primary</Badge>}
+                  {entry.label && <span className={cn("text-gray-400 capitalize shrink-0", typo.muted)}>{entry.label}</span>}
                 </div>
               ))
               : (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
+                <div className={cn("flex items-center gap-2 italic text-gray-300", typo.muted)}>
                   <Mail className="h-4 w-4 shrink-0" />
                   <span>No email provided</span>
                 </div>
@@ -331,17 +351,17 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             {!useThreeColumns && (
               displayPhones.length > 0
                 ? displayPhones.map(entry => (
-                  <div key={entry.id} className="flex items-center gap-2 text-sm">
-                    <Phone className={`h-4 w-4 shrink-0 ${entry.is_primary ? "text-green-500" : "text-gray-400"}`} />
-                    <span className={`truncate ${entry.is_primary ? "text-gray-900 font-medium" : "text-gray-600"}`}>
+                  <div key={entry.id} className={cn("flex items-center gap-2", typo.body)}>
+                    <Phone className={cn("h-4 w-4 shrink-0", entry.is_primary ? "text-green-500" : "text-gray-400")} />
+                    <span className={cn("truncate", entry.is_primary ? "text-gray-900 font-semibold" : "text-gray-600")}>
                       {entry.phone}
                     </span>
-                    {entry.is_primary && <Badge variant="secondary" className="text-xs px-1.5 py-0 shrink-0">Primary</Badge>}
-                    {entry.label && <span className="text-xs text-gray-400 capitalize shrink-0">{entry.label}</span>}
+                    {entry.is_primary && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Primary</Badge>}
+                    {entry.label && <span className={cn("text-gray-400 capitalize shrink-0", typo.muted)}>{entry.label}</span>}
                   </div>
                 ))
                 : (
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <div className={cn("flex items-center gap-2 italic text-gray-300", typo.muted)}>
                     <Phone className="h-4 w-4 shrink-0" />
                     <span>No phone provided</span>
                   </div>
@@ -354,29 +374,29 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             {useThreeColumns ? (
               /* Dense mode: col 3 = phones */
               displayPhones.map(entry => (
-                <div key={entry.id} className="flex items-center gap-2 text-sm">
-                  <Phone className={`h-4 w-4 shrink-0 ${entry.is_primary ? "text-green-500" : "text-gray-400"}`} />
-                  <span className={`truncate ${entry.is_primary ? "text-gray-900 font-medium" : "text-gray-600"}`}>
+                <div key={entry.id} className={cn("flex items-center gap-2", typo.body)}>
+                  <Phone className={cn("h-4 w-4 shrink-0", entry.is_primary ? "text-green-500" : "text-gray-400")} />
+                  <span className={cn("truncate", entry.is_primary ? "text-gray-900 font-semibold" : "text-gray-600")}>
                     {entry.phone}
                   </span>
-                  {entry.is_primary && <Badge variant="secondary" className="text-xs px-1.5 py-0 shrink-0">Primary</Badge>}
-                  {entry.label && <span className="text-xs text-gray-400 capitalize shrink-0">{entry.label}</span>}
+                  {entry.is_primary && <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Primary</Badge>}
+                  {entry.label && <span className={cn("text-gray-400 capitalize shrink-0", typo.muted)}>{entry.label}</span>}
                 </div>
               ))
             ) : (
               /* Sparse mode: col 3 = added by + updated by */
               <>
                 {contact.created_by_name && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-500">
+                  <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
                     <User className="h-4 w-4 shrink-0 text-gray-400" />
-                    <span>Added by {contact.created_by_name}</span>
+                    <span>Added by <span className="font-medium text-gray-700">{contact.created_by_name}</span></span>
                   </div>
                 )}
                 {contact.updated_at && (
-                  <div className="flex items-center gap-2.5 text-sm text-gray-500">
+                  <div className={cn("flex items-center gap-2.5 text-gray-500", typo.body)}>
                     <Clock className="h-4 w-4 shrink-0 text-gray-400" />
                     <span>
-                      Updated{contact.updated_by_name ? ` by ${contact.updated_by_name}` : ""} on{" "}
+                      Updated{contact.updated_by_name ? <> by <span className="font-medium text-gray-700">{contact.updated_by_name}</span></> : ""} on{" "}
                       {format(parseISO(contact.updated_at), "PPP")}
                     </span>
                   </div>
@@ -397,12 +417,12 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600">
           <User className="h-3.5 w-3.5" />
         </div>
-        <h3 className="text-sm font-semibold text-gray-900">Personal Information</h3>
+        <h3 className={cn("font-semibold text-gray-900", typo.body)}>Personal Information</h3>
       </div>
 
       {/* Emails */}
       <div className="space-y-2">
-        <Label className="text-xs text-gray-500 flex items-center gap-1.5">
+        <Label className={cn("text-gray-500 flex items-center gap-1.5", typo.muted)}>
           <Mail className="h-3 w-3" /> Email Addresses
         </Label>
         <div className="space-y-2">
@@ -412,14 +432,14 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                 value={entry.email || ""}
                 onChange={e => updateEmail(index, "email", e.target.value)}
                 placeholder="email@example.com"
-                className={`h-8 text-sm flex-1 ${errors[`emails.${index}.email`] ? "border-red-400" : ""}`}
+                className={cn("h-8 flex-1", typo.body, errors[`emails.${index}.email`] ? "border-red-400" : "")}
               />
               <Input
                 value={entry.label || ""}
                 onChange={e => updateEmail(index, "label", e.target.value)}
                 placeholder="work, personal..."
                 maxLength={20}
-                className="h-8 text-sm w-32"
+                className={cn("h-8 w-32", typo.body)}
               />
               <button
                 type="button"
@@ -441,8 +461,8 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
               </button>
             </div>
           ))}
-          {errors.emails && <p className="text-xs text-red-500">{errors.emails}</p>}
-          <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-gray-500" onClick={addEmail}>
+          {errors.emails && <p className={cn("text-red-500", typo.muted)}>{errors.emails}</p>}
+          <Button type="button" variant="ghost" size="sm" className={cn("h-7 gap-1.5 text-gray-500", typo.muted)} onClick={addEmail}>
             <Plus className="h-3 w-3" /> Add email
           </Button>
         </div>
@@ -450,7 +470,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
 
       {/* Phones */}
       <div className="space-y-2">
-        <Label className="text-xs text-gray-500 flex items-center gap-1.5">
+        <Label className={cn("text-gray-500 flex items-center gap-1.5", typo.muted)}>
           <Phone className="h-3 w-3" /> Phone Numbers
         </Label>
         <div className="space-y-2">
@@ -464,14 +484,14 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                 }}
                 maxLength={15}
                 placeholder="+1234567890"
-                className={`h-8 text-sm flex-1 ${errors[`phones.${index}.phone`] ? "border-red-400" : ""}`}
+                className={cn("h-8 flex-1", typo.body, errors[`phones.${index}.phone`] ? "border-red-400" : "")}
               />
               <Input
                 value={entry.label || ""}
                 onChange={e => updatePhone(index, "label", e.target.value)}
                 placeholder="mobile, office..."
                 maxLength={20}
-                className="h-8 text-sm w-32"
+                className={cn("h-8 w-32", typo.body)}
               />
               <button
                 type="button"
@@ -493,8 +513,8 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
               </button>
             </div>
           ))}
-          {errors.phones && <p className="text-xs text-red-500">{errors.phones}</p>}
-          <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-gray-500" onClick={addPhone}>
+          {errors.phones && <p className={cn("text-red-500", typo.muted)}>{errors.phones}</p>}
+          <Button type="button" variant="ghost" size="sm" className={cn("h-7 gap-1.5 text-gray-500", typo.muted)} onClick={addPhone}>
             <Plus className="h-3 w-3" /> Add phone
           </Button>
         </div>
@@ -503,34 +523,34 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
       {/* Social handles */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-4">
         <div className="space-y-1.5">
-          <Label className="text-xs text-gray-500 flex items-center gap-1.5">
+          <Label className={cn("text-gray-500 flex items-center gap-1.5", typo.muted)}>
             <Instagram className="h-3 w-3 text-[#E4405F]" /> Instagram Handle
           </Label>
           <Input value={instagramHandle} onChange={e => setInstagramHandle(e.target.value)}
-            placeholder="handle (without @)" className="h-8 text-sm" />
+            placeholder="handle (without @)" className={cn("h-8", typo.body)} />
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-gray-500 flex items-center gap-1.5">
+          <Label className={cn("text-gray-500 flex items-center gap-1.5", typo.muted)}>
             <LinkedinIcon className="h-3 w-3 text-[#0A66C2]" /> LinkedIn URL
           </Label>
           <Input value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)}
-            placeholder="https://linkedin.com/in/..." className="h-8 text-sm" />
-          {errors.linkedin_url && <p className="text-xs text-red-500">{errors.linkedin_url}</p>}
+            placeholder="https://linkedin.com/in/..." className={cn("h-8", typo.body)} />
+          {errors.linkedin_url && <p className={cn("text-red-500", typo.muted)}>{errors.linkedin_url}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-gray-500 flex items-center gap-1.5">
+          <Label className={cn("text-gray-500 flex items-center gap-1.5", typo.muted)}>
             <Twitter className="h-3 w-3 text-[#1DA1F2]" /> X Handle
           </Label>
           <Input value={twitterHandle} onChange={e => setTwitterHandle(e.target.value)}
-            placeholder="handle (without @)" className="h-8 text-sm" />
+            placeholder="handle (without @)" className={cn("h-8", typo.body)} />
         </div>
       </div>
 
       {/* City/Country — read-only reminder */}
       {locationLabel && (
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className={cn("flex items-center gap-2 text-gray-400", typo.muted)}>
           <MapPin className="h-3.5 w-3.5 shrink-0" />
           <span>{locationLabel} · location is not editable here</span>
         </div>
@@ -538,11 +558,11 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-1">
-        <Button size="sm" className="h-8 gap-1.5 text-sm" onClick={handleSave} disabled={saving}>
+        <Button size="sm" className={cn("h-8 gap-1.5", typo.body)} onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
           {saving ? "Saving..." : "Save Changes"}
         </Button>
-        <Button size="sm" variant="ghost" className="h-8 gap-1.5 text-sm text-gray-500" onClick={handleCancel} disabled={saving}>
+        <Button size="sm" variant="ghost" className={cn("h-8 gap-1.5 text-gray-500", typo.body)} onClick={handleCancel} disabled={saving}>
           <X className="h-3.5 w-3.5" /> Cancel
         </Button>
       </div>
