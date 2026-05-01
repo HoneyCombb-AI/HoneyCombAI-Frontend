@@ -293,7 +293,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   LinkedIn Profile <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className={cn("italic text-gray-300", typo.muted)}>No LinkedIn profile</span>
+                <span className={cn("italic text-gray-500", typo.muted)}>No LinkedIn profile</span>
               )}
             </div>
             <div className={cn("flex items-center gap-2.5", typo.body)}>
@@ -304,7 +304,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   @{contact.instagram_handle} <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className={cn("italic text-gray-300", typo.muted)}>No Instagram profile</span>
+                <span className={cn("italic text-gray-500", typo.muted)}>No Instagram profile</span>
               )}
             </div>
             <div className={cn("flex items-center gap-2.5", typo.body)}>
@@ -315,7 +315,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   @{contact.twitter_handle} <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className={cn("italic text-gray-300", typo.muted)}>No X profile</span>
+                <span className={cn("italic text-gray-500", typo.muted)}>No X profile</span>
               )}
             </div>
             {companyIndustry && (
@@ -365,7 +365,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                 </div>
               ))
               : (
-                <div className={cn("flex items-center gap-2 italic text-gray-300", typo.muted)}>
+                <div className={cn("flex items-center gap-2 italic text-gray-500", typo.muted)}>
                   <Mail className="h-4 w-4 shrink-0" />
                   <span>No email provided</span>
                 </div>
@@ -384,7 +384,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
                   </div>
                 ))
                 : (
-                  <div className={cn("flex items-center gap-2 italic text-gray-300", typo.muted)}>
+                  <div className={cn("flex items-center gap-2 italic text-gray-500", typo.muted)}>
                     <Phone className="h-4 w-4 shrink-0" />
                     <span>No phone provided</span>
                   </div>
