@@ -10,14 +10,17 @@ const EmailEntrySchema = z.object({
   id: z.string().optional(),
   email: z.string().email('Invalid email address'),
   is_primary: z.boolean(),
-  label: z.string().nullable().optional(),
+  label: z.string().max(20, 'Label too long').nullable().optional(),
 });
 
 const PhoneEntrySchema = z.object({
   id: z.string().optional(),
-  phone: z.string().min(1, 'Phone number is required'),
+  phone: z.string()
+    .min(1, 'Phone number is required')
+    .max(15, 'Phone number cannot exceed 15 characters')
+    .regex(/^\+?\d+$/, 'Phone number can only contain digits and an optional leading +'),
   is_primary: z.boolean(),
-  label: z.string().nullable().optional(),
+  label: z.string().max(20, 'Label too long').nullable().optional(),
 });
 
 const ContactUpdateSchema = z.object({

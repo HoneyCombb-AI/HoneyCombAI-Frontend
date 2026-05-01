@@ -214,14 +214,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
 
           ) : (
             <div className="px-6 py-2 space-y-3">
-              {/* Intent Signals - PRIMARY FOCUS */}
-              {drawerContact?.signals && drawerContact.signals.length > 0 && (
-                <>
-                  <IntentSignalsSection signals={drawerContact.signals} />
-                  <Separator className="my-4" />
-                </>
-              )}
-
+              {/* 1. Personal Information — always shown when contact is loaded */}
               {drawerContact && (
                 <ContactPersonalInfoSection
                   contact={drawerContact}
@@ -229,25 +222,33 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                   onUpdate={() => fetchContactDetails(selectedContact.id)}
                 />
               )}
-              {/* Why Reach Out Section - Standalone */}
+
+              {/* 2. Intent Signals */}
+              {drawerContact?.signals && drawerContact.signals.length > 0 && (
+                <>
+                  <Separator className="my-4" />
+                  <IntentSignalsSection signals={drawerContact.signals} />
+                </>
+              )}
+
+              {/* 3. Why Reach Out — only when there is actual analysis data */}
               {drawerContact?.ai_analysis?.[0] && (
                 <>
+                  <Separator className="my-4" />
                   <WhyReachOutStandalone analysis={drawerContact.ai_analysis[0]} />
                 </>
               )}
 
-              {/* Social Activity Section - Clean and compact */}
+              {/* 4. Social Activity — only when present */}
               {drawerContact?.social_activity && (
-                <SocialActivitySection social_activity={drawerContact?.social_activity} />
+                <SocialActivitySection social_activity={drawerContact.social_activity} />
               )}
 
-              {/* Social Intelligence Section */}
+              {/* 5. Social Intelligence — only when ai_analysis has real content */}
               {drawerContact?.ai_analysis && drawerContact.ai_analysis.length > 0 && (
                 <>
                   <Separator className="my-5" />
-                  <SocialIntelligenceSection
-                    aiAnalysis={drawerContact.ai_analysis}
-                  />
+                  <SocialIntelligenceSection aiAnalysis={drawerContact.ai_analysis} />
                 </>
               )}
             </div>
