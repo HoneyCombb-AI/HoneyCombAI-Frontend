@@ -222,7 +222,6 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                   onUpdate={() => fetchContactDetails(selectedContact.id)}
                 />
               )}
-
               {/* 2. Intent Signals */}
               {drawerContact?.signals && drawerContact.signals.length > 0 && (
                 <>
@@ -230,13 +229,9 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                   <IntentSignalsSection signals={drawerContact.signals} />
                 </>
               )}
-
               {/* 3. Why Reach Out — only when there is actual analysis data */}
               {drawerContact?.ai_analysis?.[0] && (
-                <>
-                  <Separator className="my-4" />
-                  <WhyReachOutStandalone analysis={drawerContact.ai_analysis[0]} />
-                </>
+                <WhyReachOutStandalone analysis={drawerContact.ai_analysis[0]} />
               )}
 
               {/* 4. Social Activity — only when present */}
@@ -246,11 +241,10 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
 
               {/* 5. Social Intelligence — only when ai_analysis has real content */}
               {drawerContact?.ai_analysis && drawerContact.ai_analysis.length > 0 && (
-                <>
-                  <Separator className="my-5" />
-                  <SocialIntelligenceSection aiAnalysis={drawerContact.ai_analysis} />
-                </>
+                <SocialIntelligenceSection aiAnalysis={drawerContact.ai_analysis} />
               )}
+              {/* Final finishing separator */}
+              <Separator className="mt-6 mb-4" />
             </div>
           )}
         </div>
