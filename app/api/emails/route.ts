@@ -10,6 +10,9 @@ export async function GET(req: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '20');
         const tagsParam = searchParams.get('tags');
         const tags = tagsParam ? tagsParam.split(',') : null;
+        const hasReplyParam = searchParams.get('hasReply');
+        const hasReply = hasReplyParam === 'true' ? true : null;
+        const userId = searchParams.get('userId') || null;
 
         // Get authenticated user to fetch their organization
         const supabase = await createClient();
@@ -41,7 +44,9 @@ export async function GET(req: NextRequest) {
             p_page: page,
             p_limit: limit,
             p_search: search,
-            p_tag_names: tags
+            p_tag_names: tags,
+            p_has_reply: hasReply,
+            p_user_id: userId,
         });
 
         if (error) {

@@ -46,6 +46,8 @@ export default function EmailsPage() {
     // Filter State
     const [search, setSearch] = useState("");
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [hasReply, setHasReply] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const LIMIT = 20;
 
@@ -71,6 +73,8 @@ export default function EmailsPage() {
                 params: {
                     search: debouncedSearch.trim().toLowerCase() || undefined,
                     tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+                    hasReply: hasReply || undefined,
+                    userId: selectedUserId || undefined,
                     page: currentPage,
                     limit: LIMIT,
                 },
@@ -101,15 +105,14 @@ export default function EmailsPage() {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [debouncedSearch, selectedTags, page, selectedId]);
+    }, [debouncedSearch, selectedTags, hasReply, selectedUserId, page, selectedId]);
 
     // Initial Load & Filter Change
     useEffect(() => {
         if (!authLoading) {
-            // Reset and fetch when filters change
             fetchEmails(false);
         }
-    }, [authLoading, debouncedSearch, selectedTags]); // Removing fetchEmails from dependency to avoid loop if not handled carefully, relying on stable fetchEmails or just these deps
+    }, [authLoading, debouncedSearch, selectedTags, hasReply, selectedUserId]);
 
     // Handle ?contactId= query param — auto-select or inject the contact
     useEffect(() => {
@@ -330,15 +333,16 @@ export default function EmailsPage() {
 
     return (
         <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
-            {/* Filter Bar - Fixed at top */}
-            <div className="shrink-0 border-b bg-white shadow-sm">
-                <EmailFilters
-                    search={search}
-                    onSearchChange={setSearch}
-                    selectedTags={selectedTags}
-                    onTagsChange={setSelectedTags}
-                />
-            </div>
+            <EmailFilters
+                search={search}
+                onSearchChange={setSearch}
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+                hasReply={hasReply}
+                onHasReplyChange={setHasReply}
+                selectedUserId={selectedUserId}
+                onUserIdChange={setSelectedUserId}
+            />
 
             {authLoading || (loading && page === 1) ? (
                 <div className="flex-1 flex flex-col items-center justify-center">

@@ -12,6 +12,12 @@
 export type EmailStatusFilter = "all" | "valid" | "invalid" | "risky" | "unknown";
 export type EmailTemperatureFilter = "all" | "hot" | "warm" | "cold";
 
+export interface OrgSender {
+    user_id: string;
+    display_name: string;
+    email: string;
+}
+
 export type ContactEmail = {
     id: string;
     email: string | null;

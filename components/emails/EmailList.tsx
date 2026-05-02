@@ -46,7 +46,7 @@ export function EmailList({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="divide-y overflow-y-auto no-scrollbar">
+            <div className="divide-y overflow-y-auto">
                 {emails.map((email) => {
                     const isSelected = email.id === selectedId;
                     const hasDraft = !!email.draft_id;
