@@ -291,7 +291,7 @@ export function EmailViewer({
     const [scrollAreaHeight, setScrollAreaHeight] = useState(0);
     const [lastThreadHeight, setLastThreadHeight] = useState(0);
 
-    // Dynamically track scroll container height
+    // Dynamically track scroll container height — re-init when email appears (scroll container mounts)
     useEffect(() => {
         const el = scrollContainerRef.current;
         if (!el) return;
@@ -300,7 +300,7 @@ export function EmailViewer({
         const ro = new ResizeObserver(update);
         ro.observe(el);
         return () => ro.disconnect();
-    }, []);
+    }, [!!email]);
 
     // Dynamically track the last thread's height so the spacer adapts
     useEffect(() => {
@@ -332,7 +332,7 @@ export function EmailViewer({
                 });
             }, 150);
         }
-    }, [loading, threads.length]);
+    }, [loading, threads]);
 
     if (!email) {
         return (
