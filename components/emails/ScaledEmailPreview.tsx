@@ -123,7 +123,7 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
             <iframe
                 ref={iframeRef}
                 srcDoc={wrapInDocument(html)}
-                sandbox=""
+                sandbox="allow-same-origin"
                 tabIndex={-1}
                 title="Email preview"
                 onLoad={handleLoad}
