@@ -43,9 +43,7 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
     const rawBody = (message.body || "").trim();
     const isHtml = /<[a-z][\s\S]*>/i.test(rawBody);
     const sanitizedBody = DOMPurify.sanitize(rawBody);
-    const senderLabel = isSent
-        ? (message.sender_name || message.sender_email || "You")
-        : (message.contact_email || "Contact");
+    const plainPreview = rawBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90);
 
     return (
         <div className={`rounded-lg overflow-hidden text-sm border ${
@@ -56,20 +54,12 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
             <button
                 type="button"
                 onClick={onToggle}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                className={`w-full flex items-center px-3 py-2.5 text-left transition-colors ${
                     isSent ? "hover:bg-blue-50/40" : "hover:bg-gray-50"
                 }`}
             >
-                <span className={`font-medium flex-1 truncate ${isSent ? "text-blue-800" : "text-gray-800"}`}>
-                    {senderLabel}
-                </span>
-                {!isExpanded && (
-                    <span className="text-gray-400 truncate max-w-[200px] hidden sm:block text-xs">
-                        {rawBody.replace(/<[^>]+>/g, "").slice(0, 60)}
-                    </span>
-                )}
-                <span className="text-xs text-gray-400 shrink-0">
-                    {format(new Date(message.sent_at), "MMM d, h:mm a")}
+                <span className={`text-xs truncate flex-1 ${isSent ? "text-blue-700" : "text-gray-500"}`}>
+                    {plainPreview || <span className="italic opacity-50">No content</span>}
                 </span>
             </button>
 
@@ -234,26 +224,30 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
                         <span className="text-xs font-bold leading-none">{msgs.length}</span>
                     </div>
 
-                    {/* "Sent via [Name]" — above line */}
-                    <div className="absolute left-14 right-0 bottom-1/2 mb-1.5 flex items-end gap-1.5">
-                        <span className="text-xs leading-none text-gray-400 shrink-0">Sent via</span>
-                        <span className="text-xs font-semibold leading-none text-gray-800 group-hover:text-black transition-colors truncate">
-                            {senderName}
-                        </span>
+                    {/* Above line: Sent via (left) + Date (right) */}
+                    <div className="absolute left-14 right-0 bottom-1/2 mb-1.5 flex items-end justify-between gap-2">
+                        <div className="flex items-end gap-1.5 min-w-0">
+                            <span className="text-xs leading-none text-gray-400 shrink-0">Sent via</span>
+                            <span className="text-xs font-semibold leading-none text-gray-800 group-hover:text-black transition-colors truncate">
+                                {senderName}
+                            </span>
+                        </div>
+                        {lastMsg && (
+                            <span className="text-xs leading-none text-gray-400 shrink-0">
+                                {format(new Date(lastMsg.sent_at), "MMM d, h:mm a")}
+                            </span>
+                        )}
                     </div>
 
-                    {/* Subject + contact email — below line */}
-                    <div className="absolute left-14 right-0 top-1/2 mt-1.5 flex items-start gap-2 min-w-0">
+                    {/* Below line: Subject (left) + contact email (right) */}
+                    <div className="absolute left-14 right-0 top-1/2 mt-1.5 flex items-start justify-between gap-2 min-w-0">
                         <span className="text-xs font-medium leading-none text-gray-600 group-hover:text-gray-800 transition-colors truncate">
                             {subject}
                         </span>
                         {contactName && (
-                            <>
-                                <span className="text-xs leading-none text-gray-300 shrink-0">·</span>
-                                <span className="text-xs font-medium leading-none text-blue-500 group-hover:text-blue-600 transition-colors shrink-0">
-                                    {contactName}
-                                </span>
-                            </>
+                            <span className="text-xs font-medium leading-none text-blue-500 group-hover:text-blue-600 transition-colors shrink-0">
+                                {contactName}
+                            </span>
                         )}
                     </div>
                 </div>

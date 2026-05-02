@@ -3,14 +3,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 interface ScaledEmailPreviewProps {
-    /** Sanitized HTML body content (run through DOMPurify before being passed in). */
     html: string;
 }
-const SCALE = 0.75;
-export const IFRAME_WIDTH = 660; // logical px — width of the iframe before scaling
-const INITIAL_HEIGHT = 500;      // reasonable starting height before first measurement
 
-export const PREVIEW_VISUAL_WIDTH = Math.round(IFRAME_WIDTH * SCALE);
+const IFRAME_WIDTH = 660;
+
 function wrapInDocument(html: string): string {
     return `<!DOCTYPE html>
 <html>
@@ -18,7 +15,7 @@ function wrapInDocument(html: string): string {
 <meta charset="utf-8" />
 <style>
   html, body { margin: 0; padding: 0; overflow: visible; }
-  body { padding: 6px 8px; box-sizing: border-box; }
+  body { padding: 4px 6px; box-sizing: border-box; }
   img { max-width: 100%; height: auto; }
   ::-webkit-scrollbar { display: none; }
   * { scrollbar-width: none; }
@@ -29,22 +26,35 @@ function wrapInDocument(html: string): string {
 }
 
 export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
-    const [contentHeight, setContentHeight] = useState(INITIAL_HEIGHT);
+    const containerRef = useRef<HTMLDivElement>(null);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const observersRef = useRef<{ ro?: ResizeObserver; mo?: MutationObserver; timeoutIds?: number[] }>({});
 
-    /** Measure the true content height from the iframe document. */
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [contentHeight, setContentHeight] = useState(400);
+
+    // Track container width
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const update = () => setContainerWidth(el.offsetWidth);
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    const scale = containerWidth > 0 ? containerWidth / IFRAME_WIDTH : 1;
+
     const measureHeight = useCallback(() => {
         try {
             const doc = iframeRef.current?.contentDocument;
             if (!doc) return;
-
             const h = Math.max(
                 doc.documentElement.scrollHeight,
                 doc.body?.scrollHeight ?? 0,
                 doc.body?.offsetHeight ?? 0,
             );
-
             if (h > 0) setContentHeight(h);
         } catch {
             // cross-origin guard
@@ -54,30 +64,23 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
     const handleLoad = useCallback(() => {
         observersRef.current.ro?.disconnect();
         observersRef.current.mo?.disconnect();
-        // Clear any pending timeouts from previous loads
-        if (observersRef.current.timeoutIds) {
-            observersRef.current.timeoutIds.forEach(clearTimeout);
-        }
+        observersRef.current.timeoutIds?.forEach(clearTimeout);
         observersRef.current.timeoutIds = [];
 
         requestAnimationFrame(() => {
             measureHeight();
-
             try {
                 const body = iframeRef.current?.contentDocument?.body;
                 if (!body) return;
 
-                // ResizeObserver — fires on any layout size change
                 const ro = new ResizeObserver(() => measureHeight());
                 ro.observe(body);
                 observersRef.current.ro = ro;
 
-                // MutationObserver — catches DOM changes
                 const mo = new MutationObserver(() => measureHeight());
                 mo.observe(body, { childList: true, subtree: true, attributes: true });
                 observersRef.current.mo = mo;
 
-                // Watch images that haven't finished loading
                 body.querySelectorAll("img").forEach((img) => {
                     if (!img.complete) {
                         img.addEventListener("load", measureHeight, { once: true });
@@ -85,10 +88,9 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
                     }
                 });
 
-                // Extra safety for fonts and external resources
                 observersRef.current.timeoutIds?.push(
                     window.setTimeout(measureHeight, 300),
-                    window.setTimeout(measureHeight, 1000)
+                    window.setTimeout(measureHeight, 1000),
                 );
             } catch {
                 // cross-origin guard
@@ -96,39 +98,30 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
         });
     }, [measureHeight]);
 
-    // Reset when email changes
     useEffect(() => {
-        setContentHeight(INITIAL_HEIGHT);
+        setContentHeight(400);
     }, [html]);
 
-    // Cleanup on unmount
     useEffect(() => {
         return () => {
             observersRef.current.ro?.disconnect();
             observersRef.current.mo?.disconnect();
-            if (observersRef.current.timeoutIds) {
-                observersRef.current.timeoutIds.forEach(clearTimeout);
-            }
+            observersRef.current.timeoutIds?.forEach(clearTimeout);
         };
     }, []);
 
-    const outerWidth = PREVIEW_VISUAL_WIDTH;
-    const outerHeight = Math.round(contentHeight * SCALE) + 15;
-    const iframeHeight = contentHeight + 40; // buffer so content isn't clipped during measurement
-    const srcDoc = wrapInDocument(html);
+    // iframe is rendered at full IFRAME_WIDTH then scaled down to fill the container
+    const iframeHeight = contentHeight + 10;
+    const outerHeight = Math.round(contentHeight * scale);
 
     return (
         <div
-            style={{
-                width: outerWidth,
-                height: outerHeight,
-                overflow: "hidden",
-                flexShrink: 0,
-            }}
+            ref={containerRef}
+            style={{ width: "100%", height: outerHeight, overflow: "hidden", flexShrink: 0 }}
         >
             <iframe
                 ref={iframeRef}
-                srcDoc={srcDoc}
+                srcDoc={wrapInDocument(html)}
                 sandbox=""
                 tabIndex={-1}
                 title="Email preview"
@@ -139,8 +132,8 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
                     border: "none",
                     display: "block",
                     transformOrigin: "top left",
-                    transform: `scale(${SCALE})`,
-                    marginBottom: -(iframeHeight) * (1 - SCALE),
+                    transform: `scale(${scale})`,
+                    marginBottom: -iframeHeight * (1 - scale),
                 }}
             />
         </div>
