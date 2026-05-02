@@ -5,19 +5,22 @@ import { ContactEmail, ContactMessage, ContactEmailAddress } from "@/types/email
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "./RichTextEditor";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronUp, Loader2, Send, ShieldCheck } from "lucide-react";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { ChevronUp, Loader2, Send, ShieldCheck, X } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+
+type ThreadMode = "continue" | "new";
 
 interface EmailComposerProps {
     contact: ContactEmail | null;
     contactEmails?: ContactEmailAddress[];
     replyToMessage?: ContactMessage | null;
+    lastMessage?: ContactMessage | null;
     lastMessageSubject?: string;
-    mode?: "compose" | "reply" | "followup";
     onSent: () => void;
+    onClearReply?: () => void;
     senderEmail?: string | null;
     senderProvider?: "gmail" | "outlook" | null;
     senderAccountId?: string | null;
@@ -29,9 +32,10 @@ export function EmailComposer({
     contact,
     contactEmails = [],
     replyToMessage,
+    lastMessage,
     lastMessageSubject,
-    mode = "compose",
     onSent,
+    onClearReply,
     senderEmail = null,
     senderProvider = null,
     senderAccountId = null,
@@ -41,21 +45,36 @@ export function EmailComposer({
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
     const [toEmail, setToEmail] = useState("");
+    const [threadMode, setThreadMode] = useState<ThreadMode>("continue");
     const [sending, setSending] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
 
-    // Reset toEmail to primary whenever the contact's emails change
+    // Reset toEmail to primary when contact changes
     useEffect(() => {
         const primary = contactEmails.find(ce => ce.is_primary) ?? contactEmails[0] ?? null;
         setToEmail(primary?.email ?? "");
     }, [contact?.id, contactEmails]);
-    const { role, approvalRequired } = useAuth();
-    const needsApproval = approvalRequired && role === 'user';
 
-    const resolvedMode = replyToMessage ? "reply" : mode;
-    const isReply = resolvedMode === "reply";
+    // Reset threadMode when contact changes
+    useEffect(() => {
+        setThreadMode("continue");
+    }, [contact?.id]);
+
+    // Auto-switch to new thread when selected email differs from last sent address
+    useEffect(() => {
+        if (!lastMessage?.contact_email || !toEmail) return;
+        if (toEmail !== lastMessage.contact_email) {
+            setThreadMode("new");
+        }
+    }, [toEmail, lastMessage?.contact_email]);
+
+    const { role, approvalRequired } = useAuth();
+    const needsApproval = approvalRequired && role === "user";
+
+    const isReply = !!replyToMessage;
+    const hasHistory = !!lastMessage;
 
     const defaultSubject = useMemo(() => {
         if (isReply && replyToMessage) {
@@ -63,13 +82,13 @@ export function EmailComposer({
                 ? replyToMessage.subject
                 : `Re: ${replyToMessage.subject}`;
         }
-        if (lastMessageSubject) {
+        if (lastMessageSubject && threadMode === "continue") {
             return lastMessageSubject.startsWith("Re:")
                 ? lastMessageSubject
                 : `Re: ${lastMessageSubject}`;
         }
         return "";
-    }, [isReply, replyToMessage?.subject, lastMessageSubject]);
+    }, [isReply, replyToMessage?.subject, lastMessageSubject, threadMode]);
 
     useEffect(() => {
         const contactId = contact?.id ?? null;
@@ -91,7 +110,6 @@ export function EmailComposer({
         prevReplyIdRef.current = replyId;
     }, [contact?.id, replyToMessage?.id, defaultSubject, prefillSubject, prefillBody]);
 
-
     const bodyText = useMemo(() => {
         return body
             .replace(/<[^>]*>/g, " ")
@@ -99,32 +117,27 @@ export function EmailComposer({
             .replace(/\s+/g, " ")
             .trim();
     }, [body]);
+
     const hasSubject = subject.trim().length > 0;
     const hasBody = bodyText.length > 0;
     const canSend = hasSubject && hasBody && !!senderProvider && !!senderAccountId && !sending;
 
+    // Thread IDs derived from mode
+    const sendThreadId = isReply
+        ? (replyToMessage?.thread_id ?? null)
+        : threadMode === "continue" ? (lastMessage?.thread_id ?? null) : null;
+    const sendReplyToMessageId = isReply ? (replyToMessage?.message_id ?? null) : null;
 
     const subjectLabel =
         subject.trim() ||
-        (resolvedMode === "reply"
-            ? "Reply draft"
-            : resolvedMode === "followup"
-                ? "Follow-up draft"
-                : "New message");
-    const triggerLabel =
-        resolvedMode === "reply"
-            ? "Reply"
-            : resolvedMode === "followup"
-                ? "Continuing"
-                : "Compose";
-    const subjectFieldLabel =
-        resolvedMode === "reply"
-            ? "Replying:"
-            : resolvedMode === "followup"
-                ? "Continuing:"
-                : "Subject:";
+        (isReply ? "Reply draft" : hasHistory && threadMode === "continue" ? "Follow-up draft" : "New message");
 
-    // Send email
+    const subjectFieldLabel = isReply
+        ? "Replying:"
+        : hasHistory && threadMode === "continue"
+            ? "Continuing:"
+            : "Subject:";
+
     const handleSend = async () => {
         if (!contact || !hasSubject || !hasBody || !senderProvider || !senderAccountId) return;
 
@@ -135,22 +148,20 @@ export function EmailComposer({
                 body,
                 account_id: senderAccountId,
                 account_provider: senderProvider,
-                thread_id: replyToMessage?.thread_id,
-                reply_to_message_id: replyToMessage?.message_id,
+                thread_id: sendThreadId || undefined,
+                reply_to_message_id: sendReplyToMessageId || undefined,
                 to_email: toEmail || undefined,
             });
 
-            if (res.data?.status === 'queued_for_approval') {
+            if (res.data?.status === "queued_for_approval") {
                 toast.success("Email submitted for admin approval");
             } else {
                 toast.success("Email sent successfully!");
             }
             onSent();
-            // Clear form after send
             setSubject("");
             setBody("");
         } catch (error: unknown) {
-            console.error("Error sending email:", error);
             const errorMessage = axios.isAxiosError(error)
                 ? error.response?.data?.detail || "Failed to send email"
                 : "Failed to send email";
@@ -165,26 +176,75 @@ export function EmailComposer({
     return (
         <div className="w-full border-t border-gray-200 bg-white/95 shadow-[0_-12px_30px_-20px_rgba(15,23,42,0.45)] backdrop-blur supports-backdrop-filter:bg-white/80">
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <CollapsibleTrigger
-                    type="button"
-                    className="group flex w-full flex-col px-6 py-3 text-left transition-colors hover:bg-gray-50"
+                {/* Header — custom div so mode toggle buttons can nest without HTML violations */}
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setIsOpen(v => !v)}
+                    onKeyDown={(e) => e.key === "Enter" && setIsOpen(v => !v)}
+                    className="flex w-full flex-col px-6 py-3 text-left transition-colors hover:bg-gray-50 cursor-pointer select-none"
                 >
-                    {/* Row 1: mode label + collapse toggle */}
+                    {/* Row 1: mode toggle (left) + collapse chevron (right) */}
                     <div className="flex items-center justify-between w-full">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                            {triggerLabel}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                            <span className="hidden sm:inline">
-                                {isOpen ? "Collapse" : "Expand"}
+                        {isReply ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
+                                    ↩ Reply
+                                </span>
+                                {onClearReply && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); onClearReply(); }}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                        aria-label="Cancel reply"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                )}
+                            </div>
+                        ) : hasHistory ? (
+                            <div
+                                className="flex items-center bg-gray-100 rounded-full p-0.5"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() => setThreadMode("continue")}
+                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+                                        threadMode === "continue"
+                                            ? "bg-white text-gray-800 shadow-sm"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
+                                >
+                                    Continue
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setThreadMode("new")}
+                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+                                        threadMode === "new"
+                                            ? "bg-white text-gray-800 shadow-sm"
+                                            : "text-gray-400 hover:text-gray-600"
+                                    }`}
+                                >
+                                    New
+                                </button>
+                            </div>
+                        ) : (
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                Compose
                             </span>
+                        )}
+
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <span className="hidden sm:inline">{isOpen ? "Collapse" : "Expand"}</span>
                             <ChevronUp
                                 className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
                             />
                         </div>
                     </div>
 
-                    {/* Row 2: From (left) + To (right) — same baseline */}
+                    {/* Row 2: From (left) + To (right) */}
                     {(senderEmail || toEmail) && (
                         <div className="flex items-center justify-between w-full mt-2">
                             <div className="text-xs text-gray-400">
@@ -211,11 +271,11 @@ export function EmailComposer({
                             {subjectLabel}
                         </div>
                     )}
-                </CollapsibleTrigger>
+                </div>
 
                 <CollapsibleContent className="border-t border-gray-200 bg-white overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
                     <div className="max-h-[70vh] overflow-y-auto overflow-x-hidden">
-                        {/* To: selector — only when contact has multiple emails */}
+                        {/* To selector — only when contact has multiple emails */}
                         {contactEmails.length > 1 && (
                             <div className="px-6 py-2.5 border-b flex items-center gap-4 bg-gray-50">
                                 <span className="text-sm font-medium text-gray-500 w-20 shrink-0">To:</span>
@@ -239,9 +299,9 @@ export function EmailComposer({
                             </div>
                         )}
 
-                        {/* Header / Subject Line */}
+                        {/* Subject */}
                         <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
-                            <span className="text-sm font-medium text-gray-500 w-20">
+                            <span className="text-sm font-medium text-gray-500 w-20 shrink-0">
                                 {subjectFieldLabel}
                             </span>
                             <Input
@@ -252,7 +312,7 @@ export function EmailComposer({
                             />
                         </div>
 
-                        {/* Editor Area */}
+                        {/* Editor */}
                         <div className="p-4 bg-white">
                             <RichTextEditor
                                 value={body}
@@ -261,7 +321,7 @@ export function EmailComposer({
                             />
                         </div>
 
-                        {/* Action Bar */}
+                        {/* Action bar */}
                         <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-end">
                             <Button
                                 onClick={handleSend}
