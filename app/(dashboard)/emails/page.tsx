@@ -203,14 +203,7 @@ export default function EmailsPage() {
         [emails, selectedId]
     );
 
-    const lastMessage = useMemo(() => {
-        if (threads.length === 0) return null;
-        const latest = threads.reduce((a, b) =>
-            new Date(a.last_sent_at) >= new Date(b.last_sent_at) ? a : b
-        );
-        const msgs = latest.messages;
-        return msgs.length > 0 ? msgs[msgs.length - 1] : null;
-    }, [threads]);
+    const [lastMessage, setLastMessage] = useState<ContactMessage | null>(null);
 
     const handleSelectEmail = useCallback((id: string) => {
         setSelectedId(id);
@@ -226,8 +219,20 @@ export default function EmailsPage() {
             const approval = response.data.pending_approval || null;
             const rejected = response.data.rejected_approval || null;
 
-            setThreads(response.data.threads || []);
+            const loadedThreads: MessageThread[] = response.data.threads || [];
+            setThreads(loadedThreads);
             setContactEmails(response.data.contact_emails || []);
+
+            // Default selected thread to the latest one
+            if (loadedThreads.length > 0) {
+                const latest = loadedThreads.reduce((a, b) =>
+                    new Date(a.last_sent_at) >= new Date(b.last_sent_at) ? a : b
+                );
+                const msgs = latest.messages;
+                setLastMessage(msgs.length > 0 ? msgs[msgs.length - 1] : null);
+            } else {
+                setLastMessage(null);
+            }
             setPendingDraft(draft);
             setPendingApproval(approval);
             setRejectedApproval(rejected);
@@ -299,6 +304,7 @@ export default function EmailsPage() {
     useEffect(() => {
         setThreads([]);
         setContactEmails([]);
+        setLastMessage(null);
         setReplyToMessage(null);
         setPendingDraft(null);
         setPendingApproval(null);
@@ -402,6 +408,7 @@ export default function EmailsPage() {
                             loading={messageLoading}
                             error={messageError}
                             onReply={setReplyToMessage}
+                            onThreadSelect={setLastMessage}
                             onDraftSave={handleDraftSave}
                             bottomInset={composerHeight}
                             pendingDraft={pendingDraft}

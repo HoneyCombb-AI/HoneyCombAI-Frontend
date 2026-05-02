@@ -16,6 +16,7 @@ interface EmailViewerProps {
     loading: boolean;
     error: string | null;
     onReply: (message: ContactMessage) => void;
+    onThreadSelect?: (message: ContactMessage | null) => void;
     onDraftSave?: (draftId: string, updates: { subject?: string; body?: string }) => Promise<void>;
     bottomInset?: number;
     pendingDraft?: PendingDraftItem | null;
@@ -275,6 +276,7 @@ export function EmailViewer({
     loading,
     error,
     onReply,
+    onThreadSelect,
     onDraftSave,
     bottomInset = 0,
     pendingDraft = null,
@@ -311,7 +313,14 @@ export function EmailViewer({
         );
     }
 
-    const toggleThread = (key: string) => setOpenKey(prev => prev === key ? null : key);
+    const toggleThread = (key: string, thread: MessageThread) => {
+        const isOpening = openKey !== key;
+        if (isOpening && onThreadSelect) {
+            const msgs = thread.messages;
+            onThreadSelect(msgs.length > 0 ? msgs[msgs.length - 1] : null);
+        }
+        setOpenKey(prev => prev === key ? null : key);
+    };
 
     const isDraftAwaiting = pendingDraft?.status === "awaiting_approval";
 
@@ -397,7 +406,7 @@ export function EmailViewer({
                                     key={key}
                                     thread={thread}
                                     isOpen={openKey === key}
-                                    onToggle={() => toggleThread(key)}
+                                    onToggle={() => toggleThread(key, thread)}
                                     onReply={onReply}
                                     scrollRef={isLast ? bottomRef : undefined}
                                 />
