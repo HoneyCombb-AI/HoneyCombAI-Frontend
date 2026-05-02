@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "./RichTextEditor";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { ChevronUp, Loader2, Send, ShieldCheck, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
@@ -128,10 +129,6 @@ export function EmailComposer({
         : threadMode === "continue" ? (lastMessage?.thread_id ?? null) : null;
     const sendReplyToMessageId = isReply ? (replyToMessage?.message_id ?? null) : null;
 
-    const subjectLabel =
-        subject.trim() ||
-        (isReply ? "Reply draft" : hasHistory && threadMode === "continue" ? "Follow-up draft" : "New message");
-
     const subjectFieldLabel = isReply
         ? "Replying:"
         : hasHistory && threadMode === "continue"
@@ -184,13 +181,16 @@ export function EmailComposer({
                     onKeyDown={(e) => e.key === "Enter" && setIsOpen(v => !v)}
                     className="flex w-full flex-col px-6 py-3 text-left transition-colors hover:bg-gray-50 cursor-pointer select-none"
                 >
-                    {/* Row 1: mode toggle (left) + collapse chevron (right) */}
+                    {/* Row 1: mode label (left) + collapse chevron (right) */}
                     <div className="flex items-center justify-between w-full">
-                        {isReply ? (
+                        {/* Collapsed: plain text label. Expanded: interactive toggle */}
+                        {!isOpen ? (
+                            <span className={`text-[11px] font-semibold uppercase tracking-wide ${isReply ? "text-blue-600" : "text-gray-500"}`}>
+                                {isReply ? "↩ Reply" : hasHistory ? (threadMode === "continue" ? "Continue" : "New Message") : "Compose"}
+                            </span>
+                        ) : isReply ? (
                             <div className="flex items-center gap-2">
-                                <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
-                                    ↩ Reply
-                                </span>
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">↩ Reply</span>
                                 {onClearReply && (
                                     <button
                                         type="button"
@@ -211,9 +211,7 @@ export function EmailComposer({
                                     type="button"
                                     onClick={() => setThreadMode("continue")}
                                     className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors ${
-                                        threadMode === "continue"
-                                            ? "bg-white text-gray-800 shadow-sm"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        threadMode === "continue" ? "bg-white text-gray-800 shadow-sm" : "text-gray-400 hover:text-gray-600"
                                     }`}
                                 >
                                     Continue
@@ -222,25 +220,19 @@ export function EmailComposer({
                                     type="button"
                                     onClick={() => setThreadMode("new")}
                                     className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors ${
-                                        threadMode === "new"
-                                            ? "bg-white text-gray-800 shadow-sm"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        threadMode === "new" ? "bg-white text-gray-800 shadow-sm" : "text-gray-400 hover:text-gray-600"
                                     }`}
                                 >
                                     New
                                 </button>
                             </div>
                         ) : (
-                            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                                Compose
-                            </span>
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Compose</span>
                         )}
 
                         <div className="flex items-center gap-1.5 text-xs text-gray-500">
                             <span className="hidden sm:inline">{isOpen ? "Collapse" : "Expand"}</span>
-                            <ChevronUp
-                                className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
-                            />
+                            <ChevronUp className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`} />
                         </div>
                     </div>
 
@@ -256,49 +248,44 @@ export function EmailComposer({
                                     )}
                                 </span>
                             </div>
-                            {toEmail && (
-                                <div className="hidden sm:block text-xs text-gray-400">
+                            {/* Collapsed: plain text. Expanded: select if multiple emails */}
+                            {!isOpen || contactEmails.length <= 1 ? (
+                                toEmail ? (
+                                    <div className="hidden sm:block text-xs text-gray-400">
+                                        To:{" "}
+                                        <span className="font-semibold text-gray-700">{toEmail}</span>
+                                    </div>
+                                ) : null
+                            ) : (
+                                <div
+                                    className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400"
+                                    onClick={e => e.stopPropagation()}
+                                >
                                     To:{" "}
-                                    <span className="font-semibold text-gray-700">{toEmail}</span>
+                                    <Select value={toEmail} onValueChange={setToEmail}>
+                                        <SelectTrigger
+                                            size="sm"
+                                            className="h-auto py-0.5 px-2 text-xs font-semibold text-gray-700 border-gray-200 bg-white shadow-none gap-1"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {contactEmails.map(ce => (
+                                                <SelectItem key={ce.id} value={ce.email}>
+                                                    {ce.email}{ce.label ? ` (${ce.label})` : ""}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {/* Row 3: subject preview when collapsed */}
-                    {!isOpen && (
-                        <div className="truncate text-sm font-medium text-gray-900 mt-1">
-                            {subjectLabel}
-                        </div>
-                    )}
                 </div>
 
                 <CollapsibleContent className="border-t border-gray-200 bg-white overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
                     <div className="max-h-[70vh] overflow-y-auto overflow-x-hidden">
-                        {/* To selector — only when contact has multiple emails */}
-                        {contactEmails.length > 1 && (
-                            <div className="px-6 py-2.5 border-b flex items-center gap-4 bg-gray-50">
-                                <span className="text-sm font-medium text-gray-500 w-20 shrink-0">To:</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {contactEmails.map(ce => (
-                                        <button
-                                            key={ce.id}
-                                            type="button"
-                                            onClick={() => setToEmail(ce.email)}
-                                            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                                                toEmail === ce.email
-                                                    ? "bg-slate-800 text-white"
-                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                            }`}
-                                        >
-                                            {ce.email}
-                                            {ce.label && <span className="ml-1 opacity-60">({ce.label})</span>}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
                         {/* Subject */}
                         <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
                             <span className="text-sm font-medium text-gray-500 w-20 shrink-0">
