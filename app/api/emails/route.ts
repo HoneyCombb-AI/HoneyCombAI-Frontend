@@ -56,9 +56,10 @@ export async function GET(req: NextRequest) {
         const total = emails.length > 0 ? Number((emails[0] as any).total_count) : 0;
         const hasMore = (page * limit) < total;
 
-        // Ensure all draft fields are present (in case RPC hasn't been updated yet)
         const normalizedEmails = emails.map((e: any) => ({
             ...e,
+            last_message_subject: e.last_message_subject ?? null,
+            last_interaction_at: e.last_interaction_at ?? null,
             draft_id: e.draft_id ?? null,
             draft_subject: e.draft_subject ?? null,
             draft_body: e.draft_body ?? null,

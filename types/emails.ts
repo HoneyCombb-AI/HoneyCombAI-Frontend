@@ -18,8 +18,8 @@ export type ContactEmail = {
     first_name: string | null;
     last_name: string | null;
     full_name: string;
-    company_name: string;
-    tags: { name: string; color: string }[];
+    last_message_subject: string | null;
+    last_interaction_at: string | null;
     // Pending draft fields
     draft_id: string | null;
     draft_subject: string | null;
@@ -29,7 +29,7 @@ export type ContactEmail = {
     // Email account ownership
     email_account_name: string | null;
     email_account_id: string | null;
-    // Approval status (lightweight flag from RPC 1)
+    // Approval status (lightweight flag from RPC)
     has_pending_approval: boolean;
     // Approval item details (loaded from messages endpoint)
     pending_approval_id?: string | null;
