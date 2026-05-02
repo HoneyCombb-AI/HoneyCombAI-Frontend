@@ -49,7 +49,7 @@ export function EmailList({
             <div className="divide-y overflow-y-auto">
                 {emails.map((email) => {
                     const isSelected = email.id === selectedId;
-                    const hasDraft = !!email.draft_id;
+                    const hasDraft = email.has_draft;
                     const isRejected = email.has_rejected;
                     const hasApproval = email.has_pending_approval;
                     const time = relativeTime(email.last_interaction_at);

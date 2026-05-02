@@ -93,19 +93,31 @@ export async function POST(
 
             if (org.approval_required && profile.role !== 'admin') {
                 // Get contact info for the snapshot
-                const { data: contact, error: contactError } = await supabase
-                    .from('contacts')
-                    .select('full_name, email, company:companies(name)')
-                    .eq('id', contactId)
-                    .maybeSingle();
+                const [{ data: contact, error: contactError }, { data: contactEmailRows, error: emailRowsError }] = await Promise.all([
+                    supabase
+                        .from('contacts')
+                        .select('full_name, company:companies(name)')
+                        .eq('id', contactId)
+                        .maybeSingle(),
+                    supabase
+                        .from('contact_emails')
+                        .select('email, is_primary')
+                        .eq('contact_id', contactId)
+                        .order('is_primary', { ascending: false }),
+                ]);
 
-                if (contactError) {
-                    console.error('Failed to fetch contact for approval snapshot:', contactError);
+                if (contactError || emailRowsError) {
+                    console.error('Failed to fetch contact for approval snapshot:', contactError ?? emailRowsError);
                     return NextResponse.json(
                         { detail: 'Failed to fetch contact details' },
                         { status: 500 }
                     );
                 }
+
+                const primaryEmail =
+                    (contactEmailRows ?? []).find(ce => ce.is_primary)?.email ??
+                    (contactEmailRows ?? [])[0]?.email ??
+                    '';
 
                 const { error: insertError } = await supabase.from('approval_queue').insert({
                     organization_id: profile.organization_id,
@@ -119,7 +131,7 @@ export async function POST(
                         account_provider: body.account_provider,
                         thread_id: body.thread_id || null,
                         reply_to_message_id: body.reply_to_message_id || null,
-                        contact_email: contact?.email || '',
+                        contact_email: primaryEmail,
                         contact_name: contact?.full_name || '',
                         company_name: ((contact?.company as unknown as { name: string } | null)?.name) || '',
                     },

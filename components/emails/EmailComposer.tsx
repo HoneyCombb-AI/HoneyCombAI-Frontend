@@ -1,27 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ContactEmail } from "@/types/emails";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { ContactEmail, ContactMessage, ContactEmailAddress } from "@/types/emails";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "./RichTextEditor";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronUp, Loader2, Sparkles, Send, ShieldCheck } from "lucide-react";
+import { ChevronUp, Loader2, Send, ShieldCheck } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
-import { formatDistanceToNowStrict } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
-
-interface ContactMessage {
-    id: string;
-    subject: string;
-    thread_id: string;
-    message_id: string;
-    direction: string;
-}
 
 interface EmailComposerProps {
     contact: ContactEmail | null;
+    contactEmails?: ContactEmailAddress[];
     replyToMessage?: ContactMessage | null;
     lastMessageSubject?: string;
     mode?: "compose" | "reply" | "followup";
@@ -29,13 +21,13 @@ interface EmailComposerProps {
     senderEmail?: string | null;
     senderProvider?: "gmail" | "outlook" | null;
     senderAccountId?: string | null;
-    senderFirstName?: string | null;
     prefillSubject?: string | null;
     prefillBody?: string | null;
 }
 
 export function EmailComposer({
     contact,
+    contactEmails = [],
     replyToMessage,
     lastMessageSubject,
     mode = "compose",
@@ -43,17 +35,22 @@ export function EmailComposer({
     senderEmail = null,
     senderProvider = null,
     senderAccountId = null,
-    senderFirstName = null,
     prefillSubject = null,
     prefillBody = null,
 }: EmailComposerProps) {
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
-    const [generating, setGenerating] = useState(false);
+    const [toEmail, setToEmail] = useState("");
     const [sending, setSending] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
+
+    // Reset toEmail to primary whenever the contact's emails change
+    useEffect(() => {
+        const primary = contactEmails.find(ce => ce.is_primary) ?? contactEmails[0] ?? null;
+        setToEmail(primary?.email ?? "");
+    }, [contact?.id, contactEmails]);
     const { role, approvalRequired } = useAuth();
     const needsApproval = approvalRequired && role === 'user';
 
@@ -95,55 +92,6 @@ export function EmailComposer({
     }, [contact?.id, replyToMessage?.id, defaultSubject, prefillSubject, prefillBody]);
 
 
-    // Add signature to body
-    const addSignature = useCallback((content: string) => {
-        const rawName = senderFirstName?.replace(/[<>]/g, "") || "HoneyComb";
-        const signature = `<p>${rawName}</p>`;
-        return content + signature;
-    }, [senderFirstName]);
-
-    // Generate AI draft
-    const handleGenerateDraft = async () => {
-        if (!contact) return;
-        if (!senderProvider || !senderAccountId) {
-            toast.error("Connect an email account to generate drafts.");
-            return;
-        }
-
-        setGenerating(true);
-        try {
-            const response = await axios.post(`/api/emails/${contact.id}/generate-draft`);
-
-            setSubject(response.data.subject);
-            setBody(addSignature(response.data.body));
-
-            toast.success("Draft generated successfully!");
-        } catch (error) {
-            console.error("Error generating draft:", error);
-
-            if (axios.isAxiosError(error)) {
-                const status = error.response?.status;
-                if (status === 403) {
-                    const detail = error.response?.data?.detail || "No connected email account.";
-                    toast.error(detail);
-                    return;
-                }
-                if (status === 429) {
-                    const resetTime = error.response?.data?.resetTime;
-                    const retryIn = resetTime
-                        ? formatDistanceToNowStrict(new Date(resetTime), { addSuffix: true })
-                        : "later";
-                    toast.error(`Rate limit exceeded. Try again ${retryIn}.`);
-                    return;
-                }
-            }
-
-            toast.error("Failed to generate draft");
-        } finally {
-            setGenerating(false);
-        }
-    };
-
     const bodyText = useMemo(() => {
         return body
             .replace(/<[^>]*>/g, " ")
@@ -154,6 +102,7 @@ export function EmailComposer({
     const hasSubject = subject.trim().length > 0;
     const hasBody = bodyText.length > 0;
     const canSend = hasSubject && hasBody && !!senderProvider && !!senderAccountId && !sending;
+
 
     const subjectLabel =
         subject.trim() ||
@@ -188,6 +137,7 @@ export function EmailComposer({
                 account_provider: senderProvider,
                 thread_id: replyToMessage?.thread_id,
                 reply_to_message_id: replyToMessage?.message_id,
+                to_email: toEmail || undefined,
             });
 
             if (res.data?.status === 'queued_for_approval') {
@@ -217,36 +167,78 @@ export function EmailComposer({
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
                 <CollapsibleTrigger
                     type="button"
-                    className="group flex w-full items-center justify-between gap-3 px-6 py-3 text-left transition-colors hover:bg-gray-50"
+                    className="group flex w-full flex-col px-6 py-3 text-left transition-colors hover:bg-gray-50"
                 >
-                    <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    {/* Row 1: mode label + collapse toggle */}
+                    <div className="flex items-center justify-between w-full">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                             {triggerLabel}
-                        </div>
-                        {senderEmail && (
-                            <div className="text-xs text-gray-500">
-                                From: {senderEmail}
-                                {senderProvider ? ` (${senderProvider})` : ""}
-                            </div>
-                        )}
-                        {!isOpen && (
-                            <div className="truncate text-sm font-medium text-gray-900">
-                                {subjectLabel}
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span className="hidden sm:inline">
-                            {isOpen ? "Collapse" : "Expand"}
                         </span>
-                        <ChevronUp
-                            className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
-                        />
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <span className="hidden sm:inline">
+                                {isOpen ? "Collapse" : "Expand"}
+                            </span>
+                            <ChevronUp
+                                className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
+                            />
+                        </div>
                     </div>
+
+                    {/* Row 2: From (left) + To (right) — same baseline */}
+                    {(senderEmail || toEmail) && (
+                        <div className="flex items-center justify-between w-full mt-2">
+                            <div className="text-xs text-gray-400">
+                                From:{" "}
+                                <span className="font-semibold text-gray-700">
+                                    {senderEmail ?? "—"}
+                                    {senderProvider && (
+                                        <span className="ml-1 font-normal text-gray-400">({senderProvider})</span>
+                                    )}
+                                </span>
+                            </div>
+                            {toEmail && (
+                                <div className="hidden sm:block text-xs text-gray-400">
+                                    To:{" "}
+                                    <span className="font-semibold text-gray-700">{toEmail}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Row 3: subject preview when collapsed */}
+                    {!isOpen && (
+                        <div className="truncate text-sm font-medium text-gray-900 mt-1">
+                            {subjectLabel}
+                        </div>
+                    )}
                 </CollapsibleTrigger>
 
                 <CollapsibleContent className="border-t border-gray-200 bg-white overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
                     <div className="max-h-[70vh] overflow-y-auto overflow-x-hidden">
+                        {/* To: selector — only when contact has multiple emails */}
+                        {contactEmails.length > 1 && (
+                            <div className="px-6 py-2.5 border-b flex items-center gap-4 bg-gray-50">
+                                <span className="text-sm font-medium text-gray-500 w-20 shrink-0">To:</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {contactEmails.map(ce => (
+                                        <button
+                                            key={ce.id}
+                                            type="button"
+                                            onClick={() => setToEmail(ce.email)}
+                                            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                                                toEmail === ce.email
+                                                    ? "bg-slate-800 text-white"
+                                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                            }`}
+                                        >
+                                            {ce.email}
+                                            {ce.label && <span className="ml-1 opacity-60">({ce.label})</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Header / Subject Line */}
                         <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
                             <span className="text-sm font-medium text-gray-500 w-20">
@@ -270,22 +262,7 @@ export function EmailComposer({
                         </div>
 
                         {/* Action Bar */}
-                        <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleGenerateDraft}
-                                disabled={generating || sending}
-                                className="border border-purple-200 text-purple-700 bg-white hover:bg-purple-50 hover:border-purple-300 hover:text-purple-800 cursor-pointer transition-all duration-200 focus:ring-1 focus:ring-purple-200 shadow-sm"
-                            >
-                                {generating ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Sparkles className="h-4 w-4 mr-2" />
-                                )}
-                                AI Generate
-                            </Button>
-
+                        <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-end">
                             <Button
                                 onClick={handleSend}
                                 disabled={!canSend}

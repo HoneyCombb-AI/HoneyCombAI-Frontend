@@ -1,29 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { TrackingEvent, ContactMessage, MessagesResponse, RejectedApprovalItem } from '@/types/emails';
-
-type ContactRow = {
-    id: string;
-    user_id: string | null;
-    companies?: { organization_id: string | null } | { organization_id: string | null }[] | null;
-};
-
-type EmailLogRow = {
-    id: string;
-    gmail_account_id: string | null;
-    outlook_account_id: string | null;
-    status: string | null;
-    subject: string | null;
-    thread_id: string | null;
-    message_id: string | null;
-    campaign_id: string | null;
-    contact_id: string;
-    sent_at: string;
-    direction: string | null;
-    body: string | null;
-    replied_at: string | null;
-    email_tracking_events: TrackingEvent[];
-};
+import type { MessagesResponse } from '@/types/emails';
 
 export async function GET(
     _req: NextRequest,
@@ -49,152 +26,36 @@ export async function GET(
             return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
         }
 
-        const organizationId = profile.organization_id;
+        const { data, error } = await supabase.rpc('get_contact_messages', {
+            p_contact_id: contactId,
+            p_org_id: profile.organization_id,
+        });
 
-        const { data: orgMembers, error: membersError } = await supabase
-            .from('organization_members')
-            .select('user_id')
-            .eq('organization_id', organizationId);
-
-        if (membersError) {
-            return NextResponse.json(
-                { error: 'Failed to load organization members' },
-                { status: 500 }
-            );
+        if (error) {
+            console.error('get_contact_messages RPC error:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        const memberIds = (orgMembers || [])
-            .map((member) => member.user_id)
-            .filter((id): id is string => !!id);
+        const result = data as any;
 
-        const { data: contact, error: contactError } = await supabase
-            .from('contacts')
-            .select('id, user_id, companies:company_id (organization_id)')
-            .eq('id', contactId)
-            .single();
-
-        if (contactError || !contact) {
-            return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
-        }
-
-        const contactRow = contact as ContactRow;
-        const companyOrgId = Array.isArray(contactRow.companies)
-            ? contactRow.companies[0]?.organization_id
-            : contactRow.companies?.organization_id;
-
-        const inOrganization =
-            companyOrgId === organizationId ||
-            (contactRow.user_id && memberIds.includes(contactRow.user_id));
-
-        if (!inOrganization) {
+        if (result?.error === 'forbidden') {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const { data: emailLogs, error: logsError } = await supabase
-            .from('email_logs')
-            .select(
-                'id, gmail_account_id, outlook_account_id, status, subject, thread_id, message_id, ' +
-                'campaign_id, contact_id, sent_at, direction, body, replied_at, ' +
-                'email_tracking_events(id, event_type, clicked_url, created_at)'
-            )
-            .eq('contact_id', contactId)
-            .order('sent_at', { ascending: true });
-
-        if (logsError) {
-            return NextResponse.json(
-                { error: `Failed to load messages: ${logsError.message}` },
-                { status: 500 }
-            );
-        }
-
-        const logs = (emailLogs || []) as unknown as EmailLogRow[];
-        const messages: ContactMessage[] = logs.map((log) => {
-            const events = log.email_tracking_events || [];
-            return {
-                id: log.id,
-                account_id: log.gmail_account_id || log.outlook_account_id || '',
-                status: log.status || '',
-                subject: log.subject || '',
-                thread_id: log.thread_id || '',
-                message_id: log.message_id || '',
-                campaign_id: log.campaign_id || '',
-                contact_id: log.contact_id,
-                sent_at: log.sent_at,
-                direction: log.direction || 'outbound',
-                body: log.body || '',
-                replied_at: log.replied_at,
-                open_count: events.filter(e => e.event_type === 'open').length,
-                click_count: events.filter(e => e.event_type === 'click').length,
-                tracking_events: events,
-            };
-        });
-
-        // Fetch pending approval item for this contact (if any)
-        const { data: approvalRows, error: approvalError } = await supabase
-            .from('approval_queue')
-            .select('id, snapshot, submitted_at')
-            .eq('contact_id', contactId)
-            .eq('status', 'pending')
-            .eq('organization_id', organizationId)
-            .in('item_type', ['manual_email', 'email_draft'])
-            .order('submitted_at', { ascending: false })
-            .limit(1);
-
-        if (approvalError) {
-            console.error('Failed to fetch pending approval:', approvalError);
-            return NextResponse.json(
-                { error: 'Failed to fetch pending approval' },
-                { status: 500 }
-            );
-        }
-
-        const approvalItem = approvalRows?.[0] || null;
-        const pendingApproval = approvalItem
-            ? {
-                id: approvalItem.id,
-                subject: (approvalItem.snapshot as any)?.subject || '',
-                body: (approvalItem.snapshot as any)?.body || '',
-                submitted_at: approvalItem.submitted_at,
-            }
-            : null;
-
-        // Fetch most recent rejected approval for this contact (if any)
-        const { data: rejectedRows } = await supabase
-            .from('approval_queue')
-            .select('id, snapshot, rejection_reason, reviewed_at')
-            .eq('contact_id', contactId)
-            .eq('status', 'rejected')
-            .eq('organization_id', organizationId)
-            .in('item_type', ['manual_email', 'email_draft'])
-            .order('reviewed_at', { ascending: false })
-            .limit(1);
-
-        const rejectedItem = rejectedRows?.[0] || null;
-        const rejectedApproval: RejectedApprovalItem | null = rejectedItem
-            ? {
-                id: rejectedItem.id,
-                subject: (rejectedItem.snapshot as any)?.subject || '',
-                body: (rejectedItem.snapshot as any)?.body || '',
-                rejection_reason: rejectedItem.rejection_reason || null,
-                reviewed_at: rejectedItem.reviewed_at || null,
-            }
-            : null;
-
-        const result: MessagesResponse = {
-            messages,
+        const response: MessagesResponse = {
+            threads: result.threads ?? [],
             contact_id: contactId,
-            pending_approval: pendingApproval,
-            rejected_approval: rejectedApproval,
+            contact_emails: result.contact_emails ?? [],
+            draft: result.draft ?? null,
+            pending_approval: result.pending_approval ?? null,
+            rejected_approval: result.rejected_approval ?? null,
         };
 
-        return NextResponse.json(result);
+        return NextResponse.json(response);
 
     } catch (error: unknown) {
-        console.error(`API /api/emails messages error:`, error);
+        console.error('API /api/emails messages error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        return NextResponse.json(
-            { error: errorMessage },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

@@ -11,7 +11,16 @@ import { EmailList } from "@/components/emails/EmailList";
 import { EmailViewer } from "@/components/emails/EmailViewer";
 import { EmailFilters } from "@/components/emails/EmailFilters";
 import { EmailComposer } from "@/components/emails/EmailComposer";
-import { type EmailsResponse, type ContactEmail, type ContactMessage, type RejectedApprovalItem } from "@/types/emails";
+import {
+    type EmailsResponse,
+    type ContactEmail,
+    type ContactMessage,
+    type ContactEmailAddress,
+    type MessageThread,
+    type RejectedApprovalItem,
+    type PendingApprovalItem,
+    type PendingDraftItem,
+} from "@/types/emails";
 import { useSearchParams } from "next/navigation";
 
 export default function EmailsPage() {
@@ -30,13 +39,15 @@ export default function EmailsPage() {
     const [emails, setEmails] = useState<ContactEmail[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(false);
-    const [messages, setMessages] = useState<ContactMessage[]>([]);
+    const [threads, setThreads] = useState<MessageThread[]>([]);
     const [replyToMessage, setReplyToMessage] = useState<ContactMessage | null>(null);
+    const [contactEmails, setContactEmails] = useState<ContactEmailAddress[]>([]);
+    const [pendingDraft, setPendingDraft] = useState<PendingDraftItem | null>(null);
+    const [pendingApproval, setPendingApproval] = useState<PendingApprovalItem | null>(null);
     const [rejectedApproval, setRejectedApproval] = useState<RejectedApprovalItem | null>(null);
     const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
     const [senderEmail, setSenderEmail] = useState<string | null>(null);
     const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
-    const [senderFirstName, setSenderFirstName] = useState<string | null>(null);
     const viewerRef = useRef<HTMLDivElement>(null);
     const composerRef = useRef<HTMLDivElement>(null);
     const [composerHeight, setComposerHeight] = useState(0);
@@ -54,7 +65,7 @@ export default function EmailsPage() {
     const [page, setPage] = useState(1);
     const LIMIT = 20;
 
-    // Debounce search so we don't spam API
+    // Debounce search
     const [debouncedSearch, setDebouncedSearch] = useState(search);
     useEffect(() => {
         const normalized = search.toLowerCase();
@@ -92,7 +103,6 @@ export default function EmailsPage() {
             } else {
                 setEmails(result.emails);
                 setPage(1);
-                // Auto-select first email if none selected
                 if (result.emails.length > 0 && !selectedId) {
                     setSelectedId(result.emails[0].id);
                 }
@@ -123,7 +133,6 @@ export default function EmailsPage() {
         if (!contactIdParam || authLoading || loading) return;
         if (handledContactIdRef.current === contactIdParam) return;
 
-        // Check if contact is already in the list — move to top
         const existing = emails.find(e => e.id === contactIdParam);
         if (existing) {
             setEmails(prev => [existing, ...prev.filter(e => e.id !== contactIdParam)]);
@@ -132,7 +141,6 @@ export default function EmailsPage() {
             return;
         }
 
-        // Not in list — fetch contact info and inject as a new entry
         let cancelled = false;
         const injectContact = async () => {
             try {
@@ -143,21 +151,12 @@ export default function EmailsPage() {
                     const minimalContact: ContactEmail = {
                         id: c.id,
                         full_name: c.full_name || '',
-                        first_name: c.first_name || null,
-                        last_name: c.last_name || null,
-                        email: c.email || '',
                         last_message_subject: null,
                         last_interaction_at: null,
-                        draft_id: null,
-                        draft_subject: null,
-                        draft_body: null,
-                        draft_status: null,
-                        draft_position: null,
-                        email_account_name: null,
                         email_account_id: null,
                         has_pending_approval: false,
                         has_rejected: false,
-                        rejection_reason: null,
+                        has_draft: false,
                     };
                     setEmails(prev => {
                         if (prev.some(e => e.id === minimalContact.id)) return prev;
@@ -172,7 +171,7 @@ export default function EmailsPage() {
         return () => { cancelled = true; };
     }, [contactIdParam, authLoading, loading, emails]);
 
-    // Fetch current user's sender account to check ownership
+    // Fetch current user's sender account
     useEffect(() => {
         const loadSender = async () => {
             try {
@@ -181,27 +180,22 @@ export default function EmailsPage() {
                     setSenderAccountId(res.data.account_id);
                     setSenderEmail(res.data.email ?? null);
                     setSenderProvider(res.data.provider ?? null);
-                    setSenderFirstName(res.data.first_name ?? null);
                 } else {
                     setSenderAccountId(null);
                     setSenderEmail(null);
                     setSenderProvider(null);
-                    setSenderFirstName(null);
                 }
             } catch {
                 setSenderAccountId(null);
                 setSenderEmail(null);
                 setSenderProvider(null);
-                setSenderFirstName(null);
             }
         };
         loadSender();
     }, []);
 
     const loadMore = () => {
-        if (!loadingMore && hasMore) {
-            fetchEmails(true);
-        }
+        if (!loadingMore && hasMore) fetchEmails(true);
     };
 
     const selectedEmail = useMemo(
@@ -209,7 +203,14 @@ export default function EmailsPage() {
         [emails, selectedId]
     );
 
-    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+    const lastMessage = useMemo(() => {
+        if (threads.length === 0) return null;
+        const latest = threads.reduce((a, b) =>
+            new Date(a.last_sent_at) >= new Date(b.last_sent_at) ? a : b
+        );
+        const msgs = latest.messages;
+        return msgs.length > 0 ? msgs[msgs.length - 1] : null;
+    }, [threads]);
     const isLastInbound = lastMessage ? lastMessage.direction !== "outbound" : false;
     const activeReplyMessage = replyToMessage ?? (isLastInbound ? lastMessage : null);
     const composerMode = activeReplyMessage ? "reply" : lastMessage ? "followup" : "compose";
@@ -223,29 +224,34 @@ export default function EmailsPage() {
             setMessageLoading(true);
             setMessageError(null);
             const response = await axios.get(`/api/emails/${contactId}/messages`);
-            setMessages(response.data.messages || []);
 
-            // Merge pending approval data into the contact entry
+            const draft    = response.data.draft            || null;
             const approval = response.data.pending_approval || null;
+            const rejected = response.data.rejected_approval || null;
+
+            setThreads(response.data.threads || []);
+            setContactEmails(response.data.contact_emails || []);
+            setPendingDraft(draft);
+            setPendingApproval(approval);
+            setRejectedApproval(rejected);
+
+            // Sync status flags back into the list item
             setEmails(prev => prev.map(e => {
                 if (e.id !== contactId) return e;
                 return {
                     ...e,
                     has_pending_approval: !!approval,
-                    pending_approval_id: approval?.id || null,
-                    pending_approval_subject: approval?.subject || null,
-                    pending_approval_body: approval?.body || null,
+                    has_rejected: !!rejected,
+                    has_draft: !!draft,
                 };
             }));
-
-            setRejectedApproval(response.data.rejected_approval || null);
         } catch (e: unknown) {
             if (axios.isAxiosError(e)) {
                 setMessageError(e.response?.data?.error || e.message);
             } else {
                 setMessageError(e instanceof Error ? e.message : "Failed to load messages");
             }
-            setMessages([]);
+            setThreads([]);
         } finally {
             setMessageLoading(false);
         }
@@ -255,11 +261,10 @@ export default function EmailsPage() {
         if (selectedEmail?.id) {
             fetchMessages(selectedEmail.id);
         } else {
-            setMessages([]);
+            setThreads([]);
         }
     }, [selectedEmail?.id, fetchMessages]);
 
-    // Handle saving email draft edits
     const handleDraftSave = useCallback(async (
         draftId: string,
         updates: { subject?: string; body?: string }
@@ -269,16 +274,11 @@ export default function EmailsPage() {
             draft_id: draftId,
             ...updates,
         });
-        // Update local state in-place
-        setEmails(prev => prev.map(e =>
-            e.id === selectedEmail.id
-                ? {
-                    ...e,
-                    draft_subject: updates.subject ?? e.draft_subject,
-                    draft_body: updates.body ?? e.draft_body,
-                }
-                : e
-        ));
+        setPendingDraft(prev => prev ? {
+            ...prev,
+            subject: updates.subject ?? prev.subject,
+            body: updates.body ?? prev.body,
+        } : null);
     }, [selectedEmail]);
 
     const handleResubmit = useCallback(async (subject: string, body: string) => {
@@ -292,15 +292,19 @@ export default function EmailsPage() {
             account_id: senderAccountId,
             account_provider: senderProvider,
         });
-        toast.success("Email resubmitted for approval.");
         setRejectedApproval(null);
         setEmails(prev => prev.map(e =>
-            e.id === selectedEmail.id ? { ...e, has_rejected: false, rejection_reason: null } : e
+            e.id === selectedEmail.id ? { ...e, has_rejected: false } : e
         ));
     }, [selectedEmail, senderAccountId, senderProvider]);
 
+    // Clear viewer state on contact change
     useEffect(() => {
+        setThreads([]);
+        setContactEmails([]);
         setReplyToMessage(null);
+        setPendingDraft(null);
+        setPendingApproval(null);
         setRejectedApproval(null);
     }, [selectedId]);
 
@@ -327,7 +331,6 @@ export default function EmailsPage() {
         updateComposerRect();
     }, [updateComposerRect, selectedId]);
 
-    // Recalculate after sidebar transition (200ms CSS transition)
     useEffect(() => {
         const timer = setTimeout(() => updateComposerRect(), 220);
         return () => clearTimeout(timer);
@@ -382,7 +385,7 @@ export default function EmailsPage() {
                 </div>
             ) : (
                 <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0 overflow-hidden min-h-0">
-                    {/* Email List - Independently scrollable */}
+                    {/* Email List */}
                     <div className="border-r bg-white lg:col-span-1 overflow-y-auto h-full min-h-0">
                         <EmailList
                             emails={emails}
@@ -394,23 +397,24 @@ export default function EmailsPage() {
                         />
                     </div>
 
-                    {/* Email Viewer - Independently scrollable */}
+                    {/* Email Viewer */}
                     <div ref={viewerRef} className="lg:col-span-2 overflow-hidden h-full min-h-0 relative">
                         <EmailViewer
                             email={selectedEmail}
-                            messages={messages}
+                            threads={threads}
                             loading={messageLoading}
                             error={messageError}
                             onReply={setReplyToMessage}
                             onDraftSave={handleDraftSave}
                             bottomInset={composerHeight}
+                            pendingDraft={pendingDraft}
+                            pendingApproval={pendingApproval}
                             rejectedApproval={rejectedApproval}
                             onResubmit={handleResubmit}
                         />
 
                         {selectedEmail && (
                             (() => {
-                                // Only show composer if this contact is handled by the current user's email account
                                 const isOwnAccount = !selectedEmail.email_account_id || selectedEmail.email_account_id === senderAccountId;
                                 if (!isOwnAccount) return null;
                                 return (
@@ -421,6 +425,7 @@ export default function EmailsPage() {
                                     >
                                         <EmailComposer
                                             contact={selectedEmail}
+                                            contactEmails={contactEmails}
                                             replyToMessage={activeReplyMessage}
                                             lastMessageSubject={lastMessage?.subject}
                                             mode={composerMode}
@@ -428,7 +433,6 @@ export default function EmailsPage() {
                                             senderEmail={senderEmail}
                                             senderProvider={senderProvider}
                                             senderAccountId={senderAccountId}
-                                            senderFirstName={senderFirstName}
                                         />
                                     </div>
                                 );

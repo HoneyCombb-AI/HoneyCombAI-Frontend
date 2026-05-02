@@ -65,19 +65,14 @@ export async function GET(req: NextRequest) {
         const hasMore = (page * limit) < total;
 
         const normalizedEmails = emails.map((e: any) => ({
-            ...e,
+            id: e.id,
+            full_name: e.full_name ?? 'Unknown',
             last_message_subject: e.last_message_subject ?? null,
             last_interaction_at: e.last_interaction_at ?? null,
-            draft_id: e.draft_id ?? null,
-            draft_subject: e.draft_subject ?? null,
-            draft_body: e.draft_body ?? null,
-            draft_status: e.draft_status ?? null,
-            draft_position: e.draft_position ?? null,
-            email_account_name: e.email_account_name ?? null,
+            has_draft: e.has_draft ?? false,
             email_account_id: e.email_account_id ?? null,
             has_pending_approval: e.has_pending_approval ?? false,
             has_rejected: e.has_rejected ?? false,
-            rejection_reason: e.rejection_reason ?? null,
         }));
 
         const response: EmailsResponse = {
