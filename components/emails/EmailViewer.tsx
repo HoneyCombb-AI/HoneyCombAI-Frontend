@@ -283,8 +283,35 @@ export function EmailViewer({
         [threads]
     );
 
+    const SCROLL_TOP_OFFSET = 15; // px breathing room from top edge
+
     const [openKey, setOpenKey] = useState<string | null>(lastThreadKey);
     const bottomRef = useRef<HTMLDivElement | null>(null);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+    const [scrollAreaHeight, setScrollAreaHeight] = useState(0);
+    const [lastThreadHeight, setLastThreadHeight] = useState(0);
+
+    // Dynamically track scroll container height
+    useEffect(() => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        const update = () => setScrollAreaHeight(el.clientHeight);
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    // Dynamically track the last thread's height so the spacer adapts
+    useEffect(() => {
+        const el = bottomRef.current;
+        if (!el) { setLastThreadHeight(0); return; }
+        const update = () => setLastThreadHeight(el.offsetHeight);
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [threads, openKey]);
 
     useEffect(() => {
         setOpenKey(lastThreadKey);
@@ -293,7 +320,16 @@ export function EmailViewer({
     useEffect(() => {
         if (!loading && threads.length > 0) {
             setTimeout(() => {
-                bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+                const container = scrollContainerRef.current;
+                const el = bottomRef.current;
+                if (!container || !el) return;
+                const containerRect = container.getBoundingClientRect();
+                const elRect = el.getBoundingClientRect();
+                const currentOffset = elRect.top - containerRect.top;
+                container.scrollTo({
+                    top: container.scrollTop + currentOffset - SCROLL_TOP_OFFSET,
+                    behavior: "smooth",
+                });
             }, 150);
         }
     }, [loading, threads.length]);
@@ -373,6 +409,7 @@ export function EmailViewer({
 
             {/* Thread list */}
             <div
+                ref={scrollContainerRef}
                 className="flex-1 overflow-y-auto no-scrollbar bg-white px-8 py-6 min-h-0"
                 style={{ paddingBottom: bottomInset ? bottomInset + 24 : undefined }}
             >
@@ -406,6 +443,8 @@ export function EmailViewer({
                                 />
                             );
                         })}
+                        {/* Dynamic spacer — accounts for space-y-6 gap (24px) + bottom padding (bottomInset + 24px) */}
+                        <div style={{ minHeight: Math.max(0, scrollAreaHeight - lastThreadHeight - SCROLL_TOP_OFFSET - 48 - bottomInset) }} />
                     </div>
                 )}
             </div>
