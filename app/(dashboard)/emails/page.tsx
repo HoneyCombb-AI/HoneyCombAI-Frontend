@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import axios from "axios";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
@@ -10,7 +11,7 @@ import { EmailList } from "@/components/emails/EmailList";
 import { EmailViewer } from "@/components/emails/EmailViewer";
 import { EmailFilters } from "@/components/emails/EmailFilters";
 import { EmailComposer } from "@/components/emails/EmailComposer";
-import { type EmailsResponse, type ContactEmail, type ContactMessage } from "@/types/emails";
+import { type EmailsResponse, type ContactEmail, type ContactMessage, type RejectedApprovalItem } from "@/types/emails";
 import { useSearchParams } from "next/navigation";
 
 export default function EmailsPage() {
@@ -31,6 +32,7 @@ export default function EmailsPage() {
     const [hasMore, setHasMore] = useState(false);
     const [messages, setMessages] = useState<ContactMessage[]>([]);
     const [replyToMessage, setReplyToMessage] = useState<ContactMessage | null>(null);
+    const [rejectedApproval, setRejectedApproval] = useState<RejectedApprovalItem | null>(null);
     const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
     const [senderEmail, setSenderEmail] = useState<string | null>(null);
     const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
@@ -48,6 +50,7 @@ export default function EmailsPage() {
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [hasReply, setHasReply] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    const [showRejected, setShowRejected] = useState(false);
     const [page, setPage] = useState(1);
     const LIMIT = 20;
 
@@ -75,6 +78,7 @@ export default function EmailsPage() {
                     tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
                     hasReply: hasReply || undefined,
                     userId: selectedUserId || undefined,
+                    showRejected: showRejected || undefined,
                     page: currentPage,
                     limit: LIMIT,
                 },
@@ -105,14 +109,14 @@ export default function EmailsPage() {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [debouncedSearch, selectedTags, hasReply, selectedUserId, page, selectedId]);
+    }, [debouncedSearch, selectedTags, hasReply, selectedUserId, showRejected, page, selectedId]);
 
     // Initial Load & Filter Change
     useEffect(() => {
         if (!authLoading) {
             fetchEmails(false);
         }
-    }, [authLoading, debouncedSearch, selectedTags, hasReply, selectedUserId]);
+    }, [authLoading, debouncedSearch, selectedTags, hasReply, selectedUserId, showRejected]);
 
     // Handle ?contactId= query param — auto-select or inject the contact
     useEffect(() => {
@@ -152,6 +156,8 @@ export default function EmailsPage() {
                         email_account_name: null,
                         email_account_id: null,
                         has_pending_approval: false,
+                        has_rejected: false,
+                        rejection_reason: null,
                     };
                     setEmails(prev => {
                         if (prev.some(e => e.id === minimalContact.id)) return prev;
@@ -231,6 +237,8 @@ export default function EmailsPage() {
                     pending_approval_body: approval?.body || null,
                 };
             }));
+
+            setRejectedApproval(response.data.rejected_approval || null);
         } catch (e: unknown) {
             if (axios.isAxiosError(e)) {
                 setMessageError(e.response?.data?.error || e.message);
@@ -273,8 +281,27 @@ export default function EmailsPage() {
         ));
     }, [selectedEmail]);
 
+    const handleResubmit = useCallback(async (subject: string, body: string) => {
+        if (!selectedEmail || !senderAccountId || !senderProvider) {
+            toast.error("No email account connected. Please connect an account first.");
+            throw new Error("No email account");
+        }
+        await axios.post(`/api/emails/${selectedEmail.id}/send`, {
+            subject,
+            body,
+            account_id: senderAccountId,
+            account_provider: senderProvider,
+        });
+        toast.success("Email resubmitted for approval.");
+        setRejectedApproval(null);
+        setEmails(prev => prev.map(e =>
+            e.id === selectedEmail.id ? { ...e, has_rejected: false, rejection_reason: null } : e
+        ));
+    }, [selectedEmail, senderAccountId, senderProvider]);
+
     useEffect(() => {
         setReplyToMessage(null);
+        setRejectedApproval(null);
     }, [selectedId]);
 
     useEffect(() => {
@@ -342,6 +369,8 @@ export default function EmailsPage() {
                 onHasReplyChange={setHasReply}
                 selectedUserId={selectedUserId}
                 onUserIdChange={setSelectedUserId}
+                showRejected={showRejected}
+                onShowRejectedChange={setShowRejected}
             />
 
             {authLoading || (loading && page === 1) ? (
@@ -375,6 +404,8 @@ export default function EmailsPage() {
                             onReply={setReplyToMessage}
                             onDraftSave={handleDraftSave}
                             bottomInset={composerHeight}
+                            rejectedApproval={rejectedApproval}
+                            onResubmit={handleResubmit}
                         />
 
                         {selectedEmail && (

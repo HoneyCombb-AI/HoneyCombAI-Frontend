@@ -30,6 +30,8 @@ interface EmailComposerProps {
     senderProvider?: "gmail" | "outlook" | null;
     senderAccountId?: string | null;
     senderFirstName?: string | null;
+    prefillSubject?: string | null;
+    prefillBody?: string | null;
 }
 
 export function EmailComposer({
@@ -42,6 +44,8 @@ export function EmailComposer({
     senderProvider = null,
     senderAccountId = null,
     senderFirstName = null,
+    prefillSubject = null,
+    prefillBody = null,
 }: EmailComposerProps) {
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
@@ -77,10 +81,10 @@ export function EmailComposer({
         const replyChanged = prevReplyIdRef.current !== replyId;
 
         if (contactChanged) {
-            setBody("");
+            setBody(prefillBody || "");
         }
 
-        setSubject(defaultSubject);
+        setSubject(prefillSubject || defaultSubject);
 
         if (replyChanged && replyId) {
             setIsOpen(true);
@@ -88,7 +92,7 @@ export function EmailComposer({
 
         prevContactIdRef.current = contactId;
         prevReplyIdRef.current = replyId;
-    }, [contact?.id, replyToMessage?.id, defaultSubject]);
+    }, [contact?.id, replyToMessage?.id, defaultSubject, prefillSubject, prefillBody]);
 
 
     // Add signature to body

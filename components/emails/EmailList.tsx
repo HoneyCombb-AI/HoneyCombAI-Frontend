@@ -2,7 +2,7 @@
 
 import { ContactEmail } from "@/types/emails";
 import { cn } from "@/lib/utils";
-import { Mail, Loader2, ChevronDown, Clock } from "lucide-react";
+import { Mail, Loader2, ChevronDown, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EmailListProps {
@@ -50,6 +50,7 @@ export function EmailList({
                 {emails.map((email) => {
                     const isSelected = email.id === selectedId;
                     const hasDraft = !!email.draft_id;
+                    const isRejected = email.has_rejected;
                     const hasApproval = email.has_pending_approval;
                     const time = relativeTime(email.last_interaction_at);
 
@@ -61,6 +62,8 @@ export function EmailList({
                                 "w-full px-4 py-1.5 pt-3 text-left transition-colors hover:bg-gray-50 flex flex-col gap-3 cursor-pointer border-l-4",
                                 hasDraft
                                     ? "border-l-violet-400"
+                                    : isRejected
+                                    ? "border-l-red-400"
                                     : hasApproval
                                     ? "border-l-amber-400"
                                     : isSelected
@@ -89,7 +92,10 @@ export function EmailList({
                                 {hasDraft && (
                                     <Clock className="h-3.5 w-3.5 shrink-0 text-violet-500" />
                                 )}
-                                {!hasDraft && hasApproval && (
+                                {!hasDraft && isRejected && (
+                                    <XCircle className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                                )}
+                                {!hasDraft && !isRejected && hasApproval && (
                                     <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" />
                                 )}
                             </div>

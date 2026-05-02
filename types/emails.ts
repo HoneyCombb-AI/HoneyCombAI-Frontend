@@ -35,8 +35,10 @@ export type ContactEmail = {
     // Email account ownership
     email_account_name: string | null;
     email_account_id: string | null;
-    // Approval status (lightweight flag from RPC)
+    // Approval status (lightweight flags from RPC)
     has_pending_approval: boolean;
+    has_rejected: boolean;
+    rejection_reason: string | null;
     // Approval item details (loaded from messages endpoint)
     pending_approval_id?: string | null;
     pending_approval_subject?: string | null;
@@ -85,10 +87,19 @@ export interface PendingApprovalItem {
     submitted_at: string;
 }
 
+export interface RejectedApprovalItem {
+    id: string;
+    subject: string;
+    body: string;
+    rejection_reason: string | null;
+    reviewed_at: string | null;
+}
+
 export interface MessagesResponse {
     messages: ContactMessage[];
     contact_id: string;
     pending_approval?: PendingApprovalItem | null;
+    rejected_approval?: RejectedApprovalItem | null;
 }
 
 // --- Send email (from api/emails/[contactId]/send/route.ts) ---

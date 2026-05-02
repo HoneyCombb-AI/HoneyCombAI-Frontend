@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search, X, Plus, Loader2, ChevronDown, Tag, MessageSquare, User } from "lucide-react";
+import { Search, X, Plus, Loader2, ChevronDown, Tag, MessageSquare, User, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +29,8 @@ interface EmailFiltersProps {
     onHasReplyChange: (value: boolean) => void;
     selectedUserId: string | null;
     onUserIdChange: (userId: string | null) => void;
+    showRejected: boolean;
+    onShowRejectedChange: (value: boolean) => void;
 }
 
 export function EmailFilters({
@@ -40,6 +42,8 @@ export function EmailFilters({
     onHasReplyChange,
     selectedUserId,
     onUserIdChange,
+    showRejected,
+    onShowRejectedChange,
 }: EmailFiltersProps) {
     const router = useRouter();
 
@@ -114,9 +118,10 @@ export function EmailFilters({
         removeTagsFilter();
         removeUserFilter();
         onHasReplyChange(false);
+        onShowRejectedChange(false);
     };
 
-    const hasActiveFilters = showTags || hasReply || showUser;
+    const hasActiveFilters = showTags || hasReply || showUser || showRejected;
 
     const selectedSender = senders.find(s => s.user_id === selectedUserId) ?? null;
 
@@ -206,6 +211,14 @@ export function EmailFilters({
                         By User
                         {showUser && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onSelect={() => onShowRejectedChange(!showRejected)}
+                        className={cn(showRejected && "bg-accent")}
+                    >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Rejected
+                        {showRejected && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
@@ -271,6 +284,20 @@ export function EmailFilters({
                 >
                     <MessageSquare className="h-4 w-4" />
                     Has Reply
+                    <X className="h-3 w-3" />
+                </Button>
+            )}
+
+            {/* Rejected — inline toggle button */}
+            {showRejected && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 text-sm bg-red-50 border-red-300 text-red-700"
+                    onClick={() => onShowRejectedChange(false)}
+                >
+                    <XCircle className="h-4 w-4" />
+                    Rejected
                     <X className="h-3 w-3" />
                 </Button>
             )}

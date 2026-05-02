@@ -1,6 +1,6 @@
 "use client";
 
-import { ContactEmail, ContactMessage } from "@/types/emails";
+import { ContactEmail, ContactMessage, RejectedApprovalItem } from "@/types/emails";
 import { Mail, Send, Inbox, Reply } from "lucide-react";
 import { ScaledEmailPreview, PREVIEW_VISUAL_WIDTH } from "./ScaledEmailPreview";
 import { Loading } from "@/components/loading";
@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { PendingDraftBanner } from "./PendingDraftBanner";
 import { PendingApprovalBanner } from "./PendingApprovalBanner";
+import { RejectedApprovalBanner } from "./RejectedApprovalBanner";
 import DOMPurify from "dompurify";
 
 interface EmailViewerProps {
@@ -19,6 +20,8 @@ interface EmailViewerProps {
     onReply: (message: ContactMessage) => void;
     onDraftSave?: (draftId: string, updates: { subject?: string; body?: string }) => Promise<void>;
     bottomInset?: number;
+    rejectedApproval?: RejectedApprovalItem | null;
+    onResubmit?: (subject: string, body: string) => Promise<void>;
 }
 
 export function EmailViewer({
@@ -29,6 +32,8 @@ export function EmailViewer({
     onReply,
     onDraftSave,
     bottomInset = 0,
+    rejectedApproval = null,
+    onResubmit,
 }: EmailViewerProps) {
 
     if (!email) {
@@ -55,6 +60,17 @@ export function EmailViewer({
             {email.pending_approval_id && email.draft_status !== 'awaiting_approval' && (
                 <div className="shrink-0">
                     <PendingApprovalBanner key={`approval-${email.id}`} contact={email} />
+                </div>
+            )}
+
+            {/* Rejected Approval Banner */}
+            {rejectedApproval && onResubmit && (
+                <div className="shrink-0">
+                    <RejectedApprovalBanner
+                        key={rejectedApproval.id}
+                        rejectedApproval={rejectedApproval}
+                        onResubmit={onResubmit}
+                    />
                 </div>
             )}
 

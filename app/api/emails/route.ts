@@ -13,6 +13,8 @@ export async function GET(req: NextRequest) {
         const hasReplyParam = searchParams.get('hasReply');
         const hasReply = hasReplyParam === 'true' ? true : null;
         const userId = searchParams.get('userId') || null;
+        const showRejectedParam = searchParams.get('showRejected');
+        const showRejected = showRejectedParam === 'true' ? true : null;
 
         // Get authenticated user to fetch their organization
         const supabase = await createClient();
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest) {
             p_tag_names: tags,
             p_has_reply: hasReply,
             p_user_id: userId,
+            p_show_rejected: showRejected,
         });
 
         if (error) {
@@ -73,6 +76,8 @@ export async function GET(req: NextRequest) {
             email_account_name: e.email_account_name ?? null,
             email_account_id: e.email_account_id ?? null,
             has_pending_approval: e.has_pending_approval ?? false,
+            has_rejected: e.has_rejected ?? false,
+            rejection_reason: e.rejection_reason ?? null,
         }));
 
         const response: EmailsResponse = {

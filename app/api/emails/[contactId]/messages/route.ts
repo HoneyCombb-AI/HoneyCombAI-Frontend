@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { TrackingEvent, ContactMessage, MessagesResponse } from '@/types/emails';
+import type { TrackingEvent, ContactMessage, MessagesResponse, RejectedApprovalItem } from '@/types/emails';
 
 type ContactRow = {
     id: string;
@@ -158,10 +158,33 @@ export async function GET(
             }
             : null;
 
+        // Fetch most recent rejected approval for this contact (if any)
+        const { data: rejectedRows } = await supabase
+            .from('approval_queue')
+            .select('id, snapshot, rejection_reason, reviewed_at')
+            .eq('contact_id', contactId)
+            .eq('status', 'rejected')
+            .eq('organization_id', organizationId)
+            .in('item_type', ['manual_email', 'email_draft'])
+            .order('reviewed_at', { ascending: false })
+            .limit(1);
+
+        const rejectedItem = rejectedRows?.[0] || null;
+        const rejectedApproval: RejectedApprovalItem | null = rejectedItem
+            ? {
+                id: rejectedItem.id,
+                subject: (rejectedItem.snapshot as any)?.subject || '',
+                body: (rejectedItem.snapshot as any)?.body || '',
+                rejection_reason: rejectedItem.rejection_reason || null,
+                reviewed_at: rejectedItem.reviewed_at || null,
+            }
+            : null;
+
         const result: MessagesResponse = {
             messages,
             contact_id: contactId,
             pending_approval: pendingApproval,
+            rejected_approval: rejectedApproval,
         };
 
         return NextResponse.json(result);
