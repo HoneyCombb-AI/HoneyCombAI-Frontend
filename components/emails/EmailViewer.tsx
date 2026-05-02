@@ -46,25 +46,25 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
     const plainPreview = rawBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90);
 
     return (
-        <div className={`rounded-lg overflow-hidden text-sm border ${
-            isSent
-                ? "ml-8 border-blue-200 bg-blue-50/20"
-                : "mr-8 border-gray-200 bg-white"
-        }`}>
-            <button
-                type="button"
-                onClick={onToggle}
-                className={`w-full flex items-center px-3 py-2.5 text-left transition-colors ${
-                    isSent ? "hover:bg-blue-50/40" : "hover:bg-gray-50"
-                }`}
-            >
-                <span className={`text-xs truncate flex-1 ${isSent ? "text-blue-700" : "text-gray-500"}`}>
-                    {plainPreview || <span className="italic opacity-50">No content</span>}
-                </span>
-            </button>
+        <div className={`rounded-lg overflow-hidden text-sm border max-w-[75%] ${isSent
+                ? "ml-auto border-blue-200 bg-blue-50/20"
+                : "border-gray-200 bg-white"
+            }`}>
+            {!isExpanded && (
+                <button
+                    type="button"
+                    onClick={onToggle}
+                    className={`w-full flex items-center px-3 py-2.5 text-left transition-colors ${isSent ? "hover:bg-blue-50/40" : "hover:bg-gray-50"
+                        }`}
+                >
+                    <span className={`text-xs truncate flex-1 ${isSent ? "text-blue-700" : "text-gray-500"}`}>
+                        {plainPreview || <span className="italic opacity-50">No content</span>}
+                    </span>
+                </button>
+            )}
 
             {isExpanded && (
-                <div className={`border-t px-4 py-3 space-y-3 ${isSent ? "border-blue-100" : "border-gray-100"}`}>
+                <div className={`px-4 py-3 space-y-3 ${isSent ? "border-blue-100" : "border-gray-100"}`}>
                     <div className="overflow-hidden">
                         {isHtml ? (
                             <ScaledEmailPreview html={sanitizedBody} />
@@ -182,7 +182,7 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
                         className="w-full text-xs text-gray-400 hover:text-gray-600 py-1 flex items-center gap-2 transition-colors"
                     >
                         <span className="flex gap-0.5">
-                            {[0,1,2].map(i => <span key={i} className="w-1 h-1 rounded-full bg-gray-400 inline-block" />)}
+                            {[0, 1, 2].map(i => <span key={i} className="w-1 h-1 rounded-full bg-gray-400 inline-block" />)}
                         </span>
                         {middle.length} more {middle.length === 1 ? "message" : "messages"}
                     </button>
