@@ -211,7 +211,7 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
                     {/* Line */}
                     <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center">
                         <div className="w-10 shrink-0" />
-                        <div className={`flex-1 h-[1.5px] transition-colors ${isOpen ? "bg-gray-800" : "bg-gray-300 group-hover:bg-gray-600"}`} />
+                        <div className={`flex-1 h-[1.5px] transition-colors ${isOpen ? "bg-gray-900" : "bg-gray-300 group-hover:bg-gray-600"}`} />
                     </div>
 
                     {/* Circle */}
@@ -219,7 +219,7 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
                         absolute left-1 top-1/2 -translate-y-1/2
                         w-8 h-8 rounded-full border-2 bg-white
                         flex items-center justify-center transition-colors z-10
-                        ${isOpen ? "border-gray-800 text-gray-800" : "border-gray-400 text-gray-500 group-hover:border-gray-800 group-hover:text-gray-800"}
+                        ${isOpen ? "border-gray-900 text-gray-800" : "border-gray-400 text-gray-500 group-hover:border-gray-800 group-hover:text-gray-800"}
                     `}>
                         <span className="text-xs font-bold leading-none">{msgs.length}</span>
                     </div>
@@ -233,7 +233,7 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
                             </span>
                         </div>
                         {lastMsg && (
-                            <span className="text-xs leading-none text-gray-400 shrink-0">
+                            <span className="text-xs leading-none text-gray-800 font-medium shrink-0">
                                 {format(new Date(lastMsg.sent_at), "MMM d, h:mm a")}
                             </span>
                         )}
@@ -241,7 +241,7 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
 
                     {/* Below line: Subject (left) + contact email (right) */}
                     <div className="absolute left-14 right-0 top-1/2 mt-1.5 flex items-start justify-between gap-2 min-w-0">
-                        <span className="text-xs font-medium leading-none text-gray-600 group-hover:text-gray-800 transition-colors truncate">
+                        <span className="text-xs font-medium leading-none text-gray-800 group-hover:text-gray-800 transition-colors truncate">
                             {subject}
                         </span>
                         {contactName && (
