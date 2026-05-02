@@ -17,6 +17,7 @@ function wrapInDocument(html: string): string {
   html, body { margin: 0; padding: 0; overflow: visible; }
   body { padding: 4px 6px; box-sizing: border-box; }
   img { max-width: 100%; height: auto; }
+  a { pointer-events: none; cursor: default; }
   ::-webkit-scrollbar { display: none; }
   * { scrollbar-width: none; }
 </style>
