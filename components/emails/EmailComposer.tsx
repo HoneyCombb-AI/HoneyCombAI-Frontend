@@ -336,12 +336,18 @@ export function EmailComposer({
                             <span className="text-sm font-medium text-gray-500 w-20 shrink-0">
                                 {subjectFieldLabel}
                             </span>
-                            <Input
-                                placeholder="Subject"
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                                className="flex-1 bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 shadow-sm h-9 px-3 focus-visible:ring-2 focus-visible:ring-gray-200 focus-visible:border-gray-300"
-                            />
+                            {isReply || (hasHistory && threadMode === "continue") ? (
+                                <span className="flex-1 text-sm font-medium text-gray-700 truncate px-3 py-1.5">
+                                    {subject}
+                                </span>
+                            ) : (
+                                <Input
+                                    placeholder="Subject"
+                                    value={subject}
+                                    onChange={(e) => setSubject(e.target.value)}
+                                    className="flex-1 bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 shadow-sm h-9 px-3 focus-visible:ring-2 focus-visible:ring-gray-200 focus-visible:border-gray-300"
+                                />
+                            )}
                             <button
                                 type="button"
                                 onClick={() => {
