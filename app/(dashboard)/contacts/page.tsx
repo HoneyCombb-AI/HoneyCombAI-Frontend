@@ -19,8 +19,6 @@ import {
   ChevronDown,
   Search,
   MapPin,
-  SortAsc,
-  SortDesc,
   ChevronLeft,
   ChevronRight,
   X,
@@ -39,7 +37,9 @@ import type {
   TagGroupResponse,
   PaginationInfo,
 } from "@/types/contacts";
+import type { CompanyListItem } from "@/types/companies";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
+import { CompanyFilterDropdown } from "@/components/dashboard/Contacts/CompanyFilterDropdown";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
@@ -87,6 +87,7 @@ interface FetchParams {
   limit?: number;
   sortBy?: SortBy;
   sortOrder?: SortOrder;
+  companyId?: string;
 }
 
 function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
@@ -109,6 +110,8 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [locationType, setLocationType] = useState<LocationType>("country");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>(""); // New state for input
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [selectedCompanyName, setSelectedCompanyName] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageLimit, setPageLimit] = useState<number>(20);
   const [sortBy, setSortBy] = useState<SortBy>("name");
@@ -147,6 +150,9 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         }
         if (params?.search || searchTerm) {
           queryParams.append("search", params?.search || searchTerm);
+        }
+        if (params?.companyId || selectedCompanyId) {
+          queryParams.append("companyId", params?.companyId || selectedCompanyId);
         }
         if (params?.page || currentPage) {
           queryParams.append("page", String(params?.page || currentPage));
@@ -187,6 +193,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       groupBy,
       locationType,
       searchTerm,
+      selectedCompanyId,
       currentPage,
       pageLimit,
       sortBy,
@@ -206,6 +213,18 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     setCurrentPage(1);
   };
 
+  const handleCompanyChange = (company: CompanyListItem) => {
+    setSelectedCompanyId(company.id);
+    setSelectedCompanyName(company.name);
+    setCurrentPage(1);
+  };
+
+  const handleCompanyClear = () => {
+    setSelectedCompanyId("");
+    setSelectedCompanyName("");
+    setCurrentPage(1);
+  };
+
   const handleLocationTypeChange = (newLocationType: LocationType) => {
     setLocationType(newLocationType);
     setCurrentPage(1);
@@ -217,11 +236,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
   const handleSearchSubmit = () => {
     setSearchTerm(searchInput);
-    setCurrentPage(1);
-  };
-
-  const handleSortOrderToggle = () => {
-    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     setCurrentPage(1);
   };
 
@@ -239,6 +253,8 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     setLocationType("country");
     setSearchTerm("");
     setSearchInput("");
+    setSelectedCompanyId("");
+    setSelectedCompanyName("");
     setSortBy("name");
     setSortOrder("desc");
     setCurrentPage(1);
@@ -420,10 +436,10 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       groupBy !== "none" ||
       locationType !== "country" ||
       searchTerm !== "" ||
-      sortBy !== "name" ||
-      sortOrder !== "desc"
+      selectedCompanyId !== ""
     );
   };
+
   // Show error state if there's an error
   if (error) {
     return (
@@ -512,44 +528,33 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </DropdownMenu>
               )}
 
-              {/* Sort Controls - Temperature Priority */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 text-sm"
-                onClick={handleSortOrderToggle}
-              >
-                {sortOrder === "desc" ? (
-                  <SortDesc className="h-4 w-4" />
-                ) : (
-                  <SortAsc className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">
-                  {sortOrder === "desc" ? "Hot First" : "Cold First"}
-                </span>
-                <span className="sm:hidden">
-                  {sortOrder === "desc" ? "🔥" : "🔵"}
-                </span>
-              </Button>
+              <CompanyFilterDropdown
+                selectedCompanyId={selectedCompanyId}
+                selectedCompanyName={selectedCompanyName}
+                onCompanyChange={handleCompanyChange}
+                onCompanyClear={handleCompanyClear}
+              />
 
               {/* Search Input with Button */}
-              <div className="relative">
-                <Search
-                  onClick={handleSearchSubmit}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black"
-                />
-                <Input
-                  placeholder="Search contacts..."
-                  value={searchInput}
-                  onChange={handleSearchInputChange}
-                  className="pl-10 w-64"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSearchSubmit();
-                    }
-                  }}
-                />
-              </div>
+              {!selectedCompanyId && (
+                <div className="relative">
+                  <Search
+                    onClick={handleSearchSubmit}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black"
+                  />
+                  <Input
+                    placeholder="Search contacts..."
+                    value={searchInput}
+                    onChange={handleSearchInputChange}
+                    className="pl-10 w-64"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearchSubmit();
+                      }
+                    }}
+                  />
+                </div>
+              )}
               {/* Clear All Filters - only show when filters are applied */}
               {hasFiltersApplied() && (
                 <Button
