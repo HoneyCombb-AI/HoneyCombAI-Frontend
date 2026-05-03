@@ -2,7 +2,7 @@
 
 import { ApprovalListItem } from "@/types/admin";
 import { cn } from "@/lib/utils";
-import { ShieldCheck, Loader2, ChevronDown, User } from "lucide-react";
+import { ShieldCheck, Loader2, ChevronDown, User, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
@@ -59,17 +59,17 @@ export function ApprovalList({
                         item.status === "pending"
                             ? "border-l-amber-400"
                             : item.status === "approved"
-                            ? "border-l-green-400"
-                            : item.status === "rejected"
-                            ? "border-l-red-400"
-                            : "border-l-transparent";
+                                ? "border-l-green-400"
+                                : item.status === "rejected"
+                                    ? "border-l-red-400"
+                                    : "border-l-transparent";
 
                     return (
                         <button
                             key={item.id}
                             onClick={() => onSelect(item.id)}
                             className={cn(
-                                "w-full px-4 py-1.5 pt-3 text-left transition-colors hover:bg-gray-50 flex flex-col gap-3 cursor-pointer border-l-4",
+                                "w-full px-5 py-4 text-left transition-colors hover:bg-gray-50 flex flex-col gap-3 cursor-pointer border-l-4",
                                 borderColor,
                                 isSelected && "bg-blue-50 hover:bg-blue-50 border-l-blue-500"
                             )}
@@ -79,19 +79,22 @@ export function ApprovalList({
                                 <span className="font-semibold text-sm text-gray-900 truncate">
                                     {item.contact_name || "Unknown Contact"}
                                 </span>
-                                <span className="text-[11px] text-gray-400 shrink-0">{time}</span>
-                            </div>
-
-                            {/* Row 2: subject + submitted-by */}
-                            <div className="flex items-center gap-2 w-full min-w-0">
-                                <p className="text-xs text-gray-500 truncate flex-1 min-w-0">
-                                    {subject || "—"}
-                                </p>
-                                <span className="flex items-center gap-0.5 text-[10px] text-gray-400 shrink-0">
-                                    <User className="h-2.5 w-2.5" />
-                                    {item.submitted_by_name}
+                                <span className="flex items-center gap-1 text-[11px] text-gray-600 shrink-0">
+                                    <Clock className="h-3 w-3" />
+                                    {time}
                                 </span>
                             </div>
+
+                            {/* Row 2: subject */}
+                            <p className="text-xs text-gray-500 truncate w-full min-w-0">
+                                {subject || "—"}
+                            </p>
+
+                            {/* Row 3: submitted-by */}
+                            <span className="flex items-center gap-1.5 text-xs font-medium text-gray-800 shrink-0">
+                                <User className="h-3 w-3 text-gray-600" />
+                                {item.submitted_by_name}
+                            </span>
                         </button>
                     );
                 })}
