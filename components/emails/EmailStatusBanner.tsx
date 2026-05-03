@@ -1,13 +1,26 @@
 "use client";
 
-import { useRef, useState, useMemo } from "react";
-import { Mail, XCircle, FileText, ChevronDown, Edit3, Save, X, Loader2, RotateCcw } from "lucide-react";
+import { useRef, useState, useMemo, useCallback } from "react";
+import {
+    Mail, XCircle, FileText, ChevronDown, Edit3, Save,
+    X, Loader2, RotateCcw, Trash2, AtSign,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RichTextEditor } from "./RichTextEditor";
 import DOMPurify from "dompurify";
 import { toast } from "sonner";
+import type { ContactEmailAddress } from "@/types/emails";
 
 type BannerVariant = "violet" | "amber" | "red";
+
+export interface ResubmitData {
+    subject: string;
+    body: string;
+    contact_email: string;
+    cc: string[];
+}
 
 export interface EmailStatusBannerProps {
     variant: BannerVariant;
@@ -22,6 +35,14 @@ export interface EmailStatusBannerProps {
     saveButtonLabel?: string;
     successMessage?: string;
     onSave?: (subject: string, body: string) => Promise<void>;
+    // Rejected resubmit props
+    contactEmails?: ContactEmailAddress[];
+    initialTo?: string | null;
+    initialCc?: string[] | null;
+    accountProvider?: "gmail" | "outlook" | null;
+    accountEmail?: string | null;
+    onResubmit?: (data: ResubmitData) => Promise<void>;
+    onDiscard?: () => Promise<void>;
 }
 
 const STYLES: Record<BannerVariant, {
@@ -90,19 +111,231 @@ const STYLES: Record<BannerVariant, {
     },
 };
 
-function splitHtmlBody(html: string): { before: string; inner: string; after: string } {
-    const bodyOpenMatch = html.match(/(<body[^>]*>)/i);
-    const bodyCloseMatch = html.match(/<\/body>/i);
-    if (bodyOpenMatch && bodyOpenMatch.index !== undefined && bodyCloseMatch && bodyCloseMatch.index !== undefined) {
-        const bodyOpenEnd = bodyOpenMatch.index + bodyOpenMatch[0].length;
-        return {
-            before: html.substring(0, bodyOpenEnd),
-            inner:  html.substring(bodyOpenEnd, bodyCloseMatch.index),
-            after:  html.substring(bodyCloseMatch.index),
-        };
-    }
-    return { before: "", inner: html, after: "" };
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+// ── CC tag input (mirrors EmailComposer) ──────────────────────────────────────
+interface CcInputProps {
+    cc: string[];
+    onChange: (cc: string[]) => void;
+    inputClass: string;
 }
+
+function CcTagInput({ cc, onChange, inputClass }: CcInputProps) {
+    const [input, setInput] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const addTag = useCallback((raw: string) => {
+        const email = raw.trim().toLowerCase();
+        if (!email) return;
+        if (!isValidEmail(email)) { toast.error(`"${email}" is not a valid email address`); return; }
+        if (cc.includes(email)) return;
+        onChange([...cc, email]);
+        setInput("");
+    }, [cc, onChange]);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+            e.preventDefault();
+            addTag(input);
+        } else if (e.key === "Backspace" && !input && cc.length > 0) {
+            onChange(cc.slice(0, -1));
+        }
+    };
+
+    return (
+        <div
+            className={`flex flex-wrap items-center gap-1.5 w-full min-h-[36px] px-2.5 py-1.5 text-sm rounded-lg border bg-white focus-within:ring-2 cursor-text ${inputClass}`}
+            onClick={() => inputRef.current?.focus()}
+        >
+            {cc.map(email => (
+                <span key={email} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-100 text-red-800 text-xs font-medium">
+                    {email}
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onChange(cc.filter(c => c !== email)); }}
+                        className="hover:text-red-600 cursor-pointer"
+                    >
+                        <X className="h-3 w-3" />
+                    </button>
+                </span>
+            ))}
+            <input
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={() => addTag(input)}
+                className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-gray-400"
+                placeholder={cc.length === 0 ? "Add CC recipients..." : ""}
+            />
+        </div>
+    );
+}
+
+// ── Resubmit edit form (red variant) ─────────────────────────────────────────
+interface ResubmitFormProps {
+    subject: string;
+    body: string;
+    contactEmails: ContactEmailAddress[];
+    initialTo: string;
+    initialCc: string[];
+    accountProvider: "gmail" | "outlook" | null;
+    accountEmail: string | null;
+    onSubmit: (data: ResubmitData) => Promise<void>;
+    onCancel: () => void;
+    onDiscard?: () => Promise<void>;
+    s: typeof STYLES["red"];
+}
+
+function ResubmitForm({
+    subject, body, contactEmails, initialTo, initialCc,
+    accountProvider, accountEmail, onSubmit, onCancel, onDiscard, s,
+}: ResubmitFormProps) {
+    const [editSubject, setEditSubject] = useState(subject);
+    const [editBody, setEditBody] = useState(body);
+    const [editTo, setEditTo] = useState(initialTo || (contactEmails[0]?.email ?? ""));
+    const [editCc, setEditCc] = useState<string[]>(initialCc);
+    const [saving, setSaving] = useState(false);
+    const [discarding, setDiscarding] = useState(false);
+
+    const handleSubmit = async () => {
+        setSaving(true);
+        try {
+            await onSubmit({ subject: editSubject, body: editBody, contact_email: editTo, cc: editCc });
+            toast.success("Email resubmitted for approval.");
+        } catch {
+            toast.error("Failed to resubmit. Please try again.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDiscard = async () => {
+        if (!onDiscard) return;
+        setDiscarding(true);
+        try {
+            await onDiscard();
+            toast.success("Email discarded.");
+        } catch {
+            toast.error("Failed to discard. Please try again.");
+        } finally {
+            setDiscarding(false);
+        }
+    };
+
+    const providerLabel = accountProvider === "gmail" ? "Gmail" : accountProvider === "outlook" ? "Outlook" : "Email";
+
+    return (
+        <div className="p-5 space-y-3">
+            {/* From */}
+            <div>
+                <label className={`text-xs font-medium mb-1 block ${s.title}`}>From</label>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-600">
+                    <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                    <span>{accountEmail || "Connected account"}</span>
+                    <span className="ml-auto text-xs text-gray-400">{providerLabel}</span>
+                </div>
+            </div>
+
+            {/* To */}
+            <div>
+                <label className={`text-xs font-medium mb-1 block ${s.title}`}>To</label>
+                {contactEmails.length > 1 ? (
+                    <Select value={editTo} onValueChange={setEditTo}>
+                        <SelectTrigger className={`w-full text-sm h-9 ${s.inputClass}`}>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {contactEmails.map(ce => (
+                                <SelectItem key={ce.id} value={ce.email}>
+                                    {ce.email}{ce.is_primary ? " (primary)" : ""}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                ) : (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-700">
+                        <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                        {editTo || "—"}
+                    </div>
+                )}
+            </div>
+
+            {/* CC */}
+            <div>
+                <label className={`text-xs font-medium mb-1 flex items-center gap-1 ${s.title}`}>
+                    <AtSign className="h-3 w-3" />
+                    CC
+                </label>
+                <CcTagInput cc={editCc} onChange={setEditCc} inputClass={s.inputClass} />
+            </div>
+
+            {/* Subject */}
+            <div>
+                <label className={`text-xs font-medium mb-1 block ${s.title}`}>Subject</label>
+                <input
+                    type="text"
+                    value={editSubject}
+                    onChange={e => setEditSubject(e.target.value)}
+                    className={`w-full p-2.5 text-sm rounded-lg border bg-white focus:outline-none focus:ring-2 ${s.inputClass}`}
+                    placeholder="Email subject..."
+                />
+            </div>
+
+            {/* Body */}
+            <div>
+                <label className={`text-xs font-medium mb-1 block ${s.title}`}>Body</label>
+                <RichTextEditor
+                    value={editBody}
+                    onChange={setEditBody}
+                    placeholder="Write your message..."
+                />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 justify-between pt-1">
+                {onDiscard ? (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDiscard}
+                        disabled={discarding || saving}
+                        className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        {discarding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                        Discard
+                    </Button>
+                ) : <span />}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onCancel}
+                        disabled={saving || discarding}
+                        className="gap-1.5 text-gray-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        <X className="h-3.5 w-3.5" />
+                        Cancel
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={handleSubmit}
+                        disabled={saving || discarding || !editTo}
+                        className="gap-1.5 text-white bg-red-600 hover:bg-red-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        {saving ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin" />Submitting...</>
+                        ) : (
+                            <><RotateCcw className="h-3.5 w-3.5" />Submit for Approval</>
+                        )}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function EmailStatusBanner({
     variant,
@@ -117,6 +350,13 @@ export function EmailStatusBanner({
     saveButtonLabel = "Save",
     successMessage = "Saved successfully.",
     onSave,
+    contactEmails = [],
+    initialTo,
+    initialCc,
+    accountProvider,
+    accountEmail,
+    onResubmit,
+    onDiscard,
 }: EmailStatusBannerProps) {
     const s = STYLES[variant];
     const [isOpen, setIsOpen] = useState(false);
@@ -125,15 +365,13 @@ export function EmailStatusBanner({
     const [saving, setSaving] = useState(false);
     const editorRef = useRef<HTMLDivElement>(null);
 
-    const htmlParts = useMemo(() => splitHtmlBody(body), [body]);
     const sanitizedPreview = useMemo(() => DOMPurify.sanitize(body), [body]);
+
+    const isRejectMode = variant === "red" && !!onResubmit;
 
     const handleStartEdit = () => {
         setEditing(true);
         setIsOpen(true);
-        requestAnimationFrame(() => {
-            if (editorRef.current) editorRef.current.innerHTML = htmlParts.inner;
-        });
     };
 
     const handleCancel = () => {
@@ -145,11 +383,7 @@ export function EmailStatusBanner({
         if (!onSave) return;
         setSaving(true);
         try {
-            const editedInner = editorRef.current?.innerHTML ?? body;
-            const fullHtml = htmlParts.before
-                ? htmlParts.before + editedInner + htmlParts.after
-                : editedInner;
-            await onSave(editSubject, fullHtml);
+            await onSave(editSubject, body);
             toast.success(successMessage);
             setEditing(false);
         } catch {
@@ -160,12 +394,11 @@ export function EmailStatusBanner({
     };
 
     const BannerIcon = variant === "red" ? XCircle : Mail;
-    const EditIcon  = variant === "red" ? RotateCcw : Edit3;
-    const SaveIcon  = variant === "red" ? RotateCcw : Save;
+    const EditIcon   = variant === "red" ? RotateCcw : Edit3;
 
     return (
         <div className={`border-b shadow-sm ${s.wrapper}`}>
-            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <Collapsible open={isOpen} onOpenChange={v => { setIsOpen(v); if (!v) setEditing(false); }}>
                 <div className="flex items-center">
                     <CollapsibleTrigger
                         type="button"
@@ -224,8 +457,23 @@ export function EmailStatusBanner({
                 </div>
 
                 <CollapsibleContent className={`border-t overflow-hidden ${s.expandedBorder} ${s.expanded}`}>
-                    <div className="max-h-[50vh] overflow-y-auto">
-                        {editing ? (
+                    <div className="max-h-[70vh] overflow-y-auto">
+                        {editing && isRejectMode ? (
+                            <ResubmitForm
+                                subject={editSubject}
+                                body={body}
+                                contactEmails={contactEmails}
+                                initialTo={initialTo || (contactEmails[0]?.email ?? "")}
+                                initialCc={initialCc ?? []}
+                                accountProvider={accountProvider ?? null}
+                                accountEmail={accountEmail ?? null}
+                                onSubmit={async (data) => { await onResubmit!(data); }}
+                                onCancel={handleCancel}
+                                onDiscard={onDiscard}
+                                s={s}
+                            />
+                        ) : editing ? (
+                            // Generic edit form for violet/amber
                             <div className="p-5 space-y-3">
                                 <div>
                                     <label className={`text-xs font-medium mb-1 block ${s.title}`}>Subject</label>
@@ -267,12 +515,13 @@ export function EmailStatusBanner({
                                         {saving ? (
                                             <><Loader2 className="h-3.5 w-3.5 animate-spin" />Saving...</>
                                         ) : (
-                                            <><SaveIcon className="h-3.5 w-3.5" />{saveButtonLabel}</>
+                                            <><Save className="h-3.5 w-3.5" />{saveButtonLabel}</>
                                         )}
                                     </Button>
                                 </div>
                             </div>
                         ) : (
+                            // Read-only expanded view
                             <div className="p-5 space-y-3">
                                 {rejectionReason && (
                                     <div className="flex items-start gap-2 rounded-lg bg-red-100 border border-red-200 px-3 py-2">

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import axios from "axios";
-import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Loading } from "@/components/loading";
@@ -283,22 +282,20 @@ export default function EmailsPage() {
         } : null);
     }, [selectedEmail]);
 
-    const handleResubmit = useCallback(async (subject: string, body: string) => {
-        if (!selectedEmail || !senderAccountId || !senderProvider) {
-            toast.error("No email account connected. Please connect an account first.");
-            throw new Error("No email account");
-        }
-        await axios.post(`/api/emails/${selectedEmail.id}/send`, {
-            subject,
-            body,
-            account_id: senderAccountId,
-            account_provider: senderProvider,
-        });
+    const handleResubmit = useCallback(async (data: { subject: string; body: string; contact_email: string; cc: string[] }) => {
+        if (!selectedEmail || !rejectedApproval) throw new Error("No rejected approval");
+        await axios.patch(`/api/emails/${selectedEmail.id}/approval/${rejectedApproval.id}`, data);
+        await fetchMessages(selectedEmail.id);
+    }, [selectedEmail, rejectedApproval, fetchMessages]);
+
+    const handleDiscard = useCallback(async () => {
+        if (!selectedEmail || !rejectedApproval) return;
+        await axios.delete(`/api/emails/${selectedEmail.id}/approval/${rejectedApproval.id}`);
         setRejectedApproval(null);
         setEmails(prev => prev.map(e =>
             e.id === selectedEmail.id ? { ...e, has_rejected: false } : e
         ));
-    }, [selectedEmail, senderAccountId, senderProvider]);
+    }, [selectedEmail, rejectedApproval]);
 
     // Clear viewer state on contact change
     useEffect(() => {
@@ -414,7 +411,9 @@ export default function EmailsPage() {
                             pendingDraft={pendingDraft}
                             pendingApproval={pendingApproval}
                             rejectedApproval={rejectedApproval}
+                            contactEmails={contactEmails}
                             onResubmit={handleResubmit}
+                            onDiscard={handleDiscard}
                         />
 
                         {selectedEmail && (

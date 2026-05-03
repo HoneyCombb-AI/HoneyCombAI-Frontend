@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { EmailStatusBanner } from "./EmailStatusBanner";
+import type { ResubmitData } from "./EmailStatusBanner";
 import DOMPurify from "dompurify";
 
 interface EmailViewerProps {
@@ -23,7 +24,9 @@ interface EmailViewerProps {
     pendingDraft?: PendingDraftItem | null;
     pendingApproval?: PendingApprovalItem | null;
     rejectedApproval?: RejectedApprovalItem | null;
-    onResubmit?: (subject: string, body: string) => Promise<void>;
+    contactEmails?: import("@/types/emails").ContactEmailAddress[];
+    onResubmit?: (data: ResubmitData) => Promise<void>;
+    onDiscard?: () => Promise<void>;
 }
 
 function threadKey(thread: MessageThread, idx: number): string {
@@ -304,7 +307,9 @@ export function EmailViewer({
     pendingDraft = null,
     pendingApproval = null,
     rejectedApproval = null,
+    contactEmails = [],
     onResubmit,
+    onDiscard,
 }: EmailViewerProps) {
     const lastThreadKey = useMemo(
         () => threads.length > 0 ? threadKey(threads[threads.length - 1], threads.length - 1) : null,
@@ -428,9 +433,13 @@ export function EmailViewer({
                         rejectionReason={rejectedApproval.rejection_reason}
                         editable
                         editButtonLabel="Edit & Resubmit"
-                        saveButtonLabel="Resubmit for Approval"
-                        successMessage="Email resubmitted for approval."
-                        onSave={onResubmit}
+                        contactEmails={contactEmails}
+                        initialTo={rejectedApproval.contact_email}
+                        initialCc={rejectedApproval.cc}
+                        accountProvider={rejectedApproval.account_provider}
+                        accountEmail={rejectedApproval.account_email}
+                        onResubmit={onResubmit}
+                        onDiscard={onDiscard}
                     />
                 </div>
             )}

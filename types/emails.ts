@@ -90,6 +90,11 @@ export interface RejectedApprovalItem {
     body: string;
     rejection_reason: string | null;
     reviewed_at: string | null;
+    contact_email?: string | null;
+    account_provider?: "gmail" | "outlook" | null;
+    account_id?: string | null;
+    account_email?: string | null;
+    cc?: string[] | null;
 }
 
 export interface MessagesResponse {
