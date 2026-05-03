@@ -17,6 +17,7 @@ import type { ApprovalItem, LinkedInSnapshot } from "@/types/admin";
 import { isEmailSnapshot } from "@/types/admin";
 import { Loading } from "@/components/loading";
 import DOMPurify from "dompurify";
+import { ScaledEmailPreview } from "@/components/emails/ScaledEmailPreview";
 
 interface ApprovalDetailProps {
     item: ApprovalItem | null;
@@ -154,10 +155,7 @@ export function ApprovalDetail({ item, loading }: ApprovalDetailProps) {
                         {/* Body */}
                         <div className="bg-white rounded-lg border px-5 py-4">
                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Email Body</p>
-                            <div
-                                className="prose prose-sm max-w-none text-gray-700 leading-relaxed [&_p]:mb-2 [&_p:last-child]:mb-0 [&_a]:text-blue-600 [&_a]:underline"
-                                dangerouslySetInnerHTML={{ __html: sanitizedBody }}
-                            />
+                            <ScaledEmailPreview html={sanitizedBody} />
                         </div>
                     </div>
                 ) : (
