@@ -18,6 +18,7 @@ type BannerVariant = "violet" | "amber" | "red";
 export interface ResubmitData {
     subject: string;
     body: string;
+    contact_email_id: string;
     contact_email: string;
     cc: string[];
 }
@@ -37,6 +38,7 @@ export interface EmailStatusBannerProps {
     onSave?: (subject: string, body: string) => Promise<void>;
     // Rejected resubmit props
     contactEmails?: ContactEmailAddress[];
+    initialContactEmailId?: string | null;
     initialTo?: string | null;
     initialCc?: string[] | null;
     accountProvider?: "gmail" | "outlook" | null;
@@ -177,6 +179,7 @@ interface ResubmitFormProps {
     subject: string;
     body: string;
     contactEmails: ContactEmailAddress[];
+    initialContactEmailId?: string | null;
     initialTo: string;
     initialCc: string[];
     accountProvider: "gmail" | "outlook" | null;
@@ -188,20 +191,38 @@ interface ResubmitFormProps {
 }
 
 function ResubmitForm({
-    subject, body, contactEmails, initialTo, initialCc,
+    subject, body, contactEmails, initialContactEmailId, initialTo, initialCc,
     accountProvider, accountEmail, onSubmit, onCancel, onDiscard, s,
 }: ResubmitFormProps) {
     const [editSubject, setEditSubject] = useState(subject);
     const [editBody, setEditBody] = useState(body);
-    const [editTo, setEditTo] = useState(initialTo || (contactEmails[0]?.email ?? ""));
+    const initialEmailId =
+        initialContactEmailId ||
+        contactEmails.find(ce => ce.email === initialTo)?.id ||
+        contactEmails.find(ce => ce.is_primary)?.id ||
+        contactEmails[0]?.id ||
+        "";
+    const [editContactEmailId, setEditContactEmailId] = useState(initialEmailId);
     const [editCc, setEditCc] = useState<string[]>(initialCc);
     const [saving, setSaving] = useState(false);
     const [discarding, setDiscarding] = useState(false);
 
     const handleSubmit = async () => {
+        const selectedEmail = contactEmails.find(ce => ce.id === editContactEmailId);
+        if (!selectedEmail) {
+            toast.error("Select a recipient email.");
+            return;
+        }
+
         setSaving(true);
         try {
-            await onSubmit({ subject: editSubject, body: editBody, contact_email: editTo, cc: editCc });
+            await onSubmit({
+                subject: editSubject,
+                body: editBody,
+                contact_email_id: selectedEmail.id,
+                contact_email: selectedEmail.email,
+                cc: editCc,
+            });
             toast.success("Email resubmitted for approval.");
         } catch {
             toast.error("Failed to resubmit. Please try again.");
@@ -224,6 +245,7 @@ function ResubmitForm({
     };
 
     const providerLabel = accountProvider === "gmail" ? "Gmail" : accountProvider === "outlook" ? "Outlook" : "Email";
+    const selectedEmail = contactEmails.find(ce => ce.id === editContactEmailId);
 
     return (
         <div className="p-5 space-y-3">
@@ -241,13 +263,13 @@ function ResubmitForm({
             <div>
                 <label className={`text-xs font-medium mb-1 block ${s.title}`}>To</label>
                 {contactEmails.length > 1 ? (
-                    <Select value={editTo} onValueChange={setEditTo}>
+                    <Select value={editContactEmailId} onValueChange={setEditContactEmailId}>
                         <SelectTrigger className={`w-full text-sm h-9 ${s.inputClass}`}>
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             {contactEmails.map(ce => (
-                                <SelectItem key={ce.id} value={ce.email}>
+                                <SelectItem key={ce.id} value={ce.id}>
                                     {ce.email}{ce.is_primary ? " (primary)" : ""}
                                 </SelectItem>
                             ))}
@@ -256,7 +278,7 @@ function ResubmitForm({
                 ) : (
                     <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-700">
                         <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
-                        {editTo || "—"}
+                        {selectedEmail?.email || initialTo || "—"}
                     </div>
                 )}
             </div>
@@ -320,7 +342,7 @@ function ResubmitForm({
                     <Button
                         size="sm"
                         onClick={handleSubmit}
-                        disabled={saving || discarding || !editTo}
+                        disabled={saving || discarding || !editContactEmailId}
                         className="gap-1.5 text-white bg-red-600 hover:bg-red-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         {saving ? (
@@ -351,6 +373,7 @@ export function EmailStatusBanner({
     successMessage = "Saved successfully.",
     onSave,
     contactEmails = [],
+    initialContactEmailId,
     initialTo,
     initialCc,
     accountProvider,
@@ -463,6 +486,7 @@ export function EmailStatusBanner({
                                 subject={editSubject}
                                 body={body}
                                 contactEmails={contactEmails}
+                                initialContactEmailId={initialContactEmailId}
                                 initialTo={initialTo || (contactEmails[0]?.email ?? "")}
                                 initialCc={initialCc ?? []}
                                 accountProvider={accountProvider ?? null}

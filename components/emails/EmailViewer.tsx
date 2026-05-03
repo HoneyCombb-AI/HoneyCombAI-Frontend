@@ -522,6 +522,7 @@ export function EmailViewer({
                         editable
                         editButtonLabel="Edit & Resubmit"
                         contactEmails={contactEmails}
+                        initialContactEmailId={rejectedApproval.contact_email_id}
                         initialTo={rejectedApproval.contact_email}
                         initialCc={rejectedApproval.cc}
                         accountProvider={rejectedApproval.account_provider}

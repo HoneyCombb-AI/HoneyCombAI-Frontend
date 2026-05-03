@@ -9,6 +9,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         const body = await req.json() as {
             subject: string;
             body: string;
+            contact_email_id?: string;
             contact_email?: string;
             cc?: string[];
         };
@@ -35,11 +36,32 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
+        if (!body.contact_email_id) {
+            return NextResponse.json({ error: 'contact_email_id is required' }, { status: 400 });
+        }
+
+        const { data: selectedContactEmail, error: selectedContactEmailError } = await supabase
+            .from('contact_emails')
+            .select('id, email')
+            .eq('id', body.contact_email_id)
+            .eq('contact_id', contactId)
+            .maybeSingle();
+
+        if (selectedContactEmailError) {
+            console.error('Failed to validate selected contact email:', selectedContactEmailError);
+            return NextResponse.json({ error: 'Failed to validate recipient email' }, { status: 500 });
+        }
+
+        if (!selectedContactEmail) {
+            return NextResponse.json({ error: 'Selected recipient email does not belong to this contact' }, { status: 400 });
+        }
+
         const updatedSnapshot = {
             ...(existing.snapshot as Record<string, unknown>),
             subject: body.subject,
             body: body.body,
-            ...(body.contact_email ? { contact_email: body.contact_email } : {}),
+            contact_email_id: selectedContactEmail.id,
+            contact_email: selectedContactEmail.email,
             cc: body.cc?.length ? body.cc : undefined,
         };
 

@@ -12,6 +12,7 @@ export interface EmailSnapshot {
     subject: string;
     body: string;
     contact_name: string;
+    contact_email_id?: string | null;
     contact_email: string;
     company_name: string;
     account_id: string;

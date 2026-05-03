@@ -90,6 +90,7 @@ export interface RejectedApprovalItem {
     body: string;
     rejection_reason: string | null;
     reviewed_at: string | null;
+    contact_email_id?: string | null;
     contact_email?: string | null;
     account_provider?: "gmail" | "outlook" | null;
     account_id?: string | null;
@@ -115,7 +116,8 @@ export interface SendEmailRequest {
     account_provider: "gmail" | "outlook";
     thread_id?: string;
     reply_to_message_id?: string;
-    to_email?: string;
+    contact_email_id?: string;
+    contact_email?: string;
     cc?: string[];
 }
 

@@ -59,6 +59,7 @@ export async function PATCH(
 
         const body = await req.json() as ReviewActionPayload;
         const { action, snapshot: editedSnapshot, rejection_reason } = body;
+        let snapshotForReview = editedSnapshot || null;
 
         if (!action || !['approve', 'reject'].includes(action)) {
             return NextResponse.json(
@@ -91,6 +92,36 @@ export async function PATCH(
                     );
                 }
 
+                const contactEmailQuery = supabase
+                    .from('contact_emails')
+                    .select('id, email')
+                    .eq('contact_id', item.contact_id);
+
+                const { data: selectedContactEmail, error: selectedContactEmailError } = snapshot.contact_email_id
+                    ? await contactEmailQuery.eq('id', snapshot.contact_email_id).maybeSingle()
+                    : snapshot.contact_email
+                        ? await contactEmailQuery.eq('email', snapshot.contact_email).maybeSingle()
+                        : { data: null, error: null };
+
+                if (selectedContactEmailError) {
+                    console.error('Failed to validate selected contact email:', selectedContactEmailError);
+                    return NextResponse.json({ error: 'Failed to validate recipient email' }, { status: 500 });
+                }
+
+                if (!selectedContactEmail) {
+                    return NextResponse.json(
+                        { error: 'Selected recipient email does not belong to this contact' },
+                        { status: 400 }
+                    );
+                }
+
+                const sanitizedSnapshot = {
+                    ...snapshot,
+                    contact_email_id: selectedContactEmail.id,
+                    contact_email: selectedContactEmail.email,
+                };
+                snapshotForReview = sanitizedSnapshot;
+
                 try {
                     await axios.post(
                         `${MAIL_SERVER_URL}/emails/contact/${item.contact_id}/send`,
@@ -101,7 +132,8 @@ export async function PATCH(
                             account_provider: snapshot.account_provider,
                             thread_id: snapshot.thread_id,
                             reply_to_message_id: snapshot.reply_to_message_id,
-                            contact_email: snapshot.contact_email,
+                            contact_email_id: sanitizedSnapshot.contact_email_id,
+                            contact_email: sanitizedSnapshot.contact_email,
                             cc: snapshot.cc?.length ? snapshot.cc : undefined,
                         },
                         {
@@ -133,7 +165,7 @@ export async function PATCH(
             p_item_id: id,
             p_action: action,
             p_rejection_reason: rejection_reason || null,
-            p_snapshot: editedSnapshot || null,
+            p_snapshot: snapshotForReview,
         }) as { data: ReviewApprovalRPCResponse | null; error: unknown };
 
         if (error) {

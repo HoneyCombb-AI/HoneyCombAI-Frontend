@@ -45,7 +45,7 @@ export function EmailComposer({
 }: EmailComposerProps) {
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
-    const [toEmail, setToEmail] = useState("");
+    const [selectedContactEmailId, setSelectedContactEmailId] = useState("");
     const [threadMode, setThreadMode] = useState<ThreadMode>("continue");
     const [cc, setCc] = useState<string[]>([]);
     const [ccInput, setCcInput] = useState("");
@@ -56,10 +56,16 @@ export function EmailComposer({
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
 
-    // Reset toEmail to primary when contact changes
+    const selectedContactEmail = useMemo(
+        () => contactEmails.find(ce => ce.id === selectedContactEmailId) ?? null,
+        [contactEmails, selectedContactEmailId]
+    );
+    const toEmail = selectedContactEmail?.email ?? "";
+
+    // Reset recipient to primary when contact changes
     useEffect(() => {
         const primary = contactEmails.find(ce => ce.is_primary) ?? contactEmails[0] ?? null;
-        setToEmail(primary?.email ?? "");
+        setSelectedContactEmailId(primary?.id ?? "");
     }, [contact?.id, contactEmails]);
 
     // Reset threadMode, CC when contact changes
@@ -160,7 +166,7 @@ export function EmailComposer({
 
     const hasSubject = subject.trim().length > 0;
     const hasBody = bodyText.length > 0;
-    const canSend = hasSubject && hasBody && !!senderProvider && !!senderAccountId && !sending;
+    const canSend = hasSubject && hasBody && !!senderProvider && !!senderAccountId && !!selectedContactEmailId && !sending;
 
     // Thread IDs derived from mode
     const sendThreadId = isReply
@@ -198,7 +204,8 @@ export function EmailComposer({
                 account_provider: senderProvider,
                 thread_id: sendThreadId || undefined,
                 reply_to_message_id: sendReplyToMessageId || undefined,
-                to_email: toEmail || undefined,
+                contact_email_id: selectedContactEmailId || undefined,
+                contact_email: toEmail || undefined,
                 cc: cc.length ? cc : undefined,
             });
 
@@ -317,7 +324,7 @@ export function EmailComposer({
                                     onClick={e => e.stopPropagation()}
                                 >
                                     To:{" "}
-                                    <Select value={toEmail} onValueChange={setToEmail}>
+                                    <Select value={selectedContactEmailId} onValueChange={setSelectedContactEmailId}>
                                         <SelectTrigger
                                             size="sm"
                                             className="h-auto py-0.5 px-2 text-xs font-semibold text-gray-700 border-gray-200 bg-white shadow-none gap-1"
@@ -326,7 +333,7 @@ export function EmailComposer({
                                         </SelectTrigger>
                                         <SelectContent>
                                             {contactEmails.map(ce => (
-                                                <SelectItem key={ce.id} value={ce.email}>
+                                                <SelectItem key={ce.id} value={ce.id}>
                                                     {ce.email}{ce.label ? ` (${ce.label})` : ""}
                                                 </SelectItem>
                                             ))}
