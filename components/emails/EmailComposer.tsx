@@ -166,7 +166,9 @@ export function EmailComposer({
     const sendThreadId = isReply
         ? (replyToMessage?.thread_id ?? null)
         : threadMode === "continue" ? (lastMessage?.thread_id ?? null) : null;
-    const sendReplyToMessageId = isReply ? (replyToMessage?.message_id ?? null) : null;
+    const sendReplyToMessageId = isReply 
+        ? (replyToMessage?.message_id ?? null) 
+        : threadMode === "continue" ? (lastMessage?.message_id ?? null) : null;
 
     const subjectFieldLabel = isReply
         ? "Replying:"

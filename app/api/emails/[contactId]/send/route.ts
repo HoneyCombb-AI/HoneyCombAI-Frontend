@@ -159,10 +159,10 @@ export async function POST(
                 body: body.body,
                 account_id: body.account_id,
                 account_provider: body.account_provider,
-                thread_id: body.thread_id,
-                reply_to_message_id: body.reply_to_message_id,
-                to_email: body.to_email,
-                cc: body.cc?.length ? body.cc : undefined,
+                ...(body.thread_id && { thread_id: body.thread_id }),
+                ...(body.reply_to_message_id && { reply_to_message_id: body.reply_to_message_id }),
+                ...(body.to_email && { to_email: body.to_email }),
+                ...(body.cc?.length ? { cc: body.cc } : {}),
             },
             {
                 auth: {
