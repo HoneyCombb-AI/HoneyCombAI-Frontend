@@ -59,12 +59,28 @@ export function isEmailSnapshot(snapshot: ApprovalSnapshot): snapshot is EmailSn
     return 'subject' in snapshot;
 }
 
+export interface ApprovalSubmitter {
+    user_id: string;
+    name: string;
+}
+
+export interface ApprovalListItem {
+    id: string;
+    item_type: ApprovalItemType;
+    status: 'pending' | 'approved' | 'rejected';
+    submitted_at: string;
+    submitted_by_name: string;
+    contact_name: string | null;
+    subject: string | null;
+}
+
 export interface ApprovalsResponse {
     items: ApprovalItem[];
     total: number;
     page: number;
     limit: number;
     hasMore: boolean;
+    submitters: ApprovalSubmitter[];
 }
 
 // ---- API request/response types ----

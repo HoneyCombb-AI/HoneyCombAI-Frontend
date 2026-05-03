@@ -15,15 +15,17 @@ import {
 import { format } from "date-fns";
 import type { ApprovalItem, LinkedInSnapshot } from "@/types/admin";
 import { isEmailSnapshot } from "@/types/admin";
+import { Loading } from "@/components/loading";
 import DOMPurify from "dompurify";
 
 interface ApprovalDetailProps {
     item: ApprovalItem | null;
+    loading?: boolean;
 }
 
 
 
-export function ApprovalDetail({ item }: ApprovalDetailProps) {
+export function ApprovalDetail({ item, loading }: ApprovalDetailProps) {
     const sanitizedBody = useMemo(() => {
         if (!item) return "";
         const snapshot = item.snapshot;
@@ -32,6 +34,15 @@ export function ApprovalDetail({ item }: ApprovalDetailProps) {
         }
         return "";
     }, [item]);
+
+    if (loading) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
+                <Loading />
+                <p className="text-sm text-muted-foreground mt-4">Loading Details...</p>
+            </div>
+        );
+    }
 
     if (!item) {
         return (
@@ -72,6 +83,12 @@ export function ApprovalDetail({ item }: ApprovalDetailProps) {
                                 <span className="flex items-center gap-1">
                                     <AtSign className="h-3 w-3" />
                                     {snapshot.contact_email}
+                                </span>
+                            )}
+                            {isEmail && snapshot.cc && snapshot.cc.length > 0 && (
+                                <span className="flex items-center gap-1">
+                                    <AtSign className="h-3 w-3 text-gray-400" />
+                                    CC: {snapshot.cc.join(", ")}
                                 </span>
                             )}
                             {isEmail && snapshot.account_provider && (
@@ -119,7 +136,7 @@ export function ApprovalDetail({ item }: ApprovalDetailProps) {
             </div>
 
             {/* Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 min-h-0">
+            <div className="flex-1 overflow-y-auto no-scroo bg-gray-50 px-6 py-4 min-h-0">
                 {isEmail ? (
                     <div className="space-y-4">
                         {/* Subject */}
@@ -144,8 +161,8 @@ export function ApprovalDetail({ item }: ApprovalDetailProps) {
                             <p className="text-xs font-medium text-muted-foreground mb-2">Message</p>
                             <div className="text-sm text-gray-800 whitespace-pre-wrap">
                                 {(snapshot as LinkedInSnapshot).draft_message ||
-                                 (snapshot as LinkedInSnapshot).connection_note ||
-                                 "No content"}
+                                    (snapshot as LinkedInSnapshot).connection_note ||
+                                    "No content"}
                             </div>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef, useLayoutEffect } from "react";
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import type { CSSProperties } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -8,14 +8,21 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Loader2, User, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ApprovalList } from "@/components/admin/ApprovalList";
 import { ApprovalDetail } from "@/components/admin/ApprovalDetail";
 import { ApprovalActions } from "@/components/admin/ApprovalActions";
-import type { ApprovalItem, ApprovalSnapshot } from "@/types/admin";
+import type { ApprovalItem, ApprovalListItem, ApprovalSnapshot, ApprovalSubmitter } from "@/types/admin";
 
 type TabStatus = "pending" | "approved" | "rejected";
 
@@ -25,14 +32,22 @@ export default function ApprovalsPage() {
     const { state: sidebarState } = useSidebar();
 
     const [activeTab, setActiveTab] = useState<TabStatus>("pending");
-    const [items, setItems] = useState<ApprovalItem[]>([]);
+    const [items, setItems] = useState<ApprovalListItem[]>([]);
     const [fetchLoading, setFetchLoading] = useState<boolean>(false);
     const [loadingMore, setLoadingMore] = useState<boolean>(false);
-    const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(false);
     const [approvalToggle, setApprovalToggle] = useState(approvalRequired);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedDetail, setSelectedDetail] = useState<ApprovalItem | null>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+
+    // Filter state
+    const [submitters, setSubmitters] = useState<ApprovalSubmitter[]>([]);
+    const [submittersLoading, setSubmittersLoading] = useState(false);
+    const submittersFetchedRef = useRef(false);
+    const [submittedBy, setSubmittedBy] = useState<string | null>(null);
+    const [showUserFilter, setShowUserFilter] = useState(false);
 
     // Refs for fixed-position action bar (same pattern as EmailComposer)
     const detailRef = useRef<HTMLDivElement>(null);
@@ -60,7 +75,12 @@ export default function ApprovalsPage() {
         }
         try {
             const res = await axios.get("/api/admin/approvals", {
-                params: { status: activeTab, page, limit: 20 },
+                params: {
+                    status: activeTab,
+                    page,
+                    limit: 20,
+                    ...(submittedBy ? { submitted_by: submittedBy } : {}),
+                },
                 signal,
             });
             if (page === 1) {
@@ -68,7 +88,6 @@ export default function ApprovalsPage() {
             } else {
                 setItems((prev) => [...prev, ...(res.data.items || [])]);
             }
-            setTotal(res.data.total || 0);
             setHasMore(res.data.hasMore || false);
         } catch (err) {
             if (!axios.isCancel(err)) {
@@ -80,7 +99,41 @@ export default function ApprovalsPage() {
                 setLoadingMore(false);
             }
         }
-    }, [activeTab, page]);
+    }, [activeTab, page, submittedBy]);
+
+    const fetchDetail = useCallback(async (id: string) => {
+        setDetailLoading(true);
+        setSelectedDetail(null);
+        try {
+            const res = await axios.get(`/api/admin/approvals/${id}`);
+            setSelectedDetail(res.data);
+        } catch {
+            toast.error("Failed to load approval detail");
+        } finally {
+            setDetailLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (selectedId) fetchDetail(selectedId);
+        else setSelectedDetail(null);
+    }, [selectedId, fetchDetail]);
+
+    const fetchSubmitters = useCallback(async () => {
+        if (submittersFetchedRef.current) return;
+        submittersFetchedRef.current = true;
+        setSubmittersLoading(true);
+        try {
+            const res = await axios.get("/api/admin/approvals", {
+                params: { status: "pending", page: 1, limit: 1 },
+            });
+            setSubmitters(res.data.submitters || []);
+        } catch {
+            submittersFetchedRef.current = false;
+        } finally {
+            setSubmittersLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         if (!authLoading && role === "admin") {
@@ -97,10 +150,6 @@ export default function ApprovalsPage() {
         }
     }, [items]);
 
-    const selectedItem = useMemo(
-        () => items.find((i) => i.id === selectedId) || null,
-        [items, selectedId]
-    );
 
     // Calculate action bar rect (same as EmailComposer positioning)
     const updateActionsRect = useCallback(() => {
@@ -181,7 +230,7 @@ export default function ApprovalsPage() {
                     : "Email rejected successfully"
             );
             setItems((prev) => prev.filter((item) => item.id !== id));
-            setTotal((prev) => Math.max(0, prev - 1));
+            setSelectedDetail(null);
         } catch {
             toast.error(
                 action === "approve"
@@ -203,6 +252,9 @@ export default function ApprovalsPage() {
         setActiveTab(tab);
         setPage(1);
         setSelectedId(null);
+        setSelectedDetail(null);
+        setSubmittedBy(null);
+        setShowUserFilter(false);
     }, []);
 
     if (authLoading || role === null) {
@@ -226,31 +278,130 @@ export default function ApprovalsPage() {
 
     return (
         <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
-            {/* Filter Bar - Fixed at top */}
-            <div className="shrink-0 sticky top-0 z-40 flex items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
-                <div className="flex items-center gap-2">
-                    {tabs.map((tab) => (
-                        <Button
-                            key={tab.value}
-                            variant={activeTab === tab.value ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleTabChange(tab.value)}
-                            className="gap-2 text-sm"
-                        >
-                            {tab.label}
-                            {tab.value === "pending" && total > 0 && activeTab === "pending" && (
-                                <Badge variant="secondary" className="ml-1 text-xs">
-                                    {total}
-                                </Badge>
-                            )}
+            {/* Filter Bar */}
+            <div className="shrink-0 sticky top-0 z-40 flex flex-wrap items-center gap-2 border-b bg-white px-6 py-3 shadow-sm">
+
+                {/* Status dropdown */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2 text-sm">
+                            {tabs.find(t => t.value === activeTab)?.label ?? "Pending"}
+                            <ChevronDown className="h-3 w-3" />
                         </Button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-3">
-                    <Label
-                        htmlFor="approval-toggle"
-                        className="text-sm text-muted-foreground"
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        {tabs.map(tab => (
+                            <DropdownMenuItem
+                                key={tab.value}
+                                onSelect={() => handleTabChange(tab.value)}
+                                className={cn(activeTab === tab.value && "bg-accent")}
+                            >
+                                {tab.label}
+                                {activeTab === tab.value && (
+                                    <span className="ml-auto text-xs text-muted-foreground">✓</span>
+                                )}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <div className="h-6 w-px bg-gray-200 shrink-0" />
+
+                {/* Filter dropdown */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2 text-sm">
+                            Filter
+                            <ChevronDown className="h-3 w-3" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        <DropdownMenuItem
+                            onSelect={() => {
+                                if (showUserFilter) {
+                                    setShowUserFilter(false);
+                                    setSubmittedBy(null);
+                                    setPage(1);
+                                } else {
+                                    setShowUserFilter(true);
+                                    fetchSubmitters();
+                                }
+                            }}
+                            className={cn(showUserFilter && "bg-accent")}
+                        >
+                            <User className="h-4 w-4 mr-2" />
+                            By User
+                            {showUserFilter && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* By User sub-filter */}
+                {showUserFilter && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                    "gap-2 text-sm",
+                                    submittedBy && "bg-blue-50 border-blue-300 text-blue-700"
+                                )}
+                            >
+                                <User className="h-4 w-4" />
+                                {submittedBy
+                                    ? (submitters.find(s => s.user_id === submittedBy)?.name ?? "User")
+                                    : "By User"}
+                                <ChevronDown className="h-3 w-3" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-56">
+                            {submittersLoading ? (
+                                <div className="flex items-center justify-center py-4">
+                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                </div>
+                            ) : submitters.length === 0 ? (
+                                <p className="px-3 py-2 text-sm text-muted-foreground text-center">No submitters found</p>
+                            ) : (
+                                <>
+                                    {submittedBy && (
+                                        <DropdownMenuItem onSelect={() => { setSubmittedBy(null); setPage(1); }}>
+                                            <X className="h-4 w-4 mr-2 text-muted-foreground" />
+                                            Clear
+                                        </DropdownMenuItem>
+                                    )}
+                                    {submitters.map(s => (
+                                        <DropdownMenuItem
+                                            key={s.user_id}
+                                            onSelect={() => { setSubmittedBy(submittedBy === s.user_id ? null : s.user_id); setPage(1); }}
+                                            className={cn(submittedBy === s.user_id && "bg-accent")}
+                                        >
+                                            {s.name}
+                                            {submittedBy === s.user_id && <span className="ml-auto text-xs">✓</span>}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+
+                {/* Clear all filters */}
+                {showUserFilter && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setShowUserFilter(false); setSubmittedBy(null); setPage(1); }}
+                        className="gap-2 text-sm text-gray-500"
                     >
+                        <X className="h-4 w-4" />
+                        Clear All
+                    </Button>
+                )}
+
+                {/* Require Approval toggle — pushed to the right */}
+                <div className="flex items-center gap-3 ml-auto">
+                    <Label htmlFor="approval-toggle" className="text-sm text-muted-foreground">
                         Require Approval
                     </Label>
                     <Switch
@@ -286,20 +437,20 @@ export default function ApprovalsPage() {
                     <div
                         ref={detailRef}
                         className="lg:col-span-2 overflow-hidden h-full min-h-0 relative"
-                        style={{ paddingBottom: activeTab === "pending" && selectedItem ? actionsHeight : undefined }}
+                        style={{ paddingBottom: activeTab === "pending" && selectedDetail ? actionsHeight : undefined }}
                     >
-                        <ApprovalDetail item={selectedItem} />
+                        <ApprovalDetail item={selectedDetail} loading={detailLoading} />
                     </div>
 
                     {/* Action Bar - Fixed at bottom (same pattern as EmailComposer) */}
-                    {activeTab === "pending" && selectedItem && (
+                    {activeTab === "pending" && selectedDetail && (
                         <div
                             ref={actionsRef}
                             className="fixed bottom-0 z-50"
                             style={actionsStyle}
                         >
                             <ApprovalActions
-                                item={selectedItem}
+                                item={selectedDetail}
                                 onApprove={handleApprove}
                                 onReject={handleReject}
                             />

@@ -7,6 +7,43 @@ const MAIL_SERVER_URL = process.env.MAIL_SERVER_URL || 'https://mail.honeycombai
 const MAIL_SERVER_USER = process.env.MAIL_SERVER_USER || '';
 const MAIL_SERVER_PASSWORD = process.env.MAIL_SERVER_PASSWORD || '';
 
+export async function GET(
+    _req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const supabase = await createClient();
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { data, error } = await supabase.rpc('get_approval_detail', {
+            p_user_id: user.id,
+            p_item_id: id,
+        });
+
+        if (error) {
+            console.error('Error in get_approval_detail RPC:', error);
+            return NextResponse.json({ error: 'Failed to fetch detail' }, { status: 500 });
+        }
+        if (data?.error === 'forbidden') {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+        if (data?.error === 'not_found') {
+            return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        }
+
+        return NextResponse.json(data);
+
+    } catch (error: unknown) {
+        console.error('Error fetching approval detail:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
+
 export async function PATCH(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }

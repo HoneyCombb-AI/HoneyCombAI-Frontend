@@ -1,21 +1,31 @@
 "use client";
 
-import { ApprovalItem } from "@/types/admin";
-import { isEmailSnapshot } from "@/types/admin";
+import { ApprovalListItem } from "@/types/admin";
 import { cn } from "@/lib/utils";
-import { User, ShieldCheck, Loader2, ChevronDown } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ShieldCheck, Loader2, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
 interface ApprovalListProps {
-    items: ApprovalItem[];
+    items: ApprovalListItem[];
     selectedId: string | null;
     onSelect: (id: string) => void;
     hasMore: boolean;
     onLoadMore: () => void;
     loadingMore: boolean;
     activeTab: string;
+}
+
+function relativeTime(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "now";
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return `${days}d`;
+    return format(new Date(dateStr), "MMM d");
 }
 
 export function ApprovalList({
@@ -27,85 +37,66 @@ export function ApprovalList({
     loadingMore,
     activeTab,
 }: ApprovalListProps) {
+
     if (items.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-8 text-center h-full min-h-[400px]">
                 <ShieldCheck className="h-12 w-12 text-gray-300 mb-4" />
-                <p className="text-sm text-muted-foreground">
-                    No {activeTab} items
-                </p>
+                <p className="text-sm text-muted-foreground">No {activeTab} items</p>
             </div>
         );
     }
 
     return (
         <div className="flex flex-col h-full">
-            <div className="divide-y">
+            <div className="divide-y overflow-y-auto">
                 {items.map((item) => {
                     const isSelected = item.id === selectedId;
+                    const subject = item.subject;
+                    const time = relativeTime(item.submitted_at);
 
-                    const contactName = item.contact_name || "Unknown Contact";
-                    const initials = contactName
-                        .split(" ")
-                        .map((p) => p.charAt(0))
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2) || "?";
-
-                    const subject = isEmailSnapshot(item.snapshot) ? item.snapshot.subject : "";
+                    const borderColor =
+                        item.status === "pending"
+                            ? "border-l-amber-400"
+                            : item.status === "approved"
+                            ? "border-l-green-400"
+                            : item.status === "rejected"
+                            ? "border-l-red-400"
+                            : "border-l-transparent";
 
                     return (
                         <button
                             key={item.id}
                             onClick={() => onSelect(item.id)}
                             className={cn(
-                                "w-full p-4 text-left transition-colors hover:bg-gray-50 flex flex-col gap-1.5 cursor-pointer group",
-                                isSelected && "bg-blue-50 hover:bg-blue-50 border-l-4 border-blue-500"
+                                "w-full px-4 py-1.5 pt-3 text-left transition-colors hover:bg-gray-50 flex flex-col gap-3 cursor-pointer border-l-4",
+                                borderColor,
+                                isSelected && "bg-blue-50 hover:bg-blue-50 border-l-blue-500"
                             )}
                         >
-                            <div className="flex items-start gap-3 w-full">
-                                <Avatar className="h-10 w-10 shrink-0">
-                                    <AvatarFallback>
-                                        {initials}
-                                    </AvatarFallback>
-                                </Avatar>
+                            {/* Row 1: contact name + relative time */}
+                            <div className="flex items-baseline justify-between gap-2 w-full">
+                                <span className="font-semibold text-sm text-gray-900 truncate">
+                                    {item.contact_name || "Unknown Contact"}
+                                </span>
+                                <span className="text-[11px] text-gray-400 shrink-0">{time}</span>
+                            </div>
 
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2">
-                                        <span className="font-medium truncate text-sm text-gray-900">
-                                            {contactName}
-                                        </span>
-                                        <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">
-                                            {format(new Date(item.submitted_at), "MMM d")}
-                                        </span>
-                                    </div>
-
-                                    {item.company_name && (
-                                        <p className="text-xs text-muted-foreground truncate">
-                                            {item.company_name}
-                                        </p>
-                                    )}
-
-                                    {subject && (
-                                        <p className="text-xs text-gray-600 truncate mt-0.5">
-                                            {subject}
-                                        </p>
-                                    )}
-
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                            <User className="h-3 w-3" />
-                                            {item.submitted_by_name}
-                                        </span>
-                                    </div>
-                                </div>
+                            {/* Row 2: subject + submitted-by */}
+                            <div className="flex items-center gap-2 w-full min-w-0">
+                                <p className="text-xs text-gray-500 truncate flex-1 min-w-0">
+                                    {subject || "—"}
+                                </p>
+                                <span className="flex items-center gap-0.5 text-[10px] text-gray-400 shrink-0">
+                                    <User className="h-2.5 w-2.5" />
+                                    {item.submitted_by_name}
+                                </span>
                             </div>
                         </button>
                     );
                 })}
             </div>
 
-            {/* Load More */}
             {hasMore && (
                 <div className="p-4 border-t flex justify-center">
                     <Button
