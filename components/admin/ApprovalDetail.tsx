@@ -62,83 +62,74 @@ export function ApprovalDetail({ item, loading }: ApprovalDetailProps) {
 
     return (
         <div className="flex flex-col h-full min-h-0">
-            {/* Header - Contact Info */}
-            <div className="shrink-0 border-b bg-white px-6 py-5">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1 space-y-3">
-                        {/* Contact name + company */}
-                        <div className="flex items-center gap-3">
-                            <h2 className="text-lg font-semibold text-gray-900 truncate">
-                                {contactName}
-                            </h2>
-                            {item.company_name && (
-                                <span className="flex items-center gap-1.5 text-sm text-gray-500">
-                                    <Building2 className="h-3.5 w-3.5" />
-                                    {item.company_name}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* To / CC / Provider — labeled rows */}
-                        <div className="space-y-1.5">
-                            {isEmail && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <span className="text-gray-400 font-medium w-8 shrink-0">To</span>
-                                    <Mail className="h-3.5 w-3.5 text-gray-500 shrink-0" />
-                                    <span className="text-gray-900 font-medium">{snapshot.contact_email}</span>
-                                </div>
-                            )}
-                            {isEmail && snapshot.cc && snapshot.cc.length > 0 && (
-                                <div className="flex items-start gap-2 text-sm min-w-0">
-                                    <span className="text-gray-400 font-medium w-8 shrink-0">CC</span>
-                                    <AtSign className="h-3.5 w-3.5 text-gray-500 shrink-0 mt-0.5" />
-                                    <span className="text-gray-700 flex flex-wrap gap-x-0 gap-y-0.5 min-w-0">
-                                        {snapshot.cc.map((email, i) => (
-                                            <span key={email} className="break-all">
-                                                {email}
-                                                {i < snapshot.cc!.length - 1 && <span className="text-gray-300 mx-1">·</span>}
-                                            </span>
-                                        ))}
-                                    </span>
-                                </div>
-                            )}
-                            {isEmail && snapshot.account_provider && (
-                                <div className="flex items-center gap-2 text-sm">
-                                    <span className="text-gray-400 font-medium w-8 shrink-0">Via</span>
-                                    <Send className="h-3.5 w-3.5 text-gray-500 shrink-0" />
-                                    <span className="text-gray-700">{snapshot.account_provider === "gmail" ? "Gmail" : "Outlook"}</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Submitted by + date */}
-                        <div className="flex items-center gap-4 pt-1 border-t border-gray-100">
-                            <span className="flex items-center gap-1.5 text-sm text-gray-900">
-                                <User className="h-3.5 w-3.5 text-gray-600" />
-                                <span className="font-semibold">{item.submitted_by_name}</span>
+            {/* Header - Compact Contact Info */}
+            <div className="shrink-0 border-b bg-white px-6 py-3">
+                {/* Row 1: Name + Company + Badge */}
+                <div className="flex items-center justify-between gap-3 mb-1.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <h2 className="text-base font-semibold text-gray-900 truncate">
+                            {contactName}
+                        </h2>
+                        {item.company_name && (
+                            <span className="flex items-center gap-1 text-xs text-gray-500 shrink-0">
+                                <Building2 className="h-3 w-3" />
+                                {item.company_name}
                             </span>
-                            <span className="flex items-center gap-1.5 text-sm text-gray-500">
-                                <Clock className="h-3.5 w-3.5" />
-                                {format(new Date(item.submitted_at), "MMM d, yyyy · h:mm a")}
-                            </span>
-                        </div>
+                        )}
                     </div>
-
-                    {/* Status Badge — only for approved/rejected */}
                     <div className="shrink-0">
                         {item.status === "approved" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-green-50 text-green-800 border border-green-200">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-green-50 text-green-800 border border-green-200">
                                 <Check className="h-3 w-3" />
                                 Approved
                             </span>
                         )}
                         {item.status === "rejected" && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-800 border border-red-200">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-red-50 text-red-800 border border-red-200">
                                 <X className="h-3 w-3" />
                                 Rejected
                             </span>
                         )}
                     </div>
+                </div>
+
+                {/* Row 2: To · CC · Via · Submitted by · Date — all inline */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+                    {isEmail && (
+                        <span className="flex items-center gap-1">
+                            <Mail className="h-3 w-3 text-gray-400" />
+                            <span className="font-semibold text-gray-900">{snapshot.contact_email}</span>
+                        </span>
+                    )}
+                    {isEmail && snapshot.cc && snapshot.cc.length > 0 && (
+                        <span className="group relative flex items-center gap-1 cursor-pointer">
+                            <AtSign className="h-3 w-3 text-gray-400" />
+                            <span className="text-gray-600">CC: {snapshot.cc.length}</span>
+                            {/* Hover tooltip */}
+                            <span className="hidden group-hover:block absolute left-0 top-full pt-1 z-50">
+                                <span className="block bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 w-max max-w-xs">
+                                    {snapshot.cc.map(email => (
+                                        <span key={email} className="block text-xs text-gray-700 py-0.5">{email}</span>
+                                    ))}
+                                </span>
+                            </span>
+                        </span>
+                    )}
+                    {isEmail && snapshot.account_provider && (
+                        <span className="flex items-center gap-1">
+                            <Send className="h-3 w-3 text-gray-400" />
+                            <span>{snapshot.account_provider === "gmail" ? "Gmail" : "Outlook"}</span>
+                        </span>
+                    )}
+                    <span className="text-gray-300">|</span>
+                    <span className="flex items-center gap-1">
+                        <User className="h-3 w-3 text-gray-400" />
+                        <span className="font-semibold text-gray-900">{item.submitted_by_name}</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-gray-400" />
+                        {format(new Date(item.submitted_at), "MMM d, yyyy · h:mm a")}
+                    </span>
                 </div>
             </div>
 
