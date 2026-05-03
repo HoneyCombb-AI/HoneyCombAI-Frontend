@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import type { DrawerContact, ContactEmail, ContactPhone } from "@/types/contacts"
+import { contactPhonePattern, sanitizeContactPhoneInput } from "@/lib/contacts/contact-details"
 
 // ─── Typography scale map ───────────────────────────────────────────────────
 
@@ -52,8 +53,7 @@ const ContactUpdateSchema = z.object({
       id: z.string().optional(),
       phone: z.string()
         .min(1, "Phone number is required")
-        .max(15, "Phone number cannot exceed 15 characters")
-        .regex(/^\+?\d+$/, "Phone number can only contain digits and an optional leading +"),
+        .regex(contactPhonePattern, "Phone number must use digits only, may start with +, and be up to 15 characters total"),
       is_primary: z.boolean(),
       label: z.string().max(20, "Label too long").nullable().optional(),
     })
@@ -483,10 +483,7 @@ export const ContactPersonalInfoSection = memo(function ContactPersonalInfoSecti
             <div key={entry.id || entry._uiKey || index} className="flex items-center gap-2">
               <Input
                 value={entry.phone || ""}
-                onChange={e => {
-                  const sanitized = e.target.value.replace(/[^\d+]/g, "").replace(/(?!^)\+/g, "").slice(0, 15)
-                  updatePhone(index, "phone", sanitized)
-                }}
+                onChange={e => updatePhone(index, "phone", sanitizeContactPhoneInput(e.target.value))}
                 maxLength={15}
                 placeholder="+1234567890"
                 className={cn("h-8 flex-1", typo.body, errors[`phones.${index}.phone`] ? "border-red-400" : "")}

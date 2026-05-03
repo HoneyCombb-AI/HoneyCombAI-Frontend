@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import axios from "axios"
-import { Building2, User, Briefcase, Mail, Phone, LinkedinIcon, Twitter, Instagram, Globe } from "lucide-react"
+import { Building2, User, Briefcase, Mail, Phone, LinkedinIcon, Twitter, Instagram, Globe, Plus, Star, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,16 +26,54 @@ import {
 import type { CompanyListItem } from "@/types/companies"
 import { toast } from "sonner";
 import { AddCompanyDrawer } from "../Company/AddCompanyDrawer"
+import {
+  contactPhonePattern,
+  sanitizeContactPhoneInput,
+  type ContactEmailInput,
+  type ContactPhoneInput,
+} from "@/lib/contacts/contact-details"
 
-const phonePattern = /^(?:\+\d{1,14}|\d{1,15})$/
+type ContactEmailFormRow = ContactEmailInput & { _uiKey: string }
+type ContactPhoneFormRow = ContactPhoneInput & { _uiKey: string }
 
-const sanitizePhoneInput = (value: string) => {
-  const startsWithPlus = value.startsWith("+")
-  const maxDigits = startsWithPlus ? 14 : 15
-  const digits = value.replace(/\D/g, "").slice(0, maxDigits)
+const createEmailRow = (isPrimary = false): ContactEmailFormRow => ({
+  _uiKey: crypto.randomUUID(),
+  email: "",
+  is_primary: isPrimary,
+  label: "",
+})
 
-  return startsWithPlus ? `+${digits}` : digits
-}
+const createPhoneRow = (isPrimary = false): ContactPhoneFormRow => ({
+  _uiKey: crypto.randomUUID(),
+  phone: "",
+  is_primary: isPrimary,
+  label: "",
+})
+
+const emailEntrySchema = z.object({
+  email: z.string().trim().email("Please enter a valid email"),
+  is_primary: z.boolean(),
+  label: z.string().trim().max(20, "Label too long").nullable().optional(),
+})
+
+const phoneEntrySchema = z.object({
+  phone: z.string()
+    .trim()
+    .regex(contactPhonePattern, "Phone number must use digits only, may start with +, and be up to 15 characters total"),
+  is_primary: z.boolean(),
+  label: z.string().trim().max(20, "Label too long").nullable().optional(),
+})
+
+const contactMethodsSchema = z.object({
+  emails: z.array(emailEntrySchema).refine(
+    emails => emails.filter(e => e.is_primary).length <= 1,
+    { message: "Only one email can be marked as primary" }
+  ),
+  phones: z.array(phoneEntrySchema).refine(
+    phones => phones.filter(p => p.is_primary).length <= 1,
+    { message: "Only one phone can be marked as primary" }
+  ),
+})
 
 const contactSchema = z.object({
   fullName: z.string().trim().min(1, "Person's name is required"),
@@ -49,13 +87,6 @@ const contactSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-  email: z.string().trim().email("Please enter a valid email").optional().or(z.literal("")),
-  phone: z.string()
-    .trim()
-    .refine((phone) => !phone || phonePattern.test(phone), {
-      message: "Phone number must use digits only, may start with +, and be up to 15 characters total"
-    })
-    .optional(),
   city: z.string().trim().optional(),
   country: z.string().trim().optional(),
   twitterProfile: z.string()
@@ -103,6 +134,9 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
   const [companies, setCompanies] = React.useState<CompanyListItem[]>([])
   const [loadingCompanies, setLoadingCompanies] = React.useState(false)
   const [companyDrawerOpen, setCompanyDrawerOpen] = React.useState(false)
+  const [emails, setEmails] = React.useState<ContactEmailFormRow[]>(() => [createEmailRow(true)])
+  const [phones, setPhones] = React.useState<ContactPhoneFormRow[]>(() => [createPhoneRow(true)])
+  const [contactMethodErrors, setContactMethodErrors] = React.useState<Record<string, string>>({})
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
   const {
@@ -114,6 +148,12 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
   })
+
+  const resetContactMethods = React.useCallback(() => {
+    setEmails([createEmailRow(true)])
+    setPhones([createPhoneRow(true)])
+    setContactMethodErrors({})
+  }, [])
 
   // Fetch companies when drawer opens
   React.useEffect(() => {
@@ -169,16 +209,112 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     setCompanyDrawerOpen(false)
   }
 
+  const setPrimaryEmail = React.useCallback((index: number) => {
+    setEmails(prev => prev.map((email, i) => ({
+      ...email,
+      is_primary: i === index,
+      label: i === index ? "" : email.label,
+    })))
+  }, [])
+
+  const addEmail = React.useCallback(() => {
+    setEmails(prev => [...prev, createEmailRow(prev.length === 0)])
+  }, [])
+
+  const removeEmail = React.useCallback((index: number) => {
+    setEmails(prev => {
+      const next = prev.filter((_, i) => i !== index)
+      if (prev[index]?.is_primary && next.length > 0) {
+        next[0] = { ...next[0], is_primary: true, label: "" }
+      }
+      return next.length > 0 ? next : [createEmailRow(true)]
+    })
+  }, [])
+
+  const updateEmail = React.useCallback((index: number, field: keyof ContactEmailInput, value: string | boolean) => {
+    setEmails(prev => prev.map((email, i) => i === index ? { ...email, [field]: value } : email))
+  }, [])
+
+  const setPrimaryPhone = React.useCallback((index: number) => {
+    setPhones(prev => prev.map((phone, i) => ({
+      ...phone,
+      is_primary: i === index,
+      label: i === index ? "" : phone.label,
+    })))
+  }, [])
+
+  const addPhone = React.useCallback(() => {
+    setPhones(prev => [...prev, createPhoneRow(prev.length === 0)])
+  }, [])
+
+  const removePhone = React.useCallback((index: number) => {
+    setPhones(prev => {
+      const next = prev.filter((_, i) => i !== index)
+      if (prev[index]?.is_primary && next.length > 0) {
+        next[0] = { ...next[0], is_primary: true, label: "" }
+      }
+      return next.length > 0 ? next : [createPhoneRow(true)]
+    })
+  }, [])
+
+  const updatePhone = React.useCallback((index: number, field: keyof ContactPhoneInput, value: string | boolean) => {
+    setPhones(prev => prev.map((phone, i) => i === index ? { ...phone, [field]: value } : phone))
+  }, [])
+
   const onFormSubmit = async (data: ContactFormData) => {
     try {
+      const emailRows = emails
+        .map(({ _uiKey, ...email }) => ({
+          email: email.email.trim(),
+          is_primary: email.is_primary,
+          label: email.label?.trim() || null,
+        }))
+        .filter(email => email.email)
+
+      const phoneRows = phones
+        .map(({ _uiKey, ...phone }) => ({
+          phone: phone.phone.trim(),
+          is_primary: phone.is_primary,
+          label: phone.label?.trim() || null,
+        }))
+        .filter(phone => phone.phone)
+
+      if (emailRows.length > 0 && !emailRows.some(email => email.is_primary)) {
+        emailRows[0].is_primary = true
+      }
+
+      if (phoneRows.length > 0 && !phoneRows.some(phone => phone.is_primary)) {
+        phoneRows[0].is_primary = true
+      }
+
+      const contactMethodsResult = contactMethodsSchema.safeParse({
+        emails: emailRows,
+        phones: phoneRows,
+      })
+
+      if (!contactMethodsResult.success) {
+        const fieldErrors: Record<string, string> = {}
+        contactMethodsResult.error.errors.forEach(error => {
+          fieldErrors[error.path.join(".")] = error.message
+        })
+        setContactMethodErrors(fieldErrors)
+        toast.error(contactMethodsResult.error.errors[0].message)
+        return
+      }
+
+      setContactMethodErrors({})
+
       const processedData = {
         ...data,
-        companyId: data.companyId === "no-company" ? undefined : data.companyId
+        companyId: data.companyId === "no-company" ? undefined : data.companyId,
+        emails: contactMethodsResult.data.emails,
+        phones: contactMethodsResult.data.phones,
       }
       const response = await axios.post('/api/contacts/create', processedData)
       if (response.data.success) {
         onSubmit?.(response.data.contact)
         reset()
+        resetContactMethods()
         toast.success(`Contact ${data.fullName} created successfully!`)
         setOpen(false)
       } else {
@@ -338,42 +474,112 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="email" className="flex items-center gap-2 text-sm font-medium">
+                  <label className="flex items-center gap-2 text-sm font-medium">
                     <Mail className="h-4 w-4" />
-                    Email
+                    Email Addresses
                   </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="email@example.com"
-                    {...register("email")}
-                    aria-invalid={!!errors.email}
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email.message}</p>
+                  <div className="space-y-2">
+                    {emails.map((entry, index) => (
+                      <div key={entry._uiKey} className="flex items-center gap-2">
+                        <Input
+                          type="email"
+                          placeholder="email@example.com"
+                          value={entry.email}
+                          onChange={(event) => updateEmail(index, "email", event.target.value)}
+                          aria-invalid={!!contactMethodErrors[`emails.${index}.email`]}
+                          className="flex-1"
+                        />
+                        <Input
+                          value={entry.is_primary ? "" : (entry.label || "")}
+                          onChange={(event) => updateEmail(index, "label", event.target.value)}
+                          placeholder={entry.is_primary ? "Primary" : "work, personal..."}
+                          maxLength={20}
+                          disabled={entry.is_primary}
+                          className="w-36"
+                        />
+                        <button
+                          type="button"
+                          title={entry.is_primary ? "Primary email" : "Set as primary"}
+                          onClick={() => setPrimaryEmail(index)}
+                          className={`shrink-0 p-2 rounded transition-colors ${entry.is_primary
+                            ? "text-amber-500 bg-amber-50"
+                            : "text-gray-300 hover:text-amber-400 hover:bg-amber-50"
+                            }`}
+                        >
+                          <Star className="h-4 w-4" fill={entry.is_primary ? "currentColor" : "none"} />
+                        </button>
+                        <button
+                          type="button"
+                          title="Remove email"
+                          onClick={() => removeEmail(index)}
+                          className="shrink-0 p-2 rounded text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {contactMethodErrors.emails && (
+                    <p className="text-sm text-destructive">{contactMethodErrors.emails}</p>
                   )}
+                  <Button type="button" variant="ghost" size="sm" className="h-8 gap-1.5 text-gray-500" onClick={addEmail}>
+                    <Plus className="h-4 w-4" /> Add email
+                  </Button>
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="phone" className="flex items-center gap-2 text-sm font-medium">
+                  <label className="flex items-center gap-2 text-sm font-medium">
                     <Phone className="h-4 w-4" />
-                    Phone
+                    Phone Numbers
                   </label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    inputMode="tel"
-                    placeholder="+15551234567"
-                    {...register("phone", {
-                      onChange: (event) => {
-                        event.target.value = sanitizePhoneInput(event.target.value)
-                      }
-                    })}
-                    aria-invalid={!!errors.phone}
-                  />
-                  {errors.phone && (
-                    <p className="text-sm text-destructive">{errors.phone.message}</p>
+                  <div className="space-y-2">
+                    {phones.map((entry, index) => (
+                      <div key={entry._uiKey} className="flex items-center gap-2">
+                        <Input
+                          type="tel"
+                          inputMode="tel"
+                          placeholder="+15551234567"
+                          value={entry.phone}
+                          onChange={(event) => updatePhone(index, "phone", sanitizeContactPhoneInput(event.target.value))}
+                          aria-invalid={!!contactMethodErrors[`phones.${index}.phone`]}
+                          className="flex-1"
+                        />
+                        <Input
+                          value={entry.is_primary ? "" : (entry.label || "")}
+                          onChange={(event) => updatePhone(index, "label", event.target.value)}
+                          placeholder={entry.is_primary ? "Primary" : "mobile, office..."}
+                          maxLength={20}
+                          disabled={entry.is_primary}
+                          className="w-36"
+                        />
+                        <button
+                          type="button"
+                          title={entry.is_primary ? "Primary phone" : "Set as primary"}
+                          onClick={() => setPrimaryPhone(index)}
+                          className={`shrink-0 p-2 rounded transition-colors ${entry.is_primary
+                            ? "text-amber-500 bg-amber-50"
+                            : "text-gray-300 hover:text-amber-400 hover:bg-amber-50"
+                            }`}
+                        >
+                          <Star className="h-4 w-4" fill={entry.is_primary ? "currentColor" : "none"} />
+                        </button>
+                        <button
+                          type="button"
+                          title="Remove phone"
+                          onClick={() => removePhone(index)}
+                          className="shrink-0 p-2 rounded text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {contactMethodErrors.phones && (
+                    <p className="text-sm text-destructive">{contactMethodErrors.phones}</p>
                   )}
+                  <Button type="button" variant="ghost" size="sm" className="h-8 gap-1.5 text-gray-500" onClick={addPhone}>
+                    <Plus className="h-4 w-4" /> Add phone
+                  </Button>
                 </div>
 
                 <div className="space-y-2">
