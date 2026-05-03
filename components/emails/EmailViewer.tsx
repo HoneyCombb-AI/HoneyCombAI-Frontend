@@ -407,10 +407,10 @@ export function EmailViewer({
     const SCROLL_TOP_OFFSET = 15; // px breathing room from top edge
 
     const [openKey, setOpenKey] = useState<string | null>(lastThreadKey);
-    const bottomRef = useRef<HTMLDivElement | null>(null);
+    const openThreadRef = useRef<HTMLDivElement | null>(null);
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const [scrollAreaHeight, setScrollAreaHeight] = useState(0);
-    const [lastThreadHeight, setLastThreadHeight] = useState(0);
+    const [openThreadHeight, setOpenThreadHeight] = useState(0);
 
     // Dynamically track scroll container height — re-init when email appears (scroll container mounts)
     useEffect(() => {
@@ -423,11 +423,11 @@ export function EmailViewer({
         return () => ro.disconnect();
     }, [!!email]);
 
-    // Dynamically track the last thread's height so the spacer adapts
+    // Dynamically track the open thread's height so the spacer adapts
     useEffect(() => {
-        const el = bottomRef.current;
-        if (!el) { setLastThreadHeight(0); return; }
-        const update = () => setLastThreadHeight(el.offsetHeight);
+        const el = openThreadRef.current;
+        if (!el) { setOpenThreadHeight(0); return; }
+        const update = () => setOpenThreadHeight(el.offsetHeight);
         update();
         const ro = new ResizeObserver(update);
         ro.observe(el);
@@ -442,7 +442,7 @@ export function EmailViewer({
         if (!loading && threads.length > 0) {
             setTimeout(() => {
                 const container = scrollContainerRef.current;
-                const el = bottomRef.current;
+                const el = openThreadRef.current;
                 if (!container || !el) return;
                 const containerRect = container.getBoundingClientRect();
                 const elRect = el.getBoundingClientRect();
@@ -453,7 +453,7 @@ export function EmailViewer({
                 });
             }, 150);
         }
-    }, [loading, threads]);
+    }, [loading, threads, openKey]);
 
     if (!email) {
         return (
@@ -556,20 +556,20 @@ export function EmailViewer({
                     <div className="space-y-6">
                         {threads.map((thread, idx) => {
                             const key = threadKey(thread, idx);
-                            const isLast = idx === threads.length - 1;
+                            const isOpen = openKey === key;
                             return (
                                 <ThreadRow
                                     key={key}
                                     thread={thread}
-                                    isOpen={openKey === key}
+                                    isOpen={isOpen}
                                     onToggle={() => toggleThread(key, thread)}
                                     onReply={onReply}
-                                    scrollRef={isLast ? bottomRef : undefined}
+                                    scrollRef={isOpen ? openThreadRef : undefined}
                                 />
                             );
                         })}
                         {/* Dynamic spacer — accounts for space-y-6 gap (24px) + bottom padding (bottomInset + 24px) */}
-                        <div style={{ minHeight: Math.max(0, scrollAreaHeight - lastThreadHeight - SCROLL_TOP_OFFSET - 48 - bottomInset) }} />
+                        <div style={{ minHeight: Math.max(0, scrollAreaHeight - openThreadHeight - SCROLL_TOP_OFFSET - 48 - bottomInset) }} />
                     </div>
                 )}
             </div>
