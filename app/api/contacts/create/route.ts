@@ -28,14 +28,14 @@ interface CreateContactResponse {
     id: string;
     full_name: string;
     title: string;
-    company_id?: string;
-    linkedin_url?: string;
-    email?: string;
-    phone?: string;
-    city?: string;
-    country?: string;
-    twitter_handle?: string;
-    instagram_handle?: string;
+    company_id?: string | null;
+    linkedin_url?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    city?: string | null;
+    country?: string | null;
+    twitter_handle?: string | null;
+    instagram_handle?: string | null;
     created_at: string;
   };
   error?: string;
@@ -158,13 +158,14 @@ export async function POST(req: NextRequest) {
     };
 
     // Prepare data for insertion
+    const primaryEmail = body.email?.trim() || null;
+    const primaryPhone = body.phone?.trim() || null;
+
     const contactData = {
       full_name: body.fullName.trim(),
       headline: body.title.trim(),
       company_id: body.companyId === 'no-company' || !body.companyId ? null : body.companyId,
       linkedin_url: body.linkedinUrl?.trim() || null,
-      email: body.email?.trim() || null,
-      phone: body.phone?.trim() || null,
       city: body.city?.trim() || null,
       country: body.country?.trim() || null,
       twitter_handle: body.twitterProfile?.trim() ? extractTwitterHandle(body.twitterProfile.trim()) : null,
@@ -200,6 +201,44 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (primaryEmail) {
+      const { error: emailInsertError } = await supabase
+        .from('contact_emails')
+        .insert({
+          contact_id: contact.id,
+          email: primaryEmail,
+          is_primary: true,
+          label: null,
+        });
+
+      if (emailInsertError) {
+        console.error('Error inserting contact email:', emailInsertError);
+        return NextResponse.json(
+          { success: false, error: 'Contact was created, but failed to add primary email' },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (primaryPhone) {
+      const { error: phoneInsertError } = await supabase
+        .from('contact_phones')
+        .insert({
+          contact_id: contact.id,
+          phone: primaryPhone,
+          is_primary: true,
+          label: null,
+        });
+
+      if (phoneInsertError) {
+        console.error('Error inserting contact phone:', phoneInsertError);
+        return NextResponse.json(
+          { success: false, error: 'Contact was created, but failed to add primary phone' },
+          { status: 500 }
+        );
+      }
+    }
+
     const response: CreateContactResponse = {
       success: true,
       contact: {
@@ -208,8 +247,8 @@ export async function POST(req: NextRequest) {
         title: contact.headline,
         company_id: contact.company_id,
         linkedin_url: contact.linkedin_url,
-        email: contact.email,
-        phone: contact.phone,
+        email: primaryEmail,
+        phone: primaryPhone,
         city: contact.city,
         country: contact.country,
         twitter_handle: contact.twitter_handle,

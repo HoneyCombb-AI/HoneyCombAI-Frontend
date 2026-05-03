@@ -27,6 +27,16 @@ import type { CompanyListItem } from "@/types/companies"
 import { toast } from "sonner";
 import { AddCompanyDrawer } from "../Company/AddCompanyDrawer"
 
+const phonePattern = /^(?:\+\d{1,14}|\d{1,15})$/
+
+const sanitizePhoneInput = (value: string) => {
+  const startsWithPlus = value.startsWith("+")
+  const maxDigits = startsWithPlus ? 14 : 15
+  const digits = value.replace(/\D/g, "").slice(0, maxDigits)
+
+  return startsWithPlus ? `+${digits}` : digits
+}
+
 const contactSchema = z.object({
   fullName: z.string().trim().min(1, "Person's name is required"),
   title: z.string().trim().min(1, "Title is required"),
@@ -40,7 +50,12 @@ const contactSchema = z.object({
     .optional()
     .or(z.literal("")),
   email: z.string().trim().email("Please enter a valid email").optional().or(z.literal("")),
-  phone: z.string().trim().optional(),
+  phone: z.string()
+    .trim()
+    .refine((phone) => !phone || phonePattern.test(phone), {
+      message: "Phone number must use digits only, may start with +, and be up to 15 characters total"
+    })
+    .optional(),
   city: z.string().trim().optional(),
   country: z.string().trim().optional(),
   twitterProfile: z.string()
@@ -347,8 +362,13 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+1 (555) 123-4567"
-                    {...register("phone")}
+                    inputMode="tel"
+                    placeholder="+15551234567"
+                    {...register("phone", {
+                      onChange: (event) => {
+                        event.target.value = sanitizePhoneInput(event.target.value)
+                      }
+                    })}
                     aria-invalid={!!errors.phone}
                   />
                   {errors.phone && (
