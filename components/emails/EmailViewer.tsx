@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ContactEmail, ContactMessage, MessageThread, PendingApprovalItem, PendingDraftItem, RejectedApprovalItem } from "@/types/emails";
-import { Mail, Reply } from "lucide-react";
+import { Info, Mail, Reply } from "lucide-react";
 import { ScaledEmailPreview } from "./ScaledEmailPreview";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { EmailStatusBanner } from "./EmailStatusBanner";
 import DOMPurify from "dompurify";
@@ -118,6 +119,10 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
     const contactName = msgs.find(m => m.direction === "inbound")?.contact_email
         || thread.messages[0]?.contact_email
         || "";
+
+    const threadCc = Array.from(new Set(
+        msgs.flatMap(m => (m.direction === "outbound" && m.cc?.length) ? m.cc : [])
+    ));
 
     const [expandedIds, setExpandedIds] = useState<Set<string>>(
         () => new Set(lastMsg ? [lastMsg.id] : [])
@@ -239,11 +244,33 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
                         )}
                     </div>
 
-                    {/* Below line: Subject (left) + contact email (right) */}
+                    {/* Below line: Subject + CC icon (left) + contact email (right) */}
                     <div className="absolute left-14 right-0 top-1/2 mt-1.5 flex items-start justify-between gap-2 min-w-0">
-                        <span className="text-xs font-medium leading-none text-gray-800 group-hover:text-gray-800 transition-colors truncate">
-                            {subject}
-                        </span>
+                        <div className="flex items-center gap-1 min-w-0">
+                            <span className="text-xs font-medium leading-none text-gray-800 group-hover:text-gray-800 transition-colors truncate">
+                                {subject}
+                            </span>
+                            {threadCc.length > 0 && (
+                                <Tooltip delayDuration={100}>
+                                    <TooltipTrigger asChild onClick={e => e.stopPropagation()}>
+                                        <span className="shrink-0 cursor-default">
+                                            <Info className={`h-3 w-3 transition-colors ${isOpen ? "text-gray-700 hover:text-gray-900" : "text-gray-400 hover:text-gray-600"}`} />
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                        side="top"
+                                        className="bg-white border border-gray-200 text-gray-700 shadow-md max-w-[260px] [&>svg]:fill-white [&>svg]:stroke-gray-200"
+                                    >
+                                        <p className="text-xs font-semibold mb-1 text-gray-500">CC</p>
+                                        <div className="pb-1.5">
+                                            {threadCc.map(email => (
+                                                <p key={email} className="text-xs text-gray-700">{email}</p>
+                                            ))}
+                                        </div>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+                        </div>
                         {contactName && (
                             <span className="text-xs font-medium leading-none text-blue-500 group-hover:text-blue-600 transition-colors shrink-0">
                                 {contactName}

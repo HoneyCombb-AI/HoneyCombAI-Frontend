@@ -18,6 +18,7 @@ export interface EmailSnapshot {
     account_provider: 'gmail' | 'outlook';
     thread_id?: string;
     reply_to_message_id?: string;
+    cc?: string[];
 }
 
 export interface LinkedInSnapshot {

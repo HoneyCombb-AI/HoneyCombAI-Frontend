@@ -134,6 +134,7 @@ export async function POST(
                         contact_email: primaryEmail,
                         contact_name: contact?.full_name || '',
                         company_name: ((contact?.company as unknown as { name: string } | null)?.name) || '',
+                        cc: body.cc?.length ? body.cc : undefined,
                     },
                 });
 
@@ -160,6 +161,8 @@ export async function POST(
                 account_provider: body.account_provider,
                 thread_id: body.thread_id,
                 reply_to_message_id: body.reply_to_message_id,
+                to_email: body.to_email,
+                cc: body.cc?.length ? body.cc : undefined,
             },
             {
                 auth: {

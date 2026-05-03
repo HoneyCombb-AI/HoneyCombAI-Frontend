@@ -64,6 +64,8 @@ export async function PATCH(
                             account_provider: snapshot.account_provider,
                             thread_id: snapshot.thread_id,
                             reply_to_message_id: snapshot.reply_to_message_id,
+                            contact_email: snapshot.contact_email,
+                            cc: snapshot.cc?.length ? snapshot.cc : undefined,
                         },
                         {
                             auth: {

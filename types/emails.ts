@@ -56,6 +56,7 @@ export interface ContactMessage {
     sender_name: string;
     sender_email: string | null;
     contact_email: string | null;
+    cc?: string[] | null;
 }
 
 export interface MessageThread {
@@ -110,6 +111,7 @@ export interface SendEmailRequest {
     thread_id?: string;
     reply_to_message_id?: string;
     to_email?: string;
+    cc?: string[];
 }
 
 export interface SendEmailResponse {
