@@ -33,6 +33,69 @@ function threadKey(thread: MessageThread, idx: number): string {
     return thread.thread_id ?? thread.messages[0]?.id ?? String(idx);
 }
 
+function decodeEmailText(value: string): string {
+    if (typeof document !== "undefined") {
+        const textarea = document.createElement("textarea");
+        textarea.innerHTML = value;
+        return textarea.value;
+    }
+
+    return value
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;/g, "&")
+        .replace(/&quot;/g, "\"")
+        .replace(/&#39;/g, "'");
+}
+
+function htmlToPlainText(value: string): string {
+    const withBreaks = value
+        .replace(/<\s*br\s*\/?>/gi, "\n")
+        .replace(/<\/\s*(p|div|li|tr|blockquote|h[1-6])\s*>/gi, "\n");
+
+    return decodeEmailText(withBreaks.replace(/<[^>]*>/g, " "));
+}
+
+function normalizeEmailText(value: string): string {
+    return value
+        .replace(/\r\n?/g, "\n")
+        .replace(/\u00a0/g, " ")
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim();
+}
+
+function splitInboundReply(rawBody: string, isHtml: boolean) {
+    const plainBody = normalizeEmailText(isHtml ? htmlToPlainText(rawBody) : decodeEmailText(rawBody));
+    const quotePatterns = [
+        /\nOn .{1,300} wrote:\s*/i,
+        /\sOn (?:Mon|Tue|Wed|Thu|Fri|Sat|Sun),? .{1,300} wrote:\s*/i,
+        /\n-{2,}\s*Original Message\s*-{2,}\s*/i,
+        /\n_{5,}\s*/i,
+        /\nFrom:\s.+\n(?:Sent|Date):\s.+/i,
+        /\n> .+/,
+    ];
+
+    const quoteIndex = quotePatterns.reduce<number | null>((earliest, pattern) => {
+        const match = pattern.exec(plainBody);
+        if (!match) return earliest;
+        return earliest === null ? match.index : Math.min(earliest, match.index);
+    }, null);
+
+    if (quoteIndex === null) {
+        return {
+            replyText: plainBody,
+            quotedText: "",
+        };
+    }
+
+    return {
+        replyText: normalizeEmailText(plainBody.slice(0, quoteIndex)),
+        quotedText: normalizeEmailText(plainBody.slice(quoteIndex)),
+    };
+}
+
 // ── Expanded message panel ───────────────────────────────────────────────────
 
 interface MessagePanelProps {
@@ -48,7 +111,13 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
     const isHtml = /<[a-z][\s\S]*>/i.test(rawBody);
     const isFullHtml = /<(html|body|table|doctype)[\s>]/i.test(rawBody);
     const sanitizedBody = DOMPurify.sanitize(rawBody);
-    const plainPreview = rawBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90);
+    const inboundBody = !isSent ? splitInboundReply(rawBody, isHtml) : null;
+    const displayBody = inboundBody?.replyText || rawBody;
+    const plainPreview = (inboundBody?.replyText || rawBody)
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 90);
 
     return (
         <div className={`rounded-lg overflow-hidden text-sm border max-w-[75%] ${isSent
@@ -70,12 +139,28 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
 
             {isExpanded && (
                 <div className={`space-y-3 ${isSent ? "border-blue-100" : "border-gray-100"}`}>
-                    <div className={`overflow-hidden ${(!isHtml || !isFullHtml) ? "px-4 pt-3" : ""}`}>
-                        {isHtml ? (
+                    <div className={`overflow-hidden ${(!isHtml || !isFullHtml || inboundBody) ? "px-4 pt-3" : ""}`}>
+                        {inboundBody ? (
+                            <div className="space-y-3">
+                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap wrap-break-word">
+                                    {displayBody || <span className="italic text-gray-400">No content</span>}
+                                </p>
+                                {inboundBody.quotedText && (
+                                    <details className="rounded-md border border-gray-100 bg-gray-50/70 px-3 py-2 text-xs text-gray-500">
+                                        <summary className="cursor-pointer select-none font-medium text-gray-500">
+                                            Quoted text
+                                        </summary>
+                                        <p className="mt-2 whitespace-pre-wrap leading-relaxed wrap-break-word">
+                                            {inboundBody.quotedText}
+                                        </p>
+                                    </details>
+                                )}
+                            </div>
+                        ) : isHtml ? (
                             <ScaledEmailPreview html={sanitizedBody} />
                         ) : (
                             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap wrap-break-word">
-                                {rawBody || <span className="italic text-gray-400">No content</span>}
+                                {displayBody || <span className="italic text-gray-400">No content</span>}
                             </p>
                         )}
                     </div>
