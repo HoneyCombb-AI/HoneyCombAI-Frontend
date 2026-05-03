@@ -43,6 +43,7 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
     const isSent = message.direction === "outbound";
     const rawBody = (message.body || "").trim();
     const isHtml = /<[a-z][\s\S]*>/i.test(rawBody);
+    const isFullHtml = /<(html|body|table|doctype)[\s>]/i.test(rawBody);
     const sanitizedBody = DOMPurify.sanitize(rawBody);
     const plainPreview = rawBody.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 90);
 
@@ -66,16 +67,16 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
 
             {isExpanded && (
                 <div className={`space-y-3 ${isSent ? "border-blue-100" : "border-gray-100"}`}>
-                    <div className="overflow-hidden">
+                    <div className={`overflow-hidden ${(!isHtml || !isFullHtml) ? "px-4 pt-3" : ""}`}>
                         {isHtml ? (
                             <ScaledEmailPreview html={sanitizedBody} />
                         ) : (
-                            <p className="px-4 py-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap wrap-break-word">
+                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap wrap-break-word">
                                 {rawBody || <span className="italic text-gray-400">No content</span>}
                             </p>
                         )}
                     </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between px-4 pb-2 pt-2 border-t border-gray-100">
                         {message.replied_at ? (
                             <span className="text-xs text-gray-400">
                                 ✓ Replied {format(new Date(message.replied_at), "MMM d, h:mm a")}

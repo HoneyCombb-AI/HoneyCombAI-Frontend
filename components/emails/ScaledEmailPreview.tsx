@@ -66,6 +66,9 @@ export function ScaledEmailPreview({ html }: ScaledEmailPreviewProps) {
                 h1 { font-size: 1.5em; }
                 h2 { font-size: 1.25em; }
                 h3 { font-size: 1.125em; }
+
+                /* Remove bottom margin from the very last block element to prevent artificial bottom gap */
+                #email-content-wrapper > *:last-child { margin-bottom: 0 !important; }
             </style>
         `;
 
