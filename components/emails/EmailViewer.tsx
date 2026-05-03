@@ -65,12 +65,12 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
             )}
 
             {isExpanded && (
-                <div className={`px-4 py-3 space-y-3 ${isSent ? "border-blue-100" : "border-gray-100"}`}>
+                <div className={`space-y-3 ${isSent ? "border-blue-100" : "border-gray-100"}`}>
                     <div className="overflow-hidden">
                         {isHtml ? (
                             <ScaledEmailPreview html={sanitizedBody} />
                         ) : (
-                            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap wrap-break-word">
+                            <p className="px-4 py-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap wrap-break-word">
                                 {rawBody || <span className="italic text-gray-400">No content</span>}
                             </p>
                         )}
@@ -83,10 +83,10 @@ function MessagePanel({ message, isExpanded, onToggle, onReply }: MessagePanelPr
                         ) : <span />}
                         {!isSent && (
                             <Button
-                                variant="outline"
+                                variant="link"
                                 size="sm"
                                 onClick={(e) => { e.stopPropagation(); onReply(message); }}
-                                className="h-7 px-3 text-xs gap-1.5"
+                                className="h-7 px-3 text-xs gap-1.5 cursor-pointer"
                             >
                                 <Reply className="h-3 w-3" />
                                 Reply
