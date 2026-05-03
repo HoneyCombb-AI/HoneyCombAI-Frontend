@@ -311,10 +311,13 @@ export function EmailViewer({
     onResubmit,
     onDiscard,
 }: EmailViewerProps) {
-    const lastThreadKey = useMemo(
-        () => threads.length > 0 ? threadKey(threads[threads.length - 1], threads.length - 1) : null,
-        [threads]
-    );
+    const lastThreadKey = useMemo(() => {
+        if (threads.length === 0) return null;
+        const latest = threads.reduce((a, b) =>
+            new Date(a.last_sent_at) >= new Date(b.last_sent_at) ? a : b
+        );
+        return threadKey(latest, threads.indexOf(latest));
+    }, [threads]);
 
     const SCROLL_TOP_OFFSET = 15; // px breathing room from top edge
 

@@ -176,6 +176,16 @@ export function EmailComposer({
             ? "Continuing:"
             : "Subject:";
 
+    const threadCcs = useMemo(() => {
+        if (isReply && replyToMessage?.cc?.length) return replyToMessage.cc;
+        if (threadMode === "continue" && lastMessage?.cc?.length) return lastMessage.cc;
+        return [];
+    }, [isReply, replyToMessage, threadMode, lastMessage]);
+
+    const missingThreadCcs = useMemo(() => {
+        return threadCcs.filter(c => !cc.includes(c));
+    }, [threadCcs, cc]);
+
     const handleSend = async () => {
         if (!contact || !hasSubject || !hasBody || !senderProvider || !senderAccountId) return;
 
@@ -348,18 +358,32 @@ export function EmailComposer({
                                     className="flex-1 bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 shadow-sm h-9 px-3 focus-visible:ring-2 focus-visible:ring-gray-200 focus-visible:border-gray-300"
                                 />
                             )}
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowCc(v => {
-                                        if (!v) setTimeout(() => ccInputRef.current?.focus(), 50);
-                                        return !v;
-                                    });
-                                }}
-                                className="shrink-0 text-[11px] font-semibold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wide cursor-pointer"
-                            >
-                                {showCc ? "− CC" : "+ CC"}
-                            </button>
+                            <div className="flex items-center gap-4 shrink-0">
+                                {missingThreadCcs.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCc(prev => [...prev, ...missingThreadCcs]);
+                                            setShowCc(true);
+                                        }}
+                                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wide cursor-pointer"
+                                    >
+                                        + Reply All ({missingThreadCcs.length})
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowCc(v => {
+                                            if (!v) setTimeout(() => ccInputRef.current?.focus(), 50);
+                                            return !v;
+                                        });
+                                    }}
+                                    className="text-[11px] font-semibold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wide cursor-pointer"
+                                >
+                                    {showCc ? "− CC" : "+ CC"}
+                                </button>
+                            </div>
                         </div>
 
                         {/* CC row */}

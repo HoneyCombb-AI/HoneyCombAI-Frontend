@@ -208,6 +208,19 @@ export default function EmailsPage() {
         setSelectedId(id);
     }, []);
 
+    const handleThreadSelect = useCallback((message: ContactMessage | null) => {
+        setLastMessage(message);
+        setReplyToMessage(prev => {
+            if (!prev) return null;
+            if (!message) return null;
+
+            const prevThreadKey = prev.thread_id ?? prev.id;
+            const nextThreadKey = message.thread_id ?? message.id;
+
+            return prevThreadKey === nextThreadKey ? prev : null;
+        });
+    }, []);
+
     const fetchMessages = useCallback(async (contactId: string) => {
         try {
             setMessageLoading(true);
@@ -405,7 +418,7 @@ export default function EmailsPage() {
                             loading={messageLoading}
                             error={messageError}
                             onReply={setReplyToMessage}
-                            onThreadSelect={setLastMessage}
+                            onThreadSelect={handleThreadSelect}
                             onDraftSave={handleDraftSave}
                             bottomInset={composerHeight}
                             pendingDraft={pendingDraft}
