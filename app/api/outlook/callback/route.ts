@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { OUTLOOK_SCOPES } from "../scopes";
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({
                 client_id: clientId,
-                scope: "User.Read Mail.Read Mail.Send offline_access",
+                scope: OUTLOOK_SCOPES.join(" "),
                 code: code,
                 redirect_uri: redirectUri,
                 grant_type: "authorization_code",
