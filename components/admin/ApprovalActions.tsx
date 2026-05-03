@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X, Pencil, Loader2 } from "lucide-react";
+import { Check, X, Pencil, Loader2, AtSign } from "lucide-react";
 import type { ApprovalItem, ApprovalSnapshot, EmailSnapshot, LinkedInSnapshot } from "@/types/admin";
 import { isEmailSnapshot } from "@/types/admin";
 import { RichTextEditor } from "@/components/emails/RichTextEditor";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
 interface ApprovalActionsProps {
     item: ApprovalItem;
@@ -16,6 +19,64 @@ interface ApprovalActionsProps {
 }
 
 
+
+function CcTagInput({ cc, onChange }: { cc: string[]; onChange: (cc: string[]) => void }) {
+    const [input, setInput] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const addTag = useCallback((raw: string) => {
+        const email = raw.trim().toLowerCase();
+        if (!email) return;
+        if (!isValidEmail(email)) { toast.error(`"${email}" is not a valid email address`); return; }
+        if (cc.includes(email)) return;
+        onChange([...cc, email]);
+        setInput("");
+    }, [cc, onChange]);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+            e.preventDefault();
+            addTag(input);
+        } else if (e.key === "Backspace" && !input && cc.length > 0) {
+            onChange(cc.slice(0, -1));
+        }
+    };
+
+    return (
+        <div>
+            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <AtSign className="h-3 w-3" />
+                CC
+            </label>
+            <div
+                className="mt-1 flex flex-wrap items-center gap-1.5 min-h-[36px] px-2.5 py-1.5 rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring cursor-text"
+                onClick={() => inputRef.current?.focus()}
+            >
+                {cc.map(email => (
+                    <span key={email} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-800 text-xs font-medium">
+                        {email}
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onChange(cc.filter(c => c !== email)); }}
+                            className="hover:text-red-600 cursor-pointer"
+                        >
+                            <X className="h-3 w-3" />
+                        </button>
+                    </span>
+                ))}
+                <input
+                    ref={inputRef}
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={() => addTag(input)}
+                    className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-muted-foreground"
+                    placeholder={cc.length === 0 ? "Add CC recipients..." : ""}
+                />
+            </div>
+        </div>
+    );
+}
 
 export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsProps) {
     const [editing, setEditing] = useState(false);
@@ -74,6 +135,12 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
                                     className="mt-1"
                                 />
                             </div>
+                            <CcTagInput
+                                cc={isEmailSnapshot(editSnapshot) ? (editSnapshot.cc ?? []) : []}
+                                onChange={(cc) =>
+                                    setEditSnapshot((s) => ({ ...s, cc: cc.length ? cc : undefined } as EmailSnapshot))
+                                }
+                            />
                             <div>
                                 <label className="text-xs font-medium text-muted-foreground">Body</label>
                                 <div className="mt-1">
