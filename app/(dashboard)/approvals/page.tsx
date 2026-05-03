@@ -419,7 +419,7 @@ export default function ApprovalsPage() {
                     <p className="text-sm text-muted-foreground mt-4">Loading approvals...</p>
                 </div>
             ) : (
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0 overflow-hidden min-h-0">
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-0 overflow-hidden min-h-0">
                     {/* Left Panel - Item List */}
                     <div className="border-r bg-white lg:col-span-1 overflow-y-auto h-full min-h-0">
                         <ApprovalList
@@ -436,7 +436,7 @@ export default function ApprovalsPage() {
                     {/* Right Panel - Detail View */}
                     <div
                         ref={detailRef}
-                        className="lg:col-span-2 overflow-hidden h-full min-h-0 relative"
+                        className="lg:col-span-3 overflow-hidden h-full min-h-0 relative"
                         style={{ paddingBottom: activeTab === "pending" && selectedDetail ? actionsHeight : undefined }}
                     >
                         <ApprovalDetail item={selectedDetail} loading={detailLoading} />

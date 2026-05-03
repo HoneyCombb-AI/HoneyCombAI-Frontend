@@ -387,7 +387,7 @@ export default function EmailsPage() {
                     </p>
                 </div>
             ) : (
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0 overflow-hidden min-h-0">
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-0 overflow-hidden min-h-0">
                     {/* Email List */}
                     <div className="border-r bg-white lg:col-span-1 overflow-y-auto h-full min-h-0">
                         <EmailList
@@ -401,7 +401,7 @@ export default function EmailsPage() {
                     </div>
 
                     {/* Email Viewer */}
-                    <div ref={viewerRef} className="lg:col-span-2 overflow-hidden h-full min-h-0 relative">
+                    <div ref={viewerRef} className="lg:col-span-3 overflow-hidden h-full min-h-0 relative">
                         <EmailViewer
                             email={selectedEmail}
                             threads={threads}
