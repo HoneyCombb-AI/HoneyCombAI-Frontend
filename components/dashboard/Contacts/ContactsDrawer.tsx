@@ -194,15 +194,15 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
                 {/* Send Email Button */}
                 {((drawerContact?.emails?.length ?? 0) > 0 || drawerContact?.email) && (
                   <Button
-                    variant="outline"
+                    variant="link"
                     size="sm"
-                    className="gap-2 text-sm shrink-0"
+                    className="gap-2 text-xs shrink-0 cursor-pointer"
                     onClick={() => {
                       router.push(`/emails?contactId=${selectedContact.id}`);
                       onOpenChange(false);
                     }}
                   >
-                    <Send className="h-3 w-3" />
+                    <Send className="h-1.5 w-1.5" />
                     Send Email
                   </Button>
                 )}
