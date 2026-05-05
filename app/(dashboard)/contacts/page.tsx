@@ -216,6 +216,8 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const handleCompanyChange = (company: CompanyListItem) => {
     setSelectedCompanyId(company.id);
     setSelectedCompanyName(company.name);
+    setSearchTerm("");
+    setSearchInput("");
     setCurrentPage(1);
   };
 

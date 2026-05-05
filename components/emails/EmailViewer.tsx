@@ -438,6 +438,19 @@ export function EmailViewer({
         setOpenKey(lastThreadKey);
     }, [lastThreadKey]);
 
+    // Keep parent synchronized whenever openKey changes (auto-open, manual open, or close)
+    useEffect(() => {
+        if (!onThreadSelect) return;
+        if (!openKey) {
+            onThreadSelect(null);
+            return;
+        }
+        const thread = threads.find((t, i) => threadKey(t, i) === openKey);
+        if (!thread) return;
+        const msgs = thread.messages;
+        onThreadSelect(msgs.length > 0 ? msgs[msgs.length - 1] : null);
+    }, [openKey, threads, onThreadSelect]);
+
     useEffect(() => {
         if (!loading && threads.length > 0) {
             setTimeout(() => {
@@ -464,12 +477,7 @@ export function EmailViewer({
         );
     }
 
-    const toggleThread = (key: string, thread: MessageThread) => {
-        const isOpening = openKey !== key;
-        if (isOpening && onThreadSelect) {
-            const msgs = thread.messages;
-            onThreadSelect(msgs.length > 0 ? msgs[msgs.length - 1] : null);
-        }
+    const toggleThread = (key: string) => {
         setOpenKey(prev => prev === key ? null : key);
     };
 
@@ -563,7 +571,7 @@ export function EmailViewer({
                                     key={key}
                                     thread={thread}
                                     isOpen={isOpen}
-                                    onToggle={() => toggleThread(key, thread)}
+                                    onToggle={() => toggleThread(key)}
                                     onReply={onReply}
                                     scrollRef={isOpen ? openThreadRef : undefined}
                                 />

@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -32,6 +31,7 @@ import {
   type ContactEmailInput,
   type ContactPhoneInput,
 } from "@/lib/contacts/contact-details"
+import { useCallback, useEffect, useState } from "react"
 
 type ContactEmailFormRow = ContactEmailInput & { _uiKey: string }
 type ContactPhoneFormRow = ContactPhoneInput & { _uiKey: string }
@@ -130,13 +130,13 @@ const customDrawerStyles = {
 };
 
 export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onOpenChange }: AddContactDrawerProps) {
-  const [internalOpen, setInternalOpen] = React.useState(false)
-  const [companies, setCompanies] = React.useState<CompanyListItem[]>([])
-  const [loadingCompanies, setLoadingCompanies] = React.useState(false)
-  const [companyDrawerOpen, setCompanyDrawerOpen] = React.useState(false)
-  const [emails, setEmails] = React.useState<ContactEmailFormRow[]>(() => [createEmailRow(true)])
-  const [phones, setPhones] = React.useState<ContactPhoneFormRow[]>(() => [createPhoneRow(true)])
-  const [contactMethodErrors, setContactMethodErrors] = React.useState<Record<string, string>>({})
+  const [internalOpen, setInternalOpen] = useState(false)
+  const [companies, setCompanies] = useState<CompanyListItem[]>([])
+  const [loadingCompanies, setLoadingCompanies] = useState(false)
+  const [companyDrawerOpen, setCompanyDrawerOpen] = useState(false)
+  const [emails, setEmails] = useState<ContactEmailFormRow[]>(() => [createEmailRow(true)])
+  const [phones, setPhones] = useState<ContactPhoneFormRow[]>(() => [createPhoneRow(true)])
+  const [contactMethodErrors, setContactMethodErrors] = useState<Record<string, string>>({})
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
   const {
@@ -149,16 +149,18 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     resolver: zodResolver(contactSchema),
   })
 
-  const resetContactMethods = React.useCallback(() => {
+  const resetContactMethods = useCallback(() => {
     setEmails([createEmailRow(true)])
     setPhones([createPhoneRow(true)])
     setContactMethodErrors({})
   }, [])
 
-  // Fetch companies when drawer opens
-  React.useEffect(() => {
-    if (open && companies.length === 0) {
-      fetchCompanies()
+  // Fetch companies when drawer opens; reset contact methods when it closes
+  useEffect(() => {
+    if (open) {
+      if (companies.length === 0) fetchCompanies()
+    } else {
+      resetContactMethods()
     }
   }, [open])
 
@@ -209,7 +211,7 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     setCompanyDrawerOpen(false)
   }
 
-  const setPrimaryEmail = React.useCallback((index: number) => {
+  const setPrimaryEmail = useCallback((index: number) => {
     setEmails(prev => prev.map((email, i) => ({
       ...email,
       is_primary: i === index,
@@ -217,11 +219,11 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     })))
   }, [])
 
-  const addEmail = React.useCallback(() => {
+  const addEmail = useCallback(() => {
     setEmails(prev => [...prev, createEmailRow(prev.length === 0)])
   }, [])
 
-  const removeEmail = React.useCallback((index: number) => {
+  const removeEmail = useCallback((index: number) => {
     setEmails(prev => {
       const next = prev.filter((_, i) => i !== index)
       if (prev[index]?.is_primary && next.length > 0) {
@@ -231,11 +233,11 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     })
   }, [])
 
-  const updateEmail = React.useCallback((index: number, field: keyof ContactEmailInput, value: string | boolean) => {
+  const updateEmail = useCallback((index: number, field: keyof ContactEmailInput, value: string | boolean) => {
     setEmails(prev => prev.map((email, i) => i === index ? { ...email, [field]: value } : email))
   }, [])
 
-  const setPrimaryPhone = React.useCallback((index: number) => {
+  const setPrimaryPhone = useCallback((index: number) => {
     setPhones(prev => prev.map((phone, i) => ({
       ...phone,
       is_primary: i === index,
@@ -243,11 +245,11 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     })))
   }, [])
 
-  const addPhone = React.useCallback(() => {
+  const addPhone = useCallback(() => {
     setPhones(prev => [...prev, createPhoneRow(prev.length === 0)])
   }, [])
 
-  const removePhone = React.useCallback((index: number) => {
+  const removePhone = useCallback((index: number) => {
     setPhones(prev => {
       const next = prev.filter((_, i) => i !== index)
       if (prev[index]?.is_primary && next.length > 0) {
@@ -257,7 +259,7 @@ export function AddContactDrawer({ onSubmit, children, open: controlledOpen, onO
     })
   }, [])
 
-  const updatePhone = React.useCallback((index: number, field: keyof ContactPhoneInput, value: string | boolean) => {
+  const updatePhone = useCallback((index: number, field: keyof ContactPhoneInput, value: string | boolean) => {
     setPhones(prev => prev.map((phone, i) => i === index ? { ...phone, [field]: value } : phone))
   }, [])
 
