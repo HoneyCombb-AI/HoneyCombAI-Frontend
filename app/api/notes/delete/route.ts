@@ -15,7 +15,6 @@ export async function DELETE(req: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -24,7 +23,6 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Apply rate limiting
     const rateLimit = await rateLimiters.TANPerUser(user.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -44,10 +42,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Parse request body
     const body: DeleteNoteRequest = await req.json();
 
-    // Validate request structure
     if (!body.id || typeof body.id !== 'string') {
       return NextResponse.json(
         { success: false, error: 'id is required and must be a valid string' },
@@ -55,7 +51,24 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Delete the note
+    // Check ownership before deleting
+    const { data: existingNote, error: fetchError } = await supabase
+      .from('notes')
+      .select('id, created_by')
+      .eq('id', body.id)
+      .single();
+
+    if (fetchError || !existingNote) {
+      return NextResponse.json({ success: false, error: 'Note not found' }, { status: 404 });
+    }
+
+    if (existingNote.created_by !== null && existingNote.created_by !== user.id) {
+      return NextResponse.json(
+        { success: false, error: 'You can only delete your own notes' },
+        { status: 403 }
+      );
+    }
+
     const { error: deleteError } = await supabase
       .from('notes')
       .delete()
@@ -69,10 +82,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const response: DeleteNoteResponse = {
-      success: true
-    };
-
+    const response: DeleteNoteResponse = { success: true };
     return NextResponse.json(response);
 
   } catch (error: unknown) {

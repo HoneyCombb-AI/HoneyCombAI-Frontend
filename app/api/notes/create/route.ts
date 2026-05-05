@@ -8,6 +8,20 @@ interface CreateNoteRequest {
   content: string;
 }
 
+interface InsertedNoteProfile {
+  full_name: string | null;
+}
+
+interface InsertedNoteRow {
+  id: string;
+  notable_type: string;
+  notable_id: string;
+  content: string;
+  created_at: string;
+  created_by: string | null;
+  profiles: InsertedNoteProfile[] | InsertedNoteProfile | null;
+}
+
 interface CreateNoteResponse {
   success: boolean;
   note?: {
@@ -16,6 +30,8 @@ interface CreateNoteResponse {
     notable_id: string;
     content: string;
     created_at: string;
+    created_by: string | null;
+    created_by_name: string | null;
   };
   error?: string;
 }
@@ -24,7 +40,6 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -33,7 +48,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Apply rate limiting
     const rateLimit = await rateLimiters.TANPerUser(user.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -53,10 +67,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse request body
     const body: CreateNoteRequest = await req.json();
 
-    // Validate request structure
     if (!body.notable_type || !['contact', 'company'].includes(body.notable_type)) {
       return NextResponse.json(
         { success: false, error: 'notable_type must be either "contact" or "company"' },
@@ -78,18 +90,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Insert the note
-    const { data: insertedNote, error: insertError } = await supabase
+    const { data, error: insertError } = await supabase
       .from('notes')
       .insert({
         notable_type: body.notable_type,
         notable_id: body.notable_id,
         content: body.content.trim(),
       })
-      .select('*')
+      .select('*, profiles(full_name)')
       .single();
 
-    if (insertError) {
+    const insertedNote = data as InsertedNoteRow | null;
+
+    if (insertError || !insertedNote) {
       console.error('Error inserting note:', insertError);
       return NextResponse.json(
         { success: false, error: 'Failed to create note' },
@@ -105,6 +118,10 @@ export async function POST(req: NextRequest) {
         notable_id: insertedNote.notable_id,
         content: insertedNote.content,
         created_at: insertedNote.created_at,
+        created_by: insertedNote.created_by,
+        created_by_name: Array.isArray(insertedNote.profiles)
+            ? insertedNote.profiles[0]?.full_name ?? null
+            : insertedNote.profiles?.full_name ?? null,
       }
     };
 

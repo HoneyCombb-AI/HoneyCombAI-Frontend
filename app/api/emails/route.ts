@@ -10,6 +10,11 @@ export async function GET(req: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '20');
         const tagsParam = searchParams.get('tags');
         const tags = tagsParam ? tagsParam.split(',') : null;
+        const hasReplyParam = searchParams.get('hasReply');
+        const hasReply = hasReplyParam === 'true' ? true : null;
+        const userId = searchParams.get('userId') || null;
+        const showRejectedParam = searchParams.get('showRejected');
+        const showRejected = showRejectedParam === 'true' ? true : null;
 
         // Get authenticated user to fetch their organization
         const supabase = await createClient();
@@ -41,7 +46,10 @@ export async function GET(req: NextRequest) {
             p_page: page,
             p_limit: limit,
             p_search: search,
-            p_tag_names: tags
+            p_tag_names: tags,
+            p_has_reply: hasReply,
+            p_user_id: userId,
+            p_show_rejected: showRejected,
         });
 
         if (error) {
@@ -56,17 +64,15 @@ export async function GET(req: NextRequest) {
         const total = emails.length > 0 ? Number((emails[0] as any).total_count) : 0;
         const hasMore = (page * limit) < total;
 
-        // Ensure all draft fields are present (in case RPC hasn't been updated yet)
         const normalizedEmails = emails.map((e: any) => ({
-            ...e,
-            draft_id: e.draft_id ?? null,
-            draft_subject: e.draft_subject ?? null,
-            draft_body: e.draft_body ?? null,
-            draft_status: e.draft_status ?? null,
-            draft_position: e.draft_position ?? null,
-            email_account_name: e.email_account_name ?? null,
+            id: e.id,
+            full_name: e.full_name ?? 'Unknown',
+            last_message_subject: e.last_message_subject ?? null,
+            last_interaction_at: e.last_interaction_at ?? null,
+            has_draft: e.has_draft ?? false,
             email_account_id: e.email_account_id ?? null,
             has_pending_approval: e.has_pending_approval ?? false,
+            has_rejected: e.has_rejected ?? false,
         }));
 
         const response: EmailsResponse = {

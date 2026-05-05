@@ -10,7 +10,16 @@ import { EmailList } from "@/components/emails/EmailList";
 import { EmailViewer } from "@/components/emails/EmailViewer";
 import { EmailFilters } from "@/components/emails/EmailFilters";
 import { EmailComposer } from "@/components/emails/EmailComposer";
-import { type EmailsResponse, type ContactEmail, type ContactMessage } from "@/types/emails";
+import {
+    type EmailsResponse,
+    type ContactEmail,
+    type ContactMessage,
+    type ContactEmailAddress,
+    type MessageThread,
+    type RejectedApprovalItem,
+    type PendingApprovalItem,
+    type PendingDraftItem,
+} from "@/types/emails";
 import { useSearchParams } from "next/navigation";
 
 export default function EmailsPage() {
@@ -29,12 +38,15 @@ export default function EmailsPage() {
     const [emails, setEmails] = useState<ContactEmail[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(false);
-    const [messages, setMessages] = useState<ContactMessage[]>([]);
+    const [threads, setThreads] = useState<MessageThread[]>([]);
     const [replyToMessage, setReplyToMessage] = useState<ContactMessage | null>(null);
+    const [contactEmails, setContactEmails] = useState<ContactEmailAddress[]>([]);
+    const [pendingDraft, setPendingDraft] = useState<PendingDraftItem | null>(null);
+    const [pendingApproval, setPendingApproval] = useState<PendingApprovalItem | null>(null);
+    const [rejectedApproval, setRejectedApproval] = useState<RejectedApprovalItem | null>(null);
     const [senderAccountId, setSenderAccountId] = useState<string | null>(null);
     const [senderEmail, setSenderEmail] = useState<string | null>(null);
     const [senderProvider, setSenderProvider] = useState<"gmail" | "outlook" | null>(null);
-    const [senderFirstName, setSenderFirstName] = useState<string | null>(null);
     const viewerRef = useRef<HTMLDivElement>(null);
     const composerRef = useRef<HTMLDivElement>(null);
     const [composerHeight, setComposerHeight] = useState(0);
@@ -46,10 +58,13 @@ export default function EmailsPage() {
     // Filter State
     const [search, setSearch] = useState("");
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
+    const [hasReply, setHasReply] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    const [showRejected, setShowRejected] = useState(false);
     const [page, setPage] = useState(1);
     const LIMIT = 20;
 
-    // Debounce search so we don't spam API
+    // Debounce search
     const [debouncedSearch, setDebouncedSearch] = useState(search);
     useEffect(() => {
         const normalized = search.toLowerCase();
@@ -71,6 +86,9 @@ export default function EmailsPage() {
                 params: {
                     search: debouncedSearch.trim().toLowerCase() || undefined,
                     tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+                    hasReply: hasReply || undefined,
+                    userId: selectedUserId || undefined,
+                    showRejected: showRejected || undefined,
                     page: currentPage,
                     limit: LIMIT,
                 },
@@ -84,7 +102,6 @@ export default function EmailsPage() {
             } else {
                 setEmails(result.emails);
                 setPage(1);
-                // Auto-select first email if none selected
                 if (result.emails.length > 0 && !selectedId) {
                     setSelectedId(result.emails[0].id);
                 }
@@ -101,22 +118,20 @@ export default function EmailsPage() {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [debouncedSearch, selectedTags, page, selectedId]);
+    }, [debouncedSearch, selectedTags, hasReply, selectedUserId, showRejected, page, selectedId]);
 
     // Initial Load & Filter Change
     useEffect(() => {
         if (!authLoading) {
-            // Reset and fetch when filters change
             fetchEmails(false);
         }
-    }, [authLoading, debouncedSearch, selectedTags]); // Removing fetchEmails from dependency to avoid loop if not handled carefully, relying on stable fetchEmails or just these deps
+    }, [authLoading, debouncedSearch, selectedTags, hasReply, selectedUserId, showRejected]);
 
     // Handle ?contactId= query param — auto-select or inject the contact
     useEffect(() => {
         if (!contactIdParam || authLoading || loading) return;
         if (handledContactIdRef.current === contactIdParam) return;
 
-        // Check if contact is already in the list — move to top
         const existing = emails.find(e => e.id === contactIdParam);
         if (existing) {
             setEmails(prev => [existing, ...prev.filter(e => e.id !== contactIdParam)]);
@@ -125,7 +140,6 @@ export default function EmailsPage() {
             return;
         }
 
-        // Not in list — fetch contact info and inject as a new entry
         let cancelled = false;
         const injectContact = async () => {
             try {
@@ -136,19 +150,12 @@ export default function EmailsPage() {
                     const minimalContact: ContactEmail = {
                         id: c.id,
                         full_name: c.full_name || '',
-                        first_name: c.first_name || null,
-                        last_name: c.last_name || null,
-                        email: c.email || '',
-                        company_name: c.company_name || c.current_company || '',
-                        tags: [],
-                        draft_id: null,
-                        draft_subject: null,
-                        draft_body: null,
-                        draft_status: null,
-                        draft_position: null,
-                        email_account_name: null,
+                        last_message_subject: null,
+                        last_interaction_at: null,
                         email_account_id: null,
                         has_pending_approval: false,
+                        has_rejected: false,
+                        has_draft: false,
                     };
                     setEmails(prev => {
                         if (prev.some(e => e.id === minimalContact.id)) return prev;
@@ -163,7 +170,7 @@ export default function EmailsPage() {
         return () => { cancelled = true; };
     }, [contactIdParam, authLoading, loading, emails]);
 
-    // Fetch current user's sender account to check ownership
+    // Fetch current user's sender account
     useEffect(() => {
         const loadSender = async () => {
             try {
@@ -172,27 +179,22 @@ export default function EmailsPage() {
                     setSenderAccountId(res.data.account_id);
                     setSenderEmail(res.data.email ?? null);
                     setSenderProvider(res.data.provider ?? null);
-                    setSenderFirstName(res.data.first_name ?? null);
                 } else {
                     setSenderAccountId(null);
                     setSenderEmail(null);
                     setSenderProvider(null);
-                    setSenderFirstName(null);
                 }
             } catch {
                 setSenderAccountId(null);
                 setSenderEmail(null);
                 setSenderProvider(null);
-                setSenderFirstName(null);
             }
         };
         loadSender();
     }, []);
 
     const loadMore = () => {
-        if (!loadingMore && hasMore) {
-            fetchEmails(true);
-        }
+        if (!loadingMore && hasMore) fetchEmails(true);
     };
 
     const selectedEmail = useMemo(
@@ -200,13 +202,23 @@ export default function EmailsPage() {
         [emails, selectedId]
     );
 
-    const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-    const isLastInbound = lastMessage ? lastMessage.direction !== "outbound" : false;
-    const activeReplyMessage = replyToMessage ?? (isLastInbound ? lastMessage : null);
-    const composerMode = activeReplyMessage ? "reply" : lastMessage ? "followup" : "compose";
+    const [lastMessage, setLastMessage] = useState<ContactMessage | null>(null);
 
     const handleSelectEmail = useCallback((id: string) => {
         setSelectedId(id);
+    }, []);
+
+    const handleThreadSelect = useCallback((message: ContactMessage | null) => {
+        setLastMessage(message);
+        setReplyToMessage(prev => {
+            if (!prev) return null;
+            if (!message) return null;
+
+            const prevThreadKey = prev.thread_id ?? prev.id;
+            const nextThreadKey = message.thread_id ?? message.id;
+
+            return prevThreadKey === nextThreadKey ? prev : null;
+        });
     }, []);
 
     const fetchMessages = useCallback(async (contactId: string) => {
@@ -214,18 +226,37 @@ export default function EmailsPage() {
             setMessageLoading(true);
             setMessageError(null);
             const response = await axios.get(`/api/emails/${contactId}/messages`);
-            setMessages(response.data.messages || []);
 
-            // Merge pending approval data into the contact entry
+            const draft    = response.data.draft            || null;
             const approval = response.data.pending_approval || null;
+            const rejected = response.data.rejected_approval || null;
+
+            const loadedThreads: MessageThread[] = response.data.threads || [];
+            setThreads(loadedThreads);
+            setContactEmails(response.data.contact_emails || []);
+
+            // Default selected thread to the latest one
+            if (loadedThreads.length > 0) {
+                const latest = loadedThreads.reduce((a, b) =>
+                    new Date(a.last_sent_at) >= new Date(b.last_sent_at) ? a : b
+                );
+                const msgs = latest.messages;
+                setLastMessage(msgs.length > 0 ? msgs[msgs.length - 1] : null);
+            } else {
+                setLastMessage(null);
+            }
+            setPendingDraft(draft);
+            setPendingApproval(approval);
+            setRejectedApproval(rejected);
+
+            // Sync status flags back into the list item
             setEmails(prev => prev.map(e => {
                 if (e.id !== contactId) return e;
                 return {
                     ...e,
                     has_pending_approval: !!approval,
-                    pending_approval_id: approval?.id || null,
-                    pending_approval_subject: approval?.subject || null,
-                    pending_approval_body: approval?.body || null,
+                    has_rejected: !!rejected,
+                    has_draft: !!draft,
                 };
             }));
         } catch (e: unknown) {
@@ -234,7 +265,7 @@ export default function EmailsPage() {
             } else {
                 setMessageError(e instanceof Error ? e.message : "Failed to load messages");
             }
-            setMessages([]);
+            setThreads([]);
         } finally {
             setMessageLoading(false);
         }
@@ -244,11 +275,10 @@ export default function EmailsPage() {
         if (selectedEmail?.id) {
             fetchMessages(selectedEmail.id);
         } else {
-            setMessages([]);
+            setThreads([]);
         }
     }, [selectedEmail?.id, fetchMessages]);
 
-    // Handle saving email draft edits
     const handleDraftSave = useCallback(async (
         draftId: string,
         updates: { subject?: string; body?: string }
@@ -258,20 +288,37 @@ export default function EmailsPage() {
             draft_id: draftId,
             ...updates,
         });
-        // Update local state in-place
-        setEmails(prev => prev.map(e =>
-            e.id === selectedEmail.id
-                ? {
-                    ...e,
-                    draft_subject: updates.subject ?? e.draft_subject,
-                    draft_body: updates.body ?? e.draft_body,
-                }
-                : e
-        ));
+        setPendingDraft(prev => prev ? {
+            ...prev,
+            subject: updates.subject ?? prev.subject,
+            body: updates.body ?? prev.body,
+        } : null);
     }, [selectedEmail]);
 
+    const handleResubmit = useCallback(async (data: { subject: string; body: string; contact_email_id: string; contact_email: string; cc: string[] }) => {
+        if (!selectedEmail || !rejectedApproval) throw new Error("No rejected approval");
+        await axios.patch(`/api/emails/${selectedEmail.id}/approval/${rejectedApproval.id}`, data);
+        await fetchMessages(selectedEmail.id);
+    }, [selectedEmail, rejectedApproval, fetchMessages]);
+
+    const handleDiscard = useCallback(async () => {
+        if (!selectedEmail || !rejectedApproval) return;
+        await axios.delete(`/api/emails/${selectedEmail.id}/approval/${rejectedApproval.id}`);
+        setRejectedApproval(null);
+        setEmails(prev => prev.map(e =>
+            e.id === selectedEmail.id ? { ...e, has_rejected: false } : e
+        ));
+    }, [selectedEmail, rejectedApproval]);
+
+    // Clear viewer state on contact change
     useEffect(() => {
+        setThreads([]);
+        setContactEmails([]);
+        setLastMessage(null);
         setReplyToMessage(null);
+        setPendingDraft(null);
+        setPendingApproval(null);
+        setRejectedApproval(null);
     }, [selectedId]);
 
     useEffect(() => {
@@ -297,7 +344,6 @@ export default function EmailsPage() {
         updateComposerRect();
     }, [updateComposerRect, selectedId]);
 
-    // Recalculate after sidebar transition (200ms CSS transition)
     useEffect(() => {
         const timer = setTimeout(() => updateComposerRect(), 220);
         return () => clearTimeout(timer);
@@ -330,15 +376,18 @@ export default function EmailsPage() {
 
     return (
         <div className="flex h-screen w-full flex-col bg-gray-50/50 overflow-hidden">
-            {/* Filter Bar - Fixed at top */}
-            <div className="shrink-0 border-b bg-white shadow-sm">
-                <EmailFilters
-                    search={search}
-                    onSearchChange={setSearch}
-                    selectedTags={selectedTags}
-                    onTagsChange={setSelectedTags}
-                />
-            </div>
+            <EmailFilters
+                search={search}
+                onSearchChange={setSearch}
+                selectedTags={selectedTags}
+                onTagsChange={setSelectedTags}
+                hasReply={hasReply}
+                onHasReplyChange={setHasReply}
+                selectedUserId={selectedUserId}
+                onUserIdChange={setSelectedUserId}
+                showRejected={showRejected}
+                onShowRejectedChange={setShowRejected}
+            />
 
             {authLoading || (loading && page === 1) ? (
                 <div className="flex-1 flex flex-col items-center justify-center">
@@ -348,8 +397,8 @@ export default function EmailsPage() {
                     </p>
                 </div>
             ) : (
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-0 overflow-hidden min-h-0">
-                    {/* Email List - Independently scrollable */}
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-0 overflow-hidden min-h-0">
+                    {/* Email List */}
                     <div className="border-r bg-white lg:col-span-1 overflow-y-auto h-full min-h-0">
                         <EmailList
                             emails={emails}
@@ -361,21 +410,27 @@ export default function EmailsPage() {
                         />
                     </div>
 
-                    {/* Email Viewer - Independently scrollable */}
-                    <div ref={viewerRef} className="lg:col-span-2 overflow-hidden h-full min-h-0 relative">
+                    {/* Email Viewer */}
+                    <div ref={viewerRef} className="lg:col-span-3 overflow-hidden h-full min-h-0 relative">
                         <EmailViewer
                             email={selectedEmail}
-                            messages={messages}
+                            threads={threads}
                             loading={messageLoading}
                             error={messageError}
                             onReply={setReplyToMessage}
+                            onThreadSelect={handleThreadSelect}
                             onDraftSave={handleDraftSave}
                             bottomInset={composerHeight}
+                            pendingDraft={pendingDraft}
+                            pendingApproval={pendingApproval}
+                            rejectedApproval={rejectedApproval}
+                            contactEmails={contactEmails}
+                            onResubmit={handleResubmit}
+                            onDiscard={handleDiscard}
                         />
 
                         {selectedEmail && (
                             (() => {
-                                // Only show composer if this contact is handled by the current user's email account
                                 const isOwnAccount = !selectedEmail.email_account_id || selectedEmail.email_account_id === senderAccountId;
                                 if (!isOwnAccount) return null;
                                 return (
@@ -386,14 +441,15 @@ export default function EmailsPage() {
                                     >
                                         <EmailComposer
                                             contact={selectedEmail}
-                                            replyToMessage={activeReplyMessage}
+                                            contactEmails={contactEmails}
+                                            replyToMessage={replyToMessage}
+                                            lastMessage={lastMessage}
                                             lastMessageSubject={lastMessage?.subject}
-                                            mode={composerMode}
                                             onSent={() => fetchMessages(selectedEmail.id)}
+                                            onClearReply={() => setReplyToMessage(null)}
                                             senderEmail={senderEmail}
                                             senderProvider={senderProvider}
                                             senderAccountId={senderAccountId}
-                                            senderFirstName={senderFirstName}
                                         />
                                     </div>
                                 );

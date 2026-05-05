@@ -14,13 +14,15 @@ export async function GET(req: NextRequest) {
         const status = searchParams.get('status') || 'pending';
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '20');
+        const submittedBy = searchParams.get('submitted_by') || null;
 
-        // Single RPC call — handles admin check, pagination, all joins
-        const { data, error } = await supabase.rpc('get_approval_queue', {
+        // Single RPC call — handles admin check, pagination, slim list fields only
+        const { data, error } = await supabase.rpc('get_approval_queue_list', {
             p_user_id: user.id,
             p_status: status,
             p_page: page,
             p_limit: limit,
+            p_submitted_by: submittedBy,
         });
 
         if (error) {
@@ -43,6 +45,7 @@ export async function GET(req: NextRequest) {
             page: data?.page ?? page,
             limit: data?.limit ?? limit,
             hasMore: data?.has_more ?? false,
+            submitters: data?.submitters ?? [],
         });
 
     } catch (error: unknown) {

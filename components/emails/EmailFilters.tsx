@@ -1,24 +1,36 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Search, Filter, X, Plus, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Search, X, Plus, Loader2, ChevronDown, Tag, MessageSquare, User, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import type { OrgSender } from "@/types/emails";
+
+interface TagOption {
+    name: string;
+    color: string;
+}
 
 interface EmailFiltersProps {
     search: string;
     onSearchChange: (value: string) => void;
     selectedTags: string[];
     onTagsChange: (tags: string[]) => void;
-}
-
-interface TagOption {
-    name: string;
-    color: string;
+    hasReply: boolean;
+    onHasReplyChange: (value: boolean) => void;
+    selectedUserId: string | null;
+    onUserIdChange: (userId: string | null) => void;
+    showRejected: boolean;
+    onShowRejectedChange: (value: boolean) => void;
 }
 
 export function EmailFilters({
@@ -26,19 +38,94 @@ export function EmailFilters({
     onSearchChange,
     selectedTags,
     onTagsChange,
+    hasReply,
+    onHasReplyChange,
+    selectedUserId,
+    onUserIdChange,
+    showRejected,
+    onShowRejectedChange,
 }: EmailFiltersProps) {
-    const [availableTags, setAvailableTags] = useState<TagOption[]>([]);
-    const [isOpen, setIsOpen] = useState(false);
     const router = useRouter();
 
-    // New Email popover state
+    // Which filter slots are visible on the bar
+    const [showTags, setShowTags] = useState(false);
+    const [showUser, setShowUser] = useState(false);
+
+    // Tags — lazy, fetched once on first open
+    const [tags, setTags] = useState<TagOption[]>([]);
+    const [tagsLoading, setTagsLoading] = useState(false);
+    const tagsFetchedRef = useRef(false);
+
+    // Senders — lazy, fetched once on first open
+    const [senders, setSenders] = useState<OrgSender[]>([]);
+    const [sendersLoading, setSendersLoading] = useState(false);
+    const sendersFetchedRef = useRef(false);
+
+    // New email compose popover
     const [composeOpen, setComposeOpen] = useState(false);
     const [contactSearch, setContactSearch] = useState("");
-    const [contactResults, setContactResults] = useState<{id: string; full_name: string; email: string | null; company_name: string | null}[]>([]);
+    const [contactResults, setContactResults] = useState<{ id: string; full_name: string; email: string | null; company_name: string | null }[]>([]);
     const [searching, setSearching] = useState(false);
     const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Debounced contact search
+    const fetchTags = () => {
+        if (tagsFetchedRef.current) return;
+        tagsFetchedRef.current = true;
+        setTagsLoading(true);
+        axios.get("/api/tags")
+            .then(res => setTags(res.data ?? []))
+            .catch(() => { tagsFetchedRef.current = false; })
+            .finally(() => setTagsLoading(false));
+    };
+
+    const fetchSenders = () => {
+        if (sendersFetchedRef.current) return;
+        sendersFetchedRef.current = true;
+        setSendersLoading(true);
+        axios.get("/api/emails/senders")
+            .then(res => setSenders(res.data.senders ?? []))
+            .catch(() => { sendersFetchedRef.current = false; })
+            .finally(() => setSendersLoading(false));
+    };
+
+    const activateTagsFilter = () => {
+        setShowTags(true);
+        fetchTags();
+    };
+
+    const removeTagsFilter = () => {
+        setShowTags(false);
+        onTagsChange([]);
+    };
+
+    const activateUserFilter = () => {
+        setShowUser(true);
+        fetchSenders();
+    };
+
+    const removeUserFilter = () => {
+        setShowUser(false);
+        onUserIdChange(null);
+    };
+
+    const toggleTag = (name: string) => {
+        onTagsChange(selectedTags.includes(name)
+            ? selectedTags.filter(t => t !== name)
+            : [...selectedTags, name]);
+    };
+
+    const clearAll = () => {
+        removeTagsFilter();
+        removeUserFilter();
+        onHasReplyChange(false);
+        onShowRejectedChange(false);
+    };
+
+    const hasActiveFilters = showTags || hasReply || showUser || showRejected;
+
+    const selectedSender = senders.find(s => s.user_id === selectedUserId) ?? null;
+
+    // Debounced contact search for compose popover
     useEffect(() => {
         if (!composeOpen || contactSearch.trim().length < 2) {
             setContactResults([]);
@@ -56,13 +143,9 @@ export function EmailFilters({
                 });
                 setContactResults(res.data.contacts || []);
             } catch (err) {
-                if (!axios.isCancel(err)) {
-                    setContactResults([]);
-                }
+                if (!axios.isCancel(err)) setContactResults([]);
             } finally {
-                if (!controller.signal.aborted) {
-                    setSearching(false);
-                }
+                if (!controller.signal.aborted) setSearching(false);
             }
         }, 300);
         return () => {
@@ -78,148 +161,221 @@ export function EmailFilters({
         router.push(`/emails?contactId=${contactId}`);
     }, [router]);
 
-    useEffect(() => {
-        axios.get("/api/tags")
-            .then(res => setAvailableTags(res.data))
-            .catch(err => console.error("Failed to load tags", err));
-    }, []);
-
-    const toggleTag = (tagName: string) => {
-        if (selectedTags.includes(tagName)) {
-            onTagsChange(selectedTags.filter(t => t !== tagName));
-        } else {
-            onTagsChange([...selectedTags, tagName]);
-        }
-    };
-
     return (
-        <div className="p-4 flex items-center gap-2 border-b">
-            {/* Search Bar - Reduced Width */}
-            <div className="relative w-[280px] shrink-0">
+        <div className="sticky top-0 z-40 flex flex-wrap items-center gap-2 border-b bg-white px-6 py-3 shadow-sm">
+
+            {/* Search */}
+            <div className="relative shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    placeholder="Search..."
+                    placeholder="Search contacts..."
                     value={search}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    className="pl-9 bg-white w-full"
+                    onChange={e => onSearchChange(e.target.value)}
+                    className="pl-9 w-56 h-9 bg-white"
                 />
             </div>
 
-            <div className="h-6 w-px bg-gray-200 mx-1 shrink-0" />
+            <div className="h-6 w-px bg-gray-200 shrink-0" />
 
-            {/* Filter Controls & Tags */}
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="relative shrink-0">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsOpen(!isOpen)}
-                        className={cn(
-                            "h-9 border-dashed cursor-pointer",
-                            selectedTags.length > 0 && "bg-blue-50 border-blue-200 text-blue-700"
-                        )}
-                    >
-                        <Filter className="mr-2 h-3.5 w-3.5" />
-                        Tags
-                        {selectedTags.length > 0 && (
-                            <span className="ml-1.5 rounded-md bg-blue-100 px-1.5 py-0.5 text-xs">
-                                {selectedTags.length}
-                            </span>
-                        )}
+            {/* Filter type selector */}
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 text-sm">
+                        <Search className="h-4 w-4" />
+                        Filter
+                        <ChevronDown className="h-3 w-3" />
                     </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                    <DropdownMenuItem
+                        onSelect={showTags ? removeTagsFilter : activateTagsFilter}
+                        className={cn(showTags && "bg-accent")}
+                    >
+                        <Tag className="h-4 w-4 mr-2" />
+                        Tags
+                        {showTags && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onSelect={() => onHasReplyChange(!hasReply)}
+                        className={cn(hasReply && "bg-accent")}
+                    >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Has Reply
+                        {hasReply && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onSelect={showUser ? removeUserFilter : activateUserFilter}
+                        className={cn(showUser && "bg-accent")}
+                    >
+                        <User className="h-4 w-4 mr-2" />
+                        By User
+                        {showUser && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        onSelect={() => onShowRejectedChange(!showRejected)}
+                        className={cn(showRejected && "bg-accent")}
+                    >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Rejected
+                        {showRejected && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
 
-                    {/* Simple Dropdown Content */}
-                    {isOpen && (
-                        <>
-                            <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setIsOpen(false)}
-                            />
-                            <div className="absolute top-full mt-2 left-0 z-20 w-64 rounded-md border bg-white p-2 shadow-md animate-in fade-in-0 zoom-in-95">
-                                <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground mb-1">
-                                    Filter by Tags
-                                </p>
-                                {availableTags.length === 0 ? (
-                                    <p className="px-2 py-2 text-sm text-center text-muted-foreground">
-                                        No tags available
-                                    </p>
-                                ) : (
-                                    <div className="max-h-64 overflow-y-auto space-y-1">
-                                        {availableTags.map((tag) => {
-                                            const isSelected = selectedTags.includes(tag.name);
-                                            return (
-                                                <div
-                                                    key={tag.name}
-                                                    onClick={() => toggleTag(tag.name)}
-                                                    className={cn(
-                                                        "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer",
-                                                        isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted"
-                                                    )}
-                                                >
-                                                    <div className={cn(
-                                                        "h-4 w-4 rounded-sm border flex items-center justify-center",
-                                                        isSelected ? "bg-primary border-primary text-primary-foreground" : "border-primary"
-                                                    )}>
-                                                        {isSelected && <span className="text-[10px]">✓</span>}
-                                                    </div>
-                                                    <span
-                                                        className="h-2 w-2 rounded-full"
-                                                        style={{ backgroundColor: tag.color }}
-                                                    />
-                                                    <span>{tag.name}</span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                {/* Selected Tags Display - Scrollable */}
-                {selectedTags.length > 0 && (
-                    <>
-                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-1 min-w-0 px-1">
-                            {selectedTags.map(tag => (
-                                <Badge
-                                    key={tag}
-                                    variant="secondary"
-                                    className="h-7 rounded-sm px-2 font-normal whitespace-nowrap shrink-0"
-                                >
-                                    {tag}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-auto w-auto p-0 ml-1.5 hover:bg-transparent text-muted-foreground hover:text-foreground"
-                                        onClick={() => toggleTag(tag)}
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </Button>
-                                </Badge>
-                            ))}
-                        </div>
-
-                        {/* Reset Button - Fixed */}
+            {/* Tags sub-filter — appears when Tags is activated */}
+            {showTags && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() => onTagsChange([])}
-                            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground whitespace-nowrap shrink-0 ml-1"
+                            className={cn(
+                                "gap-2 text-sm",
+                                selectedTags.length > 0 && "bg-blue-50 border-blue-300 text-blue-700"
+                            )}
                         >
-                            Reset
+                            <Tag className="h-4 w-4" />
+                            Tags
+                            {selectedTags.length > 0 && (
+                                <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium">
+                                    {selectedTags.length}
+                                </span>
+                            )}
+                            <ChevronDown className="h-3 w-3" />
                         </Button>
-                    </>
-                )}
-            </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                        {tagsLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : tags.length === 0 ? (
+                            <p className="px-3 py-2 text-sm text-muted-foreground text-center">No tags available</p>
+                        ) : (
+                            tags.map(tag => {
+                                const active = selectedTags.includes(tag.name);
+                                return (
+                                    <DropdownMenuItem
+                                        key={tag.name}
+                                        onSelect={e => { e.preventDefault(); toggleTag(tag.name); }}
+                                        className={cn(active && "bg-accent")}
+                                    >
+                                        <span
+                                            className="h-2 w-2 rounded-full mr-2 shrink-0"
+                                            style={{ backgroundColor: tag.color }}
+                                        />
+                                        {tag.name}
+                                        {active && <span className="ml-auto text-xs">✓</span>}
+                                    </DropdownMenuItem>
+                                );
+                            })
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
 
-            {/* New Email Button - Right side */}
+            {/* Has Reply — inline toggle button */}
+            {hasReply && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 text-sm bg-blue-50 border-blue-300 text-blue-700"
+                    onClick={() => onHasReplyChange(false)}
+                >
+                    <MessageSquare className="h-4 w-4" />
+                    Has Reply
+                    <X className="h-3 w-3" />
+                </Button>
+            )}
+
+            {/* Rejected — inline toggle button */}
+            {showRejected && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 text-sm bg-red-50 border-red-300 text-red-700"
+                    onClick={() => onShowRejectedChange(false)}
+                >
+                    <XCircle className="h-4 w-4" />
+                    Rejected
+                    <X className="h-3 w-3" />
+                </Button>
+            )}
+
+            {/* By User sub-filter — appears when User is activated */}
+            {showUser && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                                "gap-2 text-sm",
+                                selectedUserId && "bg-blue-50 border-blue-300 text-blue-700"
+                            )}
+                        >
+                            <User className="h-4 w-4" />
+                            {selectedSender ? selectedSender.display_name : "By User"}
+                            <ChevronDown className="h-3 w-3" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-64">
+                        {sendersLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : senders.length === 0 ? (
+                            <p className="px-3 py-2 text-sm text-muted-foreground text-center">No senders found</p>
+                        ) : (
+                            <>
+                                {selectedUserId && (
+                                    <DropdownMenuItem onSelect={() => onUserIdChange(null)}>
+                                        <X className="h-4 w-4 mr-2 text-muted-foreground" />
+                                        Clear
+                                    </DropdownMenuItem>
+                                )}
+                                {senders.map(sender => {
+                                    const active = selectedUserId === sender.user_id;
+                                    return (
+                                        <DropdownMenuItem
+                                            key={sender.user_id}
+                                            onSelect={() => onUserIdChange(active ? null : sender.user_id)}
+                                            className={cn(active && "bg-accent")}
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium truncate">{sender.display_name}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{sender.email}</p>
+                                            </div>
+                                            {active && <span className="ml-2 text-xs shrink-0">✓</span>}
+                                        </DropdownMenuItem>
+                                    );
+                                })}
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
+
+            {/* Clear All — only when any filter is active */}
+            {hasActiveFilters && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAll}
+                    className="gap-2 text-sm text-gray-500"
+                >
+                    <X className="h-4 w-4" />
+                    Clear All
+                </Button>
+            )}
+
+            {/* New Email */}
             <div className="relative shrink-0 ml-auto">
                 <Button
                     variant="outline"
                     size="sm"
-                    className="gap-2 text-sm"
-                    onClick={() => setComposeOpen(!composeOpen)}
+                    className="h-9 gap-2 text-sm"
+                    onClick={() => setComposeOpen(o => !o)}
                 >
                     <Plus className="h-3.5 w-3.5" />
                     New
@@ -227,10 +383,7 @@ export function EmailFilters({
 
                 {composeOpen && (
                     <>
-                        <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => { setComposeOpen(false); setContactSearch(""); setContactResults([]); }}
-                        />
+                        <div className="fixed inset-0 z-10" onClick={() => { setComposeOpen(false); setContactSearch(""); setContactResults([]); }} />
                         <div className="absolute top-full mt-2 right-0 z-20 w-80 rounded-md border bg-white p-3 shadow-lg animate-in fade-in-0 zoom-in-95">
                             <p className="text-xs font-medium text-muted-foreground mb-2">Search for a contact</p>
                             <div className="relative">
@@ -238,19 +391,19 @@ export function EmailFilters({
                                 <Input
                                     placeholder="Type a name or email..."
                                     value={contactSearch}
-                                    onChange={(e) => setContactSearch(e.target.value)}
+                                    onChange={e => setContactSearch(e.target.value)}
                                     className="pl-9 text-sm"
                                     autoFocus
                                 />
                             </div>
-                            <div className="mt-2 max-h-56 overflow-y-auto">
+                            <div className="mt-2 max-h-56 overflow-y-auto no-scrollbar">
                                 {searching ? (
                                     <div className="flex items-center justify-center py-4">
                                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                                     </div>
                                 ) : contactResults.length > 0 ? (
                                     <div className="space-y-0.5">
-                                        {contactResults.map((c) => (
+                                        {contactResults.map(c => (
                                             <Button
                                                 key={c.id}
                                                 type="button"

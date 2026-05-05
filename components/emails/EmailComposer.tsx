@@ -1,60 +1,94 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { ContactEmail } from "@/types/emails";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { ContactEmail, ContactMessage, ContactEmailAddress } from "@/types/emails";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "./RichTextEditor";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronUp, Loader2, Sparkles, Send, ShieldCheck } from "lucide-react";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { ChevronUp, Loader2, Send, ShieldCheck, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios from "axios";
 import { toast } from "sonner";
-import { formatDistanceToNowStrict } from "date-fns";
 import { useAuth } from "@/lib/auth-context";
 
-interface ContactMessage {
-    id: string;
-    subject: string;
-    thread_id: string;
-    message_id: string;
-    direction: string;
-}
+type ThreadMode = "continue" | "new";
 
 interface EmailComposerProps {
     contact: ContactEmail | null;
+    contactEmails?: ContactEmailAddress[];
     replyToMessage?: ContactMessage | null;
+    lastMessage?: ContactMessage | null;
     lastMessageSubject?: string;
-    mode?: "compose" | "reply" | "followup";
     onSent: () => void;
+    onClearReply?: () => void;
     senderEmail?: string | null;
     senderProvider?: "gmail" | "outlook" | null;
     senderAccountId?: string | null;
-    senderFirstName?: string | null;
+    prefillSubject?: string | null;
+    prefillBody?: string | null;
 }
 
 export function EmailComposer({
     contact,
+    contactEmails = [],
     replyToMessage,
+    lastMessage,
     lastMessageSubject,
-    mode = "compose",
     onSent,
+    onClearReply,
     senderEmail = null,
     senderProvider = null,
     senderAccountId = null,
-    senderFirstName = null,
+    prefillSubject = null,
+    prefillBody = null,
 }: EmailComposerProps) {
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
-    const [generating, setGenerating] = useState(false);
+    const [selectedContactEmailId, setSelectedContactEmailId] = useState("");
+    const [threadMode, setThreadMode] = useState<ThreadMode>("continue");
+    const [cc, setCc] = useState<string[]>([]);
+    const [ccInput, setCcInput] = useState("");
+    const [showCc, setShowCc] = useState(false);
     const [sending, setSending] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const ccInputRef = useRef<HTMLInputElement>(null);
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
-    const { role, approvalRequired } = useAuth();
-    const needsApproval = approvalRequired && role === 'user';
 
-    const resolvedMode = replyToMessage ? "reply" : mode;
-    const isReply = resolvedMode === "reply";
+    const selectedContactEmail = useMemo(
+        () => contactEmails.find(ce => ce.id === selectedContactEmailId) ?? null,
+        [contactEmails, selectedContactEmailId]
+    );
+    const toEmail = selectedContactEmail?.email ?? "";
+
+    // Reset recipient to primary when contact changes
+    useEffect(() => {
+        const primary = contactEmails.find(ce => ce.is_primary) ?? contactEmails[0] ?? null;
+        setSelectedContactEmailId(primary?.id ?? "");
+    }, [contact?.id, contactEmails]);
+
+    // Reset threadMode, CC when contact changes
+    useEffect(() => {
+        setThreadMode("continue");
+        setCc([]);
+        setCcInput("");
+        setShowCc(false);
+    }, [contact?.id]);
+
+    // Auto-switch to new thread when selected email differs from last sent address
+    useEffect(() => {
+        if (!lastMessage?.contact_email || !toEmail) return;
+        if (toEmail !== lastMessage.contact_email) {
+            setThreadMode("new");
+        }
+    }, [toEmail, lastMessage?.contact_email]);
+
+    const { role, approvalRequired } = useAuth();
+    const needsApproval = approvalRequired && role === "user";
+
+    const isReply = !!replyToMessage;
+    const hasHistory = !!lastMessage;
 
     const defaultSubject = useMemo(() => {
         if (isReply && replyToMessage) {
@@ -62,13 +96,13 @@ export function EmailComposer({
                 ? replyToMessage.subject
                 : `Re: ${replyToMessage.subject}`;
         }
-        if (lastMessageSubject) {
+        if (lastMessageSubject && threadMode === "continue") {
             return lastMessageSubject.startsWith("Re:")
                 ? lastMessageSubject
                 : `Re: ${lastMessageSubject}`;
         }
         return "";
-    }, [isReply, replyToMessage?.subject, lastMessageSubject]);
+    }, [isReply, replyToMessage?.subject, lastMessageSubject, threadMode]);
 
     useEffect(() => {
         const contactId = contact?.id ?? null;
@@ -77,10 +111,10 @@ export function EmailComposer({
         const replyChanged = prevReplyIdRef.current !== replyId;
 
         if (contactChanged) {
-            setBody("");
+            setBody(prefillBody || "");
         }
 
-        setSubject(defaultSubject);
+        setSubject(prefillSubject || defaultSubject);
 
         if (replyChanged && replyId) {
             setIsOpen(true);
@@ -88,56 +122,38 @@ export function EmailComposer({
 
         prevContactIdRef.current = contactId;
         prevReplyIdRef.current = replyId;
-    }, [contact?.id, replyToMessage?.id, defaultSubject]);
+    }, [contact?.id, replyToMessage?.id, defaultSubject, prefillSubject, prefillBody]);
 
+    const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-    // Add signature to body
-    const addSignature = useCallback((content: string) => {
-        const rawName = senderFirstName?.replace(/[<>]/g, "") || "HoneyComb";
-        const signature = `<p>${rawName}</p>`;
-        return content + signature;
-    }, [senderFirstName]);
-
-    // Generate AI draft
-    const handleGenerateDraft = async () => {
-        if (!contact) return;
-        if (!senderProvider || !senderAccountId) {
-            toast.error("Connect an email account to generate drafts.");
+    const addCcTag = (raw: string) => {
+        const candidates = raw.split(/[,;\s]+/).map(s => s.trim()).filter(s => s.length > 0);
+        const valid = candidates.filter(isValidEmail);
+        if (valid.length === 0) {
+            setCcInput("");
             return;
         }
-
-        setGenerating(true);
-        try {
-            const response = await axios.post(`/api/emails/${contact.id}/generate-draft`);
-
-            setSubject(response.data.subject);
-            setBody(addSignature(response.data.body));
-
-            toast.success("Draft generated successfully!");
-        } catch (error) {
-            console.error("Error generating draft:", error);
-
-            if (axios.isAxiosError(error)) {
-                const status = error.response?.status;
-                if (status === 403) {
-                    const detail = error.response?.data?.detail || "No connected email account.";
-                    toast.error(detail);
-                    return;
-                }
-                if (status === 429) {
-                    const resetTime = error.response?.data?.resetTime;
-                    const retryIn = resetTime
-                        ? formatDistanceToNowStrict(new Date(resetTime), { addSuffix: true })
-                        : "later";
-                    toast.error(`Rate limit exceeded. Try again ${retryIn}.`);
-                    return;
-                }
+        setCc(prev => {
+            const next = [...prev];
+            for (const e of valid) {
+                if (!next.includes(e)) next.push(e);
             }
+            return next;
+        });
+        setCcInput("");
+    };
 
-            toast.error("Failed to generate draft");
-        } finally {
-            setGenerating(false);
+    const handleCcKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+            e.preventDefault();
+            addCcTag(ccInput);
+        } else if (e.key === "Backspace" && ccInput === "") {
+            setCc(prev => prev.slice(0, -1));
         }
+    };
+
+    const handleCcBlur = () => {
+        if (ccInput.trim()) addCcTag(ccInput);
     };
 
     const bodyText = useMemo(() => {
@@ -147,31 +163,35 @@ export function EmailComposer({
             .replace(/\s+/g, " ")
             .trim();
     }, [body]);
+
     const hasSubject = subject.trim().length > 0;
     const hasBody = bodyText.length > 0;
-    const canSend = hasSubject && hasBody && !!senderProvider && !!senderAccountId && !sending;
+    const canSend = hasSubject && hasBody && !!senderProvider && !!senderAccountId && !!selectedContactEmailId && !sending;
 
-    const subjectLabel =
-        subject.trim() ||
-        (resolvedMode === "reply"
-            ? "Reply draft"
-            : resolvedMode === "followup"
-                ? "Follow-up draft"
-                : "New message");
-    const triggerLabel =
-        resolvedMode === "reply"
-            ? "Reply"
-            : resolvedMode === "followup"
-                ? "Continuing"
-                : "Compose";
-    const subjectFieldLabel =
-        resolvedMode === "reply"
-            ? "Replying:"
-            : resolvedMode === "followup"
-                ? "Continuing:"
-                : "Subject:";
+    // Thread IDs derived from mode
+    const sendThreadId = isReply
+        ? (replyToMessage?.thread_id ?? null)
+        : threadMode === "continue" ? (lastMessage?.thread_id ?? null) : null;
+    const sendReplyToMessageId = isReply 
+        ? (replyToMessage?.message_id ?? null) 
+        : threadMode === "continue" ? (lastMessage?.message_id ?? null) : null;
 
-    // Send email
+    const subjectFieldLabel = isReply
+        ? "Replying:"
+        : hasHistory && threadMode === "continue"
+            ? "Continuing:"
+            : "Subject:";
+
+    const threadCcs = useMemo(() => {
+        if (isReply && replyToMessage?.cc?.length) return replyToMessage.cc;
+        if (threadMode === "continue" && lastMessage?.cc?.length) return lastMessage.cc;
+        return [];
+    }, [isReply, replyToMessage, threadMode, lastMessage]);
+
+    const missingThreadCcs = useMemo(() => {
+        return threadCcs.filter(c => !cc.includes(c));
+    }, [threadCcs, cc]);
+
     const handleSend = async () => {
         if (!contact || !hasSubject || !hasBody || !senderProvider || !senderAccountId) return;
 
@@ -182,21 +202,25 @@ export function EmailComposer({
                 body,
                 account_id: senderAccountId,
                 account_provider: senderProvider,
-                thread_id: replyToMessage?.thread_id,
-                reply_to_message_id: replyToMessage?.message_id,
+                thread_id: sendThreadId || undefined,
+                reply_to_message_id: sendReplyToMessageId || undefined,
+                contact_email_id: selectedContactEmailId || undefined,
+                contact_email: toEmail || undefined,
+                cc: cc.length ? cc : undefined,
             });
 
-            if (res.data?.status === 'queued_for_approval') {
+            if (res.data?.status === "queued_for_approval") {
                 toast.success("Email submitted for admin approval");
             } else {
                 toast.success("Email sent successfully!");
             }
             onSent();
-            // Clear form after send
             setSubject("");
             setBody("");
+            setCc([]);
+            setCcInput("");
+            setShowCc(false);
         } catch (error: unknown) {
-            console.error("Error sending email:", error);
             const errorMessage = axios.isAxiosError(error)
                 ? error.response?.data?.detail || "Failed to send email"
                 : "Failed to send email";
@@ -211,52 +235,204 @@ export function EmailComposer({
     return (
         <div className="w-full border-t border-gray-200 bg-white/95 shadow-[0_-12px_30px_-20px_rgba(15,23,42,0.45)] backdrop-blur supports-backdrop-filter:bg-white/80">
             <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-                <CollapsibleTrigger
-                    type="button"
-                    className="group flex w-full items-center justify-between gap-3 px-6 py-3 text-left transition-colors hover:bg-gray-50"
+                {/* Header — custom div so mode toggle buttons can nest without HTML violations */}
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setIsOpen(v => !v)}
+                    onKeyDown={(e) => e.key === "Enter" && setIsOpen(v => !v)}
+                    className="flex w-full flex-col px-6 py-3 text-left transition-colors hover:bg-gray-50 cursor-pointer select-none"
                 >
-                    <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                            {triggerLabel}
+                    {/* Row 1: mode label (left) + collapse chevron (right) */}
+                    <div className="flex items-center justify-between w-full">
+                        {/* Collapsed: plain text label. Expanded: interactive toggle */}
+                        {!isOpen ? (
+                            <span className={`text-[11px] font-semibold uppercase tracking-wide ${isReply ? "text-blue-600" : "text-gray-500"}`}>
+                                {isReply ? "↩ Reply" : hasHistory ? (threadMode === "continue" ? "Continue" : "New Message") : "Compose"}
+                            </span>
+                        ) : isReply ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">↩ Reply</span>
+                                {onClearReply && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); onClearReply(); }}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                        aria-label="Cancel reply"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                )}
+                            </div>
+                        ) : hasHistory ? (
+                            <div
+                                className="flex items-center bg-gray-100 rounded-full p-0.5"
+                                onClick={e => e.stopPropagation()}
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() => setThreadMode("continue")}
+                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+                                        threadMode === "continue" ? "bg-white text-gray-800 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                                    }`}
+                                >
+                                    Continue
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setThreadMode("new")}
+                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors ${
+                                        threadMode === "new" ? "bg-white text-gray-800 shadow-sm" : "text-gray-400 hover:text-gray-600"
+                                    }`}
+                                >
+                                    New
+                                </button>
+                            </div>
+                        ) : (
+                            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Compose</span>
+                        )}
+
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <span className="hidden sm:inline">{isOpen ? "Collapse" : "Expand"}</span>
+                            <ChevronUp className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`} />
                         </div>
-                        {senderEmail && (
-                            <div className="text-xs text-gray-500">
-                                From: {senderEmail}
-                                {senderProvider ? ` (${senderProvider})` : ""}
-                            </div>
-                        )}
-                        {!isOpen && (
-                            <div className="truncate text-sm font-medium text-gray-900">
-                                {subjectLabel}
-                            </div>
-                        )}
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span className="hidden sm:inline">
-                            {isOpen ? "Collapse" : "Expand"}
-                        </span>
-                        <ChevronUp
-                            className={`h-4 w-4 transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
-                        />
-                    </div>
-                </CollapsibleTrigger>
+
+                    {/* Row 2: From (left) + To (right) */}
+                    {(senderEmail || toEmail) && (
+                        <div className="flex items-center justify-between w-full mt-2">
+                            <div className="text-xs text-gray-400">
+                                From:{" "}
+                                <span className="font-semibold text-gray-700">
+                                    {senderEmail ?? "—"}
+                                    {senderProvider && (
+                                        <span className="ml-1 font-normal text-gray-400">({senderProvider})</span>
+                                    )}
+                                </span>
+                            </div>
+                            {/* Collapsed: plain text. Expanded: select if multiple emails */}
+                            {!isOpen || contactEmails.length <= 1 ? (
+                                toEmail ? (
+                                    <div className="hidden sm:block text-xs text-gray-400">
+                                        To:{" "}
+                                        <span className="font-semibold text-gray-700">{toEmail}</span>
+                                    </div>
+                                ) : null
+                            ) : (
+                                <div
+                                    className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400"
+                                    onClick={e => e.stopPropagation()}
+                                >
+                                    To:{" "}
+                                    <Select value={selectedContactEmailId} onValueChange={setSelectedContactEmailId}>
+                                        <SelectTrigger
+                                            size="sm"
+                                            className="h-auto py-0.5 px-2 text-xs font-semibold text-gray-700 border-gray-200 bg-white shadow-none gap-1"
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {contactEmails.map(ce => (
+                                                <SelectItem key={ce.id} value={ce.id}>
+                                                    {ce.email}{ce.label ? ` (${ce.label})` : ""}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                </div>
 
                 <CollapsibleContent className="border-t border-gray-200 bg-white overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
                     <div className="max-h-[70vh] overflow-y-auto overflow-x-hidden">
-                        {/* Header / Subject Line */}
+                        {/* Subject */}
                         <div className="px-6 py-3 border-b flex items-center gap-4 bg-gray-50">
-                            <span className="text-sm font-medium text-gray-500 w-20">
+                            <span className="text-sm font-medium text-gray-500 w-20 shrink-0">
                                 {subjectFieldLabel}
                             </span>
-                            <Input
-                                placeholder="Subject"
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                                className="flex-1 bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 shadow-sm h-9 px-3 focus-visible:ring-2 focus-visible:ring-gray-200 focus-visible:border-gray-300"
-                            />
+                            {isReply || (hasHistory && threadMode === "continue") ? (
+                                <span className="flex-1 text-sm font-medium text-gray-700 truncate px-3 py-1.5">
+                                    {subject}
+                                </span>
+                            ) : (
+                                <Input
+                                    placeholder="Subject"
+                                    value={subject}
+                                    onChange={(e) => setSubject(e.target.value)}
+                                    className="flex-1 bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 shadow-sm h-9 px-3 focus-visible:ring-2 focus-visible:ring-gray-200 focus-visible:border-gray-300"
+                                />
+                            )}
+                            <div className="flex items-center gap-4 shrink-0">
+                                {missingThreadCcs.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCc(prev => [...prev, ...missingThreadCcs]);
+                                            setShowCc(true);
+                                        }}
+                                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-wide cursor-pointer"
+                                    >
+                                        + Reply All ({missingThreadCcs.length})
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowCc(v => {
+                                            if (!v) setTimeout(() => ccInputRef.current?.focus(), 50);
+                                            return !v;
+                                        });
+                                    }}
+                                    className="text-[11px] font-semibold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wide cursor-pointer"
+                                >
+                                    {showCc ? "− CC" : "+ CC"}
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Editor Area */}
+                        {/* CC row */}
+                        {showCc && (
+                            <div className="px-6 py-2.5 border-b bg-gray-50 flex items-start gap-4">
+                                <span className="text-sm font-medium text-gray-500 w-20 shrink-0 pt-1.5">CC:</span>
+                                <div
+                                    className="flex-1 flex flex-wrap items-center gap-1.5 min-h-9 bg-white border border-gray-200 rounded-md px-2 py-1.5 shadow-sm cursor-text focus-within:ring-2 focus-within:ring-gray-200 focus-within:border-gray-300"
+                                    onClick={() => ccInputRef.current?.focus()}
+                                >
+                                    {cc.map((email) => (
+                                        <span
+                                            key={email}
+                                            className="inline-flex items-center gap-1 bg-gray-100 border border-gray-200 text-gray-700 text-xs font-medium rounded px-2 py-0.5"
+                                        >
+                                            {email}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setCc(prev => prev.filter(c => c !== email)); }}
+                                                className="text-gray-400 hover:text-gray-600 transition-colors leading-none"
+                                                aria-label={`Remove ${email}`}
+                                            >
+                                                <X className="h-2.5 w-2.5" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    <input
+                                        ref={ccInputRef}
+                                        type="email"
+                                        multiple
+                                        value={ccInput}
+                                        onChange={e => setCcInput(e.target.value)}
+                                        onKeyDown={handleCcKeyDown}
+                                        onBlur={handleCcBlur}
+                                        placeholder={cc.length === 0 ? "Add CC recipients…" : ""}
+                                        className="flex-1 min-w-[140px] text-sm text-gray-900 placeholder:text-gray-400 bg-transparent outline-none border-none py-0.5"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Editor */}
                         <div className="p-4 bg-white">
                             <RichTextEditor
                                 value={body}
@@ -265,23 +441,8 @@ export function EmailComposer({
                             />
                         </div>
 
-                        {/* Action Bar */}
-                        <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleGenerateDraft}
-                                disabled={generating || sending}
-                                className="border border-purple-200 text-purple-700 bg-white hover:bg-purple-50 hover:border-purple-300 hover:text-purple-800 cursor-pointer transition-all duration-200 focus:ring-1 focus:ring-purple-200 shadow-sm"
-                            >
-                                {generating ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Sparkles className="h-4 w-4 mr-2" />
-                                )}
-                                AI Generate
-                            </Button>
-
+                        {/* Action bar */}
+                        <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-end">
                             <Button
                                 onClick={handleSend}
                                 disabled={!canSend}

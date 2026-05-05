@@ -105,7 +105,6 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
   const fontSizeClass = React.useMemo(() => getFontSizeClass(), [getFontSizeClass])
 
   const analysis = aiAnalysis?.[0]
-
   if (!analysis) return null
 
   // -- Parse Complex Fields --
@@ -116,8 +115,13 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
   const accountOverviewHasData = analysis.role || recentDevelopments.length > 0 || strategicPriorities.length > 0 || analysis.network
   const insightsHasData = analysis.contact_insights_summary || analysis.professional_interests || analysis.communication_style || analysis.decision_indicators || analysis.motivations_triggers || analysis.influence_level
 
+  // Don't render the section at all if there's nothing to show
+  if (!accountOverviewHasData && !insightsHasData) return null
+
   return (
-    <div className={`space-y-4`}>
+    <>
+      <Separator className="my-5" />
+      <div className={`space-y-4`}>
 
       {/* Standard Header */}
       <div className="flex items-center gap-2 px-1">
@@ -163,9 +167,11 @@ export function SocialIntelligenceSection({ aiAnalysis }: SocialIntelligenceSect
           </AccordionItem>
         )}
       </Accordion>
-    </div>
+      </div>
+    </>
   )
 }
+
 
 // ============================================================================
 // WHY REACH OUT SECTION (STANDALONE) -- REWRITTEN FOR NEW FLAT DATA
@@ -193,7 +199,9 @@ Explicit Pain Points: ${analysis.explicit_pain_points || '-'}
     `.trim()
 
   return (
-    <div className={`space-y-3`}>
+    <>
+      <Separator className="my-4" />
+      <div className={`space-y-3`}>
 
       {/* Standard Header */}
       <div className="flex items-center justify-between px-1">
@@ -232,7 +240,8 @@ Explicit Pain Points: ${analysis.explicit_pain_points || '-'}
           <DetailRow label="Explicit Pain Points" value={analysis.explicit_pain_points} className={fontSizeClass} />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }
 

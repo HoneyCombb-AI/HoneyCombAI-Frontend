@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
 interface DeleteTagsRequest {
-  tag_ids: string[];
+  tag_ids?: string[];
+  name?: string;           // global delete: remove this tag name from all contacts
+  taggable_type?: string;
 }
 
 interface DeleteTagsResponse {
@@ -48,29 +50,36 @@ export async function DELETE(req: NextRequest) {
     // Parse request body
     const body: DeleteTagsRequest = await req.json();
 
-    // Validate request structure
-    if (!body.tag_ids || !Array.isArray(body.tag_ids) || body.tag_ids.length === 0) {
+    let deleteQuery;
+
+    if (body.name && body.taggable_type) {
+      // Global delete: remove this tag name from every contact that has it
+      if (!['contact', 'company'].includes(body.taggable_type)) {
+        return NextResponse.json(
+          { success: false, error: 'taggable_type must be contact or company' },
+          { status: 400 }
+        );
+      }
+      deleteQuery = supabase
+        .from('tags')
+        .delete({ count: 'exact' })
+        .eq('name', body.name.trim().toLowerCase())
+        .eq('taggable_type', body.taggable_type);
+    } else if (body.tag_ids && Array.isArray(body.tag_ids) && body.tag_ids.length > 0) {
+      // Existing behaviour: delete specific tag IDs
+      deleteQuery = supabase
+        .from('tags')
+        .delete({ count: 'exact' })
+        .in('id', body.tag_ids);
+    } else {
       return NextResponse.json(
-        { success: false, error: 'tag_ids array is required and must not be empty' },
+        { success: false, error: 'Provide either tag_ids array or name + taggable_type for global delete' },
         { status: 400 }
       );
     }
 
-    // Validate each tag ID
-    for (const tagId of body.tag_ids) {
-      if (!tagId || typeof tagId !== 'string') {
-        return NextResponse.json(
-          { success: false, error: 'All tag IDs must be valid strings' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Perform batch delete in a single database call
-    const { error: deleteError, count } = await supabase
-      .from('tags')
-      .delete({ count: 'exact' })
-      .in('id', body.tag_ids);
+    // Perform delete
+    const { error: deleteError, count } = await deleteQuery;
 
     if (deleteError) {
       console.error('Error deleting tags:', deleteError);

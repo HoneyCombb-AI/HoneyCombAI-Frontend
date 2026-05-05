@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { OUTLOOK_SCOPES } from "../scopes";
 
 export async function GET(_req: NextRequest) {
     try {
@@ -13,15 +14,8 @@ export async function GET(_req: NextRequest) {
             );
         }
 
-        // Scopes required for "read all emails" and "send emails on their behalf"
+        // Scopes required for reading, sending, updating mail, and refresh tokens.
         // offline_access is needed to get a refresh_token
-        const scopes = [
-            "User.Read",
-            "Mail.Read",
-            "Mail.Send",
-            "offline_access"
-        ];
-
         const redirectUri = `${process.env.NEXT_PUBLIC_SITE_URL}/api/outlook/callback`;
 
         // Construct Microsoft OAuth URL
@@ -30,7 +24,7 @@ export async function GET(_req: NextRequest) {
             response_type: "code",
             redirect_uri: redirectUri,
             response_mode: "query",
-            scope: scopes.join(" "),
+            scope: OUTLOOK_SCOPES.join(" "),
             state: "outlook_auth", // optional verification
         });
 

@@ -1,40 +1,27 @@
 // ============================================================
 // Emails domain types
-// Extracted from: api/emails/route.ts,
-//                 api/emails/[contactId]/messages/route.ts,
-//                 api/emails/[contactId]/send/route.ts,
-//                 api/emails/[contactId]/generate-draft/route.ts,
-//                 api/emails/[contactId]/draft/route.ts
 // ============================================================
-
-// --- List types (from api/emails/route.ts) ---
 
 export type EmailStatusFilter = "all" | "valid" | "invalid" | "risky" | "unknown";
 export type EmailTemperatureFilter = "all" | "hot" | "warm" | "cold";
 
+export interface OrgSender {
+    user_id: string;
+    display_name: string;
+    email: string;
+}
+
+// --- List (get_email_view_contacts RPC) ---
+
 export type ContactEmail = {
     id: string;
-    email: string | null;
-    first_name: string | null;
-    last_name: string | null;
     full_name: string;
-    company_name: string;
-    tags: { name: string; color: string }[];
-    // Pending draft fields
-    draft_id: string | null;
-    draft_subject: string | null;
-    draft_body: string | null;
-    draft_status: string | null;
-    draft_position: number | null;
-    // Email account ownership
-    email_account_name: string | null;
+    last_message_subject: string | null;
+    last_interaction_at: string | null;
     email_account_id: string | null;
-    // Approval status (lightweight flag from RPC 1)
     has_pending_approval: boolean;
-    // Approval item details (loaded from messages endpoint)
-    pending_approval_id?: string | null;
-    pending_approval_subject?: string | null;
-    pending_approval_body?: string | null;
+    has_rejected: boolean;
+    has_draft: boolean;
 };
 
 export interface EmailsResponse {
@@ -45,31 +32,49 @@ export interface EmailsResponse {
     hasMore: boolean;
 }
 
-// --- Message types (from api/emails/[contactId]/messages/route.ts) ---
+// --- Contact email addresses (contact_emails table) ---
 
-export interface TrackingEvent {
+export interface ContactEmailAddress {
     id: string;
-    event_type: string;
-    clicked_url: string | null;
-    created_at: string;
+    email: string;
+    is_primary: boolean;
+    label: string | null;
 }
+
+// --- Messages (get_contact_messages RPC) ---
 
 export interface ContactMessage {
     id: string;
-    account_id: string;
-    status: string;
     subject: string;
-    thread_id: string;
-    message_id: string;
-    campaign_id: string;
-    contact_id: string;
-    sent_at: string;
-    direction: string;
     body: string;
+    direction: string;
+    status: string;
+    sent_at: string;
     replied_at: string | null;
-    open_count: number;
-    click_count: number;
-    tracking_events: TrackingEvent[];
+    message_id: string;
+    thread_id: string | null;
+    sender_name: string;
+    sender_email: string | null;
+    contact_email: string | null;
+    cc?: string[] | null;
+}
+
+export interface MessageThread {
+    thread_id: string | null;
+    subject: string;
+    message_count: number;
+    first_sent_at: string;
+    last_sent_at: string;
+    messages: ContactMessage[];
+}
+
+export interface PendingDraftItem {
+    id: string;
+    subject: string;
+    body: string;
+    position: number | null;
+    status: string;
+    email_account_name: string | null;
 }
 
 export interface PendingApprovalItem {
@@ -79,13 +84,30 @@ export interface PendingApprovalItem {
     submitted_at: string;
 }
 
-export interface MessagesResponse {
-    messages: ContactMessage[];
-    contact_id: string;
-    pending_approval?: PendingApprovalItem | null;
+export interface RejectedApprovalItem {
+    id: string;
+    subject: string;
+    body: string;
+    rejection_reason: string | null;
+    reviewed_at: string | null;
+    contact_email_id?: string | null;
+    contact_email?: string | null;
+    account_provider?: "gmail" | "outlook" | null;
+    account_id?: string | null;
+    account_email?: string | null;
+    cc?: string[] | null;
 }
 
-// --- Send email (from api/emails/[contactId]/send/route.ts) ---
+export interface MessagesResponse {
+    threads: MessageThread[];
+    contact_id: string;
+    contact_emails: ContactEmailAddress[];
+    draft?: PendingDraftItem | null;
+    pending_approval?: PendingApprovalItem | null;
+    rejected_approval?: RejectedApprovalItem | null;
+}
+
+// --- Send email ---
 
 export interface SendEmailRequest {
     subject: string;
@@ -94,6 +116,9 @@ export interface SendEmailRequest {
     account_provider: "gmail" | "outlook";
     thread_id?: string;
     reply_to_message_id?: string;
+    contact_email_id?: string;
+    contact_email?: string;
+    cc?: string[];
 }
 
 export interface SendEmailResponse {
@@ -101,14 +126,12 @@ export interface SendEmailResponse {
     message_id: string;
 }
 
-// --- Draft (from api/emails/[contactId]/generate-draft/route.ts) ---
+// --- Draft ---
 
 export interface DraftResponse {
     subject: string;
     body: string;
 }
-
-// --- Update draft (from api/emails/[contactId]/draft/route.ts) ---
 
 export interface UpdateDraftRequest {
     draft_id: string;

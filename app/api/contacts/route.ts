@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const sortBy = searchParams.get('sortBy') || 'name';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const companyId = searchParams.get('companyId') || '';
 
     // Validate pagination parameters
     if (page < 1 || limit < 1 || limit > 100) {
@@ -69,17 +70,17 @@ export async function GET(req: NextRequest) {
     // Handle different groupBy options
     switch (groupBy) {
       case 'none':
-        return handleContactsList(supabase, page, limit, sortBy, sortOrder);
+        return handleContactsList(supabase, page, limit, sortBy, sortOrder, companyId);
       case 'company':
-        return handleCompanyGrouping(supabase, page, limit, sortBy, sortOrder);
+        return handleCompanyGrouping(supabase, page, limit, sortBy, sortOrder, companyId);
       case 'location':
-        return handleLocationGrouping(supabase, page, limit, locationType, sortBy, sortOrder);
+        return handleLocationGrouping(supabase, page, limit, locationType, sortBy, sortOrder, companyId);
       case 'city':
-        return handleLocationGrouping(supabase, page, limit, 'city', sortBy, sortOrder);
+        return handleLocationGrouping(supabase, page, limit, 'city', sortBy, sortOrder, companyId);
       case 'tags':
-        return handleTagsGrouping(supabase, page, limit, sortBy, sortOrder);
+        return handleTagsGrouping(supabase, page, limit, sortBy, sortOrder, companyId);
       default:
-        return handleContactsList(supabase, page, limit, sortBy, sortOrder);
+        return handleContactsList(supabase, page, limit, sortBy, sortOrder, companyId);
     }
 
   } catch (error: unknown) {
@@ -124,7 +125,8 @@ async function handleCompanyGrouping(
   page: number,
   limit: number,
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  companyId?: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
@@ -133,7 +135,8 @@ async function handleCompanyGrouping(
     page_offset: offset,
     page_limit: limit,
     sort_field: sortBy === 'name' ? 'name' : 'created_at',
-    sort_order: sortOrder
+    sort_order: sortOrder,
+    filter_company_id: companyId || null
   });
 
   if (error) {
@@ -151,14 +154,14 @@ async function handleCompanyGrouping(
   } as CompanyGroupResponse);
 }
 
-
 async function handleLocationGrouping(
   supabase: SupabaseClient,
   page: number,
   limit: number,
   locationType: string,
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  companyId?: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
@@ -168,7 +171,8 @@ async function handleLocationGrouping(
     page_limit: limit,
     location_type: locationType,
     sort_field: sortBy === 'name' ? 'name' : sortBy,
-    sort_order: sortOrder
+    sort_order: sortOrder,
+    filter_company_id: companyId || null
   });
 
   if (error) {
@@ -191,7 +195,8 @@ async function handleTagsGrouping(
   page: number,
   limit: number,
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  companyId?: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
@@ -200,7 +205,8 @@ async function handleTagsGrouping(
     page_offset: offset,
     page_limit: limit,
     sort_field: sortBy === 'name' ? 'name' : 'created_at',
-    sort_order: sortOrder
+    sort_order: sortOrder,
+    filter_company_id: companyId || null
   });
 
   if (error) {
@@ -223,7 +229,8 @@ async function handleContactsList(
   page: number,
   limit: number,
   sortBy: string,
-  sortOrder: string
+  sortOrder: string,
+  companyId?: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
@@ -232,7 +239,8 @@ async function handleContactsList(
     page_offset: offset,
     page_limit: limit,
     sort_field: sortBy === 'name' ? 'signals_first' : sortBy,
-    sort_order: sortOrder
+    sort_order: sortOrder,
+    filter_company_id: companyId || null
   });
 
   if (error) {

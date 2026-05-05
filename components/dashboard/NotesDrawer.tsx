@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { X, Plus, Edit2, Trash2, Loader2, FileText } from "lucide-react"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { X, Plus, Edit2, Trash2, Loader2, FileText, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -15,11 +15,15 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { toast } from "sonner"
 import axios from "axios"
+import { createClient } from "@/lib/supabase/client"
+import { useFontSize } from "@/lib/font-size-context"
 
 interface Note {
   id: string
   content: string
   created_at: string
+  created_by: string | null
+  created_by_name: string | null
 }
 
 interface NotesDrawerProps {
@@ -45,20 +49,27 @@ export function NotesDrawer({
   notableName,
   onNotesUpdated
 }: NotesDrawerProps) {
+  const { getFontSizeClass } = useFontSize()
+  const fontSizeClass = useMemo(() => getFontSizeClass(), [getFontSizeClass])
+
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
-  // Form states for adding new notes
   const [newNoteContent, setNewNoteContent] = useState("")
-
-  // Form states for editing notes
   const [editNoteContent, setEditNoteContent] = useState("")
 
-  // Loading states for individual operations
   const [isAdding, setIsAdding] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id ?? null)
+    })
+  }, [])
 
   const fetchNotes = useCallback(async () => {
     setLoading(true)
@@ -141,7 +152,9 @@ export function NotesDrawer({
 
       if (response.data.success && response.data.note) {
         setNotes(prev => prev.map(note =>
-          note.id === editingNote.id ? response.data.note : note
+          note.id === editingNote.id
+            ? { ...response.data.note, created_by_name: note.created_by_name }
+            : note
         ))
         toast.success("Note updated successfully")
         setEditingNote(null)
@@ -150,7 +163,9 @@ export function NotesDrawer({
       }
     } catch (err) {
       console.error("Error updating note:", err)
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        toast.error("You can only edit your own notes")
+      } else if (axios.isAxiosError(err) && err.response?.data?.error) {
         toast.error(err.response.data.error)
       } else {
         toast.error("Failed to update note")
@@ -173,7 +188,9 @@ export function NotesDrawer({
       onNotesUpdated?.()
     } catch (err) {
       console.error("Error deleting note:", err)
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        toast.error("You can only delete your own notes")
+      } else if (axios.isAxiosError(err) && err.response?.data?.error) {
         toast.error(err.response.data.error)
       } else {
         toast.error("Failed to delete note")
@@ -189,13 +206,15 @@ export function NotesDrawer({
     setEditNoteContent("")
   }, [])
 
+  const isOwner = (note: Note) =>
+    note.created_by === null || note.created_by === currentUserId
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
     const diffInMs = now.getTime() - date.getTime()
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
 
-    // Handle future dates or same-day edge cases (timezone issues)
     if (diffInDays < 0 || diffInDays === 0) {
       return "Today"
     } else if (diffInDays === 1) {
@@ -210,11 +229,11 @@ export function NotesDrawer({
   return (
     <Drawer direction="left" open={open} onOpenChange={onOpenChange} dismissible={false}>
       <DrawerContent style={customDrawerStyles} className="left-0 right-auto">
-        <div className="mx-auto w-full h-screen overflow-y-auto">
+        <div className="mx-auto w-full h-screen overflow-y-auto no-scrollbar">
           <DrawerHeader className="sticky top-0 bg-white z-10 border-b px-6">
             <DrawerTitle className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">
+                <h2 className={`text-lg font-semibold ${fontSizeClass}`}>
                   {notableName ? (
                     <>
                       <span className="text-gray-500 font-normal">Notes for </span>
@@ -225,7 +244,7 @@ export function NotesDrawer({
                   )}
                 </h2>
                 {!notableName && (
-                  <p className="text-sm text-gray-500 font-normal mt-1">
+                  <p className={`text-gray-500 font-normal mt-1 ${fontSizeClass}`}>
                     {notableType === "contact" ? "Contact" : "Company"} notes
                   </p>
                 )}
@@ -236,8 +255,8 @@ export function NotesDrawer({
                 onClick={() => onOpenChange(false)}
                 className="h-12 w-auto p-1.5"
               >
-                <div className="flex flex-1 justify-center  items-center gap-2">
-                  <p className="text-black font-semibold">Close</p>
+                <div className="flex flex-1 justify-center items-center gap-2">
+                  <p className={`text-black font-semibold ${fontSizeClass}`}>Close</p>
                   <X className="h-8 w-8" />
                 </div>
               </Button>
@@ -247,11 +266,11 @@ export function NotesDrawer({
           <div className="px-6 py-4 space-y-6">
             {/* Add New Note Section */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900">Add New Note</h3>
+              <h3 className={`font-semibold text-gray-900 ${fontSizeClass}`}>Add New Note</h3>
 
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label htmlFor="note-content" className="text-xs">Note Content</Label>
+                  <Label htmlFor="note-content" className={fontSizeClass}>Note Content</Label>
                   <Textarea
                     id="note-content"
                     placeholder="Enter your note here..."
@@ -259,7 +278,7 @@ export function NotesDrawer({
                     onChange={(e) => setNewNoteContent(e.target.value)}
                     disabled={isAdding}
                     rows={10}
-                    className="resize-none"
+                    className={`resize-none ${fontSizeClass}`}
                   />
                 </div>
 
@@ -270,15 +289,15 @@ export function NotesDrawer({
                   size="sm"
                 >
                   {isAdding ? (
-                    <>
+                    <span className={`flex items-center ${fontSizeClass}`}>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Adding...
-                    </>
+                    </span>
                   ) : (
-                    <>
+                    <span className={`flex items-center ${fontSizeClass}`}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Note
-                    </>
+                    </span>
                   )}
                 </Button>
               </div>
@@ -288,11 +307,11 @@ export function NotesDrawer({
 
             {/* Existing Notes Section */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className={`font-semibold text-gray-900 ${fontSizeClass}`}>
                 All Notes
                 {notes.length > 0 && (
-                  <span className="text-gray-500 font-normal ml-2">
-                    ({notes.length})
+                  <span className="text-gray-700 font-normal ml-2">
+                    - {notes.length}
                   </span>
                 )}
               </h3>
@@ -304,7 +323,7 @@ export function NotesDrawer({
               ) : notes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
                   <FileText className="h-12 w-12 text-gray-300 mb-3" />
-                  <p className="text-sm text-gray-500">No notes yet. Add one above!</p>
+                  <p className={`text-gray-500 ${fontSizeClass}`}>No notes yet. Add one above!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -314,14 +333,14 @@ export function NotesDrawer({
                         // Edit mode
                         <div className="space-y-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
                           <div className="space-y-2">
-                            <Label htmlFor="edit-note-content" className="text-xs">Note Content</Label>
+                            <Label htmlFor="edit-note-content" className={fontSizeClass}>Note Content</Label>
                             <Textarea
                               id="edit-note-content"
                               value={editNoteContent}
                               onChange={(e) => setEditNoteContent(e.target.value)}
                               disabled={isUpdating}
                               rows={10}
-                              className="resize-none"
+                              className={`resize-none ${fontSizeClass}`}
                             />
                           </div>
 
@@ -357,7 +376,7 @@ export function NotesDrawer({
                         <Alert className="p-3 border-red-200 bg-red-50">
                           <AlertDescription>
                             <div className="space-y-3">
-                              <p className="text-sm text-red-900 font-medium">
+                              <p className={`text-red-900 font-medium ${fontSizeClass}`}>
                                 Delete this note?
                               </p>
                               <div className="flex gap-2">
@@ -394,33 +413,41 @@ export function NotesDrawer({
                         // View mode
                         <div className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <p className="text-xs text-gray-500">
+                            <p className={`text-gray-500 ${fontSizeClass}`}>
                               {formatDate(note.created_at)}
                             </p>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEditNote(note)}
-                                disabled={isAdding || isUpdating || loading || deletingNoteId !== null}
-                                className="h-7 w-7"
-                              >
-                                <Edit2 className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setDeletingNoteId(note.id)}
-                                disabled={isAdding || isUpdating || loading || deletingNoteId !== null}
-                                className="h-7 w-7 hover:bg-red-50 hover:text-red-600"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
+                            {isOwner(note) && (
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEditNote(note)}
+                                  disabled={isAdding || isUpdating || loading || deletingNoteId !== null}
+                                  className="h-7 w-7"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeletingNoteId(note.id)}
+                                  disabled={isAdding || isUpdating || loading || deletingNoteId !== null}
+                                  className="h-7 w-7 hover:bg-red-50 hover:text-red-600"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap wrap-break-word">
+                          <p className={`text-gray-700 whitespace-pre-wrap wrap-break-word leading-relaxed ${fontSizeClass}`}>
                             {note.content}
                           </p>
+                          {note.created_by_name && (
+                            <div className="flex items-center justify-end gap-1 mt-2">
+                              <User className="h-3 w-3 text-gray-500" />
+                              <p className={`text-gray-500 ${fontSizeClass}`}>{note.created_by_name}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

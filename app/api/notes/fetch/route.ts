@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { rateLimiters } from '@/app/api/utils/rate-limiter';
 
+interface NoteProfile {
+  id: string;
+  full_name: string | null;
+}
+
+interface NoteRow {
+  id: string;
+  notable_type: string;
+  notable_id: string;
+  content: string;
+  created_at: string;
+  created_by: string | null;
+  profiles: NoteProfile[] | NoteProfile | null;
+}
+
 interface FetchNotesResponse {
   success: boolean;
   notes?: Array<{
@@ -10,6 +25,8 @@ interface FetchNotesResponse {
     notable_id: string;
     content: string;
     created_at: string;
+    created_by: string | null;
+    created_by_name: string | null;
   }>;
   error?: string;
 }
@@ -18,7 +35,6 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
@@ -27,7 +43,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Apply rate limiting
     const rateLimit = await rateLimiters.TANPerUser(user.id);
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -47,12 +62,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get query parameters
     const searchParams = req.nextUrl.searchParams;
     const notableId = searchParams.get('notable_id');
     const notableType = searchParams.get('notable_type') as 'contact' | 'company' | null;
 
-    // Validate parameters
     if (!notableId) {
       return NextResponse.json(
         { success: false, error: 'notable_id query parameter is required' },
@@ -67,10 +80,9 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Fetch notes for the specified notable item
-    const { data: notes, error: fetchError } = await supabase
+    const { data, error: fetchError } = await supabase
       .from('notes')
-      .select('id, notable_type, notable_id, content, created_at')
+      .select('id, notable_type, notable_id, content, created_at, created_by, profiles(id, full_name)')
       .eq('notable_type', notableType)
       .eq('notable_id', notableId)
       .order('created_at', { ascending: false });
@@ -83,15 +95,21 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const notes = (data ?? []) as NoteRow[];
+
     const response: FetchNotesResponse = {
       success: true,
-      notes: notes?.map(note => ({
+      notes: notes.map(note => ({
         id: note.id,
         notable_type: note.notable_type,
         notable_id: note.notable_id,
         content: note.content,
         created_at: note.created_at,
-      })) || []
+        created_by: note.created_by,
+        created_by_name: Array.isArray(note.profiles)
+            ? note.profiles[0]?.full_name ?? null
+            : note.profiles?.full_name ?? null,
+      }))
     };
 
     return NextResponse.json(response);

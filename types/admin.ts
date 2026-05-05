@@ -12,12 +12,14 @@ export interface EmailSnapshot {
     subject: string;
     body: string;
     contact_name: string;
+    contact_email_id?: string | null;
     contact_email: string;
     company_name: string;
     account_id: string;
     account_provider: 'gmail' | 'outlook';
     thread_id?: string;
     reply_to_message_id?: string;
+    cc?: string[];
 }
 
 export interface LinkedInSnapshot {
@@ -58,12 +60,28 @@ export function isEmailSnapshot(snapshot: ApprovalSnapshot): snapshot is EmailSn
     return 'subject' in snapshot;
 }
 
+export interface ApprovalSubmitter {
+    user_id: string;
+    name: string;
+}
+
+export interface ApprovalListItem {
+    id: string;
+    item_type: ApprovalItemType;
+    status: 'pending' | 'approved' | 'rejected';
+    submitted_at: string;
+    submitted_by_name: string;
+    contact_name: string | null;
+    subject: string | null;
+}
+
 export interface ApprovalsResponse {
     items: ApprovalItem[];
     total: number;
     page: number;
     limit: number;
     hasMore: boolean;
+    submitters: ApprovalSubmitter[];
 }
 
 // ---- API request/response types ----
