@@ -40,7 +40,7 @@ export async function GET(
 
         if (profileError) {
             console.error('Failed to fetch profile:', profileError);
-            return NextResponse.json({ error: profileError.message }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
         }
 
         if (!profile?.organization_id) {

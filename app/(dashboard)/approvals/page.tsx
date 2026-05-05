@@ -127,7 +127,7 @@ export default function ApprovalsPage() {
 
     useEffect(() => {
         if (selectedId) fetchDetail(selectedId);
-        else setSelectedDetail(null);
+        else { setSelectedDetail(null); setDetailLoading(false); }
         return () => { detailAbortRef.current?.abort(); };
     }, [selectedId, fetchDetail]);
 

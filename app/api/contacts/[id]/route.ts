@@ -209,7 +209,8 @@ export async function PATCH(
     });
 
     if (rpcError) {
-      throw new Error(rpcError.message);
+      console.error('RPC error in PATCH contact:', rpcError);
+      throw new Error('Failed to update contact');
     }
 
     return NextResponse.json({ success: true });

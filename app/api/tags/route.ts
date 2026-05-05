@@ -12,6 +12,10 @@ export async function GET(req: NextRequest) {
 
         const taggableType = req.nextUrl.searchParams.get('taggable_type') ?? 'contact';
 
+        if (taggableType !== 'contact' && taggableType !== 'company') {
+            return NextResponse.json({ error: 'Invalid taggable_type' }, { status: 400 });
+        }
+
         const { data: tags, error } = await supabase
             .from('tags')
             .select('name, color')

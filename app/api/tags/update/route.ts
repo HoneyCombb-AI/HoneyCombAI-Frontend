@@ -71,16 +71,33 @@ export async function PATCH(req: NextRequest) {
     if ('original_name' in body) {
       const { original_name, taggable_type, name, color } = body;
 
-      if (!original_name || !taggable_type) {
+      const trimmedOriginalName = original_name?.trim() ?? '';
+      const trimmedName = name?.trim() ?? '';
+
+      if (!trimmedOriginalName || !taggable_type) {
         return NextResponse.json(
           { success: false, error: 'original_name and taggable_type are required' },
           { status: 400 }
         );
       }
 
-      if (!name && !color) {
+      if (taggable_type !== 'contact' && taggable_type !== 'company') {
+        return NextResponse.json(
+          { success: false, error: 'Invalid taggable_type' },
+          { status: 400 }
+        );
+      }
+
+      if (!trimmedName && !color) {
         return NextResponse.json(
           { success: false, error: 'At least name or color is required' },
+          { status: 400 }
+        );
+      }
+
+      if (name !== undefined && !trimmedName) {
+        return NextResponse.json(
+          { success: false, error: 'Tag name cannot be blank' },
           { status: 400 }
         );
       }
@@ -93,13 +110,13 @@ export async function PATCH(req: NextRequest) {
       }
 
       const updateData: { name?: string; color?: string } = {};
-      if (name) updateData.name = name.trim().toLowerCase();
+      if (trimmedName) updateData.name = trimmedName.toLowerCase();
       if (color) updateData.color = color.trim().toUpperCase();
 
       const { error: updateError } = await supabase
         .from('tags')
         .update(updateData)
-        .eq('name', original_name)
+        .eq('name', trimmedOriginalName)
         .eq('taggable_type', taggable_type);
 
       if (updateError) {

@@ -446,7 +446,7 @@ export function EmailViewer({
             return;
         }
         const thread = threads.find((t, i) => threadKey(t, i) === openKey);
-        if (!thread) return;
+        if (!thread) { onThreadSelect(null); return; }
         const msgs = thread.messages;
         onThreadSelect(msgs.length > 0 ? msgs[msgs.length - 1] : null);
     }, [openKey, threads, onThreadSelect]);
