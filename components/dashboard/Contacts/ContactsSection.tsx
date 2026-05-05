@@ -187,6 +187,7 @@ const ContactRow = memo<{
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label={`Notes for ${contact.full_name}`}
                 className="h-7 w-7 p-0 bg-white shadow-sm border border-blue-200 hover:bg-blue-50 hover:scale-110 transition-transform duration-200 z-10 relative"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -197,10 +198,11 @@ const ContactRow = memo<{
               </Button>
             </div>
           ) : (
-            <div className="opacity-0 group-hover/row:opacity-100 transition-opacity">
+            <div className="opacity-0 group-hover/row:opacity-100 focus-within:opacity-100 transition-opacity">
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label={`Notes for ${contact.full_name}`}
                 className="h-6 w-6 p-0 bg-white shadow-sm border border-gray-200 hover:bg-gray-50 hover:scale-110 transition-transform duration-200 shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();

@@ -65,7 +65,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             cc: body.cc?.length ? body.cc : undefined,
         };
 
-        const { error: updateError } = await supabase
+        const { data: updated, error: updateError } = await supabase
             .from('approval_queue')
             .update({
                 status: 'pending',
@@ -76,11 +76,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
                 submitted_at: new Date().toISOString(),
             })
             .eq('id', approvalId)
-            .eq('submitted_by', user.id);
+            .eq('contact_id', contactId)
+            .eq('submitted_by', user.id)
+            .eq('status', 'rejected')
+            .select('id');
 
         if (updateError) {
             console.error('Failed to resubmit approval:', updateError);
             return NextResponse.json({ error: updateError.message }, { status: 500 });
+        }
+
+        if (!updated || updated.length === 0) {
+            return NextResponse.json({ error: 'Approval is no longer in rejected state' }, { status: 409 });
         }
 
         return NextResponse.json({ status: 'resubmitted' });
@@ -100,16 +107,21 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { error: deleteError } = await supabase
+        const { data: deleted, error: deleteError } = await supabase
             .from('approval_queue')
             .delete()
             .eq('id', approvalId)
             .eq('contact_id', contactId)
-            .eq('submitted_by', user.id);
+            .eq('submitted_by', user.id)
+            .select('id');
 
         if (deleteError) {
             console.error('Failed to discard approval:', deleteError);
             return NextResponse.json({ error: deleteError.message }, { status: 500 });
+        }
+
+        if (!deleted || deleted.length === 0) {
+            return NextResponse.json({ error: 'Not found' }, { status: 404 });
         }
 
         return NextResponse.json({ status: 'discarded' });

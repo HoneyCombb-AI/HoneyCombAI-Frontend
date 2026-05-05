@@ -31,8 +31,9 @@ export function CompanyFilterDropdown({
   const [companiesLoading, setCompaniesLoading] = useState<boolean>(false);
   const [companySearchInput, setCompanySearchInput] = useState<string>("");
 
+  const normalizedSearch = companySearchInput.trim().toLowerCase();
   const filteredCompanies = companies.filter((company) =>
-    company.name.toLowerCase().includes(companySearchInput.toLowerCase())
+    company.name.toLowerCase().includes(normalizedSearch)
   );
 
   useEffect(() => {

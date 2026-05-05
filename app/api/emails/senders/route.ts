@@ -16,7 +16,12 @@ export async function GET() {
             .eq('id', user.id)
             .single();
 
-        if (profileError || !profile?.organization_id) {
+        if (profileError) {
+            console.error('Failed to fetch profile:', profileError);
+            return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
+        }
+
+        if (!profile?.organization_id) {
             return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
         }
 

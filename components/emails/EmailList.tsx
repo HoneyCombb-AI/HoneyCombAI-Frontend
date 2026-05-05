@@ -46,7 +46,7 @@ export function EmailList({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="divide-y overflow-y-auto">
+            <div className="divide-y overflow-y-auto flex-1 min-h-0">
                 {emails.map((email) => {
                     const isSelected = email.id === selectedId;
                     const hasDraft = email.has_draft;
@@ -90,13 +90,19 @@ export function EmailList({
                                     {email.last_message_subject ?? "No messages yet"}
                                 </p>
                                 {hasDraft && (
-                                    <Clock className="h-3.5 w-3.5 shrink-0 text-violet-500" />
+                                    <span className="shrink-0 flex items-center" aria-label="Draft">
+                                        <Clock className="h-3.5 w-3.5 text-violet-500" aria-hidden="true" />
+                                    </span>
                                 )}
                                 {!hasDraft && isRejected && (
-                                    <XCircle className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                                    <span className="shrink-0 flex items-center" aria-label="Rejected">
+                                        <XCircle className="h-3.5 w-3.5 text-red-500" aria-hidden="true" />
+                                    </span>
                                 )}
                                 {!hasDraft && !isRejected && hasApproval && (
-                                    <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                    <span className="shrink-0 flex items-center" aria-label="Pending approval">
+                                        <Clock className="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />
+                                    </span>
                                 )}
                             </div>
                         </button>
