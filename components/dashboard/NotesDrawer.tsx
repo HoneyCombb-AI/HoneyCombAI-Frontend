@@ -207,7 +207,7 @@ export function NotesDrawer({
   }, [])
 
   const isOwner = (note: Note) =>
-    note.created_by === null || note.created_by === currentUserId
+    note.created_by === currentUserId
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

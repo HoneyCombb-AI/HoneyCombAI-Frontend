@@ -78,7 +78,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Note not found' }, { status: 404 });
     }
 
-    if (existingNote.created_by !== null && existingNote.created_by !== user.id) {
+    if (existingNote.created_by !== user.id) {
       return NextResponse.json(
         { success: false, error: 'You can only edit your own notes' },
         { status: 403 }
