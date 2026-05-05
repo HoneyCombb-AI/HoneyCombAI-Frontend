@@ -169,7 +169,7 @@ export function TagsDrawer({
     setLoading(true)
     try {
       const [systemRes, appliedRes] = await Promise.all([
-        axios.get('/api/tags'),
+        axios.get('/api/tags', { params: { taggable_type: taggableType } }),
         selectedItems.length > 0
           ? axios.get('/api/tags/fetch', {
               params: { taggable_ids: selectedItemsKey, taggable_type: taggableType }
@@ -304,23 +304,13 @@ export function TagsDrawer({
 
     setIsUpdating(true)
     try {
-      const tagIdsToUpdate = appliedTagsData
-        .filter(tag => tag.name === editingTag.name)
-        .map(tag => tag.id)
-
-      if (tagIdsToUpdate.length === 0) {
-        toast.error("This tag isn't applied to any selected contacts")
-        return
-      }
-
-      const updates = tagIdsToUpdate.map(tagId => ({
-        id: tagId,
+      await axios.patch("/api/tags/update", {
+        original_name: editingTag.name,
+        taggable_type: taggableType,
         name: editTagName.trim().toLowerCase(),
-        color: editTagColor
-      }))
-
-      await axios.patch("/api/tags/update", { updates })
-      toast.success(`Tag updated for ${tagIdsToUpdate.length} contact(s)`)
+        color: editTagColor,
+      })
+      toast.success(`Tag updated globally`)
       setEditingTag(null)
       setEditTagName("")
       setEditTagColor("")
@@ -335,7 +325,7 @@ export function TagsDrawer({
     } finally {
       setIsUpdating(false)
     }
-  }, [editingTag, editTagName, editTagColor, appliedTagsData, fetchAllData, onTagsUpdated])
+  }, [editingTag, editTagName, editTagColor, taggableType, fetchAllData, onTagsUpdated])
 
   // Globally delete a tag by name — removes it from every contact that has it
   const handleGlobalDeleteTag = useCallback(async (tagName: string) => {

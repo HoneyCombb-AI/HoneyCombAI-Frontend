@@ -12,6 +12,13 @@ interface UpdateTagsRequest {
   updates: TagUpdate[];
 }
 
+interface GlobalTagUpdateRequest {
+  original_name: string;
+  taggable_type: string;
+  name?: string;
+  color?: string;
+}
+
 interface UpdateTagsResponse {
   success: boolean;
   tags?: Array<{
@@ -58,10 +65,57 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Parse request body
-    const body: UpdateTagsRequest = await req.json();
+    const body: UpdateTagsRequest | GlobalTagUpdateRequest = await req.json();
 
-    // Validate request structure
+    // Global update path — rename/recolor a tag across all rows by name + type
+    if ('original_name' in body) {
+      const { original_name, taggable_type, name, color } = body;
+
+      if (!original_name || !taggable_type) {
+        return NextResponse.json(
+          { success: false, error: 'original_name and taggable_type are required' },
+          { status: 400 }
+        );
+      }
+
+      if (!name && !color) {
+        return NextResponse.json(
+          { success: false, error: 'At least name or color is required' },
+          { status: 400 }
+        );
+      }
+
+      if (color && !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color)) {
+        return NextResponse.json(
+          { success: false, error: 'Color must be a valid hex code (e.g., #FF5733)' },
+          { status: 400 }
+        );
+      }
+
+      const updateData: { name?: string; color?: string } = {};
+      if (name) updateData.name = name.trim().toLowerCase();
+      if (color) updateData.color = color.trim().toUpperCase();
+
+      const { error: updateError } = await supabase
+        .from('tags')
+        .update(updateData)
+        .eq('name', original_name)
+        .eq('taggable_type', taggable_type);
+
+      if (updateError) {
+        if (updateError.code === '23505') {
+          return NextResponse.json(
+            { success: false, error: 'A tag with that name or color already exists' },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json({ success: false, error: updateError.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    // Per-ID update path (applying tags to specific rows)
     if (!body.updates || !Array.isArray(body.updates) || body.updates.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Updates array is required and must not be empty' },

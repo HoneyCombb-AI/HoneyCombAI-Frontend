@@ -421,6 +421,7 @@ export function NotesDrawer({
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  aria-label="Edit note"
                                   onClick={() => handleEditNote(note)}
                                   disabled={isAdding || isUpdating || loading || deletingNoteId !== null}
                                   className="h-7 w-7"
@@ -430,6 +431,7 @@ export function NotesDrawer({
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  aria-label="Delete note"
                                   onClick={() => setDeletingNoteId(note.id)}
                                   disabled={isAdding || isUpdating || loading || deletingNoteId !== null}
                                   className="h-7 w-7 hover:bg-red-50 hover:text-red-600"
