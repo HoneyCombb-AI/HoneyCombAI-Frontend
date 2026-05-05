@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import type { MessagesResponse } from '@/types/emails';
+import type {
+    MessagesResponse,
+    MessageThread,
+    ContactEmailAddress,
+    PendingDraftItem,
+    PendingApprovalItem,
+    RejectedApprovalItem,
+} from '@/types/emails';
+
+interface GetContactMessagesResult {
+    error?: string;
+    threads: MessageThread[];
+    contact_emails: ContactEmailAddress[];
+    draft: PendingDraftItem | null;
+    pending_approval: PendingApprovalItem | null;
+    rejected_approval: RejectedApprovalItem | null;
+}
 
 export async function GET(
     _req: NextRequest,
@@ -22,7 +38,12 @@ export async function GET(
             .eq('id', user.id)
             .single();
 
-        if (profileError || !profile?.organization_id) {
+        if (profileError) {
+            console.error('Failed to fetch profile:', profileError);
+            return NextResponse.json({ error: profileError.message }, { status: 500 });
+        }
+
+        if (!profile?.organization_id) {
             return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
         }
 
@@ -36,9 +57,14 @@ export async function GET(
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        const result = data as any;
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+            console.error('get_contact_messages returned unexpected payload:', data);
+            return NextResponse.json({ error: 'Unexpected response from server' }, { status: 500 });
+        }
 
-        if (result?.error === 'forbidden') {
+        const result = data as GetContactMessagesResult;
+
+        if (result.error === 'forbidden') {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

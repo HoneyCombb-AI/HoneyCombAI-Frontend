@@ -46,6 +46,7 @@ export default function ApprovalsPage() {
     const [submitters, setSubmitters] = useState<ApprovalSubmitter[]>([]);
     const [submittersLoading, setSubmittersLoading] = useState(false);
     const submittersFetchedRef = useRef(false);
+    const detailAbortRef = useRef<AbortController | null>(null);
     const [submittedBy, setSubmittedBy] = useState<string | null>(null);
     const [showUserFilter, setShowUserFilter] = useState(false);
 
@@ -102,21 +103,32 @@ export default function ApprovalsPage() {
     }, [activeTab, page, submittedBy]);
 
     const fetchDetail = useCallback(async (id: string) => {
+        detailAbortRef.current?.abort();
+        const controller = new AbortController();
+        detailAbortRef.current = controller;
+
         setDetailLoading(true);
         setSelectedDetail(null);
         try {
-            const res = await axios.get(`/api/admin/approvals/${id}`);
-            setSelectedDetail(res.data);
-        } catch {
-            toast.error("Failed to load approval detail");
+            const res = await axios.get(`/api/admin/approvals/${id}`, { signal: controller.signal });
+            if (!controller.signal.aborted) {
+                setSelectedDetail(res.data);
+            }
+        } catch (err) {
+            if (!axios.isCancel(err)) {
+                toast.error("Failed to load approval detail");
+            }
         } finally {
-            setDetailLoading(false);
+            if (!controller.signal.aborted) {
+                setDetailLoading(false);
+            }
         }
     }, []);
 
     useEffect(() => {
         if (selectedId) fetchDetail(selectedId);
         else setSelectedDetail(null);
+        return () => { detailAbortRef.current?.abort(); };
     }, [selectedId, fetchDetail]);
 
     const fetchSubmitters = useCallback(async () => {

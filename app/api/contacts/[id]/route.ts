@@ -197,88 +197,19 @@ export async function PATCH(
 
     const { city, country, linkedin_url, twitter_handle, instagram_handle, emails, phones } = result.data;
 
-    // Update contact core fields (RLS enforces access)
-    const { error: updateError } = await supabase
-      .from('contacts')
-      .update({ city, country, linkedin_url, twitter_handle, instagram_handle })
-      .eq('id', contactId);
+    const { error: rpcError } = await supabase.rpc('update_contact', {
+      p_contact_id:       contactId,
+      p_city:             city             ?? null,
+      p_country:          country          ?? null,
+      p_linkedin_url:     linkedin_url     ?? null,
+      p_twitter_handle:   twitter_handle   ?? null,
+      p_instagram_handle: instagram_handle ?? null,
+      p_emails:           emails,
+      p_phones:           phones,
+    });
 
-    if (updateError) {
-      throw new Error(`Failed to update contact: ${updateError.message}`);
-    }
-
-    // ── Emails ────────────────────────────────────────────────────────────────
-
-    const { data: existingEmails } = await supabase
-      .from('contact_emails')
-      .select('id')
-      .eq('contact_id', contactId);
-
-    const existingEmailIds = existingEmails?.map(e => e.id as string) || [];
-    const keptEmailIds = emails.filter(e => e.id).map(e => e.id as string);
-    const deleteEmailIds = existingEmailIds.filter(id => !keptEmailIds.includes(id));
-
-    if (deleteEmailIds.length > 0) {
-      const { error } = await supabase.from('contact_emails').delete().in('id', deleteEmailIds);
-      if (error) throw new Error(`Failed to delete emails: ${error.message}`);
-    }
-
-    for (const email of emails.filter(e => e.id)) {
-      const { error } = await supabase
-        .from('contact_emails')
-        .update({ email: email.email, is_primary: email.is_primary, label: email.label || null })
-        .eq('id', email.id!);
-      if (error) throw new Error(`Failed to update email: ${error.message}`);
-    }
-
-    const newEmails = emails.filter(e => !e.id);
-    if (newEmails.length > 0) {
-      const { error } = await supabase.from('contact_emails').insert(
-        newEmails.map(e => ({
-          contact_id: contactId,
-          email: e.email,
-          is_primary: e.is_primary,
-          label: e.label || null,
-        }))
-      );
-      if (error) throw new Error(`Failed to insert emails: ${error.message}`);
-    }
-
-    // ── Phones ────────────────────────────────────────────────────────────────
-
-    const { data: existingPhones } = await supabase
-      .from('contact_phones')
-      .select('id')
-      .eq('contact_id', contactId);
-
-    const existingPhoneIds = existingPhones?.map(p => p.id as string) || [];
-    const keptPhoneIds = phones.filter(p => p.id).map(p => p.id as string);
-    const deletePhoneIds = existingPhoneIds.filter(id => !keptPhoneIds.includes(id));
-
-    if (deletePhoneIds.length > 0) {
-      const { error } = await supabase.from('contact_phones').delete().in('id', deletePhoneIds);
-      if (error) throw new Error(`Failed to delete phones: ${error.message}`);
-    }
-
-    for (const phone of phones.filter(p => p.id)) {
-      const { error } = await supabase
-        .from('contact_phones')
-        .update({ phone: phone.phone, is_primary: phone.is_primary, label: phone.label || null })
-        .eq('id', phone.id!);
-      if (error) throw new Error(`Failed to update phone: ${error.message}`);
-    }
-
-    const newPhones = phones.filter(p => !p.id);
-    if (newPhones.length > 0) {
-      const { error } = await supabase.from('contact_phones').insert(
-        newPhones.map(p => ({
-          contact_id: contactId,
-          phone: p.phone,
-          is_primary: p.is_primary,
-          label: p.label || null,
-        }))
-      );
-      if (error) throw new Error(`Failed to insert phones: ${error.message}`);
+    if (rpcError) {
+      throw new Error(rpcError.message);
     }
 
     return NextResponse.json({ success: true });
