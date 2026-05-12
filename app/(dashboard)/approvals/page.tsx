@@ -260,6 +260,17 @@ export default function ApprovalsPage() {
         return handleAction(id, "reject", { rejection_reason: reason });
     }, [handleAction]);
 
+    const handleDiscard = useCallback(async (id: string) => {
+        try {
+            await axios.delete(`/api/admin/approvals/${id}`);
+            toast.success("Approval discarded");
+            setItems((prev) => prev.filter((item) => item.id !== id));
+            setSelectedDetail(null);
+        } catch {
+            toast.error("Failed to discard approval");
+        }
+    }, []);
+
     const handleTabChange = useCallback((tab: TabStatus) => {
         setActiveTab(tab);
         setPage(1);
@@ -465,6 +476,7 @@ export default function ApprovalsPage() {
                                 item={selectedDetail}
                                 onApprove={handleApprove}
                                 onReject={handleReject}
+                                onDiscard={handleDiscard}
                             />
                         </div>
                     )}

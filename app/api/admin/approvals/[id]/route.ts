@@ -242,3 +242,50 @@ export async function PATCH(
         );
     }
 }
+
+export async function DELETE(
+    _req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const supabase = await createClient();
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { data: membership } = await supabase
+            .from('organization_members')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'admin')
+            .maybeSingle();
+
+        if (!membership) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { data: deleted, error: deleteError } = await supabase
+            .from('approval_queue')
+            .delete()
+            .eq('id', id)
+            .select('id');
+
+        if (deleteError) {
+            console.error('Failed to discard approval:', deleteError);
+            return NextResponse.json({ error: 'Failed to discard approval' }, { status: 500 });
+        }
+
+        if (!deleted || deleted.length === 0) {
+            return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ status: 'discarded' });
+
+    } catch (error: unknown) {
+        console.error('Error discarding approval:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    }
+}
