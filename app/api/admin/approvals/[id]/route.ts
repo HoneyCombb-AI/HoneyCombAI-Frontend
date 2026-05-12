@@ -261,12 +261,17 @@ export async function DELETE(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { data: membership } = await supabase
+        const { data: membership, error: membershipError } = await supabase
             .from('organization_members')
             .select('role')
             .eq('user_id', user.id)
             .eq('role', 'admin')
             .maybeSingle();
+
+        if (membershipError) {
+            console.error('Failed to fetch membership:', membershipError);
+            return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        }
 
         if (!membership) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

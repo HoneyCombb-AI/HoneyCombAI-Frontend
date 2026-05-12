@@ -40,6 +40,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import axios from "axios";
+import type { UpdatePasswordRequest } from "@/types/user";
 import { useFontSize, fontSizeLabels, FontSize } from "@/lib/font-size-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -101,9 +102,22 @@ export default function ProfilePage() {
   };
 
   const handlePasswordUpdate = async () => {
+    if (pwLoading) return;
+    if (!newPassword || !confirmPassword) {
+      toast.error("Please fill in both password fields");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
     setPwLoading(true);
     try {
-      await axios.post("/api/user/update-password", {
+      await axios.post<unknown, unknown, UpdatePasswordRequest>("/api/user/update-password", {
         password: newPassword,
         confirmPassword,
       });
@@ -242,6 +256,8 @@ export default function ProfilePage() {
                         <button
                           type="button"
                           onClick={() => setShowNew((v) => !v)}
+                          aria-label={showNew ? "Hide new password" : "Show new password"}
+                          aria-pressed={showNew}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
                           {showNew ? (
@@ -269,6 +285,8 @@ export default function ProfilePage() {
                         <button
                           type="button"
                           onClick={() => setShowConfirm((v) => !v)}
+                          aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                          aria-pressed={showConfirm}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
                           {showConfirm ? (

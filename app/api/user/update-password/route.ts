@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import type { UpdatePasswordRequest } from '@/types/user';
 
 const schema = z.object({
     password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -12,7 +13,7 @@ const schema = z.object({
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        const body: UpdatePasswordRequest = await req.json();
         const result = schema.safeParse(body);
 
         if (!result.success) {
