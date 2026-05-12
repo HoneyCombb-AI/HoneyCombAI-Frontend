@@ -92,11 +92,16 @@ export async function PATCH(
                     );
                 }
 
-                const { data: contactExists } = await supabase
+                const { data: contactExists, error: contactCheckError } = await supabase
                     .from('contacts')
                     .select('id')
                     .eq('id', item.contact_id)
                     .maybeSingle();
+
+                if (contactCheckError) {
+                    console.error('Failed to verify contact existence:', contactCheckError);
+                    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
+                }
 
                 if (!contactExists) {
                     await supabase.from('approval_queue').update({ status: 'cancelled' }).eq('id', id);

@@ -42,7 +42,7 @@ export interface ApprovalItem {
     submitted_by: string;
     submitted_by_name: string;
     submitted_at: string;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled';
     reviewed_by: string | null;
     reviewed_by_name: string | null;
     reviewed_at: string | null;
@@ -68,7 +68,7 @@ export interface ApprovalSubmitter {
 export interface ApprovalListItem {
     id: string;
     item_type: ApprovalItemType;
-    status: 'pending' | 'approved' | 'rejected';
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled';
     submitted_at: string;
     submitted_by_name: string;
     contact_name: string | null;
