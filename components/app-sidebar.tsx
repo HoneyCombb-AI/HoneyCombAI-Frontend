@@ -45,7 +45,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { NotificationPopoverContent } from "@/components/notification-popover";
 import { toast } from "sonner";
 
@@ -111,7 +111,6 @@ export function AppSidebar() {
   const { user, signOut, role } = useAuth();
   const { unreadCount } = useNotifications();
   const pathname = usePathname();
-  const router = useRouter();
   const { setOpen, state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -131,7 +130,6 @@ export function AppSidebar() {
   };
 
   const handleSignOut = async () => {
-    router.replace("/");
     signOut()
       .then(() => {
         toast.success("Signed out successfully");
@@ -257,7 +255,7 @@ export function AppSidebar() {
                   <span>Notification</span>
                 </SidebarMenuButton>
               </PopoverTrigger>
-              <PopoverContent className="min-w-80 z-[60]" align="end" side="right" sideOffset={8}>
+              <PopoverContent className="min-w-80 z-60" align="end" side="right" sideOffset={8}>
                 <NotificationPopoverContent isOpen={isNotificationOpen} />
               </PopoverContent>
             </Popover>

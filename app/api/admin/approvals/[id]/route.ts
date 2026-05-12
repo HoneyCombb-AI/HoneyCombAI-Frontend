@@ -92,6 +92,20 @@ export async function PATCH(
                     );
                 }
 
+                const { data: contactExists } = await supabase
+                    .from('contacts')
+                    .select('id')
+                    .eq('id', item.contact_id)
+                    .maybeSingle();
+
+                if (!contactExists) {
+                    await supabase.from('approval_queue').update({ status: 'cancelled' }).eq('id', id);
+                    return NextResponse.json(
+                        { error: 'Contact no longer exists. This approval has been cancelled.' },
+                        { status: 410 }
+                    );
+                }
+
                 const contactEmailQuery = supabase
                     .from('contact_emails')
                     .select('id, email')
@@ -109,9 +123,10 @@ export async function PATCH(
                 }
 
                 if (!selectedContactEmail) {
+                    await supabase.from('approval_queue').update({ status: 'cancelled' }).eq('id', id);
                     return NextResponse.json(
-                        { error: 'Selected recipient email does not belong to this contact' },
-                        { status: 400 }
+                        { error: 'Contact email no longer exists. This approval has been cancelled.' },
+                        { status: 410 }
                     );
                 }
 
