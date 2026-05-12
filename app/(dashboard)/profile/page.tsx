@@ -3,6 +3,8 @@
 import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -10,6 +12,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -22,10 +32,14 @@ import {
   Crown,
   LogOut,
   Accessibility,
+  KeyRound,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import axios from "axios";
 import { useFontSize, fontSizeLabels, FontSize } from "@/lib/font-size-context";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -33,6 +47,13 @@ export default function ProfilePage() {
   const { user, loading, signOut } = useAuth();
   const { fontSize, setFontSize } = useFontSize();
   const router = useRouter();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,7 +67,7 @@ export default function ProfilePage() {
         <Loading />
         <p className="text-sm text-muted-foreground mt-4">Loading settings...</p>
       </div>
-    )
+    );
   }
 
   if (!user) {
@@ -79,9 +100,30 @@ export default function ProfilePage() {
       });
   };
 
+  const handlePasswordUpdate = async () => {
+    setPwLoading(true);
+    try {
+      await axios.post("/api/user/update-password", {
+        password: newPassword,
+        confirmPassword,
+      });
+      toast.success("Password updated successfully");
+      setNewPassword("");
+      setConfirmPassword("");
+      setDialogOpen(false);
+    } catch (err: unknown) {
+      const message =
+        axios.isAxiosError(err)
+          ? err.response?.data?.error
+          : "Failed to update password";
+      toast.error(message || "Failed to update password");
+    } finally {
+      setPwLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col bg-background">
-      {/* Content */}
       <main className="flex-1 p-6 space-y-6">
         {/* Profile Overview */}
         <Card className="bg-gray-50 shadow-lg">
@@ -98,9 +140,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-6">
               <Avatar className="h-20 w-20">
                 <AvatarImage src={avatarUrl} alt={displayName} />
-                <AvatarFallback className="text-lg">
-                  {initials}
-                </AvatarFallback>
+                <AvatarFallback className="text-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">{displayName}</h2>
@@ -114,7 +154,6 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-
           </CardContent>
         </Card>
 
@@ -153,6 +192,109 @@ export default function ProfilePage() {
                 Secure
               </Badge>
             </div>
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Password</p>
+                <p className="text-sm text-muted-foreground">
+                  Update your account password
+                </p>
+              </div>
+              <Dialog
+                open={dialogOpen}
+                onOpenChange={(open) => {
+                  setDialogOpen(open);
+                  if (!open) {
+                    setNewPassword("");
+                    setConfirmPassword("");
+                    setShowNew(false);
+                    setShowConfirm(false);
+                  }
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <KeyRound className="h-4 w-4 mr-2" />
+                    Change Password
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Change Password</DialogTitle>
+                    <DialogDescription>
+                      Enter a new password of at least 6 characters.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="new-password"
+                          type={showNew ? "text" : "password"}
+                          placeholder="At least 6 characters"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNew((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showNew ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="confirm-password"
+                          type={showConfirm ? "text" : "password"}
+                          placeholder="Repeat new password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pr-10"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handlePasswordUpdate();
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirm((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showConfirm ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setDialogOpen(false)}
+                        disabled={pwLoading}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handlePasswordUpdate} disabled={pwLoading}>
+                        {pwLoading ? "Updating..." : "Update Password"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardContent>
         </Card>
 
@@ -175,7 +317,10 @@ export default function ProfilePage() {
                   Adjust the font size for better readability
                 </p>
               </div>
-              <Select value={fontSize} onValueChange={(value: FontSize) => setFontSize(value)}>
+              <Select
+                value={fontSize}
+                onValueChange={(value: FontSize) => setFontSize(value)}
+              >
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -190,11 +335,9 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
         <div className="p-6 flex justify-end">
-          <Button
-            variant="destructive"
-            onClick={handleSignOut}
-          >
+          <Button variant="destructive" onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </Button>
