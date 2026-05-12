@@ -95,6 +95,12 @@ export async function POST(request: NextRequest) {
 
       if (deleteError) {
         console.error("Error deleting contacts:", deleteError);
+        if (deleteError.code === '23503') {
+          return NextResponse.json(
+            { success: false, message: "This contact can't be deleted because it has pending activity linked to it. Please resolve any pending items first." },
+            { status: 409 }
+          );
+        }
         return NextResponse.json(
           { success: false, message: "Failed to delete contacts" },
           { status: 500 }

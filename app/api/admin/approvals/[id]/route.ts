@@ -92,6 +92,25 @@ export async function PATCH(
                     );
                 }
 
+                const { data: contactExists, error: contactCheckError } = await supabase
+                    .from('contacts')
+                    .select('id')
+                    .eq('id', item.contact_id)
+                    .maybeSingle();
+
+                if (contactCheckError) {
+                    console.error('Failed to verify contact existence:', contactCheckError);
+                    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
+                }
+
+                if (!contactExists) {
+                    await supabase.from('approval_queue').update({ status: 'cancelled' }).eq('id', id);
+                    return NextResponse.json(
+                        { error: 'Contact no longer exists. This approval has been cancelled.' },
+                        { status: 410 }
+                    );
+                }
+
                 const contactEmailQuery = supabase
                     .from('contact_emails')
                     .select('id, email')
@@ -109,9 +128,10 @@ export async function PATCH(
                 }
 
                 if (!selectedContactEmail) {
+                    await supabase.from('approval_queue').update({ status: 'cancelled' }).eq('id', id);
                     return NextResponse.json(
-                        { error: 'Selected recipient email does not belong to this contact' },
-                        { status: 400 }
+                        { error: 'Contact email no longer exists. This approval has been cancelled.' },
+                        { status: 410 }
                     );
                 }
 
@@ -225,5 +245,57 @@ export async function PATCH(
             { error: 'Internal server error' },
             { status: 500 }
         );
+    }
+}
+
+export async function DELETE(
+    _req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const supabase = await createClient();
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { data: membership, error: membershipError } = await supabase
+            .from('organization_members')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'admin')
+            .maybeSingle();
+
+        if (membershipError) {
+            console.error('Failed to fetch membership:', membershipError);
+            return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        }
+
+        if (!membership) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { data: deleted, error: deleteError } = await supabase
+            .from('approval_queue')
+            .delete()
+            .eq('id', id)
+            .select('id');
+
+        if (deleteError) {
+            console.error('Failed to discard approval:', deleteError);
+            return NextResponse.json({ error: 'Failed to discard approval' }, { status: 500 });
+        }
+
+        if (!deleted || deleted.length === 0) {
+            return NextResponse.json({ error: 'Not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ status: 'discarded' });
+
+    } catch (error: unknown) {
+        console.error('Error discarding approval:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

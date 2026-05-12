@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X, Pencil, Loader2, AtSign } from "lucide-react";
+import { Check, X, Pencil, Loader2, AtSign, Trash2 } from "lucide-react";
 import type { ApprovalItem, ApprovalSnapshot, EmailSnapshot, LinkedInSnapshot } from "@/types/admin";
 import { isEmailSnapshot } from "@/types/admin";
 import { RichTextEditor } from "@/components/emails/RichTextEditor";
@@ -16,6 +16,7 @@ interface ApprovalActionsProps {
     item: ApprovalItem;
     onApprove: (id: string, snapshot?: ApprovalSnapshot) => void;
     onReject: (id: string, reason: string) => void;
+    onDiscard: (id: string) => void;
 }
 
 
@@ -78,12 +79,12 @@ function CcTagInput({ cc, onChange }: { cc: string[]; onChange: (cc: string[]) =
     );
 }
 
-export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsProps) {
+export function ApprovalActions({ item, onApprove, onReject, onDiscard }: ApprovalActionsProps) {
     const [editing, setEditing] = useState(false);
     const [rejecting, setRejecting] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
     const [editSnapshot, setEditSnapshot] = useState<ApprovalSnapshot>(item.snapshot);
-    const [loadingAction, setLoadingAction] = useState<"approving" | "rejecting" | null>(null);
+    const [loadingAction, setLoadingAction] = useState<"approving" | "rejecting" | "discarding" | null>(null);
     const [prevItemId, setPrevItemId] = useState(item.id);
     if (item.id !== prevItemId) {
         setPrevItemId(item.id);
@@ -115,6 +116,15 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
         } finally {
             setLoadingAction(null);
             setRejecting(false);
+        }
+    };
+
+    const handleDiscard = async () => {
+        setLoadingAction("discarding");
+        try {
+            await onDiscard(item.id);
+        } finally {
+            setLoadingAction(null);
         }
     };
 
@@ -249,6 +259,20 @@ export function ApprovalActions({ item, onApprove, onReject }: ApprovalActionsPr
                         >
                             <X className="h-3.5 w-3.5" />
                             Reject
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleDiscard}
+                            disabled={isLoading}
+                            className="gap-1.5 whitespace-nowrap text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        >
+                            {loadingAction === "discarding" ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                            Discard
                         </Button>
                         <Button
                             size="sm"
