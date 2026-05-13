@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, X, Pencil, Loader2, AtSign, Trash2 } from "lucide-react";
+import { Check, X, Pencil, Loader2, AtSign, Trash2, Mail } from "lucide-react";
 import type { ApprovalItem, ApprovalSnapshot, EmailSnapshot, LinkedInSnapshot } from "@/types/admin";
 import { isEmailSnapshot } from "@/types/admin";
 import { RichTextEditor } from "@/components/emails/RichTextEditor";
@@ -79,13 +79,24 @@ function CcTagInput({ cc, onChange }: { cc: string[]; onChange: (cc: string[]) =
     );
 }
 
+interface ContactEmail { id: string; email: string; is_primary: boolean; label: string | null; }
+
 export function ApprovalActions({ item, onApprove, onReject, onDiscard }: ApprovalActionsProps) {
     const [editing, setEditing] = useState(false);
     const [rejecting, setRejecting] = useState(false);
     const [rejectionReason, setRejectionReason] = useState("");
     const [editSnapshot, setEditSnapshot] = useState<ApprovalSnapshot>(item.snapshot);
     const [loadingAction, setLoadingAction] = useState<"approving" | "rejecting" | "discarding" | null>(null);
+    const [confirmDiscard, setConfirmDiscard] = useState(false);
+    const [confirmApprove, setConfirmApprove] = useState(false);
     const [prevItemId, setPrevItemId] = useState(item.id);
+
+    // Email picker state
+    const [contactEmails, setContactEmails] = useState<ContactEmail[]>([]);
+    const [emailsLoading, setEmailsLoading] = useState(false);
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const [newEmailPicked, setNewEmailPicked] = useState(false);
+
     if (item.id !== prevItemId) {
         setPrevItemId(item.id);
         setEditing(false);
@@ -93,17 +104,49 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
         setRejectionReason("");
         setEditSnapshot(item.snapshot);
         setLoadingAction(null);
+        setPickerOpen(false);
+        setContactEmails([]);
+        setNewEmailPicked(false);
+        setConfirmDiscard(false);
+        setConfirmApprove(false);
     }
 
     const snapshot = item.snapshot;
     const isEmail = isEmailSnapshot(snapshot);
+    const validationStatus = item.validation_status;
+    const hasIssue = isEmail && validationStatus && validationStatus !== 'valid';
+    const contactDeleted = validationStatus === 'contact_deleted';
 
     const isLoading = loadingAction !== null;
+
+    const loadContactEmails = async () => {
+        if (!item.contact_id) return;
+        if (contactEmails.length > 0) { setPickerOpen(true); return; }
+        setEmailsLoading(true);
+        try {
+            const res = await fetch(`/api/contacts/${item.contact_id}/emails`);
+            const data = await res.json();
+            setContactEmails(data.emails ?? []);
+            setPickerOpen(true);
+        } catch {
+            toast.error('Failed to load contact emails');
+        } finally {
+            setEmailsLoading(false);
+        }
+    };
+
+    const handlePickEmail = (emailId: string) => {
+        const picked = contactEmails.find(e => e.id === emailId);
+        if (!picked) return;
+        setEditSnapshot(s => ({ ...s, contact_email_id: picked.id, contact_email: picked.email } as EmailSnapshot));
+        setNewEmailPicked(true);
+        setPickerOpen(false);
+    };
 
     const handleApprove = async () => {
         setLoadingAction("approving");
         try {
-            await onApprove(item.id, editing ? editSnapshot : undefined);
+            await onApprove(item.id, (editing || newEmailPicked) ? editSnapshot : undefined);
         } finally {
             setLoadingAction(null);
         }
@@ -130,6 +173,33 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
 
     return (
         <div className="border-t bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+            {/* Email picker — shown on demand when there's a validation issue */}
+            {hasIssue && !contactDeleted && pickerOpen && (
+                <div className="border-b px-6 py-3 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Select a new recipient email</p>
+                    {contactEmails.length === 0 ? (
+                        <p className="text-xs text-gray-400">No emails found for this contact.</p>
+                    ) : (
+                        <div className="flex flex-col gap-1">
+                            {contactEmails.map(ce => (
+                                <button
+                                    key={ce.id}
+                                    type="button"
+                                    onClick={() => handlePickEmail(ce.id)}
+                                    className="flex items-center gap-2 px-3 py-2 rounded-md border hover:bg-gray-50 text-sm text-left"
+                                >
+                                    <Mail className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                                    <span className="truncate">{ce.email}</span>
+                                    {ce.is_primary && (
+                                        <span className="ml-auto text-[10px] font-medium text-blue-600 shrink-0">Primary</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Edit panel — shown when editing */}
             {editing && (
                 <div className="border-b px-6 py-3 space-y-3 max-h-[50vh] overflow-y-auto">
@@ -232,23 +302,108 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
                             Cancel
                         </Button>
                     </>
-                ) : (
+                ) : confirmDiscard ? (
                     <>
+                        <div className="flex-1" />
+                        <span className="text-sm text-gray-600 mr-1">Permanently discard this approval?</span>
                         <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => {
-                                if (!editing) {
-                                    setEditSnapshot(item.snapshot);
-                                }
-                                setEditing(!editing);
-                            }}
-                            disabled={isLoading}
+                            variant="destructive"
+                            onClick={handleDiscard}
+                            disabled={loadingAction === "discarding"}
                             className="gap-1.5 whitespace-nowrap"
                         >
-                            <Pencil className="h-3.5 w-3.5" />
-                            {editing ? "Cancel Edit" : "Edit"}
+                            {loadingAction === "discarding" ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                            Yes, Discard
                         </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setConfirmDiscard(false)}
+                            disabled={loadingAction === "discarding"}
+                            className="whitespace-nowrap"
+                        >
+                            Cancel
+                        </Button>
+                    </>
+                ) : confirmApprove ? (
+                    <>
+                        <div className="flex-1" />
+                        <span className="text-sm text-gray-600 mr-1">Send this email now?</span>
+                        <Button
+                            size="sm"
+                            onClick={handleApprove}
+                            disabled={loadingAction === "approving"}
+                            className="gap-1.5 whitespace-nowrap"
+                        >
+                            {loadingAction === "approving" ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                                <Check className="h-3.5 w-3.5" />
+                            )}
+                            {editing ? "Save & Send" : "Yes, Send"}
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setConfirmApprove(false)}
+                            disabled={loadingAction === "approving"}
+                            className="whitespace-nowrap"
+                        >
+                            Cancel
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        {!contactDeleted && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                    if (!editing) setEditSnapshot(item.snapshot);
+                                    setEditing(!editing);
+                                }}
+                                disabled={isLoading}
+                                className="gap-1.5 whitespace-nowrap"
+                            >
+                                <Pencil className="h-3.5 w-3.5" />
+                                {editing ? "Cancel Edit" : "Edit"}
+                            </Button>
+                        )}
+                        {hasIssue && !contactDeleted && (
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                        if (pickerOpen) {
+                                            setPickerOpen(false);
+                                        } else {
+                                            loadContactEmails();
+                                        }
+                                    }}
+                                    disabled={isLoading || emailsLoading}
+                                    className="gap-1.5 whitespace-nowrap text-amber-700 hover:text-amber-800 hover:bg-amber-50 border-amber-300"
+                                >
+                                    {emailsLoading ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <Mail className="h-3.5 w-3.5" />
+                                    )}
+                                    {pickerOpen ? "Cancel" : newEmailPicked ? "Change Email" : "Select New Email"}
+                                </Button>
+                                {newEmailPicked && isEmailSnapshot(editSnapshot) && (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 border border-green-200 text-xs font-medium text-green-800">
+                                        <Check className="h-3 w-3 text-green-600" />
+                                        {editSnapshot.contact_email}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                         <div className="flex-1" />
                         <Button
                             size="sm"
@@ -263,30 +418,24 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
                         <Button
                             size="sm"
                             variant="outline"
-                            onClick={handleDiscard}
+                            onClick={() => setConfirmDiscard(true)}
                             disabled={isLoading}
                             className="gap-1.5 whitespace-nowrap text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                         >
-                            {loadingAction === "discarding" ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                                <Trash2 className="h-3.5 w-3.5" />
-                            )}
+                            <Trash2 className="h-3.5 w-3.5" />
                             Discard
                         </Button>
-                        <Button
-                            size="sm"
-                            onClick={handleApprove}
-                            disabled={loadingAction === "approving"}
-                            className="gap-1.5 whitespace-nowrap"
-                        >
-                            {loadingAction === "approving" ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
+                        {!contactDeleted && (
+                            <Button
+                                size="sm"
+                                onClick={() => setConfirmApprove(true)}
+                                disabled={isLoading || (hasIssue && !newEmailPicked && !editing)}
+                                className="gap-1.5 whitespace-nowrap"
+                            >
                                 <Check className="h-3.5 w-3.5" />
-                            )}
-                            {editing ? "Save & Approve" : "Approve"}
-                        </Button>
+                                {editing ? "Save & Approve" : "Approve"}
+                            </Button>
+                        )}
                     </>
                 )}
             </div>

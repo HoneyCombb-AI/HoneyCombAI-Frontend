@@ -33,6 +33,8 @@ export interface LinkedInSnapshot {
     post_url?: string;
 }
 
+export type ValidationStatus = 'valid' | 'email_changed' | 'email_deleted' | 'contact_deleted';
+
 export interface ApprovalItem {
     id: string;
     organization_id: string;
@@ -50,6 +52,8 @@ export interface ApprovalItem {
     snapshot: EmailSnapshot | LinkedInSnapshot;
     contact_name: string | null;
     company_name: string | null;
+    validation_status?: ValidationStatus;
+    current_email?: string | null;
 }
 
 /** Union helper for snapshot types */
@@ -73,6 +77,7 @@ export interface ApprovalListItem {
     submitted_by_name: string;
     contact_name: string | null;
     subject: string | null;
+    has_issue?: boolean;
 }
 
 export interface ApprovalsResponse {
@@ -95,7 +100,8 @@ export interface ReviewActionPayload {
 }
 
 export interface ReviewApprovalRPCResponse {
-    error?: 'forbidden' | 'not_found' | 'already_reviewed' | 'invalid_action';
+    error?: 'forbidden' | 'not_found' | 'already_reviewed' | 'invalid_action' | 'contact_deleted' | 'email_deleted' | 'email_changed';
+    current_email?: string;
     status?: 'approved' | 'rejected';
     item_type?: ApprovalItemType;
     contact_id?: string;
