@@ -227,7 +227,10 @@ export default function EmailsPage() {
             setMessageLoading(true);
             setMessageError(null);
             const response = await axios.get(`/api/emails/${contactId}/messages`, {
-                ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }),
+                ...(bypassCache && {
+                    headers: { 'Cache-Control': 'no-cache' },
+                    params: { _t: Date.now() },
+                }),
             });
 
             const draft    = response.data.draft            || null;

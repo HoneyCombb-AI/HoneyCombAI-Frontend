@@ -108,7 +108,7 @@ function CompaniesPageContent() {
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
-    async (params?: FetchParams) => {
+    async (params?: FetchParams, bypassCache = false) => {
       try {
         setfetchLoading(true);
 
@@ -140,8 +140,10 @@ function CompaniesPageContent() {
         if (params?.sortOrder || sortOrder) {
           queryParams.append("sortOrder", params?.sortOrder || sortOrder);
         }
+        if (bypassCache) queryParams.append("_t", String(Date.now()));
         const response = await axios.get(
-          `/api/companies?${queryParams.toString()}`
+          `/api/companies?${queryParams.toString()}`,
+          { ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }) }
         );
         console.log("API Response:", response.data);
 
@@ -300,7 +302,7 @@ function CompaniesPageContent() {
         }
 
         setSelectedCompanies(new Map());
-        fetchDashboardData();
+        fetchDashboardData(undefined, true);
       } else {
         toast.error(response.data.message || "Failed to delete companies");
       }
@@ -570,7 +572,7 @@ function CompaniesPageContent() {
           <AddCompanyDrawer
             open={addCompanyDrawerOpen}
             onOpenChange={setAddCompanyDrawerOpen}
-            onSubmit={() => fetchDashboardData()}
+            onSubmit={() => fetchDashboardData(undefined, true)}
           />
 
           {/* Tags Drawer */}
@@ -579,7 +581,7 @@ function CompaniesPageContent() {
             onOpenChange={setTagsDrawerOpen}
             selectedItems={Array.from(selectedCompanies.keys())}
             taggableType="company"
-            onTagsUpdated={() => fetchDashboardData()}
+            onTagsUpdated={() => fetchDashboardData(undefined, true)}
           />
         </div>
       </div>

@@ -148,6 +148,7 @@ function AudiencePageContent() {
         if (params?.sortOrder || sortOrder) {
           queryParams.append("sortOrder", params?.sortOrder || sortOrder);
         }
+        if (bypassCache) queryParams.append("_t", String(Date.now()));
         const response = await axios.get(
           `/api/contacts?${queryParams.toString()}`,
           { ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }) }
