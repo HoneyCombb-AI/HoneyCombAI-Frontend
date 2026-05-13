@@ -40,15 +40,6 @@ import type {
 } from "@/types/companies";
 import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
-import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
-
-import { useTour } from "@/lib/joyride/useTour";
-
-// Component that uses useSearchParams wrapped in Suspense
-function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean }) => React.ReactNode }) {
-  const { isJoyrideMode } = useTour('companies');
-  return <>{children({ isJoyrideMode })}</>;
-}
 
 export type GroupByType = "none" | "industry" | "location" | "employee_size";
 export type LocationType = "country" | "state" | "city";
@@ -84,7 +75,7 @@ interface FetchParams {
   sortOrder?: SortOrder;
 }
 
-function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
+function CompaniesPageContent() {
   const { loading: authLoading } = useAuth();
   const [dashboardState, setDashboardState] = useState<DashboardState>({
     data: null,
@@ -114,7 +105,6 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
-  const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -604,7 +594,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         <div className="min-h-[400px] bg-white shadow-sm p-6">
           <CompaniesSection
             groupBy={groupBy}
-            records={displayData as DashboardResponse}
+            records={dashboardState.data as DashboardResponse}
             selectedCompanies={selectedCompanies}
             onCompanySelect={handleCompanySelect}
             onSelectAll={handleSelectAll}
@@ -708,9 +698,7 @@ export default function CompaniesPage() {
         <p className="text-sm text-muted-foreground mt-4">Loading your companies...</p>
       </div>
     }>
-      <TourProvider>
-        {({ isJoyrideMode }) => <CompaniesPageContent isJoyrideMode={isJoyrideMode} />}
-      </TourProvider>
+      <CompaniesPageContent />
     </Suspense>
   );
 }

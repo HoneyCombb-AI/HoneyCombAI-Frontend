@@ -42,15 +42,6 @@ import type {
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
-import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
-import { useTour } from "@/lib/joyride/useTour";
-
-
-// Component that uses useSearchParams wrapped in Suspense
-function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean }) => React.ReactNode }) {
-  const { isJoyrideMode } = useTour('contacts');
-  return <>{children({ isJoyrideMode })}</>;
-}
 
 export type GroupByType = "none" | "company" | "location" | "city" | "tags";
 export type LocationType = "country" | "city";
@@ -88,7 +79,7 @@ interface FetchParams {
   sortOrder?: SortOrder;
 }
 
-function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
+function AudiencePageContent() {
   const { loading: authLoading } = useAuth();
   const router = useRouter();
   const [dashboardState, setDashboardState] = useState<DashboardState>({
@@ -122,8 +113,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
   const [exportLoading, setExportLoading] = useState<boolean>(false);
-
-  const displayData = isJoyrideMode ? SAMPLE_CONTACT_DATA : dashboardState.data;
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
@@ -222,9 +211,9 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   };
 
   const availableCompanies = useMemo<MinimalCompany[]>(() => {
-    if (!displayData) return [];
-    return (displayData as DashboardResponse).available_companies ?? [];
-  }, [displayData]);
+    if (!dashboardState.data) return [];
+    return (dashboardState.data as DashboardResponse).available_companies ?? [];
+  }, [dashboardState.data]);
 
   const clearAllFilters = () => {
     setGroupBy("none");
@@ -751,7 +740,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         <div className="min-h-[400px] bg-white shadow-sm p-6">
           <ContactsSection
             groupBy={groupBy}
-            records={displayData as DashboardResponse}
+            records={dashboardState.data as DashboardResponse}
             selectedContacts={selectedContacts}
             onContactSelect={handleContactSelect}
             onSelectAll={handleSelectAll}
@@ -856,9 +845,7 @@ export default function AudiencePage() {
         <p className="text-sm text-muted-foreground mt-4">Loading your contacts...</p>
       </div>
     }>
-      <TourProvider>
-        {({ isJoyrideMode }) => <AudiencePageContent isJoyrideMode={isJoyrideMode} />}
-      </TourProvider>
+      <AudiencePageContent />
     </Suspense>
   );
 }
