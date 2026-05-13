@@ -505,13 +505,13 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
               {/* Company Filter - populated from loaded data */}
               {availableCompanies.length > 0 && (
-                <div className="flex items-center">
+                <div className={`group/company-filter flex items-center ${selectedFilterCompanyId ? "rounded-md border border-input shadow-xs focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]" : ""}`}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        className={`gap-2 text-sm ${selectedFilterCompanyId ? "rounded-r-none" : ""}`}
+                        className={`gap-2 text-sm ${selectedFilterCompanyId ? "rounded-r-none border-0 shadow-none focus-visible:ring-0 focus-visible:border-0" : ""}`}
                       >
                         <Building2 className="h-4 w-4" />
                         <span className="hidden sm:inline">Company:</span>
@@ -543,14 +543,12 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                     </DropdownMenuContent>
                   </DropdownMenu>
                   {selectedFilterCompanyId && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 px-2 rounded-l-none -ml-px"
+                    <button
+                      className="h-8 px-2 rounded-r-md border-l border-input hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-center"
                       onClick={() => setSelectedFilterCompanyId(null)}
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </button>
                   )}
                 </div>
               )}

@@ -526,7 +526,10 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                   )}
                   <Badge
                     variant="secondary"
-                    className="bg-gray-200 text-gray-700 text-xs"
+                    className={visibleCount > 0
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs"
+                      : "bg-gray-100 text-gray-400 text-xs"
+                    }
                   >
                     {visibleCount} record{visibleCount !== 1 ? 's' : ''}
                   </Badge>
