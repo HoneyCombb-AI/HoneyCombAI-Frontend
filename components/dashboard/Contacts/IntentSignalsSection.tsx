@@ -2,12 +2,13 @@
 
 import * as React from "react"
 import { Badge } from "@/components/ui/badge"
-import { ExternalLink, Zap, TrendingUp, Users, DollarSign, Bot, Globe, MessageSquare, ThumbsUp, Share2, FileText, LucideIcon } from "lucide-react"
+import { ExternalLink, Zap, TrendingUp, Users, DollarSign, Bot, Globe, MessageSquare, ThumbsUp, Share2, FileText, Copy, LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import * as chrono from 'chrono-node'
 import { DrawerContactSignal } from "@/types/contacts"
 import { useFontSize } from "@/lib/font-size-context"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { toast } from "sonner"
 
 interface IntentSignalsSectionProps {
     signals: DrawerContactSignal[]
@@ -123,6 +124,25 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
         return { veryRecent, recent, other }
     }, [processedSignals])
 
+    const copyAllSignals = () => {
+        const text = processedSignals.map((processed, idx) => {
+            const { signal } = processed
+            let rawType = signal.signal_type || ''
+            const customPrefixRegex = /^custom[_\s:]+/i
+            const hasCustomPrefix = customPrefixRegex.test(rawType)
+            const isCustom = signal.is_custom === true || hasCustomPrefix
+            if (hasCustomPrefix) rawType = rawType.replace(customPrefixRegex, '')
+            const title = toSentenceCase(rawType)
+            return [
+                `${idx + 1}. ${title}${isCustom ? ' (Custom)' : ''}`,
+                `   ${signal.description || 'N/A'}`
+            ].join('\n')
+        }).join('\n\n')
+
+        navigator.clipboard.writeText(`Intent Signals:\n\n${text}`)
+        toast.success("All signals copied to clipboard")
+    }
+
     if (signals.length === 0) return null
 
     const renderSignalCard = (processed: ProcessedSignal, index: number) => {
@@ -140,8 +160,19 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
 
         const title = toSentenceCase(rawSignalType)
 
+        const copySignal = (e: React.MouseEvent) => {
+            e.stopPropagation()
+            const text = [
+                `Signal: ${title}`,
+                `Description: ${signal.description || 'N/A'}`,
+                isCustom ? `Type: Custom` : null
+            ].filter(Boolean).join('\n')
+            navigator.clipboard.writeText(text)
+            toast.success("Signal copied to clipboard")
+        }
+
         // The header content is used in both the spacer (invisible) and the actual card
-        const HeaderContent = () => (
+        const HeaderContent = ({ withCopy = false }: { withCopy?: boolean }) => (
             <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                     <div className={cn(
@@ -159,11 +190,22 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
                     </div>
                 </div>
 
-                {isCustom && (
-                    <Badge variant="secondary" className="bg-amber-100/50 text-amber-700 border-amber-200/50 text-[10px] px-2 h-5 font-medium shadow-none shrink-0">
-                        Custom
-                    </Badge>
-                )}
+                <div className="flex items-center gap-1.5">
+                    {isCustom && (
+                        <Badge variant="secondary" className="bg-amber-100/50 text-amber-700 border-amber-200/50 text-[10px] px-2 h-5 font-medium shadow-none shrink-0">
+                            Custom
+                        </Badge>
+                    )}
+                    {withCopy && (
+                        <button
+                            onClick={copySignal}
+                            className="flex items-center justify-center h-5 w-5 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors shrink-0 cursor-pointer"
+                            title="Copy signal"
+                        >
+                            <Copy className="h-3 w-3" />
+                        </button>
+                    )}
+                </div>
             </div>
         )
 
@@ -186,7 +228,7 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
                         ? "border-amber-200/60 shadow-[0_0_15px_-3px_rgba(251,191,36,0.15)] group-hover:ring-amber-200"
                         : "border-gray-100 shadow-sm group-hover:border-blue-100 group-hover:ring-blue-100"
                 )}>
-                    <HeaderContent />
+                    <HeaderContent withCopy />
 
                     {/* Expandable Content */}
                     <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-200 ease-out">
@@ -289,6 +331,14 @@ export function IntentSignalsSection({ signals }: IntentSignalsSectionProps) {
                 <Badge variant="secondary" className="ml-2 bg-gray-100 text-gray-600 hover:bg-gray-100 border-0 h-5 px-2">
                     {signals.length}
                 </Badge>
+                <button
+                    onClick={copyAllSignals}
+                    className="ml-auto flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+                    title="Copy all signals"
+                >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Copy all</span>
+                </button>
             </div>
 
             <div className="space-y-8">
