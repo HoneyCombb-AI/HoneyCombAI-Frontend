@@ -10,6 +10,16 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('organization_id')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError || !profile?.organization_id) {
+            return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
+        }
+
         const { searchParams } = new URL(req.url);
         const searchTerm = searchParams.get('search') || '';
         const locationFilter = searchParams.get('location') || null;

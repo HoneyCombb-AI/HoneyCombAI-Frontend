@@ -14,6 +14,16 @@ export async function GET() {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+    if (profileError || !profile?.organization_id) {
+        return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
+    }
+
     const { data, error } = await supabase.rpc("get_integration_statuses");
 
     if (error) {

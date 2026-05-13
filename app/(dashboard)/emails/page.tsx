@@ -368,8 +368,12 @@ export default function EmailsPage() {
 
     if (error) {
         return (
-            <div className="flex-1 flex items-center justify-center p-6">
-                <p className="text-sm text-red-600">{error}</p>
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
+                <svg className="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-11.25a.75.75 0 011.5 0v4.5a.75.75 0 01-1.5 0v-4.5zm.75 7.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+                </svg>
+                <p className="text-base font-medium text-red-500">Something went wrong</p>
+                <p className="text-sm text-muted-foreground">{error}</p>
             </div>
         );
     }

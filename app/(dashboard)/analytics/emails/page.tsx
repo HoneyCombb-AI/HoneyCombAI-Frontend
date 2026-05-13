@@ -23,6 +23,7 @@ export default function EmailAnalyticsPage() {
     // Step Metrics State
     const [stepMetrics, setStepMetrics] = useState<StepMetric[]>([]);
     const [loadingMetrics, setLoadingMetrics] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     // Selected Step Contacts State
     const [selectedStep, setSelectedStep] = useState<number | null>(null);
@@ -98,6 +99,11 @@ export default function EmailAnalyticsPage() {
             }
         } catch (err: any) {
             console.error("Error fetching step metrics:", err);
+            if (axios.isAxiosError(err)) {
+                setError(err.response?.data?.error || err.message);
+            } else {
+                setError(err instanceof Error ? err.message : 'Failed to load analytics');
+            }
         } finally {
             setLoadingMetrics(false);
         }
@@ -221,113 +227,124 @@ export default function EmailAnalyticsPage() {
 
     return (
         <div className="flex flex-1 flex-col w-full bg-gray-50/50 min-w-0 min-h-0">
-            {/* Header Bar */}
-            <div className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
-                <div className="flex items-center gap-4">
-                    {/* Tab Select */}
-                    <Select value={activeTab} onValueChange={(val) => setActiveTab(val as 'feed' | 'geo')}>
-                        <SelectTrigger className="w-[180px] h-9 bg-white">
-                            <SelectValue placeholder="Select view" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[300px] overflow-y-auto">
-                            <SelectItem value="feed">Activity Feed</SelectItem>
-                            <SelectItem value="geo">Location Insights</SelectItem>
-                        </SelectContent>
-                    </Select>
+            {error ? (
+                <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
+                    <svg className="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-11.25a.75.75 0 011.5 0v4.5a.75.75 0 01-1.5 0v-4.5zm.75 7.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-base font-medium text-red-500">Something went wrong</p>
+                    <p className="text-sm text-muted-foreground">{error}</p>
                 </div>
-
-                {/* Right side controls */}
-                <div className="flex items-center gap-3">
-                    {activeTab === 'geo' && (
-                        <Select value={groupBy} onValueChange={(val: any) => {
-                            setGroupBy(val);
-                            setGeoPage(1); // Reset page on group change
-                        }}>
-                            <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Group by" />
+            ) : (<>
+                {/* Header Bar */}
+                <div className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        {/* Tab Select */}
+                        <Select value={activeTab} onValueChange={(val) => setActiveTab(val as 'feed' | 'geo')}>
+                            <SelectTrigger className="w-[180px] h-9 bg-white">
+                                <SelectValue placeholder="Select view" />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="country">Group: Country</SelectItem>
-                                <SelectItem value="region">Group: Region</SelectItem>
-                                <SelectItem value="city">Group: City</SelectItem>
+                            <SelectContent className="max-h-[300px] overflow-y-auto">
+                                <SelectItem value="feed">Activity Feed</SelectItem>
+                                <SelectItem value="geo">Location Insights</SelectItem>
                             </SelectContent>
                         </Select>
-                    )}
-                    <Select value={activeTab === 'feed' ? contactLimit.toString() : geoLimit.toString()} onValueChange={(val) => {
-                        const numVal = parseInt(val);
-                        if (activeTab === 'feed') handleContactLimitChange(numVal);
-                        else handleGeoLimitChange(numVal);
-                    }}>
-                        <SelectTrigger className="w-[120px] h-9">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[300px] overflow-y-auto">
-                            <SelectItem value="30">Show 30</SelectItem>
-                            <SelectItem value="50">Show 50</SelectItem>
-                            <SelectItem value="100">Show 100</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleExport}
-                        disabled={exportLoading}
-                        className="h-9 gap-2"
-                    >
-                        {exportLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Download className="h-4 w-4" />
+                    </div>
+
+                    {/* Right side controls */}
+                    <div className="flex items-center gap-3">
+                        {activeTab === 'geo' && (
+                            <Select value={groupBy} onValueChange={(val: any) => {
+                                setGroupBy(val);
+                                setGeoPage(1); // Reset page on group change
+                            }}>
+                                <SelectTrigger className="h-9">
+                                    <SelectValue placeholder="Group by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="country">Group: Country</SelectItem>
+                                    <SelectItem value="region">Group: Region</SelectItem>
+                                    <SelectItem value="city">Group: City</SelectItem>
+                                </SelectContent>
+                            </Select>
                         )}
-                        Export CSV
-                    </Button>
+                        <Select value={activeTab === 'feed' ? contactLimit.toString() : geoLimit.toString()} onValueChange={(val) => {
+                            const numVal = parseInt(val);
+                            if (activeTab === 'feed') handleContactLimitChange(numVal);
+                            else handleGeoLimitChange(numVal);
+                        }}>
+                            <SelectTrigger className="w-[120px] h-9">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px] overflow-y-auto">
+                                <SelectItem value="30">Show 30</SelectItem>
+                                <SelectItem value="50">Show 50</SelectItem>
+                                <SelectItem value="100">Show 100</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleExport}
+                            disabled={exportLoading}
+                            className="h-9 gap-2"
+                        >
+                            {exportLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Download className="h-4 w-4" />
+                            )}
+                            Export CSV
+                        </Button>
+                    </div>
                 </div>
-            </div>
 
-            {/* Main Content Area — each tab uses its own loading state */}
-            <div className="flex-1 bg-white shadow-sm p-6 flex flex-col min-h-0">
-                {activeTab === 'geo' ? (
-                    // Geo tab is independent of step-metrics; uses its own loadingGeo state
-                    <LocationInsights
-                        geoMetrics={geoMetrics}
-                        groupBy={groupBy}
-                        loading={loadingGeo}
-                    />
-                ) : (
-                    // Feed tab depends on step metrics — show spinner until ready
-                    loadingMetrics ? (
-                        <div className="flex flex-1 flex-col items-center justify-center">
-                            <Loading />
-                            <p className="text-sm text-muted-foreground mt-4">Loading your Analytics...</p>
-                        </div>
-                    ) : (
-                        <ActivityFeed
-                            stepMetrics={stepMetrics}
-                            selectedStep={selectedStep}
-                            stepContacts={stepContacts}
-                            loadingContacts={loadingContacts}
-                            contactPagination={contactPagination}
-                            expandedContact={expandedContact}
-                            onStepClick={handleStepClick}
-                            onExpandedChange={setExpandedContact}
+                {/* Main Content Area — each tab uses its own loading state */}
+                <div className="flex-1 bg-white shadow-sm p-6 flex flex-col min-h-0">
+                    {activeTab === 'geo' ? (
+                        // Geo tab is independent of step-metrics; uses its own loadingGeo state
+                        <LocationInsights
+                            geoMetrics={geoMetrics}
+                            groupBy={groupBy}
+                            loading={loadingGeo}
                         />
-                    )
+                    ) : (
+                        // Feed tab depends on step metrics — show spinner until ready
+                        loadingMetrics ? (
+                            <div className="flex flex-1 flex-col items-center justify-center">
+                                <Loading />
+                                <p className="text-sm text-muted-foreground mt-4">Loading your Analytics...</p>
+                            </div>
+                        ) : (
+                            <ActivityFeed
+                                stepMetrics={stepMetrics}
+                                selectedStep={selectedStep}
+                                stepContacts={stepContacts}
+                                loadingContacts={loadingContacts}
+                                contactPagination={contactPagination}
+                                expandedContact={expandedContact}
+                                onStepClick={handleStepClick}
+                                onExpandedChange={setExpandedContact}
+                            />
+                        )
+                    )}
+                </div>
+
+                {/* Pagination Footers - Pushed to the bottom */}
+                {activeTab === 'feed' && selectedStep && (
+                    <PaginationFooter
+                        pagination={contactPagination}
+                        onPageChange={handleContactPageChange}
+                    />
                 )}
-            </div>
 
-            {/* Pagination Footers - Pushed to the bottom */}
-            {activeTab === 'feed' && selectedStep && (
-                <PaginationFooter
-                    pagination={contactPagination}
-                    onPageChange={handleContactPageChange}
-                />
-            )}
-
-            {activeTab === 'geo' && (
-                <PaginationFooter
-                    pagination={geoPagination}
-                    onPageChange={handleGeoPageChange}
-                />
+                {activeTab === 'geo' && (
+                    <PaginationFooter
+                        pagination={geoPagination}
+                        onPageChange={handleGeoPageChange}
+                    />
+                )}
+            </>
             )}
         </div>
     );
