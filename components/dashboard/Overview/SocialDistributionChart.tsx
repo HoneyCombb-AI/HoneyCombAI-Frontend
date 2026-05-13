@@ -40,7 +40,7 @@ export function SocialDistributionChart({ title, data, type = "list", colors = D
 
     const renderPieChart = () => (
         <div className="h-full w-full relative">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                     <Pie
                         data={data}

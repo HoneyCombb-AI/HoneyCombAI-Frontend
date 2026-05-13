@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   images: {
+    qualities: [75, 100],
     remotePatterns: [
       {
         protocol: 'https',

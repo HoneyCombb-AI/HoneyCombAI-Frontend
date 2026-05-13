@@ -46,7 +46,7 @@ export function SignalTrendChart({ data }: SignalTrendChartProps) {
                             <p className="text-xs opacity-70 mt-1">Activity will appear here once monitoring begins</p>
                         </div>
                     ) : (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height={300}>
                             <AreaChart data={data}>
                                 <defs>
                                     <linearGradient id="colorCustom" x1="0" y1="0" x2="0" y2="1">
