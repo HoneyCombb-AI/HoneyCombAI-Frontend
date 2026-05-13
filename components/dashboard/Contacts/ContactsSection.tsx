@@ -58,17 +58,18 @@ interface ProcessedGroup {
 const ContactRow = memo<{
   contact: DashboardContact;
   isSelected: boolean;
+  isHidden: boolean;
   onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
   onContactClick: (contact: DashboardContact) => void;
   onNotesClick: (contactId: string, contactName: string) => void;
   isFirstInGroup?: boolean;
-}>(({ contact, isSelected, onContactSelect, onContactClick, onNotesClick, isFirstInGroup }) => {
+}>(({ contact, isSelected, isHidden, onContactSelect, onContactClick, onNotesClick, isFirstInGroup }) => {
   const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
   const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default browser context menu
-    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
 
     onContactSelect(contact.id, {
       primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
@@ -81,6 +82,7 @@ const ContactRow = memo<{
 
   return (
     <tr
+      style={{ display: isHidden ? 'none' : undefined }}
       className={`group/row hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''} relative`}
       onContextMenu={handleContextMenu}
     >
@@ -282,29 +284,15 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
     return [];
   }, [groupBy, records]);
 
-  // Apply client-side company filter
-  const filteredGroups = useMemo<ProcessedGroup[]>(() => {
-    if (!filterCompanyId) return groups;
-
-    if (groupBy === 'company') {
-      return groups.filter(g => g.id === filterCompanyId);
-    }
-
-    return groups
-      .map(g => {
-        const contacts = g.contacts.filter(c => c.company?.id === filterCompanyId);
-        return { ...g, contacts, metadata: { ...g.metadata, contactCount: contacts.length } };
-      })
-      .filter(g => g.contacts.length > 0);
-  }, [groups, filterCompanyId, groupBy]);
-
   // State for managing collapsed groups - ALL COLLAPSED BY DEFAULT
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  // Total contacts
-  const totalContacts = useMemo(() =>
-    filteredGroups.reduce((sum, g) => sum + (g.contacts?.length || 0), 0)
-    , [filteredGroups]);
+  // Total visible contacts — filter-aware, no array allocation
+  const totalContacts = useMemo(() => {
+    if (!filterCompanyId) return groups.reduce((sum, g) => sum + (g.contacts?.length || 0), 0);
+    if (groupBy === 'company') return groups.find(g => g.id === filterCompanyId)?.contacts?.length || 0;
+    return groups.reduce((sum, g) => sum + g.contacts.filter(c => c.company?.id === filterCompanyId).length, 0);
+  }, [groups, filterCompanyId, groupBy]);
 
 
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -342,8 +330,8 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
   }, []);
 
   const toggleAllCollapse = useCallback(() => {
-    setCollapsedGroups(new Set(filteredGroups.map(g => g.id)));
-  }, [filteredGroups]);
+    setCollapsedGroups(new Set(groups.map((g: ProcessedGroup) => g.id)));
+  }, [groups]);
 
   return (
     <div className="space-y-4">
@@ -383,12 +371,17 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
       {/* Groups */}
       <div className="space-y-4">
-        {filteredGroups.map((group) => {
+        {groups.map((group: ProcessedGroup) => {
           const isCollapsed = collapsedGroups.has(group.id);
+          const isGroupHidden = groupBy === 'company' && !!filterCompanyId && group.id !== filterCompanyId;
+          const visibleCount = (filterCompanyId && groupBy !== 'company')
+            ? group.contacts.filter((c: DashboardContact) => c.company?.id === filterCompanyId).length
+            : (group.metadata?.contactCount ?? group.contacts?.length ?? 0);
 
           return (
             <div
               key={group.id}
+              style={{ display: isGroupHidden ? 'none' : undefined }}
               className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
             >
               {/* Group Header */}
@@ -449,8 +442,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                     variant="secondary"
                     className="bg-gray-200 text-gray-700 text-xs"
                   >
-                    {group.metadata?.contactCount || group.contacts?.length || 0} record
-                    {(group.metadata?.contactCount || group.contacts?.length || 0) !== 1 ? 's' : ''}
+                    {visibleCount} record{visibleCount !== 1 ? 's' : ''}
                   </Badge>
                 </div>
               </div>
@@ -491,11 +483,12 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                     </tr>
                   </thead>
                   <tbody>
-                    {(group.contacts || []).map((contact, index) => (
+                    {(group.contacts || []).map((contact: DashboardContact, index: number) => (
                       <ContactRow
                         key={contact.id}
                         contact={contact}
                         isSelected={selectedContacts.has(contact.id)}
+                        isHidden={groupBy !== 'company' && !!filterCompanyId && contact.company?.id !== filterCompanyId}
                         onContactSelect={onContactSelect}
                         onContactClick={handleContactClick}
                         onNotesClick={handleNotesClick}
