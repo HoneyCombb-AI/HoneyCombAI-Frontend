@@ -224,8 +224,11 @@ function ResubmitForm({
                 cc: editCc,
             });
             toast.success("Email resubmitted for approval.");
-        } catch {
-            toast.error("Failed to resubmit. Please try again.");
+        } catch (err: unknown) {
+            const message =
+                (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+                ?? "Failed to resubmit. Please try again.";
+            toast.error(message);
         } finally {
             setSaving(false);
         }
