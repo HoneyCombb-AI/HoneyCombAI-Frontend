@@ -53,6 +53,8 @@ function formatCompanyFromRPC(company: {
 }
 
 
+const CACHE = { headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' } };
+
 // Move shared query param parsing outside GET
 function getQueryParams(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -157,7 +159,7 @@ async function handleCompanyListing(
   return NextResponse.json({
     companies: formattedCompanies,
     pagination
-  } as CompanyListResponse);
+  } as CompanyListResponse, CACHE);
 }
 
 async function handleSearch(
@@ -206,7 +208,7 @@ async function handleSearch(
     companies: formattedCompanies,
     pagination,
     searchTerm
-  } as SearchResponse);
+  } as SearchResponse, CACHE);
 }
 
 async function handleIndustryGrouping(
@@ -238,7 +240,7 @@ async function handleIndustryGrouping(
   return NextResponse.json({
     industries,
     pagination
-  } as IndustryGroupResponse);
+  } as IndustryGroupResponse, CACHE);
 }
 
 async function handleLocationGrouping(
@@ -272,7 +274,7 @@ async function handleLocationGrouping(
   return NextResponse.json({
     locations,
     pagination
-  } as LocationGroupResponse);
+  } as LocationGroupResponse, CACHE);
 }
 
 async function handleEmployeeSizeGrouping(
@@ -304,5 +306,5 @@ async function handleEmployeeSizeGrouping(
   return NextResponse.json({
     employee_sizes,
     pagination
-  } as EmployeeSizeGroupResponse);
+  } as EmployeeSizeGroupResponse, CACHE);
 }

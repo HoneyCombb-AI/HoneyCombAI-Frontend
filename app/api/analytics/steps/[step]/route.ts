@@ -73,6 +73,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
         return NextResponse.json({
             data: formattedContacts,
             pagination
+        }, {
+            headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' }
         });
 
     } catch (error: any) {

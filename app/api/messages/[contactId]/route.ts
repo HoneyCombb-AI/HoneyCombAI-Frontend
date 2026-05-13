@@ -87,7 +87,9 @@ export async function GET(
             contact_id: contactId,
         };
 
-        return NextResponse.json(result);
+        return NextResponse.json(result, {
+            headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+        });
 
     } catch (error: unknown) {
         console.error('API /api/messages/[contactId] error:', error);

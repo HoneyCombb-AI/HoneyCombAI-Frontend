@@ -30,6 +30,8 @@ export async function GET(_req: NextRequest) {
 
         return NextResponse.json({
             data: metrics as StepMetric[]
+        }, {
+            headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' }
         });
 
     } catch (error: any) {

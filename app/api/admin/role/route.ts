@@ -30,6 +30,8 @@ export async function GET() {
                 role: null,
                 approval_required: false,
                 organization_id: null,
+            }, {
+                headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' }
             });
         }
 
@@ -52,6 +54,8 @@ export async function GET() {
             role: membership.role || 'user',
             approval_required: org.approval_required,
             organization_id: membership.organization_id,
+        }, {
+            headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' }
         });
 
     } catch (error: unknown) {

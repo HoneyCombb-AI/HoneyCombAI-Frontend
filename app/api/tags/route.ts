@@ -28,7 +28,9 @@ export async function GET(req: NextRequest) {
         // De-duplicate tags by name
         const uniqueTags = Array.from(new Map(tags.map(t => [t.name, t])).values());
 
-        return NextResponse.json(uniqueTags);
+        return NextResponse.json(uniqueTags, {
+            headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' }
+        });
 
     } catch (error: unknown) {
         return NextResponse.json(

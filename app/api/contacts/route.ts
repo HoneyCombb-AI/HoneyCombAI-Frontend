@@ -9,6 +9,8 @@ import type {
   TagGroupResponse
 } from '@/types/contacts';
 
+const CACHE = { headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' } };
+
 /**
  * PERFORMANCE OPTIMIZATIONS APPLIED:
  * - Limited signals to top 4 by confidence_score (displayed in main table)
@@ -115,8 +117,7 @@ async function handleSearch(
     throw new Error(`Failed to search contacts: ${error.message}`);
   }
 
-  // RPC function returns the complete response structure
-  return NextResponse.json(result as SearchResponse);
+  return NextResponse.json(result as SearchResponse, CACHE);
 }
 
 async function handleCompanyGrouping(
@@ -149,7 +150,7 @@ async function handleCompanyGrouping(
     companies,
     available_companies: availableCompanies,
     pagination
-  } as CompanyGroupResponse);
+  } as CompanyGroupResponse, CACHE);
 }
 
 async function handleLocationGrouping(
@@ -184,7 +185,7 @@ async function handleLocationGrouping(
     locations,
     available_companies: availableCompanies,
     pagination
-  } as LocationGroupResponse);
+  } as LocationGroupResponse, CACHE);
 }
 
 async function handleTagsGrouping(
@@ -217,7 +218,7 @@ async function handleTagsGrouping(
     tags,
     available_companies: availableCompanies,
     pagination
-  } as TagGroupResponse);
+  } as TagGroupResponse, CACHE);
 }
 
 async function handleContactsList(
@@ -240,6 +241,5 @@ async function handleContactsList(
     throw new Error(`Failed to fetch contacts list: ${error.message}`);
   }
 
-  // RPC function returns the complete response structure
-  return NextResponse.json(result as SearchResponse);
+  return NextResponse.json(result as SearchResponse, CACHE);
 }

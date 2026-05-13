@@ -77,7 +77,9 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
         }
 
-        return NextResponse.json(response);
+        return NextResponse.json(response, {
+            headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' }
+        });
 
     } catch (error: any) {
         console.error('API /api/analytics/geolocation error:', error);

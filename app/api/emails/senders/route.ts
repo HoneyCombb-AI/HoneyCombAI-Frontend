@@ -34,7 +34,9 @@ export async function GET() {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        return NextResponse.json({ senders: data ?? [] });
+        return NextResponse.json({ senders: data ?? [] }, {
+            headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' }
+        });
 
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error';

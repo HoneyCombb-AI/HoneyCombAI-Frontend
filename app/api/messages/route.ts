@@ -81,7 +81,9 @@ export async function GET(req: NextRequest) {
       hasMore,
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+    });
 
   } catch (error: unknown) {
     console.error('API /api/messages error:', error);
