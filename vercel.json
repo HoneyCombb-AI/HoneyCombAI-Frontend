@@ -1,14 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "app/api/contacts/enrichment/route.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "app/api/contacts/outreach/route.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
     "app/api/onboarding/route.ts": {
       "memory": 1024,
       "maxDuration": 60

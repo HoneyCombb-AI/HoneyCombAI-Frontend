@@ -72,7 +72,7 @@ export default function EmailsPage() {
         return () => clearTimeout(timer);
     }, [search]);
 
-    const fetchEmails = useCallback(async (isLoadMore = false) => {
+    const fetchEmails = useCallback(async (isLoadMore = false, bypassCache = false) => {
         try {
             if (isLoadMore) {
                 setLoadingMore(true);
@@ -92,6 +92,7 @@ export default function EmailsPage() {
                     page: currentPage,
                     limit: LIMIT,
                 },
+                ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }),
             });
 
             const result = response.data;
@@ -221,11 +222,13 @@ export default function EmailsPage() {
         });
     }, []);
 
-    const fetchMessages = useCallback(async (contactId: string) => {
+    const fetchMessages = useCallback(async (contactId: string, bypassCache = false) => {
         try {
             setMessageLoading(true);
             setMessageError(null);
-            const response = await axios.get(`/api/emails/${contactId}/messages`);
+            const response = await axios.get(`/api/emails/${contactId}/messages`, {
+                ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }),
+            });
 
             const draft    = response.data.draft            || null;
             const approval = response.data.pending_approval || null;
@@ -298,7 +301,7 @@ export default function EmailsPage() {
     const handleResubmit = useCallback(async (data: { subject: string; body: string; contact_email_id: string; contact_email: string; cc: string[] }) => {
         if (!selectedEmail || !rejectedApproval) throw new Error("No rejected approval");
         await axios.patch(`/api/emails/${selectedEmail.id}/approval/${rejectedApproval.id}`, data);
-        await fetchMessages(selectedEmail.id);
+        await fetchMessages(selectedEmail.id, true);
     }, [selectedEmail, rejectedApproval, fetchMessages]);
 
     const handleDiscard = useCallback(async () => {
@@ -449,7 +452,10 @@ export default function EmailsPage() {
                                             replyToMessage={replyToMessage}
                                             lastMessage={lastMessage}
                                             lastMessageSubject={lastMessage?.subject}
-                                            onSent={() => fetchMessages(selectedEmail.id)}
+                                            onSent={() => {
+                                                fetchMessages(selectedEmail.id, true);
+                                                fetchEmails(false, true);
+                                            }}
                                             onClearReply={() => setReplyToMessage(null)}
                                             senderEmail={senderEmail}
                                             senderProvider={senderProvider}

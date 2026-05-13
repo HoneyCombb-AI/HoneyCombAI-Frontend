@@ -165,14 +165,16 @@ export function TagsDrawer({
     return [...selectedItems].sort().join(',')
   }, [selectedItems])
 
-  const fetchAllData = useCallback(async () => {
+  const fetchAllData = useCallback(async (bypassCache = false) => {
     setLoading(true)
+    const cacheHeaders = bypassCache ? { headers: { 'Cache-Control': 'no-cache' } } : {}
     try {
       const [systemRes, appliedRes] = await Promise.all([
-        axios.get('/api/tags', { params: { taggable_type: taggableType } }),
+        axios.get('/api/tags', { params: { taggable_type: taggableType }, ...cacheHeaders }),
         selectedItems.length > 0
           ? axios.get('/api/tags/fetch', {
-              params: { taggable_ids: selectedItemsKey, taggable_type: taggableType }
+              params: { taggable_ids: selectedItemsKey, taggable_type: taggableType },
+              ...cacheHeaders
             })
           : Promise.resolve({ data: { tags: [] } })
       ])
@@ -230,7 +232,7 @@ export function TagsDrawer({
           toast.success(`Applied "${tag.name}" to ${contactsToApply.length} contact(s)`)
         }
       }
-      fetchAllData()
+      fetchAllData(true)
       onTagsUpdated?.()
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
@@ -277,7 +279,7 @@ export function TagsDrawer({
       await axios.post("/api/tags/create", { operations })
       toast.success(`Tag applied to ${contactsToApply.length} contact(s)`)
       setNewTagName("")
-      fetchAllData()
+      fetchAllData(true)
       onTagsUpdated?.()
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
@@ -314,7 +316,7 @@ export function TagsDrawer({
       setEditingTag(null)
       setEditTagName("")
       setEditTagColor("")
-      fetchAllData()
+      fetchAllData(true)
       onTagsUpdated?.()
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
@@ -336,7 +338,7 @@ export function TagsDrawer({
       })
       toast.success(`Deleted "${tagName}" from all contacts`)
       setDeletingTagName(null)
-      fetchAllData()
+      fetchAllData(true)
       onTagsUpdated?.()
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {

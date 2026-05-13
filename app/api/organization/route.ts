@@ -59,6 +59,8 @@ export async function GET() {
 
         return NextResponse.json({
             organization: organizationData
+        }, {
+            headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' }
         });
 
     } catch (error: unknown) {

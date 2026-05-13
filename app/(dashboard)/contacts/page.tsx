@@ -41,7 +41,6 @@ import type {
 } from "@/types/contacts";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
-import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
 import { SAMPLE_CONTACT_DATA } from "@/lib/joyride/sampleData";
 import { useTour } from "@/lib/joyride/useTour";
@@ -119,7 +118,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   );
   const [addContactDrawerOpen, setAddContactDrawerOpen] = useState(false);
   const [importContactsDrawerOpen, setImportContactsDrawerOpen] = useState(false);
-  const [outreachDrawerOpen, setOutreachDrawerOpen] = useState(false);
   const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
@@ -129,7 +127,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
-    async (params?: FetchParams) => {
+    async (params?: FetchParams, bypassCache = false) => {
       setfetchLoading(true);
       setError(null);
       try {
@@ -162,7 +160,8 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           queryParams.append("sortOrder", params?.sortOrder || sortOrder);
         }
         const response = await axios.get(
-          `/api/contacts?${queryParams.toString()}`
+          `/api/contacts?${queryParams.toString()}`,
+          { ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }) }
         );
         setDashboardState({
           data: response.data,
@@ -388,7 +387,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         }
 
         setSelectedContacts(new Map());
-        fetchDashboardData();
+        fetchDashboardData(undefined, true);
       } else {
         toast.error(response.data.message || "Failed to delete contacts");
       }
@@ -721,22 +720,14 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           <AddContactDrawer
             open={addContactDrawerOpen}
             onOpenChange={setAddContactDrawerOpen}
-            onSubmit={() => fetchDashboardData()}
+            onSubmit={() => fetchDashboardData(undefined, true)}
           />
 
           {/* Import Contacts Drawer */}
           <ImportContactsDrawer
             open={importContactsDrawerOpen}
             onOpenChange={setImportContactsDrawerOpen}
-            onSubmit={() => fetchDashboardData()}
-          />
-
-          {/* Outreach Drawer */}
-          <OutreachDrawer
-            open={outreachDrawerOpen}
-            onOpenChange={setOutreachDrawerOpen}
-            selectedContacts={selectedContacts}
-            onSubmit={() => fetchDashboardData()}
+            onSubmit={() => fetchDashboardData(undefined, true)}
           />
 
           {/* Tags Drawer */}
@@ -745,7 +736,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             onOpenChange={setTagsDrawerOpen}
             selectedItems={Array.from(selectedContacts.keys())}
             taggableType="contact"
-            onTagsUpdated={() => fetchDashboardData()}
+            onTagsUpdated={() => fetchDashboardData(undefined, true)}
           />
         </div>
       </div>
