@@ -144,14 +144,6 @@ export const rateLimiters = {
       keyPrefix: 'detail_view_user'
     }),
 
-  // Onboarding operations
-  onboardingPerUser: (userId: string) =>
-    RateLimiter.checkLimit(userId, {
-      limit: 15,
-      windowSeconds: 3600, // 1 hour
-      keyPrefix: 'onboarding_user'
-    }),
-
   // Support message operations
   supportPerIP: (ip: string) =>
     RateLimiter.checkLimit(ip, {
