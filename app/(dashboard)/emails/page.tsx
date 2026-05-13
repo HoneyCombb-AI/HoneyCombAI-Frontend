@@ -91,6 +91,7 @@ export default function EmailsPage() {
                     showRejected: showRejected || undefined,
                     page: currentPage,
                     limit: LIMIT,
+                    ...(bypassCache && { _t: Date.now() }),
                 },
                 ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }),
             });

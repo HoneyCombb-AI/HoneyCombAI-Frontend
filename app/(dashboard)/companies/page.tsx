@@ -109,9 +109,9 @@ function CompaniesPageContent() {
   // Fetch records from API
   const fetchDashboardData = useCallback(
     async (params?: FetchParams, bypassCache = false) => {
+      setfetchLoading(true);
+      setError(null);
       try {
-        setfetchLoading(true);
-
         const queryParams = new URLSearchParams();
         if (params?.groupBy || groupBy) {
           queryParams.append("groupBy", params?.groupBy || groupBy);
@@ -151,19 +151,16 @@ function CompaniesPageContent() {
           data: response.data,
           pagination: response.data.pagination,
         });
-        setfetchLoading(false);
       } catch (error) {
         console.error("Failed to fetch Companies data:", error);
         setDashboardState((prev) => ({
           ...prev,
         }));
-        setfetchLoading(false);
         setError(
           error instanceof Error ? error.message : "Failed to fetch data"
         );
       } finally {
         setfetchLoading(false);
-        setError(null);
       }
     },
     [

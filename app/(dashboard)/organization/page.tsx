@@ -39,7 +39,9 @@ function OrganizationPageContent() {
     if (!user) return;
 
     try {
-      const response = await axios.get('/api/organization');
+      const response = await axios.get(`/api/organization?_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (response.data.organization) {
         setOrganization(response.data.organization);
       } else {

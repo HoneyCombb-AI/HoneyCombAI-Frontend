@@ -168,12 +168,13 @@ export function TagsDrawer({
   const fetchAllData = useCallback(async (bypassCache = false) => {
     setLoading(true)
     const cacheHeaders = bypassCache ? { headers: { 'Cache-Control': 'no-cache' } } : {}
+    const cacheBust = bypassCache ? { _t: Date.now() } : {}
     try {
       const [systemRes, appliedRes] = await Promise.all([
-        axios.get('/api/tags', { params: { taggable_type: taggableType }, ...cacheHeaders }),
+        axios.get('/api/tags', { params: { taggable_type: taggableType, ...cacheBust }, ...cacheHeaders }),
         selectedItems.length > 0
           ? axios.get('/api/tags/fetch', {
-              params: { taggable_ids: selectedItemsKey, taggable_type: taggableType },
+              params: { taggable_ids: selectedItemsKey, taggable_type: taggableType, ...cacheBust },
               ...cacheHeaders
             })
           : Promise.resolve({ data: { tags: [] } })
