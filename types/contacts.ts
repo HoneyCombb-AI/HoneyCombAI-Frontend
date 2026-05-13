@@ -60,6 +60,7 @@ export interface CompanyGroupResponse {
         contactCount: number;
     }>;
     pagination: PaginationInfo;
+    available_companies?: MinimalCompany[];
 }
 
 export interface LocationGroupResponse {
@@ -69,12 +70,14 @@ export interface LocationGroupResponse {
         contactCount: number;
     }>;
     pagination: PaginationInfo;
+    available_companies?: MinimalCompany[];
 }
 
 export interface SearchResponse {
     contacts: DashboardContact[];
     pagination: PaginationInfo;
     searchTerm: string;
+    available_companies?: MinimalCompany[];
 }
 
 export interface TagGroupResponse {
@@ -85,6 +88,7 @@ export interface TagGroupResponse {
         contactCount: number;
     }>;
     pagination: PaginationInfo;
+    available_companies?: MinimalCompany[];
 }
 
 // --- Drawer types (from api/contacts/[id]/route.ts) ---

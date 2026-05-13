@@ -36,6 +36,7 @@ interface ContactsSectionProps {
   selectedContacts: Map<string, ContactValidationData>;
   onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
   onSelectAll: (contactsData: Array<{ id: string, data: ContactValidationData }>) => void;
+  filterCompanyId?: string | null;
 }
 
 // Interface for processed group data
@@ -223,7 +224,7 @@ ContactRow.displayName = 'ContactRow';
 
 
 
-const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, selectedContacts, onContactSelect, onSelectAll }) => {
+const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, selectedContacts, onContactSelect, onSelectAll, filterCompanyId }) => {
   // Memoized groups processing for performance
   const groups = useMemo<ProcessedGroup[]>(() => {
     if (!records) return [];
@@ -281,13 +282,29 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
     return [];
   }, [groupBy, records]);
 
+  // Apply client-side company filter
+  const filteredGroups = useMemo<ProcessedGroup[]>(() => {
+    if (!filterCompanyId) return groups;
+
+    if (groupBy === 'company') {
+      return groups.filter(g => g.id === filterCompanyId);
+    }
+
+    return groups
+      .map(g => {
+        const contacts = g.contacts.filter(c => c.company?.id === filterCompanyId);
+        return { ...g, contacts, metadata: { ...g.metadata, contactCount: contacts.length } };
+      })
+      .filter(g => g.contacts.length > 0);
+  }, [groups, filterCompanyId, groupBy]);
+
   // State for managing collapsed groups - ALL COLLAPSED BY DEFAULT
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   // Total contacts
   const totalContacts = useMemo(() =>
-    groups.reduce((sum, g) => sum + (g.contacts?.length || 0), 0)
-    , [groups]);
+    filteredGroups.reduce((sum, g) => sum + (g.contacts?.length || 0), 0)
+    , [filteredGroups]);
 
 
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -325,8 +342,8 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
   }, []);
 
   const toggleAllCollapse = useCallback(() => {
-    setCollapsedGroups(new Set(groups.map(g => g.id)));
-  }, [groups]);
+    setCollapsedGroups(new Set(filteredGroups.map(g => g.id)));
+  }, [filteredGroups]);
 
   return (
     <div className="space-y-4">
@@ -366,7 +383,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
       {/* Groups */}
       <div className="space-y-4">
-        {groups.map((group) => {
+        {filteredGroups.map((group) => {
           const isCollapsed = collapsedGroups.has(group.id);
 
           return (

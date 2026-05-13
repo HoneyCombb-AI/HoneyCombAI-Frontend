@@ -50,7 +50,6 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const sortBy = searchParams.get('sortBy') || 'name';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
-    const companyId = searchParams.get('companyId') || '';
 
     // Validate pagination parameters
     if (page < 1 || limit < 1 || limit > 100) {
@@ -70,17 +69,17 @@ export async function GET(req: NextRequest) {
     // Handle different groupBy options
     switch (groupBy) {
       case 'none':
-        return handleContactsList(supabase, page, limit, sortBy, sortOrder, companyId);
+        return handleContactsList(supabase, page, limit, sortBy, sortOrder);
       case 'company':
-        return handleCompanyGrouping(supabase, page, limit, sortBy, sortOrder, companyId);
+        return handleCompanyGrouping(supabase, page, limit, sortBy, sortOrder);
       case 'location':
-        return handleLocationGrouping(supabase, page, limit, locationType, sortBy, sortOrder, companyId);
+        return handleLocationGrouping(supabase, page, limit, locationType, sortBy, sortOrder);
       case 'city':
-        return handleLocationGrouping(supabase, page, limit, 'city', sortBy, sortOrder, companyId);
+        return handleLocationGrouping(supabase, page, limit, 'city', sortBy, sortOrder);
       case 'tags':
-        return handleTagsGrouping(supabase, page, limit, sortBy, sortOrder, companyId);
+        return handleTagsGrouping(supabase, page, limit, sortBy, sortOrder);
       default:
-        return handleContactsList(supabase, page, limit, sortBy, sortOrder, companyId);
+        return handleContactsList(supabase, page, limit, sortBy, sortOrder);
     }
 
   } catch (error: unknown) {
@@ -125,18 +124,15 @@ async function handleCompanyGrouping(
   page: number,
   limit: number,
   sortBy: string,
-  sortOrder: string,
-  companyId?: string
+  sortOrder: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // Use RPC function for optimized company grouping
   const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_company', {
     page_offset: offset,
     page_limit: limit,
     sort_field: sortBy === 'name' ? 'name' : 'created_at',
     sort_order: sortOrder,
-    filter_company_id: companyId || null
   });
 
   if (error) {
@@ -145,11 +141,13 @@ async function handleCompanyGrouping(
 
   const companies = result?.companies || [];
   const totalCount = result?.total_count || 0;
+  const availableCompanies = result?.available_companies || [];
 
   const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
     companies,
+    available_companies: availableCompanies,
     pagination
   } as CompanyGroupResponse);
 }
@@ -160,19 +158,16 @@ async function handleLocationGrouping(
   limit: number,
   locationType: string,
   sortBy: string,
-  sortOrder: string,
-  companyId?: string
+  sortOrder: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // Use RPC function for optimized location grouping
   const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_location', {
     page_offset: offset,
     page_limit: limit,
     location_type: locationType,
     sort_field: sortBy === 'name' ? 'name' : sortBy,
     sort_order: sortOrder,
-    filter_company_id: companyId || null
   });
 
   if (error) {
@@ -181,11 +176,13 @@ async function handleLocationGrouping(
 
   const locations = result?.locations || {};
   const totalCount = result?.total_count || 0;
+  const availableCompanies = result?.available_companies || [];
 
   const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
     locations,
+    available_companies: availableCompanies,
     pagination
   } as LocationGroupResponse);
 }
@@ -195,18 +192,15 @@ async function handleTagsGrouping(
   page: number,
   limit: number,
   sortBy: string,
-  sortOrder: string,
-  companyId?: string
+  sortOrder: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // Use RPC function for optimized tags grouping
   const { data: result, error } = await supabase.rpc('get_contacts_grouped_by_tags', {
     page_offset: offset,
     page_limit: limit,
     sort_field: sortBy === 'name' ? 'name' : 'created_at',
     sort_order: sortOrder,
-    filter_company_id: companyId || null
   });
 
   if (error) {
@@ -215,11 +209,13 @@ async function handleTagsGrouping(
 
   const tags = result?.tags || {};
   const totalCount = result?.total_count || 0;
+  const availableCompanies = result?.available_companies || [];
 
   const pagination = getPaginationInfo(page, limit, totalCount);
 
   return NextResponse.json({
     tags,
+    available_companies: availableCompanies,
     pagination
   } as TagGroupResponse);
 }
@@ -229,18 +225,15 @@ async function handleContactsList(
   page: number,
   limit: number,
   sortBy: string,
-  sortOrder: string,
-  companyId?: string
+  sortOrder: string
 ): Promise<NextResponse> {
   const offset = (page - 1) * limit;
 
-  // Use RPC function for optimized contacts list
   const { data: result, error } = await supabase.rpc('get_contacts_list', {
     page_offset: offset,
     page_limit: limit,
     sort_field: sortBy === 'name' ? 'signals_first' : sortBy,
     sort_order: sortOrder,
-    filter_company_id: companyId || null
   });
 
   if (error) {

@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
@@ -28,6 +28,7 @@ import {
   Trash2,
   Tag,
   Mail,
+  Check,
 } from "lucide-react";
 import ContactsSection from "@/components/dashboard/Contacts/ContactsSection";
 import type {
@@ -36,10 +37,9 @@ import type {
   SearchResponse,
   TagGroupResponse,
   PaginationInfo,
+  MinimalCompany,
 } from "@/types/contacts";
-import type { CompanyListItem } from "@/types/companies";
 import { AddContactDrawer } from "@/components/dashboard/Contacts/AddContactDrawer";
-import { CompanyFilterDropdown } from "@/components/dashboard/Contacts/CompanyFilterDropdown";
 import { ImportContactsDrawer } from "@/components/dashboard/Contacts/ImportContactsDrawer";
 import { OutreachDrawer } from "@/components/dashboard/Contacts/OutreachDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
@@ -87,7 +87,6 @@ interface FetchParams {
   limit?: number;
   sortBy?: SortBy;
   sortOrder?: SortOrder;
-  companyId?: string;
 }
 
 function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
@@ -109,9 +108,8 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [locationType, setLocationType] = useState<LocationType>("country");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [searchInput, setSearchInput] = useState<string>(""); // New state for input
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
-  const [selectedCompanyName, setSelectedCompanyName] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [selectedFilterCompanyId, setSelectedFilterCompanyId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageLimit, setPageLimit] = useState<number>(20);
   const [sortBy, setSortBy] = useState<SortBy>("name");
@@ -132,9 +130,9 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   // Fetch records from API
   const fetchDashboardData = useCallback(
     async (params?: FetchParams) => {
+      setfetchLoading(true);
+      setError(null);
       try {
-        setfetchLoading(true);
-
         const queryParams = new URLSearchParams();
         if (params?.groupBy || groupBy) {
           queryParams.append("groupBy", params?.groupBy || groupBy);
@@ -151,9 +149,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         if (params?.search || searchTerm) {
           queryParams.append("search", params?.search || searchTerm);
         }
-        if (params?.companyId || selectedCompanyId) {
-          queryParams.append("companyId", params?.companyId || selectedCompanyId);
-        }
         if (params?.page || currentPage) {
           queryParams.append("page", String(params?.page || currentPage));
         }
@@ -169,31 +164,22 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         const response = await axios.get(
           `/api/contacts?${queryParams.toString()}`
         );
-
         setDashboardState({
           data: response.data,
           pagination: response.data.pagination,
         });
-        setfetchLoading(false);
+        setSelectedFilterCompanyId(null);
       } catch (error) {
         console.error("Failed to fetch Contacts data:", error);
-        setDashboardState((prev) => ({
-          ...prev,
-        }));
-        setfetchLoading(false);
-        setError(
-          error instanceof Error ? error.message : "Failed to fetch data"
-        );
+        setError(error instanceof Error ? error.message : "Failed to fetch data");
       } finally {
         setfetchLoading(false);
-        setError(null);
       }
     },
     [
       groupBy,
       locationType,
       searchTerm,
-      selectedCompanyId,
       currentPage,
       pageLimit,
       sortBy,
@@ -210,20 +196,6 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   // Handler functions
   const handleGroupByChange = (newGroupBy: GroupByType) => {
     setGroupBy(newGroupBy);
-    setCurrentPage(1);
-  };
-
-  const handleCompanyChange = (company: CompanyListItem) => {
-    setSelectedCompanyId(company.id);
-    setSelectedCompanyName(company.name);
-    setSearchTerm("");
-    setSearchInput("");
-    setCurrentPage(1);
-  };
-
-  const handleCompanyClear = () => {
-    setSelectedCompanyId("");
-    setSelectedCompanyName("");
     setCurrentPage(1);
   };
 
@@ -250,13 +222,17 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     setCurrentPage(1);
   };
 
+  const availableCompanies = useMemo<MinimalCompany[]>(() => {
+    if (!displayData) return [];
+    return (displayData as DashboardResponse).available_companies ?? [];
+  }, [displayData]);
+
   const clearAllFilters = () => {
     setGroupBy("none");
     setLocationType("country");
     setSearchTerm("");
     setSearchInput("");
-    setSelectedCompanyId("");
-    setSelectedCompanyName("");
+    setSelectedFilterCompanyId(null);
     setSortBy("name");
     setSortOrder("desc");
     setCurrentPage(1);
@@ -265,7 +241,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
 
 
   // Contact selection handlers
-  const handleContactSelect = (contactId: string, contactData: ContactValidationData) => {
+  const handleContactSelect = useCallback((contactId: string, contactData: ContactValidationData) => {
     setSelectedContacts((prev) => {
       const newMap = new Map(prev);
       if (newMap.has(contactId)) {
@@ -275,24 +251,22 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
       }
       return newMap;
     });
-  };
+  }, []);
 
-  const handleSelectAll = (contactsData: Array<{ id: string, data: ContactValidationData }>) => {
+  const handleSelectAll = useCallback((contactsData: Array<{ id: string, data: ContactValidationData }>) => {
     setSelectedContacts((prev) => {
       const newMap = new Map(prev);
       const contactIds = contactsData.map(contact => contact.id);
       const allSelected = contactIds.every((id) => newMap.has(id));
 
       if (allSelected) {
-        // Deselect all
         contactIds.forEach((id) => newMap.delete(id));
       } else {
-        // Select all
         contactsData.forEach(({ id, data }) => newMap.set(id, data));
       }
       return newMap;
     });
-  };
+  }, []);
 
 
 
@@ -432,13 +406,12 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
     }
   };
 
-  // Check if any filters are applied
   const hasFiltersApplied = () => {
     return (
       groupBy !== "none" ||
       locationType !== "country" ||
       searchTerm !== "" ||
-      selectedCompanyId !== ""
+      selectedFilterCompanyId !== null
     );
   };
 
@@ -530,33 +503,76 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
                 </DropdownMenu>
               )}
 
-              <CompanyFilterDropdown
-                selectedCompanyId={selectedCompanyId}
-                selectedCompanyName={selectedCompanyName}
-                onCompanyChange={handleCompanyChange}
-                onCompanyClear={handleCompanyClear}
-              />
-
-              {/* Search Input with Button */}
-              {!selectedCompanyId && (
-                <div className="relative">
-                  <Search
-                    onClick={handleSearchSubmit}
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black"
-                  />
-                  <Input
-                    placeholder="Search contacts..."
-                    value={searchInput}
-                    onChange={handleSearchInputChange}
-                    className="pl-10 w-64"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleSearchSubmit();
-                      }
-                    }}
-                  />
+              {/* Company Filter - populated from loaded data */}
+              {availableCompanies.length > 0 && (
+                <div className="flex items-center">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`gap-2 text-sm ${selectedFilterCompanyId ? "rounded-r-none" : ""}`}
+                      >
+                        <Building2 className="h-4 w-4" />
+                        <span className="hidden sm:inline">Company:</span>
+                        <span className="max-w-[120px] truncate">
+                          {selectedFilterCompanyId
+                            ? (availableCompanies.find(c => c.id === selectedFilterCompanyId)?.name ?? "Company")
+                            : "All"}
+                        </span>
+                        {!selectedFilterCompanyId && <ChevronDown className="h-3 w-3 shrink-0" />}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="max-h-64 overflow-y-auto">
+                      {availableCompanies.map((company) => (
+                        <DropdownMenuItem
+                          key={company.id}
+                          onSelect={() => setSelectedFilterCompanyId(
+                            selectedFilterCompanyId === company.id ? null : company.id
+                          )}
+                          className="gap-2"
+                        >
+                          {selectedFilterCompanyId === company.id && (
+                            <Check className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          <span className={selectedFilterCompanyId === company.id ? "" : "pl-5"}>
+                            {company.name}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  {selectedFilterCompanyId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2 rounded-l-none -ml-px"
+                      onClick={() => setSelectedFilterCompanyId(null)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
               )}
+
+              {/* Search Input */}
+              <div className="relative">
+                <Search
+                  onClick={handleSearchSubmit}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:cursor-pointer hover:bg-black"
+                />
+                <Input
+                  placeholder="Search contacts..."
+                  value={searchInput}
+                  onChange={handleSearchInputChange}
+                  className="pl-10 w-64"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearchSubmit();
+                    }
+                  }}
+                />
+              </div>
               {/* Clear All Filters - only show when filters are applied */}
               {hasFiltersApplied() && (
                 <Button
@@ -750,6 +766,7 @@ function AudiencePageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             selectedContacts={selectedContacts}
             onContactSelect={handleContactSelect}
             onSelectAll={handleSelectAll}
+            filterCompanyId={selectedFilterCompanyId}
           />
         </div>
       )}
