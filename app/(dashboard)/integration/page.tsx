@@ -128,6 +128,8 @@ const IntegrationContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [gmailConfirming, setGmailConfirming] = useState(false);
+  const [outlookConfirming, setOutlookConfirming] = useState(false);
 
   // LinkedIn State
   const [linkedInOpen, setLinkedInOpen] = useState(false);
@@ -429,23 +431,45 @@ const IntegrationContent: React.FC = () => {
                     : "Connect your Google account to enable email capabilities."}
                 </p>
                 {isConnected ? (
-                  <div className="flex gap-2">
-                    <Button className="flex-1 bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
-                      <Check className="mr-2 h-4 w-4" />
-                      Connected
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="bg-white hover:bg-red-50 text-red-600 border-red-200 hover:border-red-300 transition-all duration-200"
-                      onClick={handleGmailDisconnect}
-                      disabled={isDisconnecting}
-                    >
-                      {isDisconnecting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Disconnect"
-                      )}
-                    </Button>
+                  <div className="flex flex-col gap-2">
+                    {gmailConfirming ? (
+                      <div className="rounded-md border border-red-200 bg-red-50 p-3 flex flex-col gap-2">
+                        <p className="text-xs text-red-700">Are you sure you want to disconnect? This will remove your account and you will no longer be able to send emails.</p>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => { setGmailConfirming(false); handleGmailDisconnect(); }}
+                            disabled={isDisconnecting}
+                          >
+                            {isDisconnecting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes, disconnect"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setGmailConfirming(false)}
+                            disabled={isDisconnecting}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button className="flex-1 bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
+                          <Check className="mr-2 h-4 w-4" />
+                          Connected
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="bg-white hover:bg-red-50 text-red-600 border-red-200 hover:border-red-300 transition-all duration-200"
+                          onClick={() => setGmailConfirming(true)}
+                        >
+                          Disconnect
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <TooltipProvider>
@@ -506,23 +530,45 @@ const IntegrationContent: React.FC = () => {
                     : "Connect your Outlook account to enable email capabilities."}
                 </p>
                 {isOutlookConnected ? (
-                  <div className="flex gap-2">
-                    <Button className="flex-1 bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
-                      <Check className="mr-2 h-4 w-4" />
-                      Connected
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="bg-white hover:bg-red-50 text-red-600 border-red-200 hover:border-red-300 transition-all duration-200"
-                      onClick={handleOutlookDisconnect}
-                      disabled={isDisconnecting}
-                    >
-                      {isDisconnecting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Disconnect"
-                      )}
-                    </Button>
+                  <div className="flex flex-col gap-2">
+                    {outlookConfirming ? (
+                      <div className="rounded-md border border-red-200 bg-red-50 p-3 flex flex-col gap-2">
+                        <p className="text-xs text-red-700">Are you sure you want to disconnect? This will remove your account and you will no longer be able to send emails.</p>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => { setOutlookConfirming(false); handleOutlookDisconnect(); }}
+                            disabled={isDisconnecting}
+                          >
+                            {isDisconnecting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes, disconnect"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setOutlookConfirming(false)}
+                            disabled={isDisconnecting}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button className="flex-1 bg-green-700 hover:bg-green-800 text-white cursor-default opacity-100 disabled:opacity-100">
+                          <Check className="mr-2 h-4 w-4" />
+                          Connected
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="bg-white hover:bg-red-50 text-red-600 border-red-200 hover:border-red-300 transition-all duration-200"
+                          onClick={() => setOutlookConfirming(true)}
+                        >
+                          Disconnect
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <TooltipProvider>
