@@ -280,7 +280,7 @@ export default function EmailsPage() {
 
     useEffect(() => {
         if (selectedEmail?.id) {
-            fetchMessages(selectedEmail.id);
+            fetchMessages(selectedEmail.id, true);
         } else {
             setThreads([]);
         }
