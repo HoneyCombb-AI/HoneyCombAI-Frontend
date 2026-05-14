@@ -152,9 +152,14 @@ const IntegrationContent: React.FC = () => {
   const [liError, setLiError] = useState<string | null>(null);
   const [liFailedHover, setLiFailedHover] = useState(false);
 
-  const checkStatuses = async () => {
+  const checkStatuses = async (bypassCache = false) => {
     try {
-      const { data } = await axios.get<IntegrationStatuses>("/api/integration/status");
+      const { data } = await axios.get<IntegrationStatuses>("/api/integration/status", {
+        ...(bypassCache && {
+          headers: { 'Cache-Control': 'no-cache' },
+          params: { _t: Date.now() },
+        }),
+      });
       setIsConnected(data.gmail.isConnected);
       setConnectedEmail(data.gmail.email);
       setLiStatus(data.linkedin.status);
@@ -182,6 +187,7 @@ const IntegrationContent: React.FC = () => {
       toast.error(axios.isAxiosError(error) ? error.response?.data?.error || "Failed to disconnect Gmail account" : "An error occurred while disconnecting");
     } finally {
       setIsDisconnecting(false);
+      setGmailConfirming(false);
     }
   };
 
@@ -197,6 +203,7 @@ const IntegrationContent: React.FC = () => {
       toast.error(axios.isAxiosError(error) ? error.response?.data?.error || "Failed to disconnect Outlook account" : "An error occurred while disconnecting");
     } finally {
       setIsDisconnecting(false);
+      setOutlookConfirming(false);
     }
   };
 
@@ -238,11 +245,13 @@ const IntegrationContent: React.FC = () => {
     if (success === "outlook_connected") {
       toast.success("Outlook account connected successfully!");
       window.history.replaceState({}, "", "/integration");
+      checkStatuses(true);
     }
 
     if (success === "gmail_connected") {
       toast.success("Gmail account connected successfully!");
       window.history.replaceState({}, "", "/integration");
+      checkStatuses(true);
     }
   }, [searchParams]);
 
@@ -268,7 +277,7 @@ const IntegrationContent: React.FC = () => {
       setIsLinkedInPasswordVisible(false);
       setLinkedInEmail("");
       setLinkedInPassword("");
-      checkStatuses();
+      checkStatuses(true);
     } catch (error) {
       toast.error(axios.isAxiosError(error) ? error.response?.data?.error || "Failed to save credentials" : "An error occurred");
     } finally {
@@ -401,7 +410,7 @@ const IntegrationContent: React.FC = () => {
                           <Button
                             size="sm"
                             className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                            onClick={() => { setGmailConfirming(false); handleGmailDisconnect(); }}
+                            onClick={handleGmailDisconnect}
                             disabled={isDisconnecting}
                           >
                             {isDisconnecting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes, disconnect"}
@@ -500,7 +509,7 @@ const IntegrationContent: React.FC = () => {
                           <Button
                             size="sm"
                             className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                            onClick={() => { setOutlookConfirming(false); handleOutlookDisconnect(); }}
+                            onClick={handleOutlookDisconnect}
                             disabled={isDisconnecting}
                           >
                             {isDisconnecting ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes, disconnect"}
