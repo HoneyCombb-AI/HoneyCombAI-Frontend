@@ -31,11 +31,11 @@ export async function GET(req: NextRequest) {
             .eq('id', user.id)
             .single();
 
-        if (profileError || !profile?.organization_id) {
-            return NextResponse.json(
-                { error: 'Organization not found for user' },
-                { status: 404 }
-            );
+        if (profileError) {
+            return NextResponse.json({ error: 'Error fetching user profile' }, { status: 500 });
+        }
+        if (!profile?.organization_id) {
+            return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
         }
 
         const organizationId = profile.organization_id;

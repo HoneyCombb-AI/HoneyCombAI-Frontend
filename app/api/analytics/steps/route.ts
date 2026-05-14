@@ -17,7 +17,10 @@ export async function GET(_req: NextRequest) {
             .eq('id', user.id)
             .single();
 
-        if (profileError || !profile?.organization_id) {
+        if (profileError) {
+            return NextResponse.json({ error: 'Profile lookup failed' }, { status: 500 });
+        }
+        if (!profile?.organization_id) {
             return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
         }
 

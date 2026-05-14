@@ -546,24 +546,31 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                   <thead>
                     <tr className="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
                       <th className="px-4 py-2 text-left font-medium w-12">
-                        <Checkbox
-                          checked={
-                            (group.contacts?.length || 0) > 0 &&
-                            group.contacts?.every(contact => selectedContacts.has(contact.id))
-                          }
-                          onCheckedChange={() => onSelectAll(
-                            group.contacts?.map(contact => ({
-                              id: contact.id,
-                              data: {
-                                primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
-                                primaryAnalysisRequested: contact.primaryAnalysisRequested,
-                                full_name: contact.full_name,
-                                company_id: contact.company?.id || null,
-                                email: contact.email ?? null,
+                        {(() => {
+                          const visibleContacts = (!filterCompanyId || groupBy === 'company')
+                            ? (group.contacts || [])
+                            : (group.contacts || []).filter(c => c.company?.id === filterCompanyId);
+                          return (
+                            <Checkbox
+                              checked={
+                                visibleContacts.length > 0 &&
+                                visibleContacts.every(contact => selectedContacts.has(contact.id))
                               }
-                            })) || []
-                          )}
-                        />
+                              onCheckedChange={() => onSelectAll(
+                                visibleContacts.map(contact => ({
+                                  id: contact.id,
+                                  data: {
+                                    primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+                                    primaryAnalysisRequested: contact.primaryAnalysisRequested,
+                                    full_name: contact.full_name,
+                                    company_id: contact.company?.id || null,
+                                    email: contact.email ?? null,
+                                  }
+                                }))
+                              )}
+                            />
+                          );
+                        })()}
                       </th>
                       <th className="px-4 py-2 text-left font-medium w-[24%]">Name</th>
                       <th className="px-2 py-2 text-left font-medium w-[18%]">Company</th>

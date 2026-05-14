@@ -125,6 +125,7 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
         setEmailsLoading(true);
         try {
             const res = await fetch(`/api/contacts/${item.contact_id}/emails`);
+            if (!res.ok) throw new Error(`Failed to load emails: ${res.status}`);
             const data = await res.json();
             setContactEmails(data.emails ?? []);
             setPickerOpen(true);

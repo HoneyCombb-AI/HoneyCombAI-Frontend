@@ -157,7 +157,13 @@ function AudiencePageContent() {
           data: response.data,
           pagination: response.data.pagination,
         });
-        setSelectedFilterCompanyId(null);
+        setSelectedFilterCompanyId(prev => {
+          if (!prev) return null;
+          const stillExists = (response.data.available_companies ?? []).some(
+            (c: { id: string }) => c.id === prev
+          );
+          return stillExists ? prev : null;
+        });
       } catch (error) {
         console.error("Failed to fetch Contacts data:", error);
         setError(error instanceof Error ? error.message : "Failed to fetch data");
