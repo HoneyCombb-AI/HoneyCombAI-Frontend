@@ -96,6 +96,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Scope browser cache per user — prevents stale data after sign-out → sign-in
+  // with a different account. Adds _uid=<userId> to all GET /api/* requests so
+  // each user's responses are cached under unique URLs.
+  useEffect(() => {
+    const id = axios.interceptors.request.use((config) => {
+      if (config.method === 'get' && user?.id && config.url?.startsWith('/api/')) {
+        config.params = { ...config.params, _uid: user.id };
+      }
+      return config;
+    });
+    return () => axios.interceptors.request.eject(id);
+  }, [user?.id]);
+
   // Non-blocking role fetch — runs independently after auth resolves.
   // Does NOT affect `loading` state so the app never hangs waiting for this.
   useEffect(() => {
