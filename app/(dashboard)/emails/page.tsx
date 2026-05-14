@@ -458,7 +458,6 @@ export default function EmailsPage() {
                                             lastMessageSubject={lastMessage?.subject}
                                             onSent={() => {
                                                 fetchMessages(selectedEmail.id, true);
-                                                fetchEmails(false, true);
                                             }}
                                             onClearReply={() => setReplyToMessage(null)}
                                             senderEmail={senderEmail}
