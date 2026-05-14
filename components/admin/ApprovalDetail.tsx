@@ -11,6 +11,7 @@ import {
     Building2,
     Send,
     AtSign,
+    AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { ApprovalItem, LinkedInSnapshot } from "@/types/admin";
@@ -132,6 +133,18 @@ export function ApprovalDetail({ item, loading }: ApprovalDetailProps) {
                     </span>
                 </div>
             </div>
+
+            {/* Validation warning banner */}
+            {item.validation_status && item.validation_status !== 'valid' && (
+                <div className="shrink-0 flex items-start gap-2.5 px-6 py-3 bg-amber-50 border-b border-amber-200">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <p className="text-xs text-amber-800">
+                        {item.validation_status === 'contact_deleted' && 'The contact this email was addressed to has been deleted. This approval cannot be sent.'}
+                        {item.validation_status === 'email_deleted' && 'The recipient email address has been removed from this contact. Please select a new email below before approving.'}
+                        {item.validation_status === 'email_changed' && `The recipient email has changed since submission${item.current_email ? ` to "${item.current_email}"` : ''}. Please select the correct email below before approving.`}
+                    </p>
+                </div>
+            )}
 
             {/* Content - Scrollable */}
             <div className="flex-1 overflow-y-auto no-scrollbar bg-gray-50 px-6 py-4 pb-28 min-h-0">

@@ -40,15 +40,6 @@ import type {
 } from "@/types/companies";
 import { AddCompanyDrawer } from "@/components/dashboard/Company/AddCompanyDrawer";
 import { TagsDrawer } from "@/components/dashboard/TagsDrawer";
-import { SAMPLE_COMPANY_DATA } from "@/lib/joyride/sampleData";
-
-import { useTour } from "@/lib/joyride/useTour";
-
-// Component that uses useSearchParams wrapped in Suspense
-function TourProvider({ children }: { children: (props: { isJoyrideMode: boolean }) => React.ReactNode }) {
-  const { isJoyrideMode } = useTour('companies');
-  return <>{children({ isJoyrideMode })}</>;
-}
 
 export type GroupByType = "none" | "industry" | "location" | "employee_size";
 export type LocationType = "country" | "state" | "city";
@@ -84,7 +75,7 @@ interface FetchParams {
   sortOrder?: SortOrder;
 }
 
-function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
+function CompaniesPageContent() {
   const { loading: authLoading } = useAuth();
   const [dashboardState, setDashboardState] = useState<DashboardState>({
     data: null,
@@ -114,14 +105,13 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
   const [tagsDrawerOpen, setTagsDrawerOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
-  const displayData = isJoyrideMode ? SAMPLE_COMPANY_DATA : dashboardState.data;
 
   // Fetch records from API
   const fetchDashboardData = useCallback(
-    async (params?: FetchParams) => {
+    async (params?: FetchParams, bypassCache = false) => {
+      setfetchLoading(true);
+      setError(null);
       try {
-        setfetchLoading(true);
-
         const queryParams = new URLSearchParams();
         if (params?.groupBy || groupBy) {
           queryParams.append("groupBy", params?.groupBy || groupBy);
@@ -150,8 +140,10 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         if (params?.sortOrder || sortOrder) {
           queryParams.append("sortOrder", params?.sortOrder || sortOrder);
         }
+        if (bypassCache) queryParams.append("_t", String(Date.now()));
         const response = await axios.get(
-          `/api/companies?${queryParams.toString()}`
+          `/api/companies?${queryParams.toString()}`,
+          { ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }) }
         );
         console.log("API Response:", response.data);
 
@@ -159,19 +151,16 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           data: response.data,
           pagination: response.data.pagination,
         });
-        setfetchLoading(false);
       } catch (error) {
         console.error("Failed to fetch Companies data:", error);
         setDashboardState((prev) => ({
           ...prev,
         }));
-        setfetchLoading(false);
         setError(
           error instanceof Error ? error.message : "Failed to fetch data"
         );
       } finally {
         setfetchLoading(false);
-        setError(null);
       }
     },
     [
@@ -310,7 +299,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         }
 
         setSelectedCompanies(new Map());
-        fetchDashboardData();
+        fetchDashboardData(undefined, true);
       } else {
         toast.error(response.data.message || "Failed to delete companies");
       }
@@ -580,7 +569,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
           <AddCompanyDrawer
             open={addCompanyDrawerOpen}
             onOpenChange={setAddCompanyDrawerOpen}
-            onSubmit={() => fetchDashboardData()}
+            onSubmit={() => fetchDashboardData(undefined, true)}
           />
 
           {/* Tags Drawer */}
@@ -589,7 +578,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
             onOpenChange={setTagsDrawerOpen}
             selectedItems={Array.from(selectedCompanies.keys())}
             taggableType="company"
-            onTagsUpdated={() => fetchDashboardData()}
+            onTagsUpdated={() => fetchDashboardData(undefined, true)}
           />
         </div>
       </div>
@@ -604,7 +593,7 @@ function CompaniesPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
         <div className="min-h-[400px] bg-white shadow-sm p-6">
           <CompaniesSection
             groupBy={groupBy}
-            records={displayData as DashboardResponse}
+            records={dashboardState.data as DashboardResponse}
             selectedCompanies={selectedCompanies}
             onCompanySelect={handleCompanySelect}
             onSelectAll={handleSelectAll}
@@ -708,9 +697,7 @@ export default function CompaniesPage() {
         <p className="text-sm text-muted-foreground mt-4">Loading your companies...</p>
       </div>
     }>
-      <TourProvider>
-        {({ isJoyrideMode }) => <CompaniesPageContent isJoyrideMode={isJoyrideMode} />}
-      </TourProvider>
+      <CompaniesPageContent />
     </Suspense>
   );
 }

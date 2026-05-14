@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+const CACHE = { headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' } };
+
 export async function GET() {
     try {
         const supabase = await createClient();
@@ -39,7 +41,7 @@ export async function GET() {
                 provider: "gmail",
                 account_id: gmailAccount.id,
                 first_name: deriveFirstName(gmailAccount.email),
-            });
+            }, CACHE);
         }
 
         const { data: outlookAccount } = await supabase
@@ -58,10 +60,10 @@ export async function GET() {
                 provider: "outlook",
                 account_id: outlookAccount.id,
                 first_name: deriveFirstName(outlookAccount.email),
-            });
+            }, CACHE);
         }
 
-        return NextResponse.json({ isConnected: false, email: null, provider: null, account_id: null, first_name: null });
+        return NextResponse.json({ isConnected: false, email: null, provider: null, account_id: null, first_name: null }, CACHE);
     } catch (error) {
         console.error("API /api/emails/sender error:", error);
         return NextResponse.json(

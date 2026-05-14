@@ -118,13 +118,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Determine the final destination based on user type
-    let finalDestination = next;
-    if (next === '/contacts') {
-      finalDestination = isNewUser ? '/contacts?joyride=true' : '/contacts';
-    } else if (next === '/overview') {
-      finalDestination = '/overview';
-    }
+    const finalDestination = next;
 
     // Determine redirect URL based on environment
     const forwardedHost = request.headers.get("x-forwarded-host");

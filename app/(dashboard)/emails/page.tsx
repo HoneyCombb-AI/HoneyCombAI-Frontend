@@ -72,7 +72,7 @@ export default function EmailsPage() {
         return () => clearTimeout(timer);
     }, [search]);
 
-    const fetchEmails = useCallback(async (isLoadMore = false) => {
+    const fetchEmails = useCallback(async (isLoadMore = false, bypassCache = false) => {
         try {
             if (isLoadMore) {
                 setLoadingMore(true);
@@ -91,7 +91,9 @@ export default function EmailsPage() {
                     showRejected: showRejected || undefined,
                     page: currentPage,
                     limit: LIMIT,
+                    ...(bypassCache && { _t: Date.now() }),
                 },
+                ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }),
             });
 
             const result = response.data;
@@ -221,11 +223,16 @@ export default function EmailsPage() {
         });
     }, []);
 
-    const fetchMessages = useCallback(async (contactId: string) => {
+    const fetchMessages = useCallback(async (contactId: string, bypassCache = false) => {
         try {
             setMessageLoading(true);
             setMessageError(null);
-            const response = await axios.get(`/api/emails/${contactId}/messages`);
+            const response = await axios.get(`/api/emails/${contactId}/messages`, {
+                ...(bypassCache && {
+                    headers: { 'Cache-Control': 'no-cache' },
+                    params: { _t: Date.now() },
+                }),
+            });
 
             const draft    = response.data.draft            || null;
             const approval = response.data.pending_approval || null;
@@ -273,7 +280,7 @@ export default function EmailsPage() {
 
     useEffect(() => {
         if (selectedEmail?.id) {
-            fetchMessages(selectedEmail.id);
+            fetchMessages(selectedEmail.id, true);
         } else {
             setThreads([]);
         }
@@ -298,7 +305,7 @@ export default function EmailsPage() {
     const handleResubmit = useCallback(async (data: { subject: string; body: string; contact_email_id: string; contact_email: string; cc: string[] }) => {
         if (!selectedEmail || !rejectedApproval) throw new Error("No rejected approval");
         await axios.patch(`/api/emails/${selectedEmail.id}/approval/${rejectedApproval.id}`, data);
-        await fetchMessages(selectedEmail.id);
+        await fetchMessages(selectedEmail.id, true);
     }, [selectedEmail, rejectedApproval, fetchMessages]);
 
     const handleDiscard = useCallback(async () => {
@@ -368,8 +375,12 @@ export default function EmailsPage() {
 
     if (error) {
         return (
-            <div className="flex-1 flex items-center justify-center p-6">
-                <p className="text-sm text-red-600">{error}</p>
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
+                <svg className="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-11.25a.75.75 0 011.5 0v4.5a.75.75 0 01-1.5 0v-4.5zm.75 7.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+                </svg>
+                <p className="text-base font-medium text-red-500">Something went wrong</p>
+                <p className="text-sm text-muted-foreground">{error}</p>
             </div>
         );
     }
@@ -445,7 +456,9 @@ export default function EmailsPage() {
                                             replyToMessage={replyToMessage}
                                             lastMessage={lastMessage}
                                             lastMessageSubject={lastMessage?.subject}
-                                            onSent={() => fetchMessages(selectedEmail.id)}
+                                            onSent={() => {
+                                                fetchMessages(selectedEmail.id, true);
+                                            }}
                                             onClearReply={() => setReplyToMessage(null)}
                                             senderEmail={senderEmail}
                                             senderProvider={senderProvider}

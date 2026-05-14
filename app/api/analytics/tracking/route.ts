@@ -84,6 +84,8 @@ export async function GET(req: NextRequest) {
                 hasNext: offset + formattedGroups.length < totalCount,
                 hasPrev: page > 1
             }
+        }, {
+            headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' }
         });
 
     } catch (error: any) {

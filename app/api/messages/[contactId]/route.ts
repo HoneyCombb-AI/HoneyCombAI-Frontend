@@ -23,7 +23,10 @@ export async function GET(
             .eq('id', user.id)
             .single();
 
-        if (profileError || !profile?.organization_id) {
+        if (profileError) {
+            return NextResponse.json({ error: 'Error fetching user profile' }, { status: 500 });
+        }
+        if (!profile?.organization_id) {
             return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
         }
 
@@ -87,7 +90,9 @@ export async function GET(
             contact_id: contactId,
         };
 
-        return NextResponse.json(result);
+        return NextResponse.json(result, {
+            headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+        });
 
     } catch (error: unknown) {
         console.error('API /api/messages/[contactId] error:', error);

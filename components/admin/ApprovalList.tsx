@@ -74,10 +74,17 @@ export function ApprovalList({
                                 isSelected && "bg-blue-50 hover:bg-blue-50 border-l-blue-500"
                             )}
                         >
-                            {/* Row 1: contact name + relative time */}
+                            {/* Row 1: contact name + issue indicator + relative time */}
                             <div className="flex items-baseline justify-between gap-2 w-full">
-                                <span className="font-semibold text-sm text-gray-900 truncate">
-                                    {item.contact_name || "Unknown Contact"}
+                                <span className="flex items-center gap-1.5 min-w-0">
+                                    <span className="font-semibold text-sm text-gray-900 truncate">
+                                        {item.contact_name || "Unknown Contact"}
+                                    </span>
+                                    {item.has_issue && (
+                                        <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                            Issue
+                                        </span>
+                                    )}
                                 </span>
                                 <span className="flex items-center gap-1 text-[11px] text-gray-600 shrink-0">
                                     <Clock className="h-3 w-3" />

@@ -77,7 +77,9 @@ export async function GET(
             rejected_approval: result.rejected_approval ?? null,
         };
 
-        return NextResponse.json(response);
+        return NextResponse.json(response, {
+            headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+        });
 
     } catch (error: unknown) {
         console.error('API /api/emails messages error:', error);

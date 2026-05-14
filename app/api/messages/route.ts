@@ -16,6 +16,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      return NextResponse.json({ error: 'Error fetching user profile' }, { status: 500 });
+    }
+    if (!profile?.organization_id) {
+      return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
+    }
+
     const { data, error } = await supabase.rpc('get_linkedin_contacts', {
       p_user_id: user.id,
       p_page: page,
@@ -71,7 +84,9 @@ export async function GET(req: NextRequest) {
       hasMore,
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+    });
 
   } catch (error: unknown) {
     console.error('API /api/messages error:', error);

@@ -209,6 +209,15 @@ export async function PATCH(
         if (data?.error === 'invalid_action') {
             return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
+        if (data?.error === 'contact_deleted') {
+            return NextResponse.json({ error: 'Contact no longer exists. This approval has been cancelled.' }, { status: 410 });
+        }
+        if (data?.error === 'email_deleted') {
+            return NextResponse.json({ error: 'The recipient email no longer exists. Please select a new email.' }, { status: 410 });
+        }
+        if (data?.error === 'email_changed') {
+            return NextResponse.json({ error: `The recipient email has changed since submission. Please select the correct email.` }, { status: 409 });
+        }
 
         if (!data) {
             return NextResponse.json({ error: 'Unexpected empty response' }, { status: 500 });

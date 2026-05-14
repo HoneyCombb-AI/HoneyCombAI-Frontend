@@ -62,11 +62,15 @@ export function EmailComposer({
     );
     const toEmail = selectedContactEmail?.email ?? "";
 
-    // Reset recipient to primary when contact changes
+    // Reset recipient to match the thread's email when contact changes
+    // (falls back to primary if no thread history exists)
     useEffect(() => {
+        const threadEmail = lastMessage?.contact_email
+            ? contactEmails.find(ce => ce.email === lastMessage.contact_email)
+            : null;
         const primary = contactEmails.find(ce => ce.is_primary) ?? contactEmails[0] ?? null;
-        setSelectedContactEmailId(primary?.id ?? "");
-    }, [contact?.id, contactEmails]);
+        setSelectedContactEmailId((threadEmail ?? primary)?.id ?? "");
+    }, [contact?.id, contactEmails, lastMessage?.contact_email]);
 
     // Reset threadMode, CC when contact changes
     useEffect(() => {
@@ -76,11 +80,13 @@ export function EmailComposer({
         setShowCc(false);
     }, [contact?.id]);
 
-    // Auto-switch to new thread when selected email differs from last sent address
+    // Auto-switch mode based on whether selected email matches the thread
     useEffect(() => {
         if (!lastMessage?.contact_email || !toEmail) return;
         if (toEmail !== lastMessage.contact_email) {
             setThreadMode("new");
+        } else {
+            setThreadMode("continue");
         }
     }, [toEmail, lastMessage?.contact_email]);
 

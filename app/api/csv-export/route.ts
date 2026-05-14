@@ -26,30 +26,27 @@ interface CompanyExportData {
 }
 
 interface ContactExportData {
-  contact_id: string;
   full_name: string;
+  first_name: string | null;
+  last_name: string | null;
   title: string | null;
-  company_name: string | null;
+  about: string | null;
   linkedin_url: string | null;
-  temperature: string | null;
+  twitter_handle: string | null;
+  instagram_handle: string | null;
+  city: string | null;
+  country: string | null;
+  languages: string | null;
+  emails: string | null;
+  phones: string | null;
+  company_name: string | null;
+  company_website: string | null;
+  company_linkedin: string | null;
+  industry: string | null;
+  notes: string | null;
   tags: string | null;
   signal_types: string | null;
-  buying_signals: string | null;
-  engagement_hooks: string | null;
-  explicit_pain_points: string | null;
-  current_priorities: string | null;
-  timing_relevance: string | null;
-  account_relevance: string | null;
-  role_context: string | null;
-  recent_developments: string | null;
-  strategic_priorities: string | null;
-  network_influence: string | null;
-  summary: string | null;
-  professional_interests: string | null;
-  communication_style: string | null;
-  decision_indicators: string | null;
-  motivation_triggers: string | null;
-  high_influence: string | null;
+  signal_details: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -202,29 +199,26 @@ function getCompaniesHeaders(): string[] {
 
 function getContactsHeaders(): string[] {
   return [
-    'Contact ID',
     'Full Name',
+    'First Name',
+    'Last Name',
     'Title',
-    'Company Name',
+    'About',
     'LinkedIn URL',
-    'Temperature',
+    'Twitter Handle',
+    'Instagram Handle',
+    'City',
+    'Country',
+    'Languages',
+    'Emails',
+    'Phones',
+    'Company Name',
+    'Company Website',
+    'Company LinkedIn',
+    'Industry',
+    'Notes',
     'Tags',
     'Signal Types',
-    'Buying Signals',
-    'Engagement Hooks',
-    'Explicit Pain Points',
-    'Current Priorities',
-    'Timing Relevance',
-    'Account Relevance',
-    'Role Context',
-    'Recent Developments',
-    'Strategic Priorities',
-    'Network Influence',
-    'Summary',
-    'Professional Interests',
-    'Communication Style',
-    'Decision Indicators',
-    'Motivation Triggers',
-    'High Influence'
+    'Signal Details',
   ];
 }

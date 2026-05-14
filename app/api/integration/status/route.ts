@@ -14,6 +14,19 @@ export async function GET() {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+
+    if (profileError) {
+        return NextResponse.json({ error: 'Profile retrieval failed' }, { status: 500 });
+    }
+    if (!profile?.organization_id) {
+        return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
+    }
+
     const { data, error } = await supabase.rpc("get_integration_statuses");
 
     if (error) {
@@ -21,5 +34,7 @@ export async function GET() {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(data as IntegrationStatuses);
+    return NextResponse.json(data as IntegrationStatuses, {
+        headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' }
+    });
 }

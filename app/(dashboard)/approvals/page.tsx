@@ -243,14 +243,17 @@ export default function ApprovalsPage() {
             );
             setItems((prev) => prev.filter((item) => item.id !== id));
             setSelectedDetail(null);
-        } catch {
-            toast.error(
-                action === "approve"
-                    ? "Failed to approve email"
-                    : "Failed to reject email"
-            );
+        } catch (err: unknown) {
+            const message = axios.isAxiosError(err)
+                ? (err.response?.data?.error ?? (action === "approve" ? "Failed to approve email" : "Failed to reject email"))
+                : (action === "approve" ? "Failed to approve email" : "Failed to reject email");
+            toast.error(message);
+            // If the item was cancelled (410), refresh the detail to reflect the new state
+            if (axios.isAxiosError(err) && err.response?.status === 410) {
+                fetchDetail(id);
+            }
         }
-    }, []);
+    }, [fetchDetail]);
 
     const handleApprove = useCallback((id: string, snapshot?: ApprovalSnapshot) => {
         return handleAction(id, "approve", { snapshot });
@@ -266,8 +269,11 @@ export default function ApprovalsPage() {
             toast.success("Approval discarded");
             setItems((prev) => prev.filter((item) => item.id !== id));
             setSelectedDetail(null);
-        } catch {
-            toast.error("Failed to discard approval");
+        } catch (err: unknown) {
+            const message = axios.isAxiosError(err)
+                ? (err.response?.data?.error ?? "Failed to discard approval")
+                : "Failed to discard approval";
+            toast.error(message);
         }
     }, []);
 

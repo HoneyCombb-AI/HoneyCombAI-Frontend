@@ -10,6 +10,19 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('organization_id')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError) {
+            return NextResponse.json({ error: 'Profile lookup failed' }, { status: 500 });
+        }
+        if (!profile?.organization_id) {
+            return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
+        }
+
         const { searchParams } = new URL(req.url);
         const searchTerm = searchParams.get('search') || '';
         const locationFilter = searchParams.get('location') || null;
@@ -67,7 +80,9 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
         }
 
-        return NextResponse.json(response);
+        return NextResponse.json(response, {
+            headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' }
+        });
 
     } catch (error: any) {
         console.error('API /api/analytics/geolocation error:', error);

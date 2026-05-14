@@ -1,6 +1,6 @@
 "use client";
 import axios from 'axios';
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Loading } from "@/components/loading";
 import { toast } from "sonner";
@@ -11,23 +11,10 @@ import { OrganizationData } from '@/types/organization';
 import { CreateOrganizationDialog } from '@/components/organization/create-organization-dialog';
 import { JoinOrganizationDialog } from '@/components/organization/join-organization-dialog';
 import { OrganizationDetails } from '@/components/organization/organization-details';
-import { useTour } from '@/lib/joyride/useTour';
-import { SAMPLE_ORGANIZATION_DATA } from '@/lib/joyride/sampleData';
-
-// Component that uses useSearchParams wrapped in Suspense
-function TourProvider({ children }: { children: (props: { isDataLoaded: boolean, isJoyrideMode: boolean }) => React.ReactNode }) {
-  const { loading: authLoading } = useAuth();
-  const { isJoyrideMode } = useTour('organization', !authLoading);
-  return <>{children({ isDataLoaded: !authLoading, isJoyrideMode })}</>;
-}
-
-function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) {
+function OrganizationPageContent() {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const [organization, setOrganization] = useState<OrganizationData | null>(null);
-
-  // Use sample data during joyride mode
-  const displayOrganization = isJoyrideMode ? SAMPLE_ORGANIZATION_DATA : organization;
 
   const fetchOrganizationData = async () => {
     if (!user) return;
@@ -52,7 +39,9 @@ function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) 
     if (!user) return;
 
     try {
-      const response = await axios.get('/api/organization');
+      const response = await axios.get(`/api/organization?_t=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (response.data.organization) {
         setOrganization(response.data.organization);
       } else {
@@ -65,14 +54,14 @@ function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) 
   };
 
   useEffect(() => {
-    if (user && !authLoading && !isJoyrideMode) {
+    if (user && !authLoading) {
       fetchOrganizationData();
     }
-  }, [authLoading, isJoyrideMode]);
+  }, [authLoading]);
 
 
 
-  if ((authLoading || loading) && !isJoyrideMode) {
+  if (authLoading || loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
         <Loading />
@@ -84,8 +73,7 @@ function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
       <main className="flex-1 p-4 md:p-6" data-testid="organization-header">
-        {!displayOrganization ? (
-          // No organization state - only show when not in joyride mode
+        {!organization ? (
           <div className="max-w-4xl mx-auto">
             <div className="text-center py-12">
               <Building2 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -109,7 +97,7 @@ function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) 
         ) : (
           <div data-testid="organization-details">
             <OrganizationDetails
-              organization={displayOrganization}
+              organization={organization}
               onOrganizationUpdated={fetchOrganizationDataWL}
             />
           </div>
@@ -120,16 +108,5 @@ function OrganizationPageContent({ isJoyrideMode }: { isJoyrideMode: boolean }) 
 }
 
 export default function OrganizationPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex-1 flex flex-col items-center justify-center min-h-screen">
-        <Loading />
-        <p className="text-sm text-muted-foreground mt-4">Loading your organization...</p>
-      </div>
-    }>
-      <TourProvider>
-        {({ isJoyrideMode }) => <OrganizationPageContent isJoyrideMode={isJoyrideMode} />}
-      </TourProvider>
-    </Suspense>
-  );
+  return <OrganizationPageContent />;
 }

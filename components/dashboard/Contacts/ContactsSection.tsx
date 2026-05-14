@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, MoreHorizontal, Edit3 } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, memo } from 'react';
 import Image from 'next/image';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,21 @@ import { ContactTags } from '../Tags';
 
 type DashboardResponse = CompanyGroupResponse | LocationGroupResponse | SearchResponse | TagGroupResponse;
 
+// Idle-scheduling helpers — resolved once at module load, SSR-safe
+type IdleHandle = ReturnType<typeof setTimeout> | ReturnType<typeof requestIdleCallback>;
+
+const hasIdleCb = typeof requestIdleCallback !== 'undefined';
+
+const scheduleIdle = (cb: () => void): IdleHandle =>
+  hasIdleCb
+    ? requestIdleCallback(cb, { timeout: 3000 })
+    : setTimeout(cb, 100);
+
+const cancelIdle = (handle: IdleHandle): void =>
+  hasIdleCb
+    ? cancelIdleCallback(handle as number)
+    : clearTimeout(handle as ReturnType<typeof setTimeout>);
+
 // Contact validation data interface
 interface ContactValidationData {
   primaryAnalysisCompleted: boolean;
@@ -36,6 +51,7 @@ interface ContactsSectionProps {
   selectedContacts: Map<string, ContactValidationData>;
   onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
   onSelectAll: (contactsData: Array<{ id: string, data: ContactValidationData }>) => void;
+  filterCompanyId?: string | null;
 }
 
 // Interface for processed group data
@@ -57,17 +73,18 @@ interface ProcessedGroup {
 const ContactRow = memo<{
   contact: DashboardContact;
   isSelected: boolean;
+  isHidden: boolean;
   onContactSelect: (contactId: string, contactData: ContactValidationData) => void;
   onContactClick: (contact: DashboardContact) => void;
   onNotesClick: (contactId: string, contactName: string) => void;
   isFirstInGroup?: boolean;
-}>(({ contact, isSelected, onContactSelect, onContactClick, onNotesClick, isFirstInGroup }) => {
+}>(({ contact, isSelected, isHidden, onContactSelect, onContactClick, onNotesClick, isFirstInGroup }) => {
   const hasAnalysisRequested = contact.primaryAnalysisRequested && !contact.primaryAnalysisCompleted;
   const hasAnalysisCompleted = contact.primaryAnalysisCompleted;
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default browser context menu
-    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault();
+    e.stopPropagation();
 
     onContactSelect(contact.id, {
       primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
@@ -80,6 +97,7 @@ const ContactRow = memo<{
 
   return (
     <tr
+      style={{ display: isHidden ? 'none' : undefined }}
       className={`group/row hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${isSelected ? 'bg-blue-50' : ''} relative`}
       onContextMenu={handleContextMenu}
     >
@@ -223,7 +241,7 @@ ContactRow.displayName = 'ContactRow';
 
 
 
-const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, selectedContacts, onContactSelect, onSelectAll }) => {
+const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, selectedContacts, onContactSelect, onSelectAll, filterCompanyId }) => {
   // Memoized groups processing for performance
   const groups = useMemo<ProcessedGroup[]>(() => {
     if (!records) return [];
@@ -281,13 +299,84 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
     return [];
   }, [groupBy, records]);
 
-  // State for managing collapsed groups - ALL COLLAPSED BY DEFAULT
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  // Combined state: expanded (currently visible) + mounted (rows in DOM, never shrinks)
+  const [groupVisibility, setGroupVisibility] = useState<{
+    expanded: Set<string>;
+    mounted: Set<string>;
+  }>({ expanded: new Set(), mounted: new Set() });
 
-  // Total contacts
-  const totalContacts = useMemo(() =>
-    groups.reduce((sum, g) => sum + (g.contacts?.length || 0), 0)
-    , [groups]);
+  // Stale-closure guard for progressive idle mounting
+  const idleAbortedRef = useRef(false);
+
+  // Reset on new data — first group expanded immediately, rest mounted progressively in idle frames
+  useEffect(() => {
+    idleAbortedRef.current = false;
+
+    const firstId = groups[0]?.id;
+    const initialSet = firstId ? new Set([firstId]) : new Set<string>();
+
+    setGroupVisibility({ expanded: new Set(initialSet), mounted: new Set(initialSet) });
+
+    // Progressively mount remaining groups during idle time
+    const remaining = groups.slice(1).map(g => g.id);
+    if (remaining.length === 0) return;
+
+    let currentIdx = 0;
+    let handle: IdleHandle;
+
+    const mountNext = () => {
+      if (idleAbortedRef.current || currentIdx >= remaining.length) return;
+
+      const idToMount = remaining[currentIdx];
+      currentIdx++;
+
+      setGroupVisibility(prev => {
+        if (prev.mounted.has(idToMount)) return prev;
+        const nextMounted = new Set(prev.mounted);
+        nextMounted.add(idToMount);
+        return { ...prev, mounted: nextMounted };
+      });
+
+      // Schedule next group
+      if (currentIdx < remaining.length) {
+        handle = scheduleIdle(mountNext);
+      }
+    };
+
+    handle = scheduleIdle(mountNext);
+
+    return () => {
+      idleAbortedRef.current = true;
+      cancelIdle(handle);
+    };
+  }, [groups]);
+
+
+  // Pre-computed visible count per group — avoids O(n) .filter() inside the render loop
+  const visibleCountMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const g of groups) {
+      if (filterCompanyId && groupBy !== 'company') {
+        let count = 0;
+        for (const c of g.contacts) {
+          if (c.company?.id === filterCompanyId) count++;
+        }
+        map.set(g.id, count);
+      } else {
+        map.set(g.id, g.metadata?.contactCount ?? g.contacts?.length ?? 0);
+      }
+    }
+    return map;
+  }, [groups, filterCompanyId, groupBy]);
+
+  // Total visible contacts — filter-aware, no array allocation
+  const totalContacts = useMemo(() => {
+    if (!filterCompanyId) return groups.reduce((sum, g) => sum + (g.contacts?.length || 0), 0);
+    if (groupBy === 'company') return groups.find(g => g.id === filterCompanyId)?.contacts?.length || 0;
+    let total = 0;
+    visibleCountMap.forEach(v => { total += v; });
+    return total;
+  }, [groups, filterCompanyId, groupBy, visibleCountMap]);
 
 
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -311,22 +400,25 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
     setNotesDrawerOpen(true)
   }, []);
 
-  // Toggle individual group collapse
   const toggleGroupCollapse = useCallback((groupId: string) => {
-    setCollapsedGroups(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(groupId)) {
-        newSet.delete(groupId);
+    setGroupVisibility(prev => {
+      const newExpanded = new Set(prev.expanded);
+      if (newExpanded.has(groupId)) {
+        newExpanded.delete(groupId);
       } else {
-        newSet.add(groupId);
+        newExpanded.add(groupId);
       }
-      return newSet;
+      // Mark rows as mounted on first expand — stays mounted forever after
+      const newMounted = prev.mounted.has(groupId)
+        ? prev.mounted
+        : new Set([...prev.mounted, groupId]);
+      return { expanded: newExpanded, mounted: newMounted };
     });
   }, []);
 
   const toggleAllCollapse = useCallback(() => {
-    setCollapsedGroups(new Set(groups.map(g => g.id)));
-  }, [groups]);
+    setGroupVisibility(prev => ({ ...prev, expanded: new Set() }));
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -366,12 +458,16 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
 
       {/* Groups */}
       <div className="space-y-4">
-        {groups.map((group) => {
-          const isCollapsed = collapsedGroups.has(group.id);
+        {groups.map((group: ProcessedGroup) => {
+          const isExpanded = groupVisibility.expanded.has(group.id);
+          const rowsMounted = groupVisibility.mounted.has(group.id);
+          const isGroupHidden = groupBy === 'company' && !!filterCompanyId && group.id !== filterCompanyId;
+          const visibleCount = visibleCountMap.get(group.id) ?? 0;
 
           return (
             <div
               key={group.id}
+              style={{ display: isGroupHidden ? 'none' : undefined, contain: 'style' }}
               className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"
             >
               {/* Group Header */}
@@ -380,10 +476,10 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                 onClick={() => toggleGroupCollapse(group.id)}
               >
                 <div className="flex items-center gap-3 flex-1">
-                  {isCollapsed ? (
-                    <ChevronRight className="h-4 w-4 text-gray-600" />
-                  ) : (
+                  {isExpanded ? (
                     <ChevronDown className="h-4 w-4 text-gray-600" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-gray-600" />
                   )}
                   <div className="flex items-center gap-3">
                     {group.logoUrl ? (
@@ -430,41 +526,51 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                   )}
                   <Badge
                     variant="secondary"
-                    className="bg-gray-200 text-gray-700 text-xs"
+                    className={visibleCount > 0
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs"
+                      : "bg-gray-100 text-gray-400 text-xs"
+                    }
                   >
-                    {group.metadata?.contactCount || group.contacts?.length || 0} record
-                    {(group.metadata?.contactCount || group.contacts?.length || 0) !== 1 ? 's' : ''}
+                    {visibleCount} record{visibleCount !== 1 ? 's' : ''}
                   </Badge>
                 </div>
               </div>
 
-              {/* Contact List - Always rendered, visibility controlled by CSS */}
+              {/* Rows lazily mounted on first expand, CSS-controlled after */}
+              {rowsMounted && (
               <div
                 className="overflow-hidden"
-                style={{ display: isCollapsed ? 'none' : 'block' }}
+                style={{ display: isExpanded ? 'block' : 'none' }}
               >
                 <table className="w-full table-fixed">
                   <thead>
                     <tr className="text-xs font-medium text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
                       <th className="px-4 py-2 text-left font-medium w-12">
-                        <Checkbox
-                          checked={
-                            (group.contacts?.length || 0) > 0 &&
-                            group.contacts?.every(contact => selectedContacts.has(contact.id))
-                          }
-                          onCheckedChange={() => onSelectAll(
-                            group.contacts?.map(contact => ({
-                              id: contact.id,
-                              data: {
-                                primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
-                                primaryAnalysisRequested: contact.primaryAnalysisRequested,
-                                full_name: contact.full_name,
-                                company_id: contact.company?.id || null,
-                                email: contact.email ?? null,
+                        {(() => {
+                          const visibleContacts = (!filterCompanyId || groupBy === 'company')
+                            ? (group.contacts || [])
+                            : (group.contacts || []).filter(c => c.company?.id === filterCompanyId);
+                          return (
+                            <Checkbox
+                              checked={
+                                visibleContacts.length > 0 &&
+                                visibleContacts.every(contact => selectedContacts.has(contact.id))
                               }
-                            })) || []
-                          )}
-                        />
+                              onCheckedChange={() => onSelectAll(
+                                visibleContacts.map(contact => ({
+                                  id: contact.id,
+                                  data: {
+                                    primaryAnalysisCompleted: contact.primaryAnalysisCompleted,
+                                    primaryAnalysisRequested: contact.primaryAnalysisRequested,
+                                    full_name: contact.full_name,
+                                    company_id: contact.company?.id || null,
+                                    email: contact.email ?? null,
+                                  }
+                                }))
+                              )}
+                            />
+                          );
+                        })()}
                       </th>
                       <th className="px-4 py-2 text-left font-medium w-[24%]">Name</th>
                       <th className="px-2 py-2 text-left font-medium w-[18%]">Company</th>
@@ -474,11 +580,12 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                     </tr>
                   </thead>
                   <tbody>
-                    {(group.contacts || []).map((contact, index) => (
+                    {(group.contacts || []).map((contact: DashboardContact, index: number) => (
                       <ContactRow
                         key={contact.id}
                         contact={contact}
                         isSelected={selectedContacts.has(contact.id)}
+                        isHidden={groupBy !== 'company' && !!filterCompanyId && contact.company?.id !== filterCompanyId}
                         onContactSelect={onContactSelect}
                         onContactClick={handleContactClick}
                         onNotesClick={handleNotesClick}
@@ -488,6 +595,7 @@ const ContactsSection: React.FC<ContactsSectionProps> = ({ groupBy, records, sel
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           );
         })}

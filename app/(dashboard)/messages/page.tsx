@@ -169,29 +169,15 @@ export default function LinkedInPage() {
         />
       </div>
 
-      {/* Error Banner */}
-      {error && (
-        <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border-b border-red-200 text-sm text-red-700">
-          <span>{error}</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { setError(null); fetchContacts(false); }}
-              className="px-3 py-1 rounded-md bg-red-100 hover:bg-red-200 text-red-800 font-medium text-xs transition-colors"
-            >
-              Retry
-            </button>
-            <button
-              onClick={() => setError(null)}
-              className="p-1 rounded hover:bg-red-100 text-red-500 transition-colors"
-              aria-label="Dismiss error"
-            >
-              ✕
-            </button>
-          </div>
+      {error ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 p-6 text-center">
+          <svg className="h-6 w-6 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-11.25a.75.75 0 011.5 0v4.5a.75.75 0 01-1.5 0v-4.5zm.75 7.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+          </svg>
+          <p className="text-base font-medium text-red-500">Something went wrong</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
         </div>
-      )}
-
-      {authLoading || (loading && page === 1) ? (
+      ) : authLoading || (loading && page === 1) ? (
         <div className="flex-1 flex flex-col items-center justify-center">
           <Loading />
           <p className="text-sm text-muted-foreground mt-4">

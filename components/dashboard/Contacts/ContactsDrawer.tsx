@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -102,6 +103,7 @@ export function ContactsDrawer({ open, onOpenChange, trigger, selectedContact }:
 
         <div className="mx-auto w-full h-screen overflow-y-auto no-scrollbar">
           <DrawerHeader className="sticky top-0 bg-white z-60 border-b">
+            <DrawerDescription className="sr-only">Contact details</DrawerDescription>
             <DrawerTitle>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">

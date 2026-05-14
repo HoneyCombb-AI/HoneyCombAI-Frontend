@@ -31,11 +31,11 @@ export async function GET(req: NextRequest) {
             .eq('id', user.id)
             .single();
 
-        if (profileError || !profile?.organization_id) {
-            return NextResponse.json(
-                { error: 'Organization not found for user' },
-                { status: 404 }
-            );
+        if (profileError) {
+            return NextResponse.json({ error: 'Error fetching user profile' }, { status: 500 });
+        }
+        if (!profile?.organization_id) {
+            return NextResponse.json({ error: 'Organization not found for user' }, { status: 404 });
         }
 
         const organizationId = profile.organization_id;
@@ -83,7 +83,9 @@ export async function GET(req: NextRequest) {
             hasMore
         };
 
-        return NextResponse.json(response);
+        return NextResponse.json(response, {
+            headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+        });
 
     } catch (error: unknown) {
         console.error('API /api/emails error:', error);

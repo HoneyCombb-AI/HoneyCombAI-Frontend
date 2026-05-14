@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         }
 
         if (existing.submitted_by !== user.id) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            return NextResponse.json({ error: 'Only the original submitter can resubmit this email.' }, { status: 403 });
         }
 
         if (!body.contact_email_id) {
