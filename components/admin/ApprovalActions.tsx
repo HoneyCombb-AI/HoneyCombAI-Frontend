@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, X, Pencil, Loader2, AtSign, Trash2, Mail } from "lucide-react";
@@ -124,9 +125,7 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
         if (contactEmails.length > 0) { setPickerOpen(true); return; }
         setEmailsLoading(true);
         try {
-            const res = await fetch(`/api/contacts/${item.contact_id}/emails`);
-            if (!res.ok) throw new Error(`Failed to load emails: ${res.status}`);
-            const data = await res.json();
+            const { data } = await axios.get<{ emails: ContactEmail[] }>(`/api/contacts/${item.contact_id}/emails`);
             setContactEmails(data.emails ?? []);
             setPickerOpen(true);
         } catch {
@@ -430,7 +429,7 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
                             <Button
                                 size="sm"
                                 onClick={() => setConfirmApprove(true)}
-                                disabled={isLoading || (hasIssue && !newEmailPicked && !editing)}
+                                disabled={isLoading || (hasIssue && !newEmailPicked)}
                                 className="gap-1.5 whitespace-nowrap"
                             >
                                 <Check className="h-3.5 w-3.5" />

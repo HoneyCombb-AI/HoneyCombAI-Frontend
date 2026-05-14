@@ -1,5 +1,6 @@
 "use client";
 import React, { Suspense, useEffect, useState } from "react";
+import axios from "axios";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -153,29 +154,17 @@ const IntegrationContent: React.FC = () => {
 
   const checkStatuses = async () => {
     try {
-      const res = await fetch("/api/integration/status");
-      if (res.ok) {
-        const data: IntegrationStatuses = await res.json();
-
-        // Gmail
-        setIsConnected(data.gmail.isConnected);
-        setConnectedEmail(data.gmail.email);
-
-        // LinkedIn
-        setLiStatus(data.linkedin.status);
-        setLiConnectedEmail(data.linkedin.email);
-        setLiError(data.linkedin.error);
-
-        // Outlook
-        setIsOutlookConnected(data.outlook.isConnected);
-        setOutlookConnectedEmail(data.outlook.email);
-      } else {
-        const json = await res.json().catch(() => ({}));
-        setPageError(json.error || 'Failed to load integration status');
-      }
+      const { data } = await axios.get<IntegrationStatuses>("/api/integration/status");
+      setIsConnected(data.gmail.isConnected);
+      setConnectedEmail(data.gmail.email);
+      setLiStatus(data.linkedin.status);
+      setLiConnectedEmail(data.linkedin.email);
+      setLiError(data.linkedin.error);
+      setIsOutlookConnected(data.outlook.isConnected);
+      setOutlookConnectedEmail(data.outlook.email);
     } catch (error) {
       console.error("Failed to check statuses", error);
-      setPageError('Failed to load integration status');
+      setPageError(axios.isAxiosError(error) ? error.response?.data?.error || 'Failed to load integration status' : 'Failed to load integration status');
     } finally {
       setIsLoading(false);
     }
@@ -184,20 +173,13 @@ const IntegrationContent: React.FC = () => {
   const handleGmailDisconnect = async () => {
     setIsDisconnecting(true);
     try {
-      const res = await fetch("/api/gmail/disconnect", {
-        method: "POST",
-      });
-
-      if (res.ok) {
-        toast.success("Gmail account disconnected successfully");
-        setIsConnected(false);
-        setConnectedEmail(null);
-      } else {
-        toast.error("Failed to disconnect Gmail account");
-      }
+      await axios.post("/api/gmail/disconnect");
+      toast.success("Gmail account disconnected successfully");
+      setIsConnected(false);
+      setConnectedEmail(null);
     } catch (error) {
       console.error("Error disconnecting Gmail:", error);
-      toast.error("An error occurred while disconnecting");
+      toast.error(axios.isAxiosError(error) ? error.response?.data?.error || "Failed to disconnect Gmail account" : "An error occurred while disconnecting");
     } finally {
       setIsDisconnecting(false);
     }
@@ -206,20 +188,13 @@ const IntegrationContent: React.FC = () => {
   const handleOutlookDisconnect = async () => {
     setIsDisconnecting(true);
     try {
-      const res = await fetch("/api/outlook/disconnect", {
-        method: "POST",
-      });
-
-      if (res.ok) {
-        toast.success("Outlook account disconnected successfully");
-        setIsOutlookConnected(false);
-        setOutlookConnectedEmail(null);
-      } else {
-        toast.error("Failed to disconnect Outlook account");
-      }
+      await axios.post("/api/outlook/disconnect");
+      toast.success("Outlook account disconnected successfully");
+      setIsOutlookConnected(false);
+      setOutlookConnectedEmail(null);
     } catch (error) {
       console.error("Error disconnecting Outlook:", error);
-      toast.error("An error occurred while disconnecting");
+      toast.error(axios.isAxiosError(error) ? error.response?.data?.error || "Failed to disconnect Outlook account" : "An error occurred while disconnecting");
     } finally {
       setIsDisconnecting(false);
     }
@@ -287,28 +262,15 @@ const IntegrationContent: React.FC = () => {
 
     setLinkedInLoading(true);
     try {
-      const res = await fetch("/api/linkedin/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: linkedInEmail,
-          password: linkedInPassword,
-        }),
-      });
-
-      if (res.ok) {
-        toast.success("LinkedIn credentials saved successfully");
-        setLinkedInOpen(false);
-        setIsLinkedInPasswordVisible(false);
-        setLinkedInEmail("");
-        setLinkedInPassword("");
-        // Refresh status
-        checkStatuses();
-      } else {
-        toast.error("Failed to save credentials");
-      }
-    } catch {
-      toast.error("An error occurred");
+      await axios.post("/api/linkedin/connect", { email: linkedInEmail, password: linkedInPassword });
+      toast.success("LinkedIn credentials saved successfully");
+      setLinkedInOpen(false);
+      setIsLinkedInPasswordVisible(false);
+      setLinkedInEmail("");
+      setLinkedInPassword("");
+      checkStatuses();
+    } catch (error) {
+      toast.error(axios.isAxiosError(error) ? error.response?.data?.error || "Failed to save credentials" : "An error occurred");
     } finally {
       setLinkedInLoading(false);
     }

@@ -205,12 +205,8 @@ export default function EmailAnalyticsPage() {
     const handleExport = async () => {
         try {
             setExportLoading(true);
-            const response = await fetch('/api/analytics/export');
-            if (!response.ok) {
-                throw new Error('Export failed');
-            }
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
+            const response = await axios.get('/api/analytics/export', { responseType: 'blob' });
+            const url = URL.createObjectURL(response.data);
             const a = document.createElement('a');
             a.href = url;
             a.download = `email-analytics-export-${new Date().toISOString().split('T')[0]}.csv`;
