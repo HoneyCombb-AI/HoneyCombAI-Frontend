@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
         const { step } = await params;
         const stepNum = Number(step);
 
-        if (!Number.isInteger(stepNum) || stepNum <= 0) {
+        if (!Number.isInteger(stepNum) || stepNum < 0) {
             return NextResponse.json({ error: 'Invalid step parameter' }, { status: 400 });
         }
 

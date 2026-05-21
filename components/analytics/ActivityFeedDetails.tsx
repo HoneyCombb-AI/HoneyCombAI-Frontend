@@ -60,7 +60,7 @@ export function ActivityFeedDetails({
     expandedContact,
     onExpandedChange,
 }: ActivityFeedDetailsProps) {
-    if (!selectedStep) {
+    if (selectedStep === null) {
         return null;
     }
 

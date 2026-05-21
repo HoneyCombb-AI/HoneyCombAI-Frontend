@@ -327,7 +327,7 @@ export default function EmailAnalyticsPage() {
                 </div>
 
                 {/* Pagination Footers - Pushed to the bottom */}
-                {activeTab === 'feed' && selectedStep && (
+                {activeTab === 'feed' && selectedStep !== null && (
                     <PaginationFooter
                         pagination={contactPagination}
                         onPageChange={handleContactPageChange}
