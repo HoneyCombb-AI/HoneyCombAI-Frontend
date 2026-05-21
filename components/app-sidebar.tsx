@@ -130,13 +130,8 @@ export function AppSidebar() {
   };
 
   const handleSignOut = async () => {
-    signOut()
-      .then(() => {
-        toast.success("Signed out successfully");
-      })
-      .catch(() => {
-        toast.error("Sign out failed");
-      });
+    toast.success("Signed out successfully");
+    await signOut();
   };
 
   // Get user display name and email

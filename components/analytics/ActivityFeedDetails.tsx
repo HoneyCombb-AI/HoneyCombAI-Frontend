@@ -60,7 +60,7 @@ export function ActivityFeedDetails({
     expandedContact,
     onExpandedChange,
 }: ActivityFeedDetailsProps) {
-    if (!selectedStep) {
+    if (selectedStep === null) {
         return null;
     }
 
@@ -125,10 +125,10 @@ export function ActivityFeedDetails({
 
                                     {/* Middle Section: Subject and Date (Flex grow) */}
                                     <div className="flex flex-col justify-center flex-1 min-w-0 px-3 border-l border-gray-100">
-                                        <span className="text-sm font-medium text-gray-700 break-words line-clamp-2">
+                                        <span className="text-sm font-medium text-gray-700 wrap-break-word line-clamp-2">
                                             {contact.subject}
                                         </span>
-                                        <span className="text-xs text-gray-500 mt-1 flex items-center gap-1 truncate w-full block">
+                                        <span className="text-xs text-gray-500 mt-1 flex items-center gap-1 truncate w-full">
                                             Sent: {contact.sent_at ? format(parseISO(contact.sent_at), "do MMMM yyyy, h:mm a") : 'Unknown'}
                                         </span>
                                     </div>
@@ -136,7 +136,7 @@ export function ActivityFeedDetails({
                                     {/* Right Section: Forwarding badge + Stats */}
                                     <div className="flex items-center gap-2 shrink-0">
                                         {isPossiblyForwarded(contact.raw_events) && (
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md whitespace-nowrap hidden sm:inline-flex">
+                                            <span className="items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md whitespace-nowrap hidden sm:inline-flex">
                                                 <Share2 className="w-3 h-3 shrink-0" />
                                                 Internally forwarded
                                             </span>
