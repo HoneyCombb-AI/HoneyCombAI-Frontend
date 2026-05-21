@@ -10,7 +10,6 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import type { RoleResponse } from "@/types/admin";
 
@@ -35,8 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<'admin' | 'user' | null>(null);
   const [approvalRequired, setApprovalRequired] = useState(false);
-  const router = useRouter();
-
   const supabase = useMemo(() => createClient(), []);
 
   const refreshSession = useCallback(async () => {
@@ -59,19 +56,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   const signOut = useCallback(async () => {
+    setUser(null);
+    setSession(null);
+    setRole(null);
+    setApprovalRequired(false);
+    setError(null);
+
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      setSession(null);
-      setRole(null);
-      setApprovalRequired(false);
-      setError(null);
+      await Promise.race([
+        supabase.auth.signOut({ scope: 'local' }),
+        new Promise((resolve) => setTimeout(resolve, 1000)),
+      ]);
     } catch (error: unknown) {
-      console.error("Error signing out:", error);
-      setError(
-        error instanceof Error ? error.message : "Unknown error occurred"
-      );
+      console.error("Error signing out locally:", error);
+    } finally {
+      window.location.replace("/auth/signout");
     }
   }, [supabase]);
 
@@ -89,7 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === "SIGNED_OUT") {
         setRole(null);
         setApprovalRequired(false);
-        router.push("/");
       }
     });
 

@@ -29,10 +29,8 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired - required for Server Components
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getClaims();
+  const user = error ? null : data?.claims;
 
   if (user && request.nextUrl.pathname === "/") {
     const url = request.nextUrl.clone();

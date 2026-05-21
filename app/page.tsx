@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth-context";
 import { AnimatedLogo } from "@/components/AnimatedLogo";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -31,7 +31,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -77,15 +77,25 @@ export default function LoginPage() {
     try {
       setIsEmailLoading(true);
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch("/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.error || "Unable to log in");
+      }
 
       toast.success("Logged in successfully!");
-      router.push('/overview');
+      window.location.replace('/overview');
     } catch (err: unknown) {
       console.error("Error logging in:", err);
       toast.error(err instanceof Error ? err.message : "An unexpected error occurred");

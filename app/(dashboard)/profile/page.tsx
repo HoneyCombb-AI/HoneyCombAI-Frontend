@@ -58,7 +58,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace("/");
     }
   }, [user, loading, router]);
 
@@ -92,13 +92,8 @@ export default function ProfilePage() {
   });
 
   const handleSignOut = async () => {
-    signOut()
-      .then(() => {
-        toast.success("Signed out successfully");
-      })
-      .catch(() => {
-        toast.error("Sign out failed");
-      });
+    toast.success("Signed out successfully");
+    await signOut();
   };
 
   const handlePasswordUpdate = async () => {
