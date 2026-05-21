@@ -51,15 +51,11 @@ export function EmailFilters({
     const [showTags, setShowTags] = useState(false);
     const [showUser, setShowUser] = useState(false);
 
-    // Tags — lazy, fetched once on first open
     const [tags, setTags] = useState<TagOption[]>([]);
     const [tagsLoading, setTagsLoading] = useState(false);
-    const tagsFetchedRef = useRef(false);
 
-    // Senders — lazy, fetched once on first open
     const [senders, setSenders] = useState<OrgSender[]>([]);
     const [sendersLoading, setSendersLoading] = useState(false);
-    const sendersFetchedRef = useRef(false);
 
     // New email compose popover
     const [composeOpen, setComposeOpen] = useState(false);
@@ -69,22 +65,20 @@ export function EmailFilters({
     const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchTags = () => {
-        if (tagsFetchedRef.current) return;
-        tagsFetchedRef.current = true;
+        if (tagsLoading) return;
         setTagsLoading(true);
-        axios.get("/api/tags")
+        axios.get("/api/tags", { headers: { 'Cache-Control': 'no-cache' }, params: { _t: Date.now() } })
             .then(res => setTags(res.data ?? []))
-            .catch(() => { tagsFetchedRef.current = false; })
+            .catch(() => {})
             .finally(() => setTagsLoading(false));
     };
 
     const fetchSenders = () => {
-        if (sendersFetchedRef.current) return;
-        sendersFetchedRef.current = true;
+        if (sendersLoading) return;
         setSendersLoading(true);
-        axios.get("/api/emails/senders")
+        axios.get("/api/emails/senders", { headers: { 'Cache-Control': 'no-cache' }, params: { _t: Date.now() } })
             .then(res => setSenders(res.data.senders ?? []))
-            .catch(() => { sendersFetchedRef.current = false; })
+            .catch(() => {})
             .finally(() => setSendersLoading(false));
     };
 

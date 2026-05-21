@@ -72,7 +72,7 @@ export default function EmailsPage() {
         return () => clearTimeout(timer);
     }, [search]);
 
-    const fetchEmails = useCallback(async (isLoadMore = false, bypassCache = false) => {
+    const fetchEmails = useCallback(async (isLoadMore = false) => {
         try {
             if (isLoadMore) {
                 setLoadingMore(true);
@@ -91,9 +91,9 @@ export default function EmailsPage() {
                     showRejected: showRejected || undefined,
                     page: currentPage,
                     limit: LIMIT,
-                    ...(bypassCache && { _t: Date.now() }),
+                    _t: Date.now(),
                 },
-                ...(bypassCache && { headers: { 'Cache-Control': 'no-cache' } }),
+                headers: { 'Cache-Control': 'no-cache' },
             });
 
             const result = response.data;
@@ -145,7 +145,10 @@ export default function EmailsPage() {
         let cancelled = false;
         const injectContact = async () => {
             try {
-                const res = await axios.get('/api/contacts/' + contactIdParam);
+                const res = await axios.get('/api/contacts/' + contactIdParam, {
+                    headers: { 'Cache-Control': 'no-cache' },
+                    params: { _t: Date.now() },
+                });
                 if (cancelled) return;
                 const c = res.data?.contact;
                 if (c) {
@@ -176,7 +179,10 @@ export default function EmailsPage() {
     useEffect(() => {
         const loadSender = async () => {
             try {
-                const res = await axios.get("/api/emails/sender");
+                const res = await axios.get("/api/emails/sender", {
+                    headers: { 'Cache-Control': 'no-cache' },
+                    params: { _t: Date.now() },
+                });
                 if (res.data?.isConnected && res.data?.account_id) {
                     setSenderAccountId(res.data.account_id);
                     setSenderEmail(res.data.email ?? null);
@@ -223,15 +229,13 @@ export default function EmailsPage() {
         });
     }, []);
 
-    const fetchMessages = useCallback(async (contactId: string, bypassCache = false) => {
+    const fetchMessages = useCallback(async (contactId: string) => {
         try {
             setMessageLoading(true);
             setMessageError(null);
             const response = await axios.get(`/api/emails/${contactId}/messages`, {
-                ...(bypassCache && {
-                    headers: { 'Cache-Control': 'no-cache' },
-                    params: { _t: Date.now() },
-                }),
+                headers: { 'Cache-Control': 'no-cache' },
+                params: { _t: Date.now() },
             });
 
             const draft    = response.data.draft            || null;
@@ -280,7 +284,7 @@ export default function EmailsPage() {
 
     useEffect(() => {
         if (selectedEmail?.id) {
-            fetchMessages(selectedEmail.id, true);
+            fetchMessages(selectedEmail.id);
         } else {
             setThreads([]);
         }
@@ -305,7 +309,7 @@ export default function EmailsPage() {
     const handleResubmit = useCallback(async (data: { subject: string; body: string; contact_email_id: string; contact_email: string; cc: string[] }) => {
         if (!selectedEmail || !rejectedApproval) throw new Error("No rejected approval");
         await axios.patch(`/api/emails/${selectedEmail.id}/approval/${rejectedApproval.id}`, data);
-        await fetchMessages(selectedEmail.id, true);
+        await fetchMessages(selectedEmail.id);
     }, [selectedEmail, rejectedApproval, fetchMessages]);
 
     const handleDiscard = useCallback(async () => {
@@ -457,7 +461,7 @@ export default function EmailsPage() {
                                             lastMessage={lastMessage}
                                             lastMessageSubject={lastMessage?.subject}
                                             onSent={() => {
-                                                fetchMessages(selectedEmail.id, true);
+                                                fetchMessages(selectedEmail.id);
                                             }}
                                             onClearReply={() => setReplyToMessage(null)}
                                             senderEmail={senderEmail}
