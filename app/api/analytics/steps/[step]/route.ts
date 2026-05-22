@@ -48,13 +48,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
         const rawContacts = contacts || [];
         const totalCount = rawContacts.length > 0 ? Number(rawContacts[0].total_count) : 0;
 
-        const formattedContacts: StepContact[] = rawContacts.map((contact: any, index: number) => {
+        const formattedContacts: StepContact[] = rawContacts.map((contact: any) => {
             const emailLogId = contact.email_log_id ?? [
                 contact.contact_id,
                 contact.sent_at ?? 'unknown-sent-at',
                 contact.subject ?? 'unknown-subject',
                 contact.position ?? 'unknown-position',
-                index,
             ].join(':');
 
             return {
