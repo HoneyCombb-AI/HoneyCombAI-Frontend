@@ -96,8 +96,8 @@ export function ActivityFeedDetails({
                 >
                     {stepContacts.map((contact) => (
                         <AccordionItem
-                            key={contact.contact_id}
-                            value={contact.contact_id}
+                            key={contact.email_log_id}
+                            value={contact.email_log_id}
                             className="border border-gray-200 rounded-lg bg-white last:border-b"
                         >
                             {/* Accordion Trigger Section */}
@@ -260,4 +260,3 @@ export function ActivityFeedDetails({
         </div>
     );
 }
-
