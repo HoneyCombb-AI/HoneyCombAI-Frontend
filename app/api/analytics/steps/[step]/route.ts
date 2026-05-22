@@ -48,18 +48,29 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
         const rawContacts = contacts || [];
         const totalCount = rawContacts.length > 0 ? Number(rawContacts[0].total_count) : 0;
 
-        const formattedContacts: StepContact[] = rawContacts.map((contact: any) => ({
-            contact_id: contact.contact_id,
-            contact_name: contact.contact_name,
-            contact_email: contact.contact_email,
-            contact_linkedin: contact.contact_linkedin,
-            subject: contact.subject,
-            sent_at: contact.sent_at,
-            position: contact.position,
-            unique_opens: Number(contact.unique_opens),
-            unique_clicks: Number(contact.unique_clicks),
-            raw_events: contact.raw_events || []
-        }));
+        const formattedContacts: StepContact[] = rawContacts.map((contact: any, index: number) => {
+            const emailLogId = contact.email_log_id ?? [
+                contact.contact_id,
+                contact.sent_at ?? 'unknown-sent-at',
+                contact.subject ?? 'unknown-subject',
+                contact.position ?? 'unknown-position',
+                index,
+            ].join(':');
+
+            return {
+                email_log_id: emailLogId,
+                contact_id: contact.contact_id,
+                contact_name: contact.contact_name,
+                contact_email: contact.contact_email,
+                contact_linkedin: contact.contact_linkedin,
+                subject: contact.subject,
+                sent_at: contact.sent_at,
+                position: contact.position,
+                unique_opens: Number(contact.unique_opens),
+                unique_clicks: Number(contact.unique_clicks),
+                raw_events: contact.raw_events || []
+            };
+        });
 
         const pagination: PaginationInfo = {
             page,

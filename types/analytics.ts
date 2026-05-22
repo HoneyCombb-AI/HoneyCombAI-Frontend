@@ -85,6 +85,7 @@ export interface StepMetric {
 }
 
 export interface StepContact {
+    email_log_id: string;
     contact_id: string;
     contact_name: string;
     contact_email: string;
