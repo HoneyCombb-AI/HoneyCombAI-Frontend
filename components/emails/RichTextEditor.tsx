@@ -12,11 +12,15 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import type { EditorState, LexicalEditor } from "lexical";
 import {
+    $insertNodes,
     $createParagraphNode,
     $getRoot,
     $getSelection,
     $isRangeSelection,
+    COMMAND_PRIORITY_LOW,
     FORMAT_TEXT_COMMAND,
+    PASTE_COMMAND,
+    type PasteCommandType,
 } from "lexical";
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
 import {
@@ -34,8 +38,131 @@ interface RichTextEditorProps {
     placeholder?: string;
 }
 
+const BLOCK_GAP_PX = 14;
+const LINE_HEIGHT = "1.45";
+
+const BLOCK_TAGS = new Set(["P", "DIV"]);
+
+function getBlockText(element: Element) {
+    return (element.textContent || "").replace(/\u00a0/g, " ").trim();
+}
+
+function isEmptyBlock(element: Element) {
+    if (!BLOCK_TAGS.has(element.tagName)) return false;
+    if (element.querySelector("img, table, ul, ol")) return false;
+    return getBlockText(element) === "";
+}
+
+function setEmailBlockStyle(element: HTMLElement, marginBottomPx: number) {
+    element.removeAttribute("class");
+    element.style.margin = `0 0 ${marginBottomPx}px 0`;
+    element.style.lineHeight = LINE_HEIGHT;
+}
+
+function normalizeListsForEmail(root: ParentNode) {
+    root.querySelectorAll("ul, ol").forEach((element) => {
+        if (!(element instanceof HTMLElement)) return;
+        element.removeAttribute("class");
+        element.style.margin = "0 0 12px 20px";
+        element.style.padding = "0";
+        element.style.lineHeight = LINE_HEIGHT;
+    });
+
+    root.querySelectorAll("li").forEach((element) => {
+        if (!(element instanceof HTMLElement)) return;
+        element.removeAttribute("class");
+        element.style.margin = "0 0 4px 0";
+        element.style.lineHeight = LINE_HEIGHT;
+    });
+}
+
+function normalizeLinksForEmail(root: ParentNode) {
+    root.querySelectorAll("a").forEach((element) => {
+        if (!(element instanceof HTMLElement)) return;
+        element.removeAttribute("class");
+        element.style.color = "#2563eb";
+        element.style.textDecoration = "underline";
+    });
+}
+
+function normalizeEmailHtml(html: string) {
+    const trimmed = html.trim();
+    if (!trimmed) return "";
+
+    const document = new DOMParser().parseFromString(trimmed, "text/html");
+    const body = document.body;
+
+    body.querySelectorAll("script, style, meta, link, title").forEach((element) => {
+        element.remove();
+    });
+
+    const children = Array.from(body.children);
+    let previousContentBlock: HTMLElement | null = null;
+    let pendingGapAfterPrevious = false;
+
+    for (const child of children) {
+        if (!(child instanceof HTMLElement)) continue;
+
+        if (isEmptyBlock(child)) {
+            if (previousContentBlock) {
+                pendingGapAfterPrevious = true;
+            }
+            child.remove();
+            continue;
+        }
+
+        if (BLOCK_TAGS.has(child.tagName)) {
+            if (previousContentBlock) {
+                setEmailBlockStyle(previousContentBlock, pendingGapAfterPrevious ? BLOCK_GAP_PX : 0);
+            }
+            previousContentBlock = child;
+            pendingGapAfterPrevious = false;
+        } else {
+            if (previousContentBlock) {
+                setEmailBlockStyle(previousContentBlock, pendingGapAfterPrevious ? BLOCK_GAP_PX : 0);
+                previousContentBlock = null;
+                pendingGapAfterPrevious = false;
+            }
+        }
+    }
+
+    if (previousContentBlock) {
+        setEmailBlockStyle(previousContentBlock, 0);
+    }
+
+    normalizeListsForEmail(body);
+    normalizeLinksForEmail(body);
+
+    return body.innerHTML.trim();
+}
+
+function normalizePastedHtml(html: string) {
+    const document = new DOMParser().parseFromString(html, "text/html");
+
+    document.body.querySelectorAll("script, style, meta, link, title").forEach((element) => {
+        element.remove();
+    });
+
+    document.body.querySelectorAll("[class]").forEach((element) => {
+        const className = element.getAttribute("class") || "";
+        if (/\b(Mso|Apple-)/i.test(className)) {
+            element.removeAttribute("class");
+        }
+    });
+
+    return document.body.innerHTML;
+}
+
+function getClipboardHtml(event: PasteCommandType) {
+    if ("clipboardData" in event && event.clipboardData) {
+        return event.clipboardData.getData("text/html");
+    }
+
+    return "";
+}
+
 const editorTheme = {
-    paragraph: "mb-2 last:mb-0",
+    paragraph: "my-0",
     text: {
         bold: "font-semibold",
         italic: "italic",
@@ -193,6 +320,33 @@ function ExternalHtmlPlugin({
     return null;
 }
 
+function PasteCleanupPlugin() {
+    const [editor] = useLexicalComposerContext();
+
+    useEffect(() => {
+        return editor.registerCommand(
+            PASTE_COMMAND,
+            (event) => {
+                const html = getClipboardHtml(event);
+                if (!html) return false;
+
+                const normalizedHtml = normalizePastedHtml(html);
+                if (!normalizedHtml) return false;
+
+                event.preventDefault();
+                const dom = new DOMParser().parseFromString(normalizedHtml, "text/html");
+                const nodes = $generateNodesFromDOM(editor, dom);
+                $insertNodes(nodes.length > 0 ? nodes : [$createParagraphNode()]);
+
+                return true;
+            },
+            COMMAND_PRIORITY_LOW,
+        );
+    }, [editor]);
+
+    return null;
+}
+
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
     const lastEmittedRef = useRef<string>("");
     const latestOnChangeRef = useRef(onChange);
@@ -204,7 +358,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     const handleChange = useCallback(
         (editorState: EditorState, editor: LexicalEditor) => {
             editorState.read(() => {
-                const html = $generateHtmlFromNodes(editor);
+                const html = normalizeEmailHtml($generateHtmlFromNodes(editor));
                 if (html !== lastEmittedRef.current) {
                     lastEmittedRef.current = html;
                     latestOnChangeRef.current(html);
@@ -229,6 +383,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
                     <HistoryPlugin />
                     <ListPlugin />
                     <LinkPlugin />
+                    <PasteCleanupPlugin />
                     <OnChangePlugin onChange={handleChange} />
                     <ExternalHtmlPlugin value={value} lastEmittedRef={lastEmittedRef} />
                 </div>
