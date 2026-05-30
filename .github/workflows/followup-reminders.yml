@@ -1,0 +1,65 @@
+name: Follow-up reminders
+
+on:
+  schedule:
+    # Runs daily at 08:45 Asia/Kolkata.
+    - cron: "15 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run without inserting notifications"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      reminder_days:
+        description: "Days after latest sent email before reminding"
+        required: false
+        default: "4"
+      max_inserts:
+        description: "Maximum notifications to insert in this run"
+        required: false
+        default: "100"
+      dedupe_window_days:
+        description: "Suppress duplicate grouped notifications for this many days"
+        required: false
+        default: "2"
+      max_contacts_per_notification:
+        description: "Maximum contact names in each notification"
+        required: false
+        default: "6"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: followup-reminders
+  cancel-in-progress: false
+
+jobs:
+  create-followup-notifications:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Create follow-up notifications
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOLLOWUP_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          FOLLOWUP_REMINDER_DAYS: ${{ github.event.inputs.reminder_days || '4' }}
+          FOLLOWUP_MAX_INSERTS: ${{ github.event.inputs.max_inserts || '100' }}
+          FOLLOWUP_DEDUPE_WINDOW_DAYS: ${{ github.event.inputs.dedupe_window_days || '2' }}
+          FOLLOWUP_MAX_CONTACTS_PER_NOTIFICATION: ${{ github.event.inputs.max_contacts_per_notification || '6' }}
+          FOLLOWUP_PAGE_SIZE: "1000"
+        run: node scripts/followup-reminders.mjs
