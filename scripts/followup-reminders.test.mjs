@@ -5,6 +5,7 @@ import {
   buildGroupedFollowupNotification,
   getDedupeWindowKey,
   planFollowupNotifications,
+  quotePostgrestInValue,
 } from "./followup-reminders.mjs";
 
 const now = new Date("2026-05-30T00:00:00.000Z");
@@ -20,6 +21,7 @@ test("buildGroupedFollowupNotification includes contact names and deterministic 
     ],
     reminderDays: 4,
     dedupeWindowDays: 2,
+    maxContactsPerNotification: 6,
     now,
   });
 
@@ -33,9 +35,49 @@ test("buildGroupedFollowupNotification includes contact names and deterministic 
   );
 });
 
+test("buildGroupedFollowupNotification honors configured contact cap above the default", () => {
+  const contacts = [
+    "Ava",
+    "Ben",
+    "Cara",
+    "Dev",
+    "Eli",
+    "Faye",
+    "Gus",
+    "Hana",
+  ].map((name, index) => ({
+    id: `contact-${index}`,
+    full_name: name,
+    first_name: name,
+  }));
+
+  const notification = buildGroupedFollowupNotification({
+    userId: "user-1",
+    organizationId: "org-1",
+    contacts,
+    reminderDays: 4,
+    dedupeWindowDays: 2,
+    maxContactsPerNotification: 8,
+    now,
+  });
+
+  assert.equal(
+    notification.text,
+    "You need to follow up with Ava, Ben, Cara, Dev, Eli, Faye, Gus, and Hana."
+  );
+});
+
 test("getDedupeWindowKey changes every two days", () => {
   assert.equal(getDedupeWindowKey(new Date("2026-05-30T00:00:00.000Z"), 2), "2026-05-29");
   assert.equal(getDedupeWindowKey(new Date("2026-05-31T00:00:00.000Z"), 2), "2026-05-31");
+});
+
+test("quotePostgrestInValue quotes reserved characters for in filters", () => {
+  assert.equal(
+    quotePostgrestInValue('email_followup:4d:2d:org:user:2026-05-29'),
+    '"email_followup:4d:2d:org:user:2026-05-29"'
+  );
+  assert.equal(quotePostgrestInValue('a"b\\c'), '"a\\"b\\\\c"');
 });
 
 test("planFollowupNotifications filters by enabled orgs and groups top contacts per sender and org", () => {

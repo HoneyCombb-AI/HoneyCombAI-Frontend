@@ -63,6 +63,10 @@ function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+export function quotePostgrestInValue(value) {
+  return `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
 function makeGroupedBatchId({ reminderDays, dedupeWindowDays, organizationId, userId, now }) {
   const windowKey = getDedupeWindowKey(now, dedupeWindowDays);
   return `email_followup:${reminderDays}d:${dedupeWindowDays}d:${organizationId}:${userId}:${windowKey}`;
@@ -106,9 +110,10 @@ export function buildGroupedFollowupNotification({
   contacts,
   reminderDays,
   dedupeWindowDays,
+  maxContactsPerNotification,
   now,
 }) {
-  const visibleContacts = contacts.slice(0, DEFAULT_MAX_CONTACTS_PER_NOTIFICATION);
+  const visibleContacts = contacts.slice(0, maxContactsPerNotification);
   const contactList = formatContactList(visibleContacts);
 
   return {
@@ -205,6 +210,7 @@ export function planFollowupNotifications({
         contacts: contactsForNotification,
         reminderDays,
         dedupeWindowDays,
+        maxContactsPerNotification,
         now,
       })
     );
@@ -290,7 +296,7 @@ async function fetchExistingBatchIds({ supabaseUrl, serviceRoleKey, batchIds }) 
       table: "notifications",
       query: {
         select: "batch_id",
-        batch_id: `in.(${batchIdChunk.join(",")})`,
+        batch_id: `in.(${batchIdChunk.map(quotePostgrestInValue).join(",")})`,
       },
     });
     rows.forEach((row) => existing.add(row.batch_id));
