@@ -20,6 +20,7 @@ interface ActivityFeedProps {
     expandedContact: string | null;
     onStepClick: (step: number) => void;
     onExpandedChange: (contactId: string | null) => void;
+    isFilteringContacts?: boolean;
 }
 
 export function ActivityFeed({
@@ -31,6 +32,7 @@ export function ActivityFeed({
     expandedContact,
     onStepClick,
     onExpandedChange,
+    isFilteringContacts = false,
 }: ActivityFeedProps) {
 
     if (stepMetrics.length === 0) {
@@ -59,8 +61,8 @@ export function ActivityFeed({
                 contactPagination={contactPagination}
                 expandedContact={expandedContact}
                 onExpandedChange={onExpandedChange}
+                isFilteringContacts={isFilteringContacts}
             />
         </div>
     );
 }
-
