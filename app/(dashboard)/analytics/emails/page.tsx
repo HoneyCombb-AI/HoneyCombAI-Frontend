@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import { StepMetric, StepContact, GeolocationGroupItem, GeolocationPaginatedResponse } from "@/types/analytics";
 import {
@@ -11,11 +11,13 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, Search, X } from "lucide-react";
 import { ActivityFeed } from "@/components/analytics/ActivityFeed";
 import { LocationInsights } from "@/components/analytics/LocationInsights";
 import { PaginationFooter, PaginationInfo } from "@/components/analytics/PaginationFooter";
 import { Loading } from "@/components/loading";
+import { Input } from "@/components/ui/input";
+
 export default function EmailAnalyticsPage() {
     // State
     const [activeTab, setActiveTab] = useState<'feed' | 'geo'>('feed');
@@ -33,6 +35,7 @@ export default function EmailAnalyticsPage() {
     const [, setContactPage] = useState(1);
     const [contactLimit, setContactLimit] = useState(30);
     const [expandedContact, setExpandedContact] = useState<string | null>(null);
+    const [contactSearch, setContactSearch] = useState("");
 
     // Location Insights State
     const [geoMetrics, setGeoMetrics] = useState<GeolocationGroupItem[]>([]);
@@ -44,6 +47,22 @@ export default function EmailAnalyticsPage() {
 
     // Export State
     const [exportLoading, setExportLoading] = useState(false);
+
+    const normalizedContactSearch = contactSearch.trim().toLowerCase();
+    const hasContactSearch = normalizedContactSearch.length > 0;
+    const filteredStepContacts = useMemo(() => {
+        if (!normalizedContactSearch) return stepContacts;
+
+        return stepContacts.filter((contact) => {
+            const name = contact.contact_name?.toLowerCase() || "";
+            const email = contact.contact_email?.toLowerCase() || "";
+            return name.includes(normalizedContactSearch) || email.includes(normalizedContactSearch);
+        });
+    }, [stepContacts, normalizedContactSearch]);
+
+    const handleClearContactSearch = useCallback(() => {
+        setContactSearch("");
+    }, []);
 
     // Store last fetched parameters to prevent duplicate/unnecessary API calls
     const lastFetchedGeoParams = useRef({ page: 0, limit: 0, groupBy: '' });
@@ -245,6 +264,31 @@ export default function EmailAnalyticsPage() {
                                 <SelectItem value="geo">Location Insights</SelectItem>
                             </SelectContent>
                         </Select>
+
+                        {activeTab === 'feed' && (
+                            <>
+                                <div className="relative w-[260px]">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        value={contactSearch}
+                                        onChange={(event) => setContactSearch(event.target.value)}
+                                        placeholder="Search name or email"
+                                        className="h-9 pl-9 bg-white"
+                                    />
+                                </div>
+                                {hasContactSearch && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleClearContactSearch}
+                                        className="gap-2 text-gray-500"
+                                    >
+                                        <X className="h-4 w-4" />
+                                        <span className="hidden sm:inline">Clear</span>
+                                    </Button>
+                                )}
+                            </>
+                        )}
                     </div>
 
                     {/* Right side controls */}
@@ -315,12 +359,13 @@ export default function EmailAnalyticsPage() {
                             <ActivityFeed
                                 stepMetrics={stepMetrics}
                                 selectedStep={selectedStep}
-                                stepContacts={stepContacts}
+                                stepContacts={filteredStepContacts}
                                 loadingContacts={loadingContacts}
                                 contactPagination={contactPagination}
                                 expandedContact={expandedContact}
                                 onStepClick={handleStepClick}
                                 onExpandedChange={setExpandedContact}
+                                isFilteringContacts={hasContactSearch}
                             />
                         )
                     )}

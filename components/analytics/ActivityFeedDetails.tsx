@@ -29,6 +29,7 @@ interface ActivityFeedDetailsProps {
     contactPagination: PaginationInfo | null;
     expandedContact: string | null;
     onExpandedChange: (contactId: string | null) => void;
+    isFilteringContacts?: boolean;
 }
 
 /** Extracts the country portion from a location string like "Madrid, Madrid, Spain" → "Spain" */
@@ -59,6 +60,7 @@ export function ActivityFeedDetails({
     contactPagination,
     expandedContact,
     onExpandedChange,
+    isFilteringContacts = false,
 }: ActivityFeedDetailsProps) {
     if (selectedStep === null) {
         return null;
@@ -71,7 +73,7 @@ export function ActivityFeedDetails({
                     {stepMetrics.find(m => m.step === selectedStep)?.step_label}
                 </h3>
                 <span className="text-sm text-gray-500">
-                    - {contactPagination?.total || 0} contacts
+                    - {isFilteringContacts ? `${stepContacts.length} matches` : `${contactPagination?.total || 0} contacts`}
                 </span>
             </div>
 
@@ -82,7 +84,7 @@ export function ActivityFeedDetails({
                 </div>
             ) : stepContacts.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">
-                    <p>No contacts with activity</p>
+                    <p>{isFilteringContacts ? 'No matching contacts' : 'No contacts with activity'}</p>
                 </div>
             ) : (
                 <Accordion
