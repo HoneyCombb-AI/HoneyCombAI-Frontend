@@ -195,7 +195,7 @@ export default function EmailAnalyticsPage() {
     // Handle Contact Page Change
     const handleContactPageChange = (newPage: number) => {
         setContactPage(newPage);
-        if (selectedStep) {
+        if (selectedStep !== null) {
             fetchStepContacts(selectedStep, newPage, contactLimit);
         }
     };
@@ -209,7 +209,7 @@ export default function EmailAnalyticsPage() {
     const handleContactLimitChange = (newLimit: number) => {
         setContactLimit(newLimit);
         setContactPage(1);
-        if (selectedStep) {
+        if (selectedStep !== null) {
             fetchStepContacts(selectedStep, 1, newLimit);
         }
     };
