@@ -533,6 +533,7 @@ export function EmailViewer({
                         initialContactEmailId={rejectedApproval.contact_email_id}
                         initialTo={rejectedApproval.contact_email}
                         initialCc={rejectedApproval.cc}
+                        initialBcc={rejectedApproval.bcc}
                         accountProvider={rejectedApproval.account_provider}
                         accountEmail={rejectedApproval.account_email}
                         onResubmit={onResubmit}

@@ -22,7 +22,7 @@ interface ApprovalActionsProps {
 
 
 
-function CcTagInput({ cc, onChange }: { cc: string[]; onChange: (cc: string[]) => void }) {
+function EmailTagInput({ emails, onChange, label, placeholder }: { emails: string[]; onChange: (emails: string[]) => void; label: string; placeholder?: string }) {
     const [input, setInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -30,17 +30,17 @@ function CcTagInput({ cc, onChange }: { cc: string[]; onChange: (cc: string[]) =
         const email = raw.trim().toLowerCase();
         if (!email) return;
         if (!isValidEmail(email)) { toast.error(`"${email}" is not a valid email address`); return; }
-        if (cc.includes(email)) return;
-        onChange([...cc, email]);
+        if (emails.includes(email)) return;
+        onChange([...emails, email]);
         setInput("");
-    }, [cc, onChange]);
+    }, [emails, onChange]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
             e.preventDefault();
             addTag(input);
-        } else if (e.key === "Backspace" && !input && cc.length > 0) {
-            onChange(cc.slice(0, -1));
+        } else if (e.key === "Backspace" && !input && emails.length > 0) {
+            onChange(emails.slice(0, -1));
         }
     };
 
@@ -48,18 +48,18 @@ function CcTagInput({ cc, onChange }: { cc: string[]; onChange: (cc: string[]) =
         <div>
             <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                 <AtSign className="h-3 w-3" />
-                CC
+                {label}
             </label>
             <div
                 className="mt-1 flex flex-wrap items-center gap-1.5 min-h-[36px] px-2.5 py-1.5 rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring cursor-text"
                 onClick={() => inputRef.current?.focus()}
             >
-                {cc.map(email => (
+                {emails.map(email => (
                     <span key={email} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-800 text-xs font-medium">
                         {email}
                         <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); onChange(cc.filter(c => c !== email)); }}
+                            onClick={(e) => { e.stopPropagation(); onChange(emails.filter(c => c !== email)); }}
                             className="hover:text-red-600 cursor-pointer"
                         >
                             <X className="h-3 w-3" />
@@ -73,7 +73,7 @@ function CcTagInput({ cc, onChange }: { cc: string[]; onChange: (cc: string[]) =
                     onKeyDown={handleKeyDown}
                     onBlur={() => addTag(input)}
                     className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-muted-foreground"
-                    placeholder={cc.length === 0 ? "Add CC recipients..." : ""}
+                    placeholder={emails.length === 0 ? (placeholder ?? `Add ${label} recipients...`) : ""}
                 />
             </div>
         </div>
@@ -215,11 +215,19 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
                                     className="mt-1"
                                 />
                             </div>
-                            <CcTagInput
-                                cc={isEmailSnapshot(editSnapshot) ? (editSnapshot.cc ?? []) : []}
+                            <EmailTagInput
+                                emails={isEmailSnapshot(editSnapshot) ? (editSnapshot.cc ?? []) : []}
                                 onChange={(cc) =>
                                     setEditSnapshot((s) => ({ ...s, cc: cc.length ? cc : undefined } as EmailSnapshot))
                                 }
+                                label="CC"
+                            />
+                            <EmailTagInput
+                                emails={isEmailSnapshot(editSnapshot) ? (editSnapshot.bcc ?? []) : []}
+                                onChange={(bcc) =>
+                                    setEditSnapshot((s) => ({ ...s, bcc: bcc.length ? bcc : undefined } as EmailSnapshot))
+                                }
+                                label="BCC"
                             />
                             <div>
                                 <label className="text-xs font-medium text-muted-foreground">Body</label>

@@ -306,7 +306,7 @@ export default function EmailsPage() {
         } : null);
     }, [selectedEmail]);
 
-    const handleResubmit = useCallback(async (data: { subject: string; body: string; contact_email_id: string; contact_email: string; cc: string[] }) => {
+    const handleResubmit = useCallback(async (data: { subject: string; body: string; contact_email_id: string; contact_email: string; cc: string[]; bcc: string[] }) => {
         if (!selectedEmail || !rejectedApproval) throw new Error("No rejected approval");
         await axios.patch(`/api/emails/${selectedEmail.id}/approval/${rejectedApproval.id}`, data);
         await fetchMessages(selectedEmail.id);

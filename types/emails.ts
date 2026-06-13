@@ -57,6 +57,7 @@ export interface ContactMessage {
     sender_email: string | null;
     contact_email: string | null;
     cc?: string[] | null;
+    bcc?: string[] | null;
 }
 
 export interface MessageThread {
@@ -96,6 +97,7 @@ export interface RejectedApprovalItem {
     account_id?: string | null;
     account_email?: string | null;
     cc?: string[] | null;
+    bcc?: string[] | null;
 }
 
 export interface MessagesResponse {
@@ -119,6 +121,7 @@ export interface SendEmailRequest {
     contact_email_id?: string;
     contact_email?: string;
     cc?: string[];
+    bcc?: string[];
 }
 
 export interface SendEmailResponse {
