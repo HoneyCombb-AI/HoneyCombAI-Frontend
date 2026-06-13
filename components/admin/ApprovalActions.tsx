@@ -222,6 +222,65 @@ export function ApprovalActions({ item, onApprove, onReject, onDiscard }: Approv
                                 }
                             />
                             <div>
+                                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                    <AtSign className="h-3 w-3" />
+                                    BCC
+                                </label>
+                                <div
+                                    className="mt-1 flex flex-wrap items-center gap-1.5 min-h-[36px] px-2.5 py-1.5 rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring cursor-text"
+                                >
+                                    {(isEmailSnapshot(editSnapshot) ? (editSnapshot.bcc ?? []) : []).map(email => (
+                                        <span key={email} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 text-gray-800 text-xs font-medium">
+                                            {email}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setEditSnapshot((s) => {
+                                                        const current = isEmailSnapshot(s) ? (s.bcc ?? []) : [];
+                                                        return { ...s, bcc: current.filter(c => c !== email) } as EmailSnapshot;
+                                                    });
+                                                }}
+                                                className="hover:text-red-600 cursor-pointer"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    <input
+                                        type="email"
+                                        className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-muted-foreground"
+                                        placeholder={(isEmailSnapshot(editSnapshot) ? (editSnapshot.bcc ?? []) : []).length === 0 ? "Add BCC recipients..." : ""}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+                                                e.preventDefault();
+                                                const val = (e.target as HTMLInputElement).value.trim().toLowerCase();
+                                                if (val && isValidEmail(val)) {
+                                                    setEditSnapshot((s) => {
+                                                        const current = isEmailSnapshot(s) ? (s.bcc ?? []) : [];
+                                                        if (current.includes(val)) return s;
+                                                        return { ...s, bcc: [...current, val] } as EmailSnapshot;
+                                                    });
+                                                    (e.target as HTMLInputElement).value = "";
+                                                } else if (val) {
+                                                    toast.error(`"${val}" is not a valid email address`);
+                                                }
+                                            }
+                                        }}
+                                        onBlur={(e) => {
+                                            const val = e.target.value.trim().toLowerCase();
+                                            if (val && isValidEmail(val)) {
+                                                setEditSnapshot((s) => {
+                                                    const current = isEmailSnapshot(s) ? (s.bcc ?? []) : [];
+                                                    if (current.includes(val)) return s;
+                                                    return { ...s, bcc: [...current, val] } as EmailSnapshot;
+                                                });
+                                                e.target.value = "";
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            <div>
                                 <label className="text-xs font-medium text-muted-foreground">Body</label>
                                 <div className="mt-1">
                                     <RichTextEditor

@@ -146,6 +146,7 @@ export async function POST(
                         contact_name: contact?.full_name || '',
                         company_name: ((contact?.company as unknown as { name: string } | null)?.name) || '',
                         cc: body.cc?.length ? body.cc : undefined,
+                        bcc: body.bcc?.length ? body.bcc : undefined,
                     },
                 });
 
@@ -175,6 +176,7 @@ export async function POST(
                 contact_email_id: selectedContactEmail.id,
                 contact_email: selectedContactEmail.email,
                 ...(body.cc?.length ? { cc: body.cc } : {}),
+                ...(body.bcc?.length ? { bcc: body.bcc } : {}),
             },
             {
                 auth: {

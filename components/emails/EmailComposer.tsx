@@ -50,9 +50,13 @@ export function EmailComposer({
     const [cc, setCc] = useState<string[]>([]);
     const [ccInput, setCcInput] = useState("");
     const [showCc, setShowCc] = useState(false);
+    const [bcc, setBcc] = useState<string[]>([]);
+    const [bccInput, setBccInput] = useState("");
+    const [showBcc, setShowBcc] = useState(false);
     const [sending, setSending] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const ccInputRef = useRef<HTMLInputElement>(null);
+    const bccInputRef = useRef<HTMLInputElement>(null);
     const prevContactIdRef = useRef<string | null>(null);
     const prevReplyIdRef = useRef<string | null>(null);
 
@@ -78,6 +82,9 @@ export function EmailComposer({
         setCc([]);
         setCcInput("");
         setShowCc(false);
+        setBcc([]);
+        setBccInput("");
+        setShowBcc(false);
     }, [contact?.id]);
 
     // Auto-switch mode based on whether selected email matches the thread
@@ -162,6 +169,36 @@ export function EmailComposer({
         if (ccInput.trim()) addCcTag(ccInput);
     };
 
+    const addBccTag = (raw: string) => {
+        const candidates = raw.split(/[,;\s]+/).map(s => s.trim()).filter(s => s.length > 0);
+        const valid = candidates.filter(isValidEmail);
+        if (valid.length === 0) {
+            setBccInput("");
+            return;
+        }
+        setBcc(prev => {
+            const next = [...prev];
+            for (const e of valid) {
+                if (!next.includes(e)) next.push(e);
+            }
+            return next;
+        });
+        setBccInput("");
+    };
+
+    const handleBccKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" || e.key === "," || e.key === "Tab") {
+            e.preventDefault();
+            addBccTag(bccInput);
+        } else if (e.key === "Backspace" && bccInput === "") {
+            setBcc(prev => prev.slice(0, -1));
+        }
+    };
+
+    const handleBccBlur = () => {
+        if (bccInput.trim()) addBccTag(bccInput);
+    };
+
     const bodyText = useMemo(() => {
         return body
             .replace(/<[^>]*>/g, " ")
@@ -213,6 +250,7 @@ export function EmailComposer({
                 contact_email_id: selectedContactEmailId || undefined,
                 contact_email: toEmail || undefined,
                 cc: cc.length ? cc : undefined,
+                bcc: bcc.length ? bcc : undefined,
             });
 
             if (res.data?.status === "queued_for_approval") {
@@ -226,6 +264,9 @@ export function EmailComposer({
             setCc([]);
             setCcInput("");
             setShowCc(false);
+            setBcc([]);
+            setBccInput("");
+            setShowBcc(false);
         } catch (error: unknown) {
             const errorMessage = axios.isAxiosError(error)
                 ? error.response?.data?.detail || "Failed to send email"
@@ -396,6 +437,18 @@ export function EmailComposer({
                                 >
                                     {showCc ? "− CC" : "+ CC"}
                                 </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowBcc(v => {
+                                            if (!v) setTimeout(() => bccInputRef.current?.focus(), 50);
+                                            return !v;
+                                        });
+                                    }}
+                                    className="text-[11px] font-semibold text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wide cursor-pointer"
+                                >
+                                    {showBcc ? "− BCC" : "+ BCC"}
+                                </button>
                             </div>
                         </div>
 
@@ -432,6 +485,45 @@ export function EmailComposer({
                                         onKeyDown={handleCcKeyDown}
                                         onBlur={handleCcBlur}
                                         placeholder={cc.length === 0 ? "Add CC recipients…" : ""}
+                                        className="flex-1 min-w-[140px] text-sm text-gray-900 placeholder:text-gray-400 bg-transparent outline-none border-none py-0.5"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* BCC row */}
+                        {showBcc && (
+                            <div className="px-6 py-2.5 border-b bg-gray-50 flex items-start gap-4">
+                                <span className="text-sm font-medium text-gray-500 w-20 shrink-0 pt-1.5">BCC:</span>
+                                <div
+                                    className="flex-1 flex flex-wrap items-center gap-1.5 min-h-9 bg-white border border-gray-200 rounded-md px-2 py-1.5 shadow-sm cursor-text focus-within:ring-2 focus-within:ring-gray-200 focus-within:border-gray-300"
+                                    onClick={() => bccInputRef.current?.focus()}
+                                >
+                                    {bcc.map((email) => (
+                                        <span
+                                            key={email}
+                                            className="inline-flex items-center gap-1 bg-gray-100 border border-gray-200 text-gray-700 text-xs font-medium rounded px-2 py-0.5"
+                                        >
+                                            {email}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setBcc(prev => prev.filter(c => c !== email)); }}
+                                                className="text-gray-400 hover:text-gray-600 transition-colors leading-none"
+                                                aria-label={`Remove ${email}`}
+                                            >
+                                                <X className="h-2.5 w-2.5" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    <input
+                                        ref={bccInputRef}
+                                        type="email"
+                                        multiple
+                                        value={bccInput}
+                                        onChange={e => setBccInput(e.target.value)}
+                                        onKeyDown={handleBccKeyDown}
+                                        onBlur={handleBccBlur}
+                                        placeholder={bcc.length === 0 ? "Add BCC recipients…" : ""}
                                         className="flex-1 min-w-[140px] text-sm text-gray-900 placeholder:text-gray-400 bg-transparent outline-none border-none py-0.5"
                                     />
                                 </div>

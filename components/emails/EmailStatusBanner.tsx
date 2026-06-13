@@ -21,6 +21,7 @@ export interface ResubmitData {
     contact_email_id: string;
     contact_email: string;
     cc: string[];
+    bcc: string[];
 }
 
 export interface EmailStatusBannerProps {
@@ -41,6 +42,7 @@ export interface EmailStatusBannerProps {
     initialContactEmailId?: string | null;
     initialTo?: string | null;
     initialCc?: string[] | null;
+    initialBcc?: string[] | null;
     accountProvider?: "gmail" | "outlook" | null;
     accountEmail?: string | null;
     onResubmit?: (data: ResubmitData) => Promise<void>;
@@ -120,9 +122,10 @@ interface CcInputProps {
     cc: string[];
     onChange: (cc: string[]) => void;
     inputClass: string;
+    placeholder?: string;
 }
 
-function CcTagInput({ cc, onChange, inputClass }: CcInputProps) {
+function CcTagInput({ cc, onChange, inputClass, placeholder = "Add CC recipients..." }: CcInputProps) {
     const [input, setInput] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -168,7 +171,7 @@ function CcTagInput({ cc, onChange, inputClass }: CcInputProps) {
                 onKeyDown={handleKeyDown}
                 onBlur={() => addTag(input)}
                 className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-gray-400"
-                placeholder={cc.length === 0 ? "Add CC recipients..." : ""}
+                placeholder={cc.length === 0 ? placeholder : ""}
             />
         </div>
     );
@@ -182,6 +185,7 @@ interface ResubmitFormProps {
     initialContactEmailId?: string | null;
     initialTo: string;
     initialCc: string[];
+    initialBcc: string[];
     accountProvider: "gmail" | "outlook" | null;
     accountEmail: string | null;
     onSubmit: (data: ResubmitData) => Promise<void>;
@@ -191,7 +195,7 @@ interface ResubmitFormProps {
 }
 
 function ResubmitForm({
-    subject, body, contactEmails, initialContactEmailId, initialTo, initialCc,
+    subject, body, contactEmails, initialContactEmailId, initialTo, initialCc, initialBcc,
     accountProvider, accountEmail, onSubmit, onCancel, onDiscard, s,
 }: ResubmitFormProps) {
     const [editSubject, setEditSubject] = useState(subject);
@@ -204,6 +208,7 @@ function ResubmitForm({
         "";
     const [editContactEmailId, setEditContactEmailId] = useState(initialEmailId);
     const [editCc, setEditCc] = useState<string[]>(initialCc);
+    const [editBcc, setEditBcc] = useState<string[]>(initialBcc);
     const [saving, setSaving] = useState(false);
     const [discarding, setDiscarding] = useState(false);
 
@@ -222,6 +227,7 @@ function ResubmitForm({
                 contact_email_id: selectedEmail.id,
                 contact_email: selectedEmail.email,
                 cc: editCc,
+                bcc: editBcc,
             });
             toast.success("Email resubmitted for approval.");
         } catch (err: unknown) {
@@ -293,6 +299,15 @@ function ResubmitForm({
                     CC
                 </label>
                 <CcTagInput cc={editCc} onChange={setEditCc} inputClass={s.inputClass} />
+            </div>
+
+            {/* BCC */}
+            <div>
+                <label className={`text-xs font-medium mb-1 flex items-center gap-1 ${s.title}`}>
+                    <AtSign className="h-3 w-3" />
+                    BCC
+                </label>
+                <CcTagInput cc={editBcc} onChange={setEditBcc} inputClass={s.inputClass} placeholder="Add BCC recipients..." />
             </div>
 
             {/* Subject */}
@@ -379,6 +394,7 @@ export function EmailStatusBanner({
     initialContactEmailId,
     initialTo,
     initialCc,
+    initialBcc,
     accountProvider,
     accountEmail,
     onResubmit,
@@ -492,6 +508,7 @@ export function EmailStatusBanner({
                                 initialContactEmailId={initialContactEmailId}
                                 initialTo={initialTo || (contactEmails[0]?.email ?? "")}
                                 initialCc={initialCc ?? []}
+                                initialBcc={initialBcc ?? []}
                                 accountProvider={accountProvider ?? null}
                                 accountEmail={accountEmail ?? null}
                                 onSubmit={async (data) => { await onResubmit!(data); }}

@@ -116,6 +116,20 @@ export function ApprovalDetail({ item, loading }: ApprovalDetailProps) {
                             </span>
                         </span>
                     )}
+                    {isEmail && snapshot.bcc && snapshot.bcc.length > 0 && (
+                        <span className="group relative flex items-center gap-1 cursor-pointer">
+                            <AtSign className="h-3 w-3 text-gray-400" />
+                            <span className="text-gray-600">BCC: {snapshot.bcc.length}</span>
+                            {/* Hover tooltip */}
+                            <span className="hidden group-hover:block absolute left-0 top-full pt-1 z-50">
+                                <span className="block bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 w-max max-w-xs">
+                                    {snapshot.bcc.map(email => (
+                                        <span key={email} className="block text-xs text-gray-700 py-0.5">{email}</span>
+                                    ))}
+                                </span>
+                            </span>
+                        </span>
+                    )}
                     {isEmail && snapshot.account_provider && (
                         <span className="flex items-center gap-1">
                             <Send className="h-3 w-3 text-gray-400" />

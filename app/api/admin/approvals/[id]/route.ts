@@ -155,6 +155,7 @@ export async function PATCH(
                             contact_email_id: sanitizedSnapshot.contact_email_id,
                             contact_email: sanitizedSnapshot.contact_email,
                             cc: snapshot.cc?.length ? snapshot.cc : undefined,
+                            bcc: snapshot.bcc?.length ? snapshot.bcc : undefined,
                         },
                         {
                             auth: {

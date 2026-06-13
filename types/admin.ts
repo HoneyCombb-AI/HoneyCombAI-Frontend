@@ -20,6 +20,7 @@ export interface EmailSnapshot {
     thread_id?: string;
     reply_to_message_id?: string;
     cc?: string[];
+    bcc?: string[];
 }
 
 export interface LinkedInSnapshot {

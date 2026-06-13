@@ -12,6 +12,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             contact_email_id?: string;
             contact_email?: string;
             cc?: string[];
+            bcc?: string[];
         };
 
         const supabase = await createClient();
@@ -63,6 +64,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             contact_email_id: selectedContactEmail.id,
             contact_email: selectedContactEmail.email,
             cc: body.cc?.length ? body.cc : undefined,
+            bcc: body.bcc?.length ? body.bcc : undefined,
         };
 
         const { data: updated, error: updateError } = await supabase
