@@ -1,9 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useDropzone } from "react-dropzone"
-import { FileUp, Upload, X, AlertCircle, Download, Loader2 } from "lucide-react"
+import { FileUp, Upload, X, AlertCircle, Download, Loader2, Check, Plus, Info } from "lucide-react"
 import { toast } from "sonner"
 import axios from "axios"
 
@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/drawer"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
 
 interface ImportContactsDrawerProps {
   onSubmit?: (file: File) => void
@@ -89,6 +92,23 @@ const SAMPLE_ROWS = [
   }
 ];
 
+const COLOR_PALETTE = [
+  { name: "Blue", value: "#3B82F6" },
+  { name: "Purple", value: "#A855F7" },
+  { name: "Green", value: "#10B981" },
+  { name: "Red", value: "#EF4444" },
+  { name: "Orange", value: "#F97316" },
+  { name: "Pink", value: "#EC4899" },
+  { name: "Teal", value: "#14B8A6" },
+  { name: "Yellow", value: "#EAB308" },
+  { name: "Indigo", value: "#6366F1" },
+];
+
+interface SystemTag {
+  name: string
+  color: string
+}
+
 export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen, onOpenChange }: ImportContactsDrawerProps) {
   const [internalOpen, setInternalOpen] = React.useState(false)
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
@@ -97,6 +117,38 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [copiedHeader, setCopiedHeader] = useState<string | null>(null)
+  const [tags, setTags] = useState<Array<{ name: string; color: string }>>([])
+  const [tagName, setTagName] = useState('')
+  const [tagColor, setTagColor] = useState(COLOR_PALETTE[0].value)
+  const [systemTags, setSystemTags] = useState<SystemTag[]>([])
+  const [loadingTags, setLoadingTags] = useState(false)
+
+  // Colors claimed by existing system tags + tags queued for this import
+  const usedColors = useMemo(() => {
+    const map = new Map<string, string>()
+    systemTags.forEach(t => map.set(t.color.toUpperCase(), t.name))
+    tags.forEach(t => map.set(t.color.toUpperCase(), t.name))
+    return map
+  }, [systemTags, tags])
+
+  // Fetch existing system tags when drawer opens
+  useEffect(() => {
+    if (open) {
+      setLoadingTags(true)
+      axios.get('/api/tags', { params: { taggable_type: 'contact' } })
+        .then(res => setSystemTags(res.data || []))
+        .catch(() => setSystemTags([]))
+        .finally(() => setLoadingTags(false))
+    }
+  }, [open])
+
+  // Keep tagColor valid when colors get used
+  useEffect(() => {
+    if (usedColors.has(tagColor.toUpperCase())) {
+      const available = COLOR_PALETTE.find(c => !usedColors.has(c.value.toUpperCase()))
+      if (available) setTagColor(available.value)
+    }
+  }, [usedColors, tagColor])
 
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -125,6 +177,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
       // Create FormData for file upload
       const formData = new FormData()
       formData.append('csv', selectedFile)
+      if (tags.length > 0) {
+        formData.append('tags', JSON.stringify(tags))
+      }
 
       // Call the bulk import API
       const response = await axios.post('/api/contacts/create/bulk', formData, {
@@ -135,7 +190,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
 
       if (response.data.success) {
         // Show success message with summary
-        const { total_processed, contacts_created, contacts_updated, companies_created, contacts_skipped } = response.data
+        const { total_processed, contacts_created, contacts_updated, companies_created, contacts_skipped, tags_applied } = response.data
 
         let message = `Successfully processed ${total_processed} rows`
         const details = []
@@ -143,6 +198,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
         if (contacts_created > 0) details.push(`${contacts_created} contacts created`)
         if (contacts_updated > 0) details.push(`${contacts_updated} contacts updated`)
         if (companies_created > 0) details.push(`${companies_created} companies created`)
+        if (tags_applied > 0) details.push(`${tags_applied} tags applied`)
 
         if (details.length > 0) {
           message += `: ${details.join(', ')}`
@@ -155,6 +211,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
         }
         onSubmit?.(selectedFile)
         setSelectedFile(null)
+        setTags([])
+        setTagName('')
+        setTagColor(COLOR_PALETTE[0].value)
         setOpen(false)
       } else {
         toast.error(response.data.error || 'Import failed')
@@ -185,6 +244,9 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
 
   const handleCancel = () => {
     setSelectedFile(null)
+    setTags([])
+    setTagName('')
+    setTagColor(COLOR_PALETTE[0].value)
     setOpen(false)
   }
 
@@ -217,6 +279,51 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
     setCopiedHeader(header)
     toast.success(`"${header}" copied to clipboard!`)
     setTimeout(() => setCopiedHeader(null), 2000)
+  }
+
+  const addTag = () => {
+    const trimmedName = tagName.trim().toLowerCase()
+    if (!trimmedName) return
+
+    // Check if this tag already exists in system tags
+    const existingSystemTag = systemTags.find(t => t.name === trimmedName)
+    if (existingSystemTag) {
+      // If it exists in the system, use its color and add it to the queue
+      if (tags.some(t => t.name === trimmedName)) {
+        toast.error('Tag already added to import')
+        return
+      }
+      setTags([...tags, { name: trimmedName, color: existingSystemTag.color }])
+      setTagName('')
+      return
+    }
+
+    // Prevent duplicate tag names in the import queue
+    if (tags.some(t => t.name === trimmedName)) {
+      toast.error('Tag with this name already added')
+      return
+    }
+    // Prevent duplicate tag colors
+    if (usedColors.has(tagColor.toUpperCase())) {
+      toast.error('This color is already in use. Please choose a different color.')
+      return
+    }
+    setTags([...tags, { name: trimmedName, color: tagColor }])
+    setSystemTags([...systemTags, { name: trimmedName, color: tagColor }])
+    setTagName('')
+  }
+
+  const removeTag = (index: number) => {
+    setTags(tags.filter((_, i) => i !== index))
+  }
+
+  const toggleExistingTag = (tag: SystemTag) => {
+    const isSelected = tags.some(t => t.name === tag.name)
+    if (isSelected) {
+      setTags(tags.filter(t => t.name !== tag.name))
+    } else {
+      setTags([...tags, { name: tag.name, color: tag.color }])
+    }
   }
 
   return (
@@ -284,6 +391,182 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Tag Selection Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900">Tag Imported Contacts</h3>
+                <p className="text-xs text-muted-foreground">
+                  Tags will be applied to all successfully imported contacts.
+                </p>
+
+                {/* New Tag Creation */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-900">New Tag</h4>
+                  <Input
+                    placeholder="Type a tag name..."
+                    value={tagName}
+                    onChange={(e) => setTagName(e.target.value.toLowerCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addTag()
+                      }
+                    }}
+                  />
+
+                  {/* Color picker — only visible while typing */}
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                      tagName.length > 0 ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Color</Label>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Info className="h-3 w-3" />
+                          <span>One color per tag</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 p-1">
+                        {COLOR_PALETTE.map((color) => {
+                          const isColorUsed = usedColors.has(color.value.toUpperCase())
+                          const usedByTagName = usedColors.get(color.value.toUpperCase())
+                          return (
+                            <button
+                              key={color.value}
+                              type="button"
+                              onClick={() => !isColorUsed && setTagColor(color.value)}
+                              disabled={isColorUsed}
+                              className={`relative h-11 rounded-lg border-2 transition-all duration-200 ${
+                                tagColor.toUpperCase() === color.value.toUpperCase()
+                                  ? 'border-gray-900 shadow-md scale-105'
+                                  : isColorUsed
+                                  ? 'border-gray-300 opacity-40 cursor-not-allowed'
+                                  : 'border-gray-200 hover:border-gray-400 hover:shadow-sm'
+                              }`}
+                              style={{
+                                backgroundColor: color.value,
+                                boxShadow: tagColor.toUpperCase() === color.value.toUpperCase() ? `0 4px 12px ${color.value}40` : undefined
+                              }}
+                              title={isColorUsed ? `Already used by tag: ${usedByTagName}` : color.name}
+                            >
+                              {tagColor.toUpperCase() === color.value.toUpperCase() && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <Check className="h-5 w-5 text-white drop-shadow-md" strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {tagName.length > 0 && (
+                    <Button
+                      type="button"
+                      onClick={addTag}
+                      className="w-full"
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />Create & Apply
+                    </Button>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Existing Tags */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-gray-900">
+                      All Tags
+                      {systemTags.length > 0 && (
+                        <span className="text-gray-500 font-normal ml-2">({systemTags.length})</span>
+                      )}
+                    </h4>
+                    <span className="text-xs text-gray-400">Click circle to apply/remove</span>
+                  </div>
+
+                  {loadingTags ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                    </div>
+                  ) : systemTags.length === 0 ? (
+                    <div className="text-sm text-gray-500 py-4 text-center">
+                      No existing tags. Create one above!
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {systemTags.map((tag) => {
+                        const isSelected = tags.some(t => t.name === tag.name)
+                        return (
+                          <div key={tag.name} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => toggleExistingTag(tag)}
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                                  isSelected
+                                    ? 'border-green-500 bg-green-500'
+                                    : 'border-gray-300 bg-white hover:border-gray-500'
+                                } cursor-pointer`}
+                              >
+                                {isSelected && (
+                                  <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                                )}
+                              </button>
+                              <Badge
+                                style={{
+                                  backgroundColor: tag.color + '20',
+                                  color: tag.color,
+                                  borderColor: tag.color + '40'
+                                }}
+                                className="border"
+                              >
+                                {tag.name}
+                              </Badge>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Selected tags summary */}
+                {tags.length > 0 && (
+                  <div className="space-y-2">
+                    <Separator />
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase">Tags to apply ({tags.length})</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag, index) => (
+                        <Badge
+                          key={index}
+                          style={{
+                            backgroundColor: tag.color + '20',
+                            color: tag.color,
+                            borderColor: tag.color + '40'
+                          }}
+                          className="border pl-2 pr-1 py-1 text-sm flex items-center gap-1.5"
+                        >
+                          {tag.name}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(index)}
+                            className="ml-1 hover:bg-gray-300 rounded-full p-0.5 transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Important Alert - CSV Format */}
