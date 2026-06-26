@@ -176,6 +176,7 @@ interface BulkImportResponse {
   contacts_created?: number;
   contacts_updated?: number;
   contacts_skipped?: number;
+  tags_applied?: number;
   errors?: Array<{ row: number; error: string }>;
   error?: string;
   details?: string;
@@ -198,6 +199,44 @@ export async function POST(request: NextRequest) {
     // Parse form data to get CSV file
     const formData = await request.formData();
     const file = formData.get('csv') as File;
+
+    const tagsRaw = formData.get('tags') as string | null;
+    let tagsArray: Array<{ name: string; color: string }> = [];
+    
+    if (tagsRaw) {
+      try {
+        tagsArray = JSON.parse(tagsRaw);
+        if (!Array.isArray(tagsArray)) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Invalid tags format. Expected a JSON array of {name, color} objects.'
+            } as BulkImportResponse,
+            { status: 400 }
+          );
+        }
+        // Validate each tag has name and color
+        for (const tag of tagsArray) {
+          if (!tag.name || typeof tag.name !== 'string' || !tag.color || typeof tag.color !== 'string') {
+            return NextResponse.json(
+              {
+                success: false,
+                error: 'Each tag must have a "name" (string) and "color" (string).'
+              } as BulkImportResponse,
+              { status: 400 }
+            );
+          }
+        }
+      } catch {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Invalid tags JSON format.'
+          } as BulkImportResponse,
+          { status: 400 }
+        );
+      }
+    }
 
     if (!file) {
       return NextResponse.json(
@@ -448,11 +487,12 @@ export async function POST(request: NextRequest) {
 
     // Call RPC function
     const { data: result, error: rpcError } = await supabase.rpc(
-      'import_contacts_bulk',
+      'import_contacts_bulk_with_tags',
       {
         contacts_data: contactsWithRowNumbers,
         p_user_id: user.id,
-        p_organization_id: orgStatus.organization_id
+        p_organization_id: orgStatus.organization_id,
+        p_tags: tagsArray
       }
     );
 
