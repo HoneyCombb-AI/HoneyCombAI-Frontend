@@ -202,8 +202,9 @@ function ThreadRow({ thread, isOpen, onToggle, onReply, scrollRef }: ThreadRowPr
     const msgs = thread.messages;
     const lastMsg = msgs[msgs.length - 1];
 
-    const senderName = msgs.find(m => m.direction === "outbound")?.sender_name
-        || msgs.find(m => m.direction === "outbound")?.sender_email
+    const representativeMsg = msgs.find(m => m.direction === "outbound") ?? msgs[0];
+    const senderName = representativeMsg?.sender_name
+        || representativeMsg?.sender_email
         || "You";
     const contactName = msgs.find(m => m.direction === "inbound")?.contact_email
         || thread.messages[0]?.contact_email
