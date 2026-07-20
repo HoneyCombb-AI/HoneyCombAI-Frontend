@@ -13,6 +13,7 @@ export interface PaginatedTrackingGroup {
     position?: number;
     total_activity: number;
     latest_activity: string;
+    unsubscribed: boolean;
     raw_events: {
         group_key: string;
         event_type: string;
@@ -26,6 +27,38 @@ export interface PaginatedTrackingGroup {
             created_at: string;
         }[];
     }[] | null;
+}
+
+export interface CampaignListItem {
+    id: string;
+    name: string;
+    status: string;
+    created_at: string;
+}
+
+export interface CampaignContactStat {
+    contact_id: string;
+    contact_name: string;
+    email: string;
+    sent_at: string;
+    step: number;
+    opened: boolean;
+    clicked: boolean;
+    replied: boolean;
+    bounced: boolean;
+    unsubscribed: boolean;
+}
+
+export interface CampaignDrawerStats {
+    campaign_name: string;
+    campaign_status: string;
+    total_sent: number;
+    total_opened: number;
+    total_clicked: number;
+    total_replied: number;
+    total_bounced: number;
+    total_unsubscribed: number;
+    contacts: CampaignContactStat[];
 }
 
 export interface StepMetricDetail {
@@ -95,6 +128,8 @@ export interface StepContact {
     position: number;
     unique_opens: number;
     unique_clicks: number;
+    unsubscribed: boolean;
+    bounced: boolean;
     raw_events: {
         group_key: string;
         event_type: string;

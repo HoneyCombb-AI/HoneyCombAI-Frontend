@@ -33,11 +33,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
         const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 30;
         const page = Number.isFinite(rawPage) ? Math.max(rawPage, 1) : 1;
         const offset = (page - 1) * limit;
+        const startDate = searchParams.get('start_date') || null;
+        const endDate = searchParams.get('end_date') || null;
+        const campaignId = searchParams.get('campaign_id') || null;
+        const statusFilter = searchParams.get('status') || null;
 
         const { data: contacts, error: rpcError } = await supabase.rpc('get_step_contacts', {
             p_step: stepNum,
             p_page_offset: offset,
-            p_page_limit: limit
+            p_page_limit: limit,
+            p_start_date: startDate,
+            p_end_date: endDate,
+            p_campaign_id: campaignId,
+            p_status_filter: statusFilter,
         });
 
         if (rpcError) {
@@ -67,7 +75,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ step
                 position: contact.position,
                 unique_opens: Number(contact.unique_opens),
                 unique_clicks: Number(contact.unique_clicks),
-                raw_events: contact.raw_events || []
+                raw_events: contact.raw_events || [],
+                unsubscribed: contact.unsubscribed ?? false,
+                bounced: contact.bounced ?? false,
             };
         });
 
