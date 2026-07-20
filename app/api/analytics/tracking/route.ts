@@ -22,6 +22,9 @@ export async function GET(req: NextRequest) {
         const page = Number.isFinite(rawPage) ? Math.max(rawPage, 1) : 1;
         const searchTerm = searchParams.get('search') || '';
         const locationFilter = searchParams.get('location') || null;
+        const startDate = searchParams.get('start_date') || null;
+        const endDate = searchParams.get('end_date') || null;
+        const campaignId = searchParams.get('campaign_id') || null;
         const rawStep = searchParams.get('step');
         let stepFilter: number | null = null;
         if (rawStep !== null) {
@@ -39,7 +42,10 @@ export async function GET(req: NextRequest) {
             page_offset: offset,
             page_limit: limit,
             p_location_filter: locationFilter,
-            p_step_filter: stepFilter
+            p_step_filter: stepFilter,
+            p_start_date: startDate,
+            p_end_date: endDate,
+            p_campaign_id: campaignId,
         });
 
         if (rpcError) {
@@ -67,6 +73,7 @@ export async function GET(req: NextRequest) {
                     total_activity: group.total_activity,
                     latest_activity: group.latest_activity,
                     raw_events: allEvents,
+                    unsubscribed: group.unsubscribed ?? false,
                 };
             })
             // Remove groups with no raw events left

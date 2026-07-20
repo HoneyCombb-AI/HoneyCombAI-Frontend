@@ -51,6 +51,7 @@
     "papaparse": "^5.5.3",
     "radix-ui": "^1.4.3",
     "react": "^19.0.0",
+    "react-day-picker": "^10.0.1",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.58.1",
@@ -62,9 +63,9 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@types/papaparse": "^5.3.16",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.11",
+    "@types/papaparse": "^5.3.16",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

@@ -7,6 +7,7 @@ import { SignalTrendChart } from "@/components/dashboard/Overview/SignalTrendCha
 import { EngagementStyleChart } from "@/components/dashboard/Overview/EngagementStyleChart";
 import { SocialDistributionChart } from "@/components/dashboard/Overview/SocialDistributionChart";
 import { OverviewActivityDrawer } from "@/components/dashboard/Overview/OverviewActivityDrawer";
+import { CampaignStatsDrawer } from "@/components/dashboard/Overview/CampaignStatsDrawer";
 import {
     Activity,
     Flame,
@@ -21,7 +22,7 @@ import {
     UserPlus,
     Heart,
     Linkedin,
-    // MailPlus,
+    BarChart3,
     MessageSquare,
 } from "lucide-react";
 import { DashboardData, OverviewStatType } from "@/types/overview";
@@ -36,6 +37,9 @@ export default function OverviewPage() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [drawerStatType, setDrawerStatType] = useState<OverviewStatType | null>(null);
     const [drawerTitle, setDrawerTitle] = useState("");
+
+    // Campaign Stats Drawer
+    const [campaignDrawerOpen, setCampaignDrawerOpen] = useState(false);
 
     const openDrawer = useCallback((statType: OverviewStatType, title: string) => {
         setDrawerStatType(statType);
@@ -214,6 +218,14 @@ export default function OverviewPage() {
                         onClick={() => openDrawer('emails_today', 'Emails Sent Today')}
                     />
                     <StatCard
+                        title="Campaign Emails Today"
+                        value={stats.campaignEmailsToday ?? 0}
+                        icon={BarChart3}
+                        description="Campaign emails sent today"
+                        className="bg-violet-500/10 border-violet-500/20"
+                        onClick={() => setCampaignDrawerOpen(true)}
+                    />
+                    <StatCard
                         title="Connects Today"
                         value={stats.linkedinConnectsToday ?? 0}
                         icon={UserPlus}
@@ -318,6 +330,12 @@ export default function OverviewPage() {
                 onOpenChange={setDrawerOpen}
                 statType={drawerStatType}
                 title={drawerTitle}
+            />
+
+            {/* Campaign Stats Drawer */}
+            <CampaignStatsDrawer
+                open={campaignDrawerOpen}
+                onOpenChange={setCampaignDrawerOpen}
             />
 
         </div>

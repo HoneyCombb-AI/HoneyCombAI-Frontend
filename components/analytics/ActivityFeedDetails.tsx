@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, MousePointerClick, MapPin, Globe, CalendarClock, Mail, Share2 } from "lucide-react";
+import { Eye, MousePointerClick, MapPin, Globe, CalendarClock, Mail, Share2, UserX, AlertTriangle } from "lucide-react";
 import { Linkedin } from "lucide-react";
 import { StepMetric, StepContact } from "@/types/analytics";
 import { Loading } from "@/components/loading";
@@ -135,8 +135,20 @@ export function ActivityFeedDetails({
                                         </span>
                                     </div>
 
-                                    {/* Right Section: Forwarding badge + Stats */}
+                                    {/* Right Section: Badges + Stats */}
                                     <div className="flex items-center gap-2 shrink-0">
+                                        {contact.bounced && (
+                                            <span className="items-center gap-1.5 text-xs font-medium text-orange-700 bg-orange-50 border border-orange-200 px-2 py-1 rounded-md whitespace-nowrap hidden sm:inline-flex">
+                                                <AlertTriangle className="w-3 h-3 shrink-0" />
+                                                Bounced
+                                            </span>
+                                        )}
+                                        {contact.unsubscribed && (
+                                            <span className="items-center gap-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-1 rounded-md whitespace-nowrap hidden sm:inline-flex">
+                                                <UserX className="w-3 h-3 shrink-0" />
+                                                Unsubscribed
+                                            </span>
+                                        )}
                                         {isPossiblyForwarded(contact.raw_events) && (
                                             <span className="items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md whitespace-nowrap hidden sm:inline-flex">
                                                 <Share2 className="w-3 h-3 shrink-0" />

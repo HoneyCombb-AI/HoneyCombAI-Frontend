@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
-import { StepMetric, StepContact, GeolocationGroupItem, GeolocationPaginatedResponse } from "@/types/analytics";
+import { StepMetric, StepContact, GeolocationGroupItem, GeolocationPaginatedResponse, CampaignListItem } from "@/types/analytics";
 import {
     Select,
     SelectContent,
@@ -17,10 +17,18 @@ import { LocationInsights } from "@/components/analytics/LocationInsights";
 import { PaginationFooter, PaginationInfo } from "@/components/analytics/PaginationFooter";
 import { Loading } from "@/components/loading";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function EmailAnalyticsPage() {
     // State
     const [activeTab, setActiveTab] = useState<'feed' | 'geo'>('feed');
+
+    // Filter State
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+    const [campaignId, setCampaignId] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState<string>('');
+    const [campaigns, setCampaigns] = useState<CampaignListItem[]>([]);
 
     // Step Metrics State
     const [stepMetrics, setStepMetrics] = useState<StepMetric[]>([]);
@@ -48,6 +56,10 @@ export default function EmailAnalyticsPage() {
     // Export State
     const [exportLoading, setExportLoading] = useState(false);
 
+    // Search expand/collapse
+    const [searchOpen, setSearchOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
     const normalizedContactSearch = contactSearch.trim().toLowerCase();
     const hasContactSearch = normalizedContactSearch.length > 0;
     const filteredStepContacts = useMemo(() => {
@@ -60,8 +72,17 @@ export default function EmailAnalyticsPage() {
         });
     }, [stepContacts, normalizedContactSearch]);
 
-    const handleClearContactSearch = useCallback(() => {
-        setContactSearch("");
+    // Fetch campaigns list on mount
+    useEffect(() => {
+        async function fetchCampaigns() {
+            try {
+                const response = await axios.get<{ data: CampaignListItem[] }>('/api/campaigns/list');
+                setCampaigns(response.data.data || []);
+            } catch (err) {
+                console.error('Failed to load campaigns:', err);
+            }
+        }
+        fetchCampaigns();
     }, []);
 
     // Store last fetched parameters to prevent duplicate/unnecessary API calls
@@ -73,7 +94,7 @@ export default function EmailAnalyticsPage() {
 
 
     // Fetch Contacts for Selected Step
-    const fetchStepContacts = useCallback(async (step: number, page: number, limit: number) => {
+    const fetchStepContacts = useCallback(async (step: number, page: number, limit: number, filters?: { start_date?: string; end_date?: string; campaign_id?: string; status?: string }) => {
         // Cancel any previous in-flight request
         contactAbortRef.current?.abort();
         const controller = new AbortController();
@@ -81,9 +102,15 @@ export default function EmailAnalyticsPage() {
 
         try {
             setLoadingContacts(true);
+            const params: Record<string, any> = { page, limit };
+            if (filters?.start_date) params.start_date = filters.start_date;
+            if (filters?.end_date) params.end_date = filters.end_date;
+            if (filters?.campaign_id) params.campaign_id = filters.campaign_id;
+            if (filters?.status) params.status = filters.status;
+
             const response = await axios.get<{ data: StepContact[], pagination: PaginationInfo }>(
                 `/api/analytics/steps/${step}`,
-                { params: { page, limit }, signal: controller.signal }
+                { params, signal: controller.signal }
             );
             setStepContacts(response.data.data || []);
             setContactPagination(response.data.pagination);
@@ -98,11 +125,22 @@ export default function EmailAnalyticsPage() {
         }
     }, []);
 
+    // Build filter params object
+    const buildFilterParams = useCallback(() => {
+        const filters: Record<string, string> = {};
+        if (startDate) filters.start_date = startDate;
+        if (endDate) filters.end_date = endDate;
+        if (campaignId) filters.campaign_id = campaignId;
+        if (statusFilter) filters.status = statusFilter;
+        return filters;
+    }, [startDate, endDate, campaignId, statusFilter]);
+
     // Fetch Step Metrics
     const fetchStepMetrics = useCallback(async () => {
         try {
             setLoadingMetrics(true);
-            const response = await axios.get<{ data: StepMetric[] }>('/api/analytics/steps');
+            const params = buildFilterParams();
+            const response = await axios.get<{ data: StepMetric[] }>('/api/analytics/steps', { params });
             const data = response.data.data || [];
             const mappedData = data.map(m => ({
                 ...m,
@@ -114,7 +152,10 @@ export default function EmailAnalyticsPage() {
                 const defaultStep = mappedData.find(m => m.step === 1)?.step || mappedData[0].step;
                 setSelectedStep(defaultStep);
                 setContactPage(1);
-                fetchStepContacts(defaultStep, 1, 30); // 30 is the default contactLimit
+                fetchStepContacts(defaultStep, 1, 30, params);
+            } else {
+                setSelectedStep(null);
+                setStepContacts([]);
             }
         } catch (err: any) {
             console.error("Error fetching step metrics:", err);
@@ -126,7 +167,7 @@ export default function EmailAnalyticsPage() {
         } finally {
             setLoadingMetrics(false);
         }
-    }, [fetchStepContacts]);
+    }, [fetchStepContacts, buildFilterParams]);
 
     // Fetch Location Metrics
     const fetchGeoMetrics = useCallback(async (page: number, limit: number, group: 'country' | 'region' | 'city' = 'country') => {
@@ -155,7 +196,7 @@ export default function EmailAnalyticsPage() {
         }
     }, []);
 
-    // Initial Data Fetch
+    // Refetch when filters or tab change
     useEffect(() => {
         fetchStepMetrics();
     }, [fetchStepMetrics]);
@@ -188,7 +229,7 @@ export default function EmailAnalyticsPage() {
         } else {
             setSelectedStep(step);
             setContactPage(1);
-            fetchStepContacts(step, 1, contactLimit);
+            fetchStepContacts(step, 1, contactLimit, buildFilterParams());
         }
     };
 
@@ -196,7 +237,7 @@ export default function EmailAnalyticsPage() {
     const handleContactPageChange = (newPage: number) => {
         setContactPage(newPage);
         if (selectedStep !== null) {
-            fetchStepContacts(selectedStep, newPage, contactLimit);
+            fetchStepContacts(selectedStep, newPage, contactLimit, buildFilterParams());
         }
     };
 
@@ -210,7 +251,7 @@ export default function EmailAnalyticsPage() {
         setContactLimit(newLimit);
         setContactPage(1);
         if (selectedStep !== null) {
-            fetchStepContacts(selectedStep, 1, newLimit);
+            fetchStepContacts(selectedStep, 1, newLimit, buildFilterParams());
         }
     };
 
@@ -251,63 +292,127 @@ export default function EmailAnalyticsPage() {
                     <p className="text-sm text-muted-foreground">{error}</p>
                 </div>
             ) : (<>
-                {/* Header Bar */}
-                <div className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b bg-white px-6 py-3 shadow-sm">
-                    <div className="flex items-center gap-4">
-                        {/* Tab Select */}
-                        <Select value={activeTab} onValueChange={(val) => setActiveTab(val as 'feed' | 'geo')}>
-                            <SelectTrigger className="w-[180px] h-9 bg-white">
-                                <SelectValue placeholder="Select view" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[300px] overflow-y-auto">
-                                <SelectItem value="feed">Activity Feed</SelectItem>
-                                <SelectItem value="geo">Location Insights</SelectItem>
-                            </SelectContent>
-                        </Select>
+                {/* Header Bar — single row */}
+                <div className="sticky top-0 z-40 flex items-center gap-2 border-b bg-white px-6 py-3 shadow-sm">
+                    {/* Left group */}
+                    <Select value={activeTab} onValueChange={(val) => setActiveTab(val as 'feed' | 'geo')}>
+                        <SelectTrigger className="w-[150px] h-9 bg-white shrink-0">
+                            <SelectValue placeholder="Select view" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px] overflow-y-auto">
+                            <SelectItem value="feed">Activity Feed</SelectItem>
+                            <SelectItem value="geo">Location Insights</SelectItem>
+                        </SelectContent>
+                    </Select>
 
-                        {activeTab === 'feed' && (
-                            <>
-                                <div className="relative w-[260px]">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        value={contactSearch}
-                                        onChange={(event) => setContactSearch(event.target.value)}
-                                        placeholder="Search name or email"
-                                        className="h-9 pl-9 bg-white"
-                                    />
-                                </div>
-                                {hasContactSearch && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={handleClearContactSearch}
-                                        className="gap-2 text-gray-500"
-                                    >
-                                        <X className="h-4 w-4" />
-                                        <span className="hidden sm:inline">Clear</span>
-                                    </Button>
-                                )}
-                            </>
-                        )}
-                    </div>
-
-                    {/* Right side controls */}
-                    <div className="flex items-center gap-3">
-                        {activeTab === 'geo' && (
-                            <Select value={groupBy} onValueChange={(val: any) => {
-                                setGroupBy(val);
-                                setGeoPage(1); // Reset page on group change
-                            }}>
-                                <SelectTrigger className="h-9">
-                                    <SelectValue placeholder="Group by" />
+                    {activeTab === 'feed' && (
+                        <>
+                            <Select value={campaignId || 'all'} onValueChange={(val) => setCampaignId(val === 'all' ? '' : val)}>
+                                <SelectTrigger className="w-[160px] h-9 bg-white shrink-0">
+                                    <SelectValue placeholder="All Emails" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="country">Group: Country</SelectItem>
-                                    <SelectItem value="region">Group: Region</SelectItem>
-                                    <SelectItem value="city">Group: City</SelectItem>
+                                <SelectContent className="max-h-[300px] overflow-y-auto">
+                                    <SelectItem value="all">All Emails</SelectItem>
+                                    {campaigns.map((c) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
-                        )}
+
+                            <DatePicker
+                                value={startDate}
+                                onChange={setStartDate}
+                                placeholder="Start date"
+                                className="shrink-0"
+                            />
+                            <DatePicker
+                                value={endDate}
+                                onChange={setEndDate}
+                                placeholder="End date"
+                                className="shrink-0"
+                            />
+
+                            <Select value={statusFilter || 'all'} onValueChange={(val) => setStatusFilter(val === 'all' ? '' : val)}>
+                                <SelectTrigger className="w-[140px] h-9 bg-white shrink-0">
+                                    <SelectValue placeholder="All Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    <SelectItem value="opened">Opened</SelectItem>
+                                    <SelectItem value="clicked">Clicked</SelectItem>
+                                    <SelectItem value="bounced">Bounced</SelectItem>
+                                    <SelectItem value="unsubscribed">Unsubscribed</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            {(startDate || endDate || campaignId || statusFilter) && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => { setStartDate(''); setEndDate(''); setCampaignId(''); setStatusFilter(''); }}
+                                    className="h-9 w-9 shrink-0 text-gray-400 hover:text-gray-600"
+                                    title="Clear filters"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+
+                            {/* Expandable search */}
+                            {searchOpen ? (
+                                <div className="relative flex items-center">
+                                    <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        ref={searchInputRef}
+                                        value={contactSearch}
+                                        onChange={(event) => setContactSearch(event.target.value)}
+                                        onBlur={() => { if (!contactSearch) setSearchOpen(false); }}
+                                        placeholder="Search name or email"
+                                        className="h-9 w-[200px] pl-9 bg-white"
+                                        autoFocus
+                                    />
+                                    {hasContactSearch && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => { setContactSearch(''); setSearchOpen(false); }}
+                                            className="h-7 w-7 ml-1 text-gray-400"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                        </Button>
+                                    )}
+                                </div>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setSearchOpen(true)}
+                                    className="h-9 w-9 shrink-0"
+                                    title="Search contacts"
+                                >
+                                    <Search className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </>
+                    )}
+
+                    {activeTab === 'geo' && (
+                        <Select value={groupBy} onValueChange={(val: any) => {
+                            setGroupBy(val);
+                            setGeoPage(1);
+                        }}>
+                            <SelectTrigger className="h-9 shrink-0">
+                                <SelectValue placeholder="Group by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="country">Group: Country</SelectItem>
+                                <SelectItem value="region">Group: Region</SelectItem>
+                                <SelectItem value="city">Group: City</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
+
+                    {/* Right side — pushed to end */}
+                    <div className="flex items-center gap-2 ml-auto shrink-0">
                         <Select value={activeTab === 'feed' ? contactLimit.toString() : geoLimit.toString()} onValueChange={(val) => {
                             const numVal = parseInt(val);
                             if (activeTab === 'feed') handleContactLimitChange(numVal);

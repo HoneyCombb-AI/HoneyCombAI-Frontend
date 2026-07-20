@@ -3,7 +3,7 @@
 // Extracted from: api/overview/route.ts
 // ============================================================
 
-export type OverviewStatType = 'emails_today' | 'linkedin_tasks_today' | 'connects_today' | 'messages_today';
+export type OverviewStatType = 'emails_today' | 'linkedin_tasks_today' | 'connects_today' | 'messages_today' | 'campaign_emails_today';
 
 export interface OverviewActivityItem {
     contact_id: string;
@@ -32,6 +32,7 @@ export interface DashboardData {
         };
         tasksCompletedToday: number;
         emailsSentToday: number;
+        campaignEmailsToday: number;
         totalEmailsSent: number;
         totalFollowUpEmailsSent: number;
         linkedinConnectsSent: number;
