@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { format, parseISO } from "date-fns";
 import {
@@ -59,23 +59,34 @@ export function CampaignStatsDrawer({ open, onOpenChange }: CampaignStatsDrawerP
         fetchCampaigns();
     }, [open]);
 
+    const statsAbortRef = useRef<AbortController | null>(null);
+
     const fetchStats = useCallback(async () => {
         if (!selectedCampaign) {
             setStats(null);
             return;
         }
+        statsAbortRef.current?.abort();
+        const controller = new AbortController();
+        statsAbortRef.current = controller;
+
         setLoading(true);
         try {
             const params: Record<string, string> = { campaign_id: selectedCampaign };
             if (startDate) params.start_date = startDate;
             if (endDate) params.end_date = endDate;
-            const res = await axios.get<CampaignDrawerStats>('/api/overview/campaign-stats', { params });
-            setStats(res.data);
+            const res = await axios.get<CampaignDrawerStats>('/api/overview/campaign-stats', { params, signal: controller.signal });
+            if (statsAbortRef.current === controller) {
+                setStats(res.data);
+            }
         } catch (err) {
+            if (axios.isCancel(err)) return;
             console.error('Failed to load campaign stats:', err);
             setStats(null);
         } finally {
-            setLoading(false);
+            if (statsAbortRef.current === controller) {
+                setLoading(false);
+            }
         }
     }, [selectedCampaign, startDate, endDate]);
 
