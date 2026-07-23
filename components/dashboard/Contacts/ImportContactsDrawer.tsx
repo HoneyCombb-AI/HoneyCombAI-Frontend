@@ -6,6 +6,7 @@ import { useDropzone } from "react-dropzone"
 import { FileUp, Upload, X, AlertCircle, Download, Loader2, Check, Plus, Info } from "lucide-react"
 import { toast } from "sonner"
 import axios from "axios"
+import { COLOR_PALETTE } from "@/lib/constants/tags"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -92,18 +93,6 @@ const SAMPLE_ROWS = [
   }
 ];
 
-const COLOR_PALETTE = [
-  { name: "Blue", value: "#3B82F6" },
-  { name: "Purple", value: "#A855F7" },
-  { name: "Green", value: "#10B981" },
-  { name: "Red", value: "#EF4444" },
-  { name: "Orange", value: "#F97316" },
-  { name: "Pink", value: "#EC4899" },
-  { name: "Teal", value: "#14B8A6" },
-  { name: "Yellow", value: "#EAB308" },
-  { name: "Indigo", value: "#6366F1" },
-];
-
 interface SystemTag {
   name: string
   color: string
@@ -120,6 +109,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
   const [tags, setTags] = useState<Array<{ name: string; color: string }>>([])
   const [tagName, setTagName] = useState('')
   const [tagColor, setTagColor] = useState(COLOR_PALETTE[0].value)
+  const [tagHexRaw, setTagHexRaw] = useState(COLOR_PALETTE[0].value.slice(1).toUpperCase())
   const [systemTags, setSystemTags] = useState<SystemTag[]>([])
   const [loadingTags, setLoadingTags] = useState(false)
 
@@ -146,7 +136,10 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
   useEffect(() => {
     if (usedColors.has(tagColor.toUpperCase())) {
       const available = COLOR_PALETTE.find(c => !usedColors.has(c.value.toUpperCase()))
-      if (available) setTagColor(available.value)
+      if (available) {
+        setTagColor(available.value)
+        setTagHexRaw(available.value.slice(1).toUpperCase())
+      }
     }
   }, [usedColors, tagColor])
 
@@ -214,6 +207,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
         setTags([])
         setTagName('')
         setTagColor(COLOR_PALETTE[0].value)
+        setTagHexRaw(COLOR_PALETTE[0].value.slice(1).toUpperCase())
         setOpen(false)
       } else {
         toast.error(response.data.error || 'Import failed')
@@ -247,6 +241,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
     setTags([])
     setTagName('')
     setTagColor(COLOR_PALETTE[0].value)
+    setTagHexRaw(COLOR_PALETTE[0].value.slice(1).toUpperCase())
     setOpen(false)
   }
 
@@ -429,7 +424,7 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                           <span>One color per tag</span>
                         </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-3 p-1">
+                      <div className="grid grid-cols-6 gap-2 p-1">
                         {COLOR_PALETTE.map((color) => {
                           const isColorUsed = usedColors.has(color.value.toUpperCase())
                           const usedByTagName = usedColors.get(color.value.toUpperCase())
@@ -437,9 +432,14 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                             <button
                               key={color.value}
                               type="button"
-                              onClick={() => !isColorUsed && setTagColor(color.value)}
+                              onClick={() => {
+                                if (!isColorUsed) {
+                                  setTagColor(color.value)
+                                  setTagHexRaw(color.value.slice(1).toUpperCase())
+                                }
+                              }}
                               disabled={isColorUsed}
-                              className={`relative h-11 rounded-lg border-2 transition-all duration-200 ${
+                              className={`relative h-9 rounded-lg border-2 transition-all duration-200 ${
                                 tagColor.toUpperCase() === color.value.toUpperCase()
                                   ? 'border-gray-900 shadow-md scale-105'
                                   : isColorUsed
@@ -454,12 +454,38 @@ export function ImportContactsDrawer({ onSubmit, children, open: controlledOpen,
                             >
                               {tagColor.toUpperCase() === color.value.toUpperCase() && (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                  <Check className="h-5 w-5 text-white drop-shadow-md" strokeWidth={3} />
+                                  <Check className="h-4 w-4 text-white drop-shadow-md" strokeWidth={3} />
                                 </div>
                               )}
                             </button>
                           )
                         })}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className={`flex items-center gap-1.5 border rounded-md px-2 py-1 flex-1 bg-white transition-colors ${
+                          tagHexRaw.length === 6 && usedColors.has('#' + tagHexRaw)
+                            ? 'border-red-400'
+                            : 'border-gray-200 focus-within:border-gray-400'
+                        }`}>
+                          <div className="w-3.5 h-3.5 rounded-sm border border-gray-200 shrink-0" style={{ backgroundColor: tagColor }} />
+                          <span className="text-xs text-muted-foreground font-mono">#</span>
+                          <input
+                            className="flex-1 text-xs font-mono bg-transparent outline-none uppercase w-0 min-w-0"
+                            placeholder="Custom hex"
+                            maxLength={6}
+                            value={tagHexRaw}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 6)
+                              setTagHexRaw(raw)
+                              if (raw.length === 6 && !usedColors.has('#' + raw)) {
+                                setTagColor('#' + raw)
+                              }
+                            }}
+                          />
+                          {tagHexRaw.length === 6 && usedColors.has('#' + tagHexRaw) && (
+                            <span className="text-xs text-red-500 shrink-0">In use</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

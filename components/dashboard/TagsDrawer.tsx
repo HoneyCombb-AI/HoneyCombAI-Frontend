@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/tooltip"
 import axios from "axios"
 import { toast } from "sonner"
+import { COLOR_PALETTE } from "@/lib/constants/tags"
 
 interface Tag {
   id: string
@@ -48,18 +49,6 @@ const customDrawerStyles = {
   maxWidth: '400px',
   minWidth: '320px'
 }
-
-const COLOR_PALETTE = [
-  { name: "Blue", value: "#3B82F6" },
-  { name: "Purple", value: "#A855F7" },
-  { name: "Green", value: "#10B981" },
-  { name: "Red", value: "#EF4444" },
-  { name: "Orange", value: "#F97316" },
-  { name: "Pink", value: "#EC4899" },
-  { name: "Teal", value: "#14B8A6" },
-  { name: "Yellow", value: "#EAB308" },
-  { name: "Indigo", value: "#6366F1" },
-]
 
 const ColorButton = React.memo(({
   color,
@@ -132,6 +121,9 @@ export function TagsDrawer({
   const [togglingTag, setTogglingTag] = useState<string | null>(null)
   const [deletingTagName, setDeletingTagName] = useState<string | null>(null)
 
+  const [newTagHexRaw, setNewTagHexRaw] = useState(COLOR_PALETTE[0].value.slice(1).toUpperCase())
+  const [editTagHexRaw, setEditTagHexRaw] = useState("")
+
   // Colors already claimed by existing global tags
   const usedColors = useMemo(() => {
     return new Map(systemTags.map(tag => [tag.color.toUpperCase(), tag.name]))
@@ -158,6 +150,7 @@ export function TagsDrawer({
     const available = COLOR_PALETTE.find(c => !usedColors.has(c.value.toUpperCase()))
     if (available && usedColors.has(newTagColor.toUpperCase())) {
       setNewTagColor(available.value)
+      setNewTagHexRaw(available.value.slice(1).toUpperCase())
     }
   }, [usedColors, newTagColor])
 
@@ -297,6 +290,7 @@ export function TagsDrawer({
     setEditingTag(tag)
     setEditTagName(tag.name)
     setEditTagColor(tag.color)
+    setEditTagHexRaw(tag.color.slice(1).toUpperCase())
   }, [])
 
   const handleUpdateTag = useCallback(async () => {
@@ -357,6 +351,7 @@ export function TagsDrawer({
     setEditingTag(null)
     setEditTagName("")
     setEditTagColor("")
+    setEditTagHexRaw("")
   }, [])
 
   const isBusy = isAdding || isUpdating || loading || deletingTagName !== null || togglingTag !== null
@@ -412,7 +407,7 @@ export function TagsDrawer({
                         <span>One color per tag</span>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-3 p-1">
+                    <div className="grid grid-cols-6 gap-2 p-1">
                       {COLOR_PALETTE.map((color) => {
                         const isColorUsed = usedColors.has(color.value.toUpperCase())
                         const usedByTag = usedColors.get(color.value.toUpperCase())
@@ -423,11 +418,43 @@ export function TagsDrawer({
                             isSelected={newTagColor.toUpperCase() === color.value.toUpperCase()}
                             isDisabled={isAdding || isColorUsed}
                             usedByTag={usedByTag}
-                            onClick={() => !isColorUsed && setNewTagColor(color.value)}
-                            size="large"
+                            onClick={() => {
+                              if (!isColorUsed) {
+                                setNewTagColor(color.value)
+                                setNewTagHexRaw(color.value.slice(1).toUpperCase())
+                              }
+                            }}
+                            size="small"
                           />
                         )
                       })}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className={`flex items-center gap-1.5 border rounded-md px-2 py-1 flex-1 bg-white transition-colors ${
+                        newTagHexRaw.length === 6 && usedColors.has('#' + newTagHexRaw)
+                          ? 'border-red-400'
+                          : 'border-gray-200 focus-within:border-gray-400'
+                      }`}>
+                        <div className="w-3.5 h-3.5 rounded-sm border border-gray-200 shrink-0" style={{ backgroundColor: newTagColor }} />
+                        <span className="text-xs text-muted-foreground font-mono">#</span>
+                        <input
+                          className="flex-1 text-xs font-mono bg-transparent outline-none uppercase w-0 min-w-0"
+                          placeholder="Custom hex"
+                          maxLength={6}
+                          value={newTagHexRaw}
+                          disabled={isAdding}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 6)
+                            setNewTagHexRaw(raw)
+                            if (raw.length === 6 && !usedColors.has('#' + raw)) {
+                              setNewTagColor('#' + raw)
+                            }
+                          }}
+                        />
+                        {newTagHexRaw.length === 6 && usedColors.has('#' + newTagHexRaw) && (
+                          <span className="text-xs text-red-500 shrink-0">In use</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -495,7 +522,7 @@ export function TagsDrawer({
                                 <span>One color per tag</span>
                               </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 p-1">
+                            <div className="grid grid-cols-6 gap-1.5 p-1">
                               {COLOR_PALETTE.map((color) => {
                                 const isColorUsed = usedColors.has(color.value.toUpperCase())
                                 const usedByTag = usedColors.get(color.value.toUpperCase())
@@ -509,11 +536,44 @@ export function TagsDrawer({
                                     isSelected={editTagColor.toUpperCase() === color.value.toUpperCase()}
                                     isDisabled={isUpdating || isDisabled}
                                     usedByTag={usedByTag}
-                                    onClick={() => !isDisabled && setEditTagColor(color.value)}
+                                    onClick={() => {
+                                      if (!isDisabled) {
+                                        setEditTagColor(color.value)
+                                        setEditTagHexRaw(color.value.slice(1).toUpperCase())
+                                      }
+                                    }}
                                     size="small"
                                   />
                                 )
                               })}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className={`flex items-center gap-1.5 border rounded-md px-2 py-1 flex-1 bg-white transition-colors ${
+                                editTagHexRaw.length === 6 && usedColors.has('#' + editTagHexRaw) && editingTag?.color.toUpperCase() !== '#' + editTagHexRaw
+                                  ? 'border-red-400'
+                                  : 'border-gray-200 focus-within:border-gray-400'
+                              }`}>
+                                <div className="w-3.5 h-3.5 rounded-sm border border-gray-200 shrink-0" style={{ backgroundColor: editTagColor }} />
+                                <span className="text-xs text-muted-foreground font-mono">#</span>
+                                <input
+                                  className="flex-1 text-xs font-mono bg-transparent outline-none uppercase w-0 min-w-0"
+                                  placeholder="Custom hex"
+                                  maxLength={6}
+                                  value={editTagHexRaw}
+                                  disabled={isUpdating}
+                                  onChange={(e) => {
+                                    const raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 6)
+                                    setEditTagHexRaw(raw)
+                                    const isOwnColor = editingTag?.color.toUpperCase() === '#' + raw
+                                    if (raw.length === 6 && (!usedColors.has('#' + raw) || isOwnColor)) {
+                                      setEditTagColor('#' + raw)
+                                    }
+                                  }}
+                                />
+                                {editTagHexRaw.length === 6 && usedColors.has('#' + editTagHexRaw) && editingTag?.color.toUpperCase() !== '#' + editTagHexRaw && (
+                                  <span className="text-xs text-red-500 shrink-0">In use</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div className="flex gap-2">
